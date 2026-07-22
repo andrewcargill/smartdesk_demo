@@ -1,0 +1,36 @@
+export const annaDiaryEvents = [
+  {
+    id: 'meeting-parent-oskar',
+    type: 'diary-event',
+    displayType: 'parent-contact',
+    source: 'smartdesk',
+    date: '2026-05-21',
+    startTime: '14:20',
+    endTime: '14:40',
+    title: 'Parent call',
+    note: 'Follow-up conversation',
+    availability: 'busy',
+    location: 'Workroom',
+    linkedContexts: [
+      {
+        moduleId: 'mentor',
+        classId: '7a',
+        studentId: 'oskar-p',
+      },
+    ],
+  },
+  {
+    id: 'diary-weekly-review-2026-05-22',
+    type: 'diary-event',
+    displayType: 'planning',
+    source: 'smartdesk',
+    date: '2026-05-22',
+    startTime: '12:05',
+    endTime: '13:00',
+    title: 'Weekly planning and SmartDesk review',
+    note: '',
+    availability: 'flexible-work',
+    location: 'Workroom',
+    linkedContexts: [],
+  },
+];
