@@ -127,6 +127,43 @@ function formatDemoDate(date) {
   return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(new Date(`${date}T12:00:00`));
 }
 
+function getCaptureLevelValue(levelId) {
+  return mathsCaptureLevels.find((level) => level.id === levelId)?.order || 0;
+}
+
+function buildCaptureProgressSeries(observations) {
+  const structuredObservations = observations
+    .filter((item) => item.capturePointId && item.levelId && getMathsCapturePointById(item.capturePointId) && getMathsCaptureLevelById(item.levelId))
+    .sort((first, second) => first.date.localeCompare(second.date));
+  const seriesByCapturePoint = structuredObservations.reduce((groups, item) => {
+    if (!groups.has(item.capturePointId)) {
+      groups.set(item.capturePointId, []);
+    }
+    groups.get(item.capturePointId).push(item);
+    return groups;
+  }, new Map());
+
+  return [...seriesByCapturePoint.entries()]
+    .map(([capturePointId, items]) => {
+      const capturePoint = getMathsCapturePointById(capturePointId);
+      const firstValue = getCaptureLevelValue(items[0]?.levelId);
+      const latestValue = getCaptureLevelValue(items[items.length - 1]?.levelId);
+
+      return {
+        capturePoint,
+        items,
+        change: latestValue - firstValue,
+        latestValue,
+      };
+    })
+    .sort((first, second) => (
+      Number(second.items.length >= 2) - Number(first.items.length >= 2)
+      || second.items.length - first.items.length
+      || second.latestValue - first.latestValue
+      || first.capturePoint.label.localeCompare(second.capturePoint.label)
+    ));
+}
+
 function getMondayMathsLesson() {
   return getCurrentWeekContext(annaSchedule).days
     .find((day) => day.id === annaSchedule.currentContext.currentDayId)
@@ -1043,6 +1080,172 @@ function AssessmentResultsChart({ assessments, evidenceTopics }) {
   );
 }
 
+function CaptureProgressChart({ observations, evidenceTopics }) {
+  const [activeObservationId, setActiveObservationId] = useState(null);
+  const width = 520;
+  const height = 210;
+  const padding = { top: 24, right: 24, bottom: 34, left: 82 };
+  const topicById = new Map(evidenceTopics.map((topic) => [topic.id, topic]));
+  const progressSeries = buildCaptureProgressSeries(observations);
+  const visibleSeries = progressSeries.slice(0, 4);
+  const visibleItems = visibleSeries.flatMap((series) => series.items);
+  const sortedVisibleItems = sortEvidenceByDate(visibleItems, 'asc');
+  const dates = visibleItems.map((item) => new Date(`${item.date}T12:00:00`).getTime());
+  const minDate = Math.min(...dates);
+  const maxDate = Math.max(...dates);
+  const levelValueById = new Map(mathsCaptureLevels.map((level) => [level.id, level.order]));
+  const levelDistribution = mathsCaptureLevels.map((level) => ({
+    ...level,
+    count: visibleItems.filter((item) => item.levelId === level.id).length,
+  }));
+  const totalStructured = visibleItems.length;
+  const lineColors = [purple, darkText, 'rgba(23, 21, 26, 0.56)', 'rgba(156, 40, 175, 0.58)'];
+  const xFor = (item) => {
+    if (visibleItems.length <= 1 || minDate === maxDate) {
+      return padding.left + (width - padding.left - padding.right) / 2;
+    }
+
+    const value = new Date(`${item.date}T12:00:00`).getTime();
+    return padding.left + ((value - minDate) / (maxDate - minDate)) * (width - padding.left - padding.right);
+  };
+  const yForLevel = (levelId) => {
+    const value = levelValueById.get(levelId) || 1;
+    return padding.top + (1 - (value - 1) / Math.max(mathsCaptureLevels.length - 1, 1)) * (height - padding.top - padding.bottom);
+  };
+  const activeObservation = visibleItems.find((item) => item.id === activeObservationId) || null;
+  const activePoint = activeObservation ? getMathsCapturePointById(activeObservation.capturePointId) : null;
+  const activeLevel = activeObservation ? getMathsCaptureLevelById(activeObservation.levelId) : null;
+  const activeTooltip = activeObservation ? {
+    x: Math.min(Math.max(xFor(activeObservation) - 78, padding.left), width - padding.right - 156),
+    y: Math.max(yForLevel(activeObservation.levelId) - 54, 8),
+  } : null;
+
+  return (
+    <Paper elevation={0} sx={{ p: 1.3, borderRadius: '16px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.7} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }}>
+        <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 860 }}>Capture progress</Typography>
+        {!!totalStructured && (
+          <Typography sx={{ color: 'text.secondary', fontSize: 12.1 }}>
+            {totalStructured} structured observation{totalStructured === 1 ? '' : 's'}
+          </Typography>
+        )}
+      </Stack>
+      {visibleSeries.length ? (
+        <>
+          <Box
+            component="svg"
+            viewBox={`0 0 ${width} ${height}`}
+            role="img"
+            aria-label={`${totalStructured} structured capture observation${totalStructured === 1 ? '' : 's'} showing progress by capture level.`}
+            sx={{ mt: 0.8, width: '100%', height: 210, overflow: 'visible' }}
+          >
+            <line x1={padding.left} y1={padding.top} x2={padding.left} y2={height - padding.bottom} stroke="rgba(23, 21, 26, 0.18)" />
+            <line x1={padding.left} y1={height - padding.bottom} x2={width - padding.right} y2={height - padding.bottom} stroke="rgba(23, 21, 26, 0.18)" />
+            {mathsCaptureLevels.map((level) => {
+              const y = yForLevel(level.id);
+              return (
+                <g key={level.id}>
+                  <line x1={padding.left} y1={y} x2={width - padding.right} y2={y} stroke="rgba(23, 21, 26, 0.055)" />
+                  <text x={padding.left - 10} y={y + 4} textAnchor="end" fill="rgba(23, 21, 26, 0.58)" fontSize="10.5">{level.label}</text>
+                </g>
+              );
+            })}
+            {visibleSeries.map((series, index) => {
+              const points = series.items.map((item) => `${xFor(item)},${yForLevel(item.levelId)}`).join(' ');
+              const color = lineColors[index % lineColors.length];
+
+              return (
+                <g key={series.capturePoint.id}>
+                  {series.items.length > 1 && <polyline points={points} fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />}
+                  {series.items.map((item) => {
+                    const topic = topicById.get(item.evidenceTopicId);
+                    const level = getMathsCaptureLevelById(item.levelId);
+                    return (
+                      <circle
+                        key={item.id}
+                        cx={xFor(item)}
+                        cy={yForLevel(item.levelId)}
+                        r="5.7"
+                        fill="#fff"
+                        stroke={color}
+                        strokeWidth="2.2"
+                        tabIndex={0}
+                        role="graphics-symbol"
+                        aria-label={`${series.capturePoint.label}, ${level?.label || item.levelId}, ${formatDemoDate(item.date)}, ${topic?.label || item.evidenceTopicId}.`}
+                        onMouseEnter={() => setActiveObservationId(item.id)}
+                        onMouseLeave={() => setActiveObservationId(null)}
+                        onFocus={() => setActiveObservationId(item.id)}
+                        onBlur={() => setActiveObservationId(null)}
+                        style={{ cursor: 'default', outline: 'none' }}
+                      >
+                        <title>{`${formatDemoDate(item.date)} · ${series.capturePoint.label} · ${level?.label || item.levelId} · ${topic?.label || item.evidenceTopicId}`}</title>
+                      </circle>
+                    );
+                  })}
+                </g>
+              );
+            })}
+            {visibleItems.length > 0 && (
+              <>
+                <text x={padding.left} y={height - 10} textAnchor="start" fill="rgba(23, 21, 26, 0.58)" fontSize="10.5">{formatDemoDate(sortedVisibleItems[0].date)}</text>
+                <text x={width - padding.right} y={height - 10} textAnchor="end" fill="rgba(23, 21, 26, 0.58)" fontSize="10.5">{formatDemoDate(sortedVisibleItems[sortedVisibleItems.length - 1].date)}</text>
+              </>
+            )}
+            {activeObservation && activeTooltip && (
+              <g pointerEvents="none">
+                <rect x={activeTooltip.x} y={activeTooltip.y} width="156" height="44" rx="8" fill="#fff" stroke="rgba(23, 21, 26, 0.16)" />
+                <text x={activeTooltip.x + 10} y={activeTooltip.y + 16} fill={darkText} fontSize="11.2" fontWeight="700">
+                  {activePoint?.label || activeObservation.capturePointId}
+                </text>
+                <text x={activeTooltip.x + 10} y={activeTooltip.y + 32} fill="rgba(23, 21, 26, 0.62)" fontSize="11">
+                  {activeLevel?.label || activeObservation.levelId} · {formatDemoDate(activeObservation.date)}
+                </text>
+              </g>
+            )}
+          </Box>
+          <Stack spacing={0.7}>
+            {visibleSeries.map((series, index) => {
+              const firstLevel = getMathsCaptureLevelById(series.items[0]?.levelId);
+              const latestLevel = getMathsCaptureLevelById(series.items[series.items.length - 1]?.levelId);
+              const movement = series.change > 0 ? '+' : '';
+              return (
+                <Stack key={series.capturePoint.id} direction="row" spacing={0.8} alignItems="center" sx={{ minWidth: 0 }}>
+                  <Box sx={{ width: 9, height: 9, borderRadius: '50%', bgcolor: lineColors[index % lineColors.length], flexShrink: 0 }} />
+                  <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 780, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{series.capturePoint.label}</Typography>
+                  <Typography sx={{ ml: 'auto', color: 'text.secondary', fontSize: 12.1, whiteSpace: 'nowrap' }}>
+                    {firstLevel?.label || 'Level'} to {latestLevel?.label || 'Level'}{series.change ? ` (${movement}${series.change})` : ''}
+                  </Typography>
+                </Stack>
+              );
+            })}
+          </Stack>
+          <Stack spacing={0.55} sx={{ mt: 1 }}>
+            {levelDistribution.filter((level) => level.count).map((level) => (
+              <Stack key={level.id} direction="row" spacing={0.8} alignItems="center">
+                <Typography sx={{ width: 76, color: 'text.secondary', fontSize: 11.8 }}>{level.label}</Typography>
+                <Box sx={{ flex: '1 1 auto', height: 8, borderRadius: '999px', bgcolor: 'rgba(23, 21, 26, 0.07)', overflow: 'hidden' }}>
+                  <Box sx={{ width: `${(level.count / totalStructured) * 100}%`, height: '100%', bgcolor: level.id === 'advanced' || level.id === 'secure' ? purple : 'rgba(23, 21, 26, 0.42)' }} />
+                </Box>
+                <Typography sx={{ width: 18, textAlign: 'right', color: darkText, fontSize: 11.8, fontWeight: 780 }}>{level.count}</Typography>
+              </Stack>
+            ))}
+          </Stack>
+          <Box component="ul" sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
+            {visibleItems.map((item) => {
+              const capturePoint = getMathsCapturePointById(item.capturePointId);
+              const level = getMathsCaptureLevelById(item.levelId);
+              const topic = topicById.get(item.evidenceTopicId);
+              return <li key={item.id}>{formatDemoDate(item.date)}. {capturePoint?.label || item.capturePointId}. {level?.label || item.levelId}. {topic?.label || item.evidenceTopicId}.</li>;
+            })}
+          </Box>
+        </>
+      ) : (
+        <Typography sx={{ mt: 0.7, color: 'text.secondary', fontSize: 13 }}>No structured capture observations yet.</Typography>
+      )}
+    </Paper>
+  );
+}
+
 function StudentInsightPanel({ student, teachingUnits, evidenceTopics, evidence, onOpenStudent }) {
   const assessments = getStudentAssessments(evidence, student.id);
   const observations = getStudentObservations(evidence, student.id);
@@ -1070,6 +1273,7 @@ function StudentInsightPanel({ student, teachingUnits, evidenceTopics, evidence,
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.08fr) minmax(280px, 0.92fr)' }, gap: 1.25, alignItems: 'start' }}>
             <Stack spacing={1.25}>
               <AssessmentResultsChart assessments={assessments} evidenceTopics={evidenceTopics} />
+              <CaptureProgressChart observations={observations} evidenceTopics={evidenceTopics} />
               <Paper elevation={0} sx={{ p: 1.3, borderRadius: '16px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
                 <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 860 }}>Saved observation timeline</Typography>
                 {observations.length ? (
