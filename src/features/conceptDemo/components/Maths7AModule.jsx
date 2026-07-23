@@ -22,6 +22,7 @@ import {
   Popover,
   Select,
   Stack,
+  TextField,
   Typography,
 } from '@mui/material';
 import { annaTasks } from '../data/annaTasks.js';
@@ -67,6 +68,7 @@ import { usePlanningCurriculumNotes } from '../hooks/usePlanningCurriculumNotes.
 import { useSubjectPlanning } from '../hooks/useSubjectPlanning.js';
 import {
   getEvidenceForStudent,
+  getLatestEvidenceDate,
   getMergedMathsEvidence,
   getStudentAssessments,
   getStudentEvidenceByContent,
@@ -1444,6 +1446,347 @@ function observationsWithoutLevel(observations) {
   return (observations || []).filter((item) => !item.levelId).length;
 }
 
+function getUnitEvidenceItems(evidence, unit) {
+  return (evidence || []).filter((item) => (
+    item.teachingUnitId === unit.id
+    || (unit.evidenceTopicIds || []).includes(item.evidenceTopicId)
+  ));
+}
+
+function getCapturePointsForUnit(unit) {
+  return (unit.evidenceTopicIds || []).flatMap((topicId) => getMathsCapturePointsForTopic({
+    teachingUnitId: unit.id,
+    evidenceTopicId: topicId,
+  }));
+}
+
+function buildTeachingUnitEvidenceSummary(unit, evidence, judgement) {
+  const items = getUnitEvidenceItems(evidence, unit);
+  const observations = items.filter((item) => item.type !== 'assessment');
+  const assessments = items.filter((item) => item.type === 'assessment');
+  const capturePoints = getCapturePointsForUnit(unit);
+  const observedCapturePointIds = new Set(observations.map((item) => item.capturePointId).filter(Boolean));
+  const dates = [...new Set(items.map((item) => item.date).filter(Boolean))].sort();
+
+  return {
+    unit,
+    items,
+    observations,
+    assessments,
+    capturePoints,
+    observedCapturePointIds,
+    observedCapturePointCount: capturePoints.filter((point) => observedCapturePointIds.has(point.id)).length,
+    lessonCount: dates.length,
+    earliestDate: dates[0] || null,
+    latestDate: dates[dates.length - 1] || null,
+    judgement,
+  };
+}
+
+function buildCapturePointSequences(summary) {
+  const observationsByCapturePoint = new Map();
+  summary.observations
+    .filter((item) => item.capturePointId && item.levelId)
+    .forEach((item) => {
+      if (!observationsByCapturePoint.has(item.capturePointId)) {
+        observationsByCapturePoint.set(item.capturePointId, []);
+      }
+      observationsByCapturePoint.get(item.capturePointId).push(item);
+    });
+
+  return summary.capturePoints.map((capturePoint) => {
+    const observations = sortEvidenceByDate(observationsByCapturePoint.get(capturePoint.id) || [], 'asc');
+    return {
+      capturePoint,
+      observations,
+    };
+  });
+}
+
+function getJudgementKey(studentId, teachingUnitId) {
+  return `${studentId}:${teachingUnitId}`;
+}
+
+function StudentInsightPanelV2({
+  student,
+  teachingUnits,
+  evidence,
+  judgements,
+  onSaveJudgement,
+}) {
+  const unitSummaries = useMemo(() => teachingUnits.map((unit) => buildTeachingUnitEvidenceSummary(
+    unit,
+    evidence,
+    judgements[getJudgementKey(student.id, unit.id)] || null,
+  )), [evidence, judgements, student.id, teachingUnits]);
+  const defaultUnit = unitSummaries.find((summary) => summary.items.length) || unitSummaries[0] || null;
+  const [selectedUnitId, setSelectedUnitId] = useState(defaultUnit?.unit.id || '');
+  const selectedSummary = unitSummaries.find((summary) => summary.unit.id === selectedUnitId) || defaultUnit;
+  const [judgementEditorOpen, setJudgementEditorOpen] = useState(false);
+  const [draftLevelId, setDraftLevelId] = useState('not-set');
+  const [draftNote, setDraftNote] = useState('');
+
+  useEffect(() => {
+    if (!selectedSummary) return;
+    setSelectedUnitId((currentId) => (
+      unitSummaries.some((summary) => summary.unit.id === currentId)
+        ? currentId
+        : selectedSummary.unit.id
+    ));
+  }, [selectedSummary, unitSummaries]);
+
+  useEffect(() => {
+    const judgement = selectedSummary?.judgement || null;
+    setDraftLevelId(judgement?.levelId || 'not-set');
+    setDraftNote(judgement?.note || '');
+    setJudgementEditorOpen(false);
+  }, [selectedSummary?.unit.id, selectedSummary?.judgement]);
+
+  if (!selectedSummary) {
+    return null;
+  }
+
+  const studentEvidence = getEvidenceForStudent(evidence, student.id);
+  const studentObservations = studentEvidence.filter((item) => item.type !== 'assessment');
+  const studentAssessments = studentEvidence.filter((item) => item.type === 'assessment');
+  const unitsWithEvidenceCount = unitSummaries.filter((summary) => summary.items.length).length;
+  const latestEvidenceDate = getLatestEvidenceDate(studentEvidence);
+  const sequences = buildCapturePointSequences(selectedSummary);
+  const observedSequences = sequences.filter((sequence) => sequence.observations.length);
+  const unobservedSequences = sequences.filter((sequence) => !sequence.observations.length);
+  const repeatedSequences = observedSequences.filter((sequence) => sequence.observations.length >= 2);
+  const changedSequences = repeatedSequences.filter((sequence) => sequence.observations[0].levelId !== sequence.observations[sequence.observations.length - 1].levelId);
+  const unchangedSequences = repeatedSequences.filter((sequence) => sequence.observations[0].levelId === sequence.observations[sequence.observations.length - 1].levelId);
+  const structuredObservationIds = new Set(selectedSummary.observations.filter((item) => item.capturePointId).map((item) => item.id));
+  const otherObservations = selectedSummary.observations.filter((item) => !structuredObservationIds.has(item.id));
+  const judgementLevel = selectedSummary.judgement?.levelId ? getMathsCaptureLevelById(selectedSummary.judgement.levelId) : null;
+
+  function saveJudgement() {
+    onSaveJudgement({
+      studentId: student.id,
+      teachingUnitId: selectedSummary.unit.id,
+      levelId: draftLevelId === 'not-set' ? null : draftLevelId,
+      note: draftNote.trim(),
+    });
+    setJudgementEditorOpen(false);
+  }
+
+  return (
+    <Box sx={{ p: { xs: 1, sm: 1.25 }, bgcolor: '#fbfafc', borderTop: '1px solid rgba(23, 21, 26, 0.07)' }}>
+      <Paper elevation={0} id={`student-insight-v2-${student.id}`} sx={{ p: { xs: 1.25, sm: 1.6 }, borderRadius: '18px', border: '1px solid rgba(23, 21, 26, 0.1)', bgcolor: '#fff' }}>
+        <Stack spacing={1.4}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
+            <Box>
+              <Typography component="h2" sx={{ color: darkText, fontSize: 16.5, fontWeight: 900 }}>Evidence picture</Typography>
+              <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 12.8 }}>Prototype V2 · factual evidence view</Typography>
+            </Box>
+            <Stack direction="row" spacing={0.6} flexWrap="wrap" useFlexGap>
+              {[
+                `${studentEvidence.length} evidence item${studentEvidence.length === 1 ? '' : 's'}`,
+                `${studentAssessments.length} assessment${studentAssessments.length === 1 ? '' : 's'}`,
+                `${studentObservations.length} observation${studentObservations.length === 1 ? '' : 's'}`,
+                `${unitsWithEvidenceCount} teaching unit${unitsWithEvidenceCount === 1 ? '' : 's'} with evidence`,
+                `Latest evidence: ${latestEvidenceDate ? formatDemoDate(latestEvidenceDate) : 'None'}`,
+              ].map((item) => <Chip key={item} label={item} size="small" sx={{ bgcolor: '#fff', border: '1px solid rgba(23, 21, 26, 0.12)', color: darkText, fontWeight: 760 }} />)}
+            </Stack>
+          </Stack>
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(260px, 0.78fr) minmax(0, 1.22fr)' }, gap: 1.25, alignItems: 'start' }}>
+            <Stack spacing={0.75}>
+              {unitSummaries.map((summary) => {
+                const selected = summary.unit.id === selectedSummary.unit.id;
+                const judgement = summary.judgement?.levelId ? getMathsCaptureLevelById(summary.judgement.levelId) : null;
+                return (
+                  <ButtonBase
+                    key={summary.unit.id}
+                    onClick={() => setSelectedUnitId(summary.unit.id)}
+                    aria-pressed={selected}
+                    sx={{
+                      width: '100%',
+                      p: 1,
+                      display: 'block',
+                      textAlign: 'left',
+                      borderRadius: '12px',
+                      border: selected ? `1px solid ${purple}` : '1px solid rgba(23, 21, 26, 0.1)',
+                      bgcolor: selected ? palePurple : '#fff',
+                      '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                    }}
+                  >
+                    <Typography sx={{ color: darkText, fontSize: 13.4, fontWeight: 880 }}>{summary.unit.label || summary.unit.title}</Typography>
+                    <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 12.2 }}>
+                      {summary.observations.length ? `${summary.observations.length} observation${summary.observations.length === 1 ? '' : 's'}` : 'No observations'} · {summary.assessments.length ? `${summary.assessments.length} assessment${summary.assessments.length === 1 ? '' : 's'}` : 'no assessments'} · {summary.observedCapturePointCount}/{summary.capturePoints.length} capture points
+                    </Typography>
+                    <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 12 }}>
+                      Evidence spans {summary.lessonCount || 0} lesson{summary.lessonCount === 1 ? '' : 's'} · Latest {summary.latestDate ? formatDemoDate(summary.latestDate) : 'none'}
+                    </Typography>
+                    <Typography sx={{ mt: 0.35, color: darkText, fontSize: 12, fontWeight: 760 }}>
+                      Teacher judgement: {judgement?.label || 'Not set'}
+                    </Typography>
+                  </ButtonBase>
+                );
+              })}
+            </Stack>
+
+            <Stack spacing={1.15}>
+              <Paper elevation={0} sx={{ p: 1.25, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+                <Typography component="h3" sx={{ color: darkText, fontSize: 16, fontWeight: 900 }}>{selectedSummary.unit.label || selectedSummary.unit.title}</Typography>
+                <Stack direction="row" spacing={0.65} flexWrap="wrap" useFlexGap sx={{ mt: 0.75 }}>
+                  {[
+                    `${selectedSummary.observations.length} observation${selectedSummary.observations.length === 1 ? '' : 's'}`,
+                    `${selectedSummary.assessments.length} assessment${selectedSummary.assessments.length === 1 ? '' : 's'}`,
+                    `${selectedSummary.observedCapturePointCount} of ${selectedSummary.capturePoints.length} capture points observed`,
+                    `Evidence across ${selectedSummary.lessonCount || 0} lesson${selectedSummary.lessonCount === 1 ? '' : 's'}`,
+                    selectedSummary.earliestDate && selectedSummary.latestDate ? `${formatDemoDate(selectedSummary.earliestDate)}-${formatDemoDate(selectedSummary.latestDate)}` : 'No evidence dates',
+                  ].map((item) => <Chip key={item} label={item} size="small" sx={{ bgcolor: '#fff', border: '1px solid rgba(23, 21, 26, 0.12)', color: darkText, fontWeight: 740 }} />)}
+                </Stack>
+              </Paper>
+
+              <Paper elevation={0} sx={{ p: 1.25, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+                <Typography component="h3" sx={{ color: darkText, fontSize: 14, fontWeight: 880 }}>Capture-point coverage</Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 1.1, mt: 0.8 }}>
+                  <Box>
+                    <Typography component="h4" sx={{ color: darkText, fontSize: 12.8, fontWeight: 850 }}>Observed</Typography>
+                    <Stack spacing={0.45} sx={{ mt: 0.45 }}>
+                      {observedSequences.length ? observedSequences.map((sequence) => (
+                        <Typography key={sequence.capturePoint.id} sx={{ color: 'text.secondary', fontSize: 12.4 }}>
+                          {sequence.capturePoint.label} · {sequence.observations.length} observation{sequence.observations.length === 1 ? '' : 's'}
+                        </Typography>
+                      )) : <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>None</Typography>}
+                    </Stack>
+                  </Box>
+                  <Box>
+                    <Typography component="h4" sx={{ color: darkText, fontSize: 12.8, fontWeight: 850 }}>Not yet observed</Typography>
+                    <Stack spacing={0.45} sx={{ mt: 0.45 }}>
+                      {unobservedSequences.length ? unobservedSequences.map((sequence) => (
+                        <Typography key={sequence.capturePoint.id} sx={{ color: 'text.secondary', fontSize: 12.4 }}>{sequence.capturePoint.label}</Typography>
+                      )) : <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>None</Typography>}
+                    </Stack>
+                  </Box>
+                </Box>
+              </Paper>
+
+              <Paper elevation={0} sx={{ p: 1.25, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+                <Typography component="h3" sx={{ color: darkText, fontSize: 14, fontWeight: 880 }}>Changes in repeated observations</Typography>
+                <Stack spacing={0.8} sx={{ mt: 0.75 }}>
+                  {[
+                    ['Changed', changedSequences],
+                    ['No recorded change', unchangedSequences],
+                  ].map(([label, sequencesForSection]) => (
+                    <Box key={label}>
+                      <Typography component="h4" sx={{ color: darkText, fontSize: 12.8, fontWeight: 850 }}>{label}</Typography>
+                      <Stack spacing={0.45} sx={{ mt: 0.35 }}>
+                        {sequencesForSection.length ? sequencesForSection.map((sequence) => {
+                          const first = sequence.observations[0];
+                          const latest = sequence.observations[sequence.observations.length - 1];
+                          const firstLevel = getMathsCaptureLevelById(first.levelId);
+                          const latestLevel = getMathsCaptureLevelById(latest.levelId);
+                          return (
+                            <Typography key={sequence.capturePoint.id} sx={{ color: 'text.secondary', fontSize: 12.4 }}>
+                              {sequence.capturePoint.label}: recorded change {firstLevel?.label || first.levelId} to {latestLevel?.label || latest.levelId} · {formatDemoDate(first.date)}-{formatDemoDate(latest.date)}
+                            </Typography>
+                          );
+                        }) : <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>No capture point has been observed more than once yet.</Typography>}
+                      </Stack>
+                    </Box>
+                  ))}
+                </Stack>
+              </Paper>
+
+              <Paper elevation={0} sx={{ p: 1.25, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+                <Typography component="h3" sx={{ color: darkText, fontSize: 14, fontWeight: 880 }}>Observation evidence</Typography>
+                <Stack spacing={0.75} sx={{ mt: 0.75 }}>
+                  {observedSequences.length ? observedSequences.map((sequence) => (
+                    <Box key={sequence.capturePoint.id} sx={{ borderTop: '1px solid rgba(23, 21, 26, 0.07)', pt: 0.65 }}>
+                      <Typography sx={{ color: darkText, fontSize: 13, fontWeight: 820 }}>{sequence.capturePoint.label}</Typography>
+                      {sequence.observations.map((item) => {
+                        const level = getMathsCaptureLevelById(item.levelId);
+                        return (
+                          <Typography key={item.id} sx={{ mt: 0.2, color: 'text.secondary', fontSize: 12.4 }}>
+                            {formatDemoDate(item.date)} · {level?.label || item.levelId}{item.observationText ? ` · ${item.observationText}` : ''}
+                          </Typography>
+                        );
+                      })}
+                    </Box>
+                  )) : <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>No structured observations recorded for this teaching unit.</Typography>}
+                  {!!otherObservations.length && (
+                    <Box sx={{ borderTop: '1px solid rgba(23, 21, 26, 0.07)', pt: 0.65 }}>
+                      <Typography sx={{ color: darkText, fontSize: 13, fontWeight: 820 }}>Other teacher observations</Typography>
+                      {otherObservations.map((item) => (
+                        <Typography key={item.id} sx={{ mt: 0.2, color: 'text.secondary', fontSize: 12.4 }}>
+                          {item.observationText || item.label} · {formatDemoDate(item.date)}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+                </Stack>
+              </Paper>
+
+              <Paper elevation={0} sx={{ p: 1.25, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+                <Typography component="h3" sx={{ color: darkText, fontSize: 14, fontWeight: 880 }}>Assessment evidence</Typography>
+                <Stack spacing={0.75} sx={{ mt: 0.75 }}>
+                  {selectedSummary.assessments.length ? selectedSummary.assessments.map((item) => (
+                    <Box key={item.id} sx={{ borderTop: '1px solid rgba(23, 21, 26, 0.07)', pt: 0.65 }}>
+                      <Typography sx={{ color: darkText, fontSize: 13, fontWeight: 820 }}>{item.assessmentTitle || item.label}</Typography>
+                      <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>{formatDemoDate(item.date)} · {item.percentage}%</Typography>
+                      {item.note && <Typography sx={{ mt: 0.15, color: 'text.secondary', fontSize: 12.3 }}>{item.note}</Typography>}
+                    </Box>
+                  )) : <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>No assessments recorded for this teaching unit.</Typography>}
+                </Stack>
+              </Paper>
+
+              <Paper elevation={0} sx={{ p: 1.25, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
+                  <Box>
+                    <Typography component="h3" sx={{ color: darkText, fontSize: 14, fontWeight: 880 }}>Teacher working judgement</Typography>
+                    <Typography sx={{ mt: 0.3, color: 'text.secondary', fontSize: 12.5 }}>
+                      {judgementLevel ? `Teacher judgement · ${judgementLevel.label}` : 'Teacher judgement not set'}
+                    </Typography>
+                    {selectedSummary.judgement?.updatedAt && (
+                      <Typography sx={{ mt: 0.15, color: 'text.secondary', fontSize: 12.1 }}>Set by Anna · {formatDemoDate(selectedSummary.judgement.effectiveDate || selectedSummary.judgement.updatedAt.slice(0, 10))}</Typography>
+                    )}
+                    {selectedSummary.judgement?.note && <Typography sx={{ mt: 0.35, color: darkText, fontSize: 12.6 }}>{selectedSummary.judgement.note}</Typography>}
+                  </Box>
+                  <Button variant="outlined" onClick={() => setJudgementEditorOpen(true)} sx={{ color: darkText, borderColor: 'rgba(23, 21, 26, 0.14)', textTransform: 'none', fontWeight: 780 }}>
+                    Add judgement
+                  </Button>
+                </Stack>
+                {judgementEditorOpen && (
+                  <Stack spacing={0.9} sx={{ mt: 1, pt: 1, borderTop: '1px solid rgba(23, 21, 26, 0.08)' }}>
+                    <FormControl size="small">
+                      <InputLabel id={`teacher-judgement-level-${student.id}-${selectedSummary.unit.id}`}>Teacher judgement</InputLabel>
+                      <Select
+                        labelId={`teacher-judgement-level-${student.id}-${selectedSummary.unit.id}`}
+                        label="Teacher judgement"
+                        value={draftLevelId}
+                        onChange={(event) => setDraftLevelId(event.target.value)}
+                      >
+                        <MenuItem value="not-set">Not set</MenuItem>
+                        {mathsCaptureLevels.map((level) => <MenuItem key={level.id} value={level.id}>{level.label}</MenuItem>)}
+                      </Select>
+                    </FormControl>
+                    <TextField
+                      label="Teacher note"
+                      value={draftNote}
+                      onChange={(event) => setDraftNote(event.target.value)}
+                      size="small"
+                      multiline
+                      minRows={2}
+                    />
+                    <Stack direction="row" spacing={0.8}>
+                      <Button variant="contained" onClick={saveJudgement} sx={{ bgcolor: purple, textTransform: 'none', fontWeight: 820, '&:hover': { bgcolor: purple } }}>Save</Button>
+                      <Button onClick={() => setJudgementEditorOpen(false)} sx={{ color: darkText, textTransform: 'none', fontWeight: 760 }}>Cancel</Button>
+                    </Stack>
+                  </Stack>
+                )}
+              </Paper>
+            </Stack>
+          </Box>
+        </Stack>
+      </Paper>
+    </Box>
+  );
+}
+
 function StudentInsightPanel({ student, teachingUnits, evidenceTopics, evidence, onOpenStudent }) {
   const assessments = getStudentAssessments(evidence, student.id);
   const observations = getStudentObservations(evidence, student.id);
@@ -1586,6 +1929,8 @@ function EvidenceMap({
   onOpenStudent,
 }) {
   const [expandedStudentId, setExpandedStudentId] = useState(null);
+  const [expandedStudentViewVersion, setExpandedStudentViewVersion] = useState('original');
+  const [teacherWorkingJudgements, setTeacherWorkingJudgements] = useState({});
   const [activeGroupingSetId, setActiveGroupingSetId] = useState('none');
   const [collapsedGroupIds, setCollapsedGroupIds] = useState([]);
   const [draggedStudentId, setDraggedStudentId] = useState('');
@@ -1607,6 +1952,24 @@ function EvidenceMap({
 
   function toggleStudent(studentId) {
     setExpandedStudentId((currentId) => (currentId === studentId ? null : studentId));
+  }
+
+  function saveTeacherWorkingJudgement(judgement) {
+    const key = getJudgementKey(judgement.studentId, judgement.teachingUnitId);
+    const now = new Date().toISOString();
+    setTeacherWorkingJudgements((currentJudgements) => ({
+      ...currentJudgements,
+      [key]: {
+        studentId: judgement.studentId,
+        teachingUnitId: judgement.teachingUnitId,
+        levelId: judgement.levelId,
+        note: judgement.note || '',
+        setBy: 'Anna',
+        effectiveDate: new Date().toISOString().slice(0, 10),
+        setAt: currentJudgements[key]?.setAt || now,
+        updatedAt: now,
+      },
+    }));
   }
 
   function toggleGroup(groupId) {
@@ -1773,7 +2136,44 @@ function EvidenceMap({
         {isExpanded && (
           <Box role="row" sx={{ display: 'contents' }}>
             <Box role="cell" sx={{ gridColumn: `1 / span ${teachingUnits.length + 1}`, minWidth: 0 }}>
-              <StudentInsightPanel student={student} teachingUnits={teachingUnits} evidenceTopics={evidenceTopics} evidence={evidence} onOpenStudent={onOpenStudent} />
+              <Box sx={{ p: { xs: 1, sm: 1.25 }, pb: 0, bgcolor: '#fbfafc', borderTop: '1px solid rgba(23, 21, 26, 0.07)' }}>
+                <ButtonGroup variant="outlined" size="small" aria-label="Expanded student view version">
+                  {[
+                    { id: 'original', label: 'Original' },
+                    { id: 'v2', label: 'V2 evidence view' },
+                  ].map((option) => {
+                    const selected = expandedStudentViewVersion === option.id;
+                    return (
+                      <Button
+                        key={option.id}
+                        onClick={() => setExpandedStudentViewVersion(option.id)}
+                        aria-pressed={selected}
+                        sx={{
+                          borderColor: selected ? purple : 'rgba(23, 21, 26, 0.14)',
+                          bgcolor: selected ? purple : '#fff',
+                          color: selected ? '#fff' : darkText,
+                          textTransform: 'none',
+                          fontWeight: 780,
+                          '&:hover': { bgcolor: selected ? purple : '#fff', borderColor: selected ? purple : darkText },
+                        }}
+                      >
+                        {option.label}
+                      </Button>
+                    );
+                  })}
+                </ButtonGroup>
+              </Box>
+              {expandedStudentViewVersion === 'v2' ? (
+                <StudentInsightPanelV2
+                  student={student}
+                  teachingUnits={teachingUnits}
+                  evidence={evidence}
+                  judgements={teacherWorkingJudgements}
+                  onSaveJudgement={saveTeacherWorkingJudgement}
+                />
+              ) : (
+                <StudentInsightPanel student={student} teachingUnits={teachingUnits} evidenceTopics={evidenceTopics} evidence={evidence} onOpenStudent={onOpenStudent} />
+              )}
             </Box>
           </Box>
         )}
