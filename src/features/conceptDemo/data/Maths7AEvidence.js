@@ -577,4 +577,369 @@ export const maths7AEvidence = [
     ],
     source: 'teacher',
   },
+
+  {
+    id: 'leo-canonical-fractions-concept-emerging',
+    type: 'observation',
+    studentId: 'leo-andersson',
+    date: '2026-05-22',
+    teachingUnitId: 'fractions-percentages',
+    evidenceTopicId: 'fractions',
+    capturePointId: 'concept-understanding',
+    levelId: 'emerging',
+    observationText: 'Needed a fraction wall to compare equivalent fractions.',
+    source: 'teacher',
+    dimensions: [
+      {
+        id: 'concepts',
+        indication: 'limited',
+        independence: 'supported',
+      },
+    ],
+  },
+
+  {
+    id: 'leo-canonical-fractions-concept-developing',
+    type: 'observation',
+    studentId: 'leo-andersson',
+    date: '2026-05-29',
+    teachingUnitId: 'fractions-percentages',
+    evidenceTopicId: 'fractions',
+    capturePointId: 'concept-understanding',
+    levelId: 'developing',
+    observationText: 'Compared equivalent fractions after one reminder.',
+    source: 'teacher',
+    dimensions: [
+      {
+        id: 'concepts',
+        indication: 'developing',
+        independence: 'prompted',
+      },
+    ],
+  },
+
+  {
+    id: 'leo-canonical-fractions-method-secure',
+    type: 'observation',
+    studentId: 'leo-andersson',
+    date: '2026-06-04',
+    teachingUnitId: 'fractions-percentages',
+    evidenceTopicId: 'fractions',
+    capturePointId: 'method-selection',
+    levelId: 'secure',
+    observationText: 'Selected the common-denominator method without prompting.',
+    source: 'teacher',
+    dimensions: [
+      {
+        id: 'methods',
+        indication: 'clear',
+        independence: 'independent',
+      },
+    ],
+  },
+
+  {
+    id: 'leo-canonical-percentages-independence-developing',
+    type: 'observation',
+    studentId: 'leo-andersson',
+    date: '2026-06-09',
+    teachingUnitId: 'fractions-percentages',
+    evidenceTopicId: 'percentages',
+    capturePointId: 'works-independently-percentages',
+    levelId: 'developing',
+    observationText: 'Began after the first percentage step was modelled.',
+    source: 'teacher',
+    dimensions: [
+      {
+        id: 'problem-solving',
+        indication: 'developing',
+        independence: 'prompted',
+      },
+    ],
+  },
+
+  {
+    id: 'leo-canonical-percentages-independence-secure',
+    type: 'observation',
+    studentId: 'leo-andersson',
+    date: '2026-06-16',
+    teachingUnitId: 'fractions-percentages',
+    evidenceTopicId: 'percentages',
+    capturePointId: 'works-independently-percentages',
+    levelId: 'secure',
+    observationText: 'Started the percentage task independently and checked his answer.',
+    source: 'teacher',
+    dimensions: [
+      {
+        id: 'problem-solving',
+        indication: 'clear',
+        independence: 'independent',
+      },
+    ],
+  },
+
+  {
+    id: 'maya-canonical-fractions-reasoning-secure',
+    type: 'observation',
+    studentId: 'maya-johnson',
+    date: '2026-05-19',
+    teachingUnitId: 'fractions-percentages',
+    evidenceTopicId: 'fractions',
+    capturePointId: 'explains-reasoning',
+    levelId: 'secure',
+    observationText: 'Explained the chosen fraction method clearly to a partner.',
+    source: 'teacher',
+    dimensions: [
+      {
+        id: 'reasoning',
+        indication: 'clear',
+        independence: 'independent',
+      },
+      {
+        id: 'communication',
+        indication: 'clear',
+        independence: 'independent',
+      },
+    ],
+  },
+
+  {
+    id: 'maya-canonical-fractions-reasoning-advanced',
+    type: 'observation',
+    studentId: 'maya-johnson',
+    date: '2026-06-02',
+    teachingUnitId: 'fractions-percentages',
+    evidenceTopicId: 'fractions',
+    capturePointId: 'explains-reasoning',
+    levelId: 'advanced',
+    observationText: 'Compared two methods and justified the more efficient choice.',
+    source: 'teacher',
+    dimensions: [
+      {
+        id: 'reasoning',
+        indication: 'clear',
+        independence: 'independent',
+      },
+      {
+        id: 'communication',
+        indication: 'clear',
+        independence: 'independent',
+      },
+    ],
+  },
+
+  {
+    id: 'maya-canonical-geometry-diagrams-secure',
+    type: 'observation',
+    studentId: 'maya-johnson',
+    date: '2026-06-10',
+    teachingUnitId: 'geometry',
+    evidenceTopicId: 'geometry',
+    capturePointId: 'uses-diagrams-effectively',
+    levelId: 'secure',
+    observationText: 'Used a diagram to organise the angle information accurately.',
+    source: 'teacher',
+    dimensions: [
+      {
+        id: 'methods',
+        indication: 'clear',
+        independence: 'independent',
+      },
+    ],
+  },
+
+  {
+    id: 'amir-canonical-fractions-method-developing',
+    type: 'observation',
+    studentId: 'amir-khan',
+    date: '2026-05-20',
+    teachingUnitId: 'fractions-percentages',
+    evidenceTopicId: 'fractions',
+    capturePointId: 'method-selection',
+    levelId: 'developing',
+    observationText: 'Chose the right method after a short prompt.',
+    source: 'teacher',
+    dimensions: [
+      {
+        id: 'methods',
+        indication: 'developing',
+        independence: 'prompted',
+      },
+    ],
+  },
+
+  {
+    id: 'amir-canonical-fractions-method-secure',
+    type: 'observation',
+    studentId: 'amir-khan',
+    date: '2026-06-12',
+    teachingUnitId: 'fractions-percentages',
+    evidenceTopicId: 'fractions',
+    capturePointId: 'method-selection',
+    levelId: 'secure',
+    observationText: 'Selected the fraction method independently on the second example.',
+    source: 'teacher',
+    dimensions: [
+      {
+        id: 'methods',
+        indication: 'clear',
+        independence: 'independent',
+      },
+    ],
+  },
+
+  {
+    id: 'amir-canonical-percentages-concept-emerging',
+    type: 'observation',
+    studentId: 'amir-khan',
+    date: '2026-05-27',
+    teachingUnitId: 'fractions-percentages',
+    evidenceTopicId: 'percentages',
+    capturePointId: 'concept-understanding-percentages',
+    levelId: 'emerging',
+    observationText: 'Needed a bar model to link the percentage to the whole.',
+    source: 'teacher',
+    dimensions: [
+      {
+        id: 'concepts',
+        indication: 'limited',
+        independence: 'supported',
+      },
+    ],
+  },
+
+  {
+    id: 'amir-canonical-percentages-concept-developing',
+    type: 'observation',
+    studentId: 'amir-khan',
+    date: '2026-06-18',
+    teachingUnitId: 'fractions-percentages',
+    evidenceTopicId: 'percentages',
+    capturePointId: 'concept-understanding-percentages',
+    levelId: 'developing',
+    observationText: 'Matched percentages to visual models with one check-in.',
+    source: 'teacher',
+    dimensions: [
+      {
+        id: 'concepts',
+        indication: 'developing',
+        independence: 'prompted',
+      },
+    ],
+  },
+
+  {
+    id: 'amir-canonical-geometry-method-developing',
+    type: 'observation',
+    studentId: 'amir-khan',
+    date: '2026-06-05',
+    teachingUnitId: 'geometry',
+    evidenceTopicId: 'geometry',
+    capturePointId: 'applies-suitable-method-geometry',
+    levelId: 'developing',
+    observationText: 'Used the correct geometry strategy after the diagram was labelled.',
+    source: 'teacher',
+    dimensions: [
+      {
+        id: 'methods',
+        indication: 'developing',
+        independence: 'prompted',
+      },
+    ],
+  },
+
+  {
+    id: 'ella-canonical-fractions-reasoning-secure',
+    type: 'observation',
+    studentId: 'ella-svensson',
+    date: '2026-05-23',
+    teachingUnitId: 'fractions-percentages',
+    evidenceTopicId: 'fractions',
+    capturePointId: 'explains-reasoning',
+    levelId: 'secure',
+    observationText: 'Gave a clear verbal reason for simplifying the fraction.',
+    source: 'teacher',
+    dimensions: [
+      {
+        id: 'reasoning',
+        indication: 'clear',
+        independence: 'independent',
+      },
+      {
+        id: 'communication',
+        indication: 'clear',
+        independence: 'independent',
+      },
+    ],
+  },
+
+  {
+    id: 'ella-canonical-fractions-reasoning-advanced',
+    type: 'observation',
+    studentId: 'ella-svensson',
+    date: '2026-06-11',
+    teachingUnitId: 'fractions-percentages',
+    evidenceTopicId: 'fractions',
+    capturePointId: 'explains-reasoning',
+    levelId: 'advanced',
+    observationText: 'Connected the fraction method to a general rule in discussion.',
+    source: 'teacher',
+    dimensions: [
+      {
+        id: 'reasoning',
+        indication: 'clear',
+        independence: 'independent',
+      },
+      {
+        id: 'communication',
+        indication: 'clear',
+        independence: 'independent',
+      },
+    ],
+  },
+
+  {
+    id: 'ella-canonical-percentages-independence-developing',
+    type: 'observation',
+    studentId: 'ella-svensson',
+    date: '2026-05-30',
+    teachingUnitId: 'fractions-percentages',
+    evidenceTopicId: 'percentages',
+    capturePointId: 'works-independently-percentages',
+    levelId: 'developing',
+    observationText: 'Asked for reassurance before writing the percentage explanation.',
+    source: 'teacher',
+    dimensions: [
+      {
+        id: 'communication',
+        indication: 'developing',
+        independence: 'prompted',
+      },
+    ],
+  },
+
+  {
+    id: 'ella-canonical-geometry-reasoning-secure',
+    type: 'observation',
+    studentId: 'ella-svensson',
+    date: '2026-06-15',
+    teachingUnitId: 'geometry',
+    evidenceTopicId: 'geometry',
+    capturePointId: 'explains-geometric-reasoning',
+    levelId: 'secure',
+    observationText: 'Explained the angle relationship verbally before writing it down.',
+    source: 'teacher',
+    dimensions: [
+      {
+        id: 'reasoning',
+        indication: 'clear',
+        independence: 'independent',
+      },
+      {
+        id: 'communication',
+        indication: 'clear',
+        independence: 'independent',
+      },
+    ],
+  },
 ];
