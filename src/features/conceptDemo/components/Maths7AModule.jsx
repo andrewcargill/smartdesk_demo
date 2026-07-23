@@ -2278,6 +2278,32 @@ function EvidenceMap({
     () => (groupedViewActive ? getUngroupedStudentsForType(students, workingGroups, activeGroupingSetId) : []),
     [activeGroupingSetId, groupedViewActive, students, workingGroups],
   );
+  const studentUnitEvidenceModel = useMemo(() => {
+    const summariesByStudentId = new Map();
+    let maxLessonCount = 1;
+
+    students.forEach((student) => {
+      const studentEvidence = getEvidenceForStudent(evidence, student.id);
+      const summariesByUnitId = new Map();
+
+      teachingUnits.forEach((unit) => {
+        const summary = buildTeachingUnitEvidenceSummary(
+          unit,
+          studentEvidence,
+          teacherWorkingJudgements[getJudgementKey(student.id, unit.id)] || null,
+        );
+        maxLessonCount = Math.max(maxLessonCount, summary.lessonCount);
+        summariesByUnitId.set(unit.id, summary);
+      });
+
+      summariesByStudentId.set(student.id, summariesByUnitId);
+    });
+
+    return {
+      maxLessonCount,
+      summariesByStudentId,
+    };
+  }, [evidence, students, teacherWorkingJudgements, teachingUnits]);
 
   function toggleStudent(studentId) {
     setExpandedStudentId((currentId) => (currentId === studentId ? null : studentId));
@@ -2377,13 +2403,7 @@ function EvidenceMap({
 
   function renderStudentRow(student, groupId = '', rowIndex) {
     const isExpanded = expandedStudentId === student.id;
-    const studentEvidence = getEvidenceForStudent(evidence, student.id);
-    const unitSummaries = teachingUnits.map((unit) => buildTeachingUnitEvidenceSummary(
-      unit,
-      studentEvidence,
-      teacherWorkingJudgements[getJudgementKey(student.id, unit.id)] || null,
-    ));
-    const maxLessonCount = Math.max(...unitSummaries.map((summary) => summary.lessonCount), 1);
+    const summariesByUnitId = studentUnitEvidenceModel.summariesByStudentId.get(student.id) || new Map();
 
     return (
       <Box key={`${groupId || 'flat'}-${student.id}`} role="rowgroup" sx={{ display: 'contents' }}>
@@ -2443,8 +2463,8 @@ function EvidenceMap({
               <Typography sx={{ color: darkText, fontSize: 13, fontWeight: 820, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{student.displayName}</Typography>
             </ButtonBase>
           </Box>
-          {teachingUnits.map((unit, unitIndex) => {
-            const summary = unitSummaries[unitIndex];
+          {teachingUnits.map((unit) => {
+            const summary = summariesByUnitId.get(unit.id) || buildTeachingUnitEvidenceSummary(unit, [], null);
             const repeatedCount = getRepeatedSequenceGroups(summary).length;
             const visualDetail = summary.items.length
               ? `${summary.lessonCount} lesson${summary.lessonCount === 1 ? '' : 's'} with evidence, ${summary.assessments.length} assessment${summary.assessments.length === 1 ? '' : 's'}, ${summary.observedCapturePointCount} of ${summary.capturePoints.length} capture points observed${repeatedCount ? `, ${repeatedCount} repeated capture point${repeatedCount === 1 ? '' : 's'}` : ''}${summary.judgement?.levelId ? ', Anna judgement added' : ''}`
@@ -2462,7 +2482,7 @@ function EvidenceMap({
                   bgcolor: draggedStudentId === student.id ? 'rgba(156, 40, 175, 0.08)' : '#fff',
                 }}
               >
-                <StudentUnitEvidenceCell summary={summary} maxLessonCount={maxLessonCount} />
+                <StudentUnitEvidenceCell summary={summary} maxLessonCount={studentUnitEvidenceModel.maxLessonCount} />
               </Box>
             );
           })}
@@ -2690,7 +2710,7 @@ function EvidenceMap({
           sx={{
             minWidth: { xs: 760, lg: 0 },
             display: 'grid',
-            gridTemplateColumns: `170px repeat(${teachingUnits.length}, minmax(112px, 1fr))`,
+            gridTemplateColumns: `minmax(280px, 1fr) repeat(${teachingUnits.length}, 100px)`,
             border: '1px solid rgba(23, 21, 26, 0.12)',
             borderRadius: '14px',
             overflow: 'hidden',

@@ -248,7 +248,7 @@ export default function SubjectWorkspaceContainer({
         </Box>
       </Box>
 
-      <Box sx={{ pl: { xs: 2, md: 6 }, pr: { xs: 2.5, md: 6 }, py: { xs: 2, md: 2.5 } }}>
+      <Box sx={{ pl: { xs: 2, md: 6 }, pr: { xs: 3.5, md: 8 }, py: { xs: 2, md: 2.5 } }}>
         <Box sx={{ width: '100%', minWidth: 0 }}>
           {children}
         </Box>
