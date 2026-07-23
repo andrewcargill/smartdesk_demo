@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -7,6 +8,7 @@ import Tooltip from '@mui/material/Tooltip';
 import {
   Box,
   Button,
+  ButtonGroup,
   ButtonBase,
   Chip,
   Divider,
@@ -16,16 +18,13 @@ import {
   InputLabel,
   MenuItem,
   Paper,
+  Popover,
   Select,
   Stack,
-  TextField,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
 } from '@mui/material';
 import { annaSchedule } from '../data/annaSchedule.js';
 import { annaTasks } from '../data/annaTasks.js';
-import { maths7AClassData } from '../data/Maths7AClassData.js';
 import { maths7AEvidence } from '../data/Maths7AEvidence.js';
 import { maths7APlanningBlocks, maths7APlanningPeriods } from '../data/maths7APlanning.js';
 import { maths7AStudents } from '../data/Maths7AStudents.js';
@@ -76,6 +75,89 @@ const classPicture = {
   suggestion: 'You may want to include one short language-focused example today.',
 };
 
+const nowCaptureFocuses = [
+  {
+    id: 'fractions-percentages',
+    label: 'Fractions and percentages',
+    topics: [
+      { id: 'fractions', label: 'Fractions' },
+      { id: 'percentages', label: 'Percentages' },
+    ],
+    capturePoints: [
+      { id: 'concept-understanding', label: 'Concept understanding' },
+      { id: 'method-selection', label: 'Method selection' },
+      { id: 'explains-reasoning', label: 'Explains reasoning' },
+      { id: 'works-independently', label: 'Works independently' },
+    ],
+  },
+  {
+    id: 'geometry',
+    label: 'Geometry',
+    topics: [
+      { id: 'shape-measurement', label: 'Shape and measurement' },
+      { id: 'geometric-reasoning', label: 'Geometric reasoning' },
+    ],
+    capturePoints: [
+      { id: 'identifies-relevant-properties', label: 'Identifies relevant properties' },
+      { id: 'uses-diagrams-effectively', label: 'Uses diagrams effectively' },
+      { id: 'applies-suitable-method', label: 'Applies a suitable method' },
+      { id: 'explains-geometric-reasoning', label: 'Explains geometric reasoning' },
+    ],
+  },
+  {
+    id: 'algebra-basics',
+    label: 'Algebra basics',
+    topics: [
+      { id: 'expressions', label: 'Expressions' },
+      { id: 'equations', label: 'Equations' },
+      { id: 'patterns', label: 'Patterns' },
+    ],
+    capturePoints: [
+      { id: 'interprets-expressions', label: 'Interprets expressions' },
+      { id: 'selects-algebraic-method', label: 'Selects an algebraic method' },
+      { id: 'uses-symbols-accurately', label: 'Uses symbols accurately' },
+      { id: 'explains-each-step', label: 'Explains each step' },
+    ],
+  },
+  {
+    id: 'probability-statistics',
+    label: 'Probability and statistics',
+    topics: [
+      { id: 'probability', label: 'Probability' },
+      { id: 'statistics', label: 'Statistics' },
+    ],
+    capturePoints: [
+      { id: 'interprets-information', label: 'Interprets information' },
+      { id: 'selects-suitable-method', label: 'Selects a suitable method' },
+      { id: 'reasons-from-data', label: 'Reasons from data' },
+      { id: 'communicates-conclusion', label: 'Communicates a conclusion' },
+    ],
+  },
+  {
+    id: 'relationships-change',
+    label: 'Relationships and change',
+    topics: [
+      { id: 'relationships', label: 'Relationships' },
+      { id: 'change', label: 'Change' },
+    ],
+    capturePoints: [
+      { id: 'identifies-relationship', label: 'Identifies a relationship' },
+      { id: 'recognises-pattern', label: 'Recognises a pattern' },
+      { id: 'represents-change', label: 'Represents change' },
+      { id: 'explains-relationship', label: 'Explains the relationship' },
+    ],
+  },
+];
+
+const nowCaptureLevels = [
+  'Emerging',
+  'Developing',
+  'Secure',
+  'Advanced',
+];
+
+const defaultNowStudentId = maths7AStudents.find((student) => student.id === 'leo-andersson')?.id || maths7AStudents[0]?.id || '';
+
 function readJsonStorage(key, fallback) {
   if (typeof window === 'undefined') {
     return fallback;
@@ -86,12 +168,6 @@ function readJsonStorage(key, fallback) {
     return value ? JSON.parse(value) : fallback;
   } catch {
     return fallback;
-  }
-}
-
-function writeJsonStorage(key, value) {
-  if (typeof window !== 'undefined') {
-    window.localStorage.setItem(key, JSON.stringify(value));
   }
 }
 
@@ -272,98 +348,590 @@ function StudentPictureDialog({ student, evidence, tasks, open, onClose, onCaptu
   );
 }
 
-function QuickCapture({ students, onSave, selectedStudentId, onStudentChange }) {
-  const [mode, setMode] = useState('observation');
-  const [templateId, setTemplateId] = useState(maths7AClassData.quickCaptureTemplates[0]?.id || '');
-  const [topicId, setTopicId] = useState(maths7AClassData.currentTopicId);
-  const [note, setNote] = useState('');
-  const [assessmentType, setAssessmentType] = useState(maths7AClassData.assessmentTypes[0]?.id || '');
-  const [result, setResult] = useState('');
+function QuickCapture({ students, selectedStudentId, onStudentChange }) {
+  const selectedStudent = students.find((student) => student.id === selectedStudentId) || students[0];
+  const [activeUnitId, setActiveUnitId] = useState(nowCaptureFocuses[0].id);
+  const [activeTopicId, setActiveTopicId] = useState(nowCaptureFocuses[0].topics[0].id);
+  const [contextAnchorEl, setContextAnchorEl] = useState(null);
+  const [sessionCaptures, setSessionCaptures] = useState([]);
+  const [recentActionId, setRecentActionId] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const activeUnit = nowCaptureFocuses.find((unit) => unit.id === activeUnitId) || nowCaptureFocuses[0];
+  const activeTopic = activeUnit.topics.find((topic) => topic.id === activeTopicId) || activeUnit.topics[0];
+  const contextPanelOpen = Boolean(contextAnchorEl);
+  const captureCountsByStudentId = useMemo(() => sessionCaptures.reduce((counts, capture) => {
+    counts[capture.studentId] = (counts[capture.studentId] || 0) + 1;
+    return counts;
+  }, {}), [sessionCaptures]);
+  const selectedStudentCaptures = useMemo(
+    () => sessionCaptures.filter((capture) => capture.studentId === selectedStudent.id),
+    [selectedStudent.id, sessionCaptures],
+  );
+  const selectedCaptureSections = useMemo(() => nowCaptureFocuses
+    .map((unit) => {
+      const topicSections = unit.topics
+        .map((topic) => {
+          const captures = selectedStudentCaptures
+            .filter((capture) => capture.teachingUnitId === unit.id && capture.evidenceTopicId === topic.id)
+            .sort((first, second) => second.capturedAt.localeCompare(first.capturedAt));
 
-  function save() {
-    const template = maths7AClassData.quickCaptureTemplates.find((item) => item.id === templateId);
-    const selectedStudent = students.find((student) => student.id === selectedStudentId);
-    const evidenceTopic = getEvidenceTopicById(topicId);
-    const linkedUnitIds = evidenceTopic?.teachingUnitIds || [];
-    const teachingUnitId = linkedUnitIds.length === 1 ? linkedUnitIds[0] : '';
-    const entry = {
-      id: `demo-${Date.now()}`,
-      type: mode === 'assessment' ? 'assessment' : 'observation',
-      assessmentType: mode === 'assessment' ? assessmentType : undefined,
-      studentId: selectedStudentId,
-      classId: maths7AClassData.classId,
-      subjectId: maths7AClassData.subjectId,
-      evidenceTopicId: evidenceTopic?.id || topicId,
-      teachingUnitId,
-      date: annaSchedule.currentContext.date,
-      value: mode === 'assessment' && result ? Number(result) : undefined,
-      valueType: mode === 'assessment' && result ? 'percentage' : undefined,
-      signal: mode === 'observation' ? template?.id : undefined,
-      label: mode === 'assessment' ? `${selectedStudent?.firstName || 'Student'} assessment result` : template?.label,
-      note: note || null,
-      source: 'teacher-demo',
+          return captures.length ? { topic, captures } : null;
+        })
+        .filter(Boolean);
+
+      return topicSections.length ? { unit, topicSections } : null;
+    })
+    .filter(Boolean), [selectedStudentCaptures]);
+  const currentLevelByCapturePointId = useMemo(() => activeUnit.capturePoints.reduce((levels, capturePoint) => {
+    const matchingCaptures = selectedStudentCaptures
+      .filter((capture) => (
+        capture.teachingUnitId === activeUnit.id
+        && capture.evidenceTopicId === activeTopic.id
+        && capture.capturePointId === capturePoint.id
+      ))
+      .sort((first, second) => second.capturedAt.localeCompare(first.capturedAt));
+
+    if (matchingCaptures[0]) {
+      levels[capturePoint.id] = matchingCaptures[0].level;
+    }
+
+    return levels;
+  }, {}), [activeTopic.id, activeUnit, selectedStudentCaptures]);
+
+  useEffect(() => {
+    if (!confirmation) {
+      return undefined;
+    }
+
+    const timeout = window.setTimeout(() => setConfirmation(''), 1800);
+    return () => window.clearTimeout(timeout);
+  }, [confirmation]);
+
+  useEffect(() => {
+    if (!recentActionId) {
+      return undefined;
+    }
+
+    const timeout = window.setTimeout(() => setRecentActionId(''), 520);
+    return () => window.clearTimeout(timeout);
+  }, [recentActionId]);
+
+  function captureLevel(capturePoint, level, mode = 'update') {
+    const id = `capture-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+    const capture = {
+      id,
+      studentId: selectedStudent.id,
+      teachingUnitId: activeUnit.id,
+      teachingUnitLabel: activeUnit.label,
+      evidenceTopicId: activeTopic.id,
+      evidenceTopicLabel: activeTopic.label,
+      capturePointId: capturePoint.id,
+      capturePointLabel: capturePoint.label,
+      level,
+      evidenceSource: 'observed',
+      capturedAt: new Date().toISOString(),
     };
 
-    onSave(entry);
-    setNote('');
-    setResult('');
+    setSessionCaptures((currentCaptures) => {
+      if (mode === 'update') {
+        return [
+          ...currentCaptures.filter((currentCapture) => !(
+            currentCapture.studentId === selectedStudent.id
+            && currentCapture.teachingUnitId === activeUnit.id
+            && currentCapture.evidenceTopicId === activeTopic.id
+            && currentCapture.capturePointId === capturePoint.id
+          )),
+          capture,
+        ];
+      }
+
+      return [...currentCaptures, capture];
+    });
+    setRecentActionId(`${capturePoint.id}-${level}`);
+    setConfirmation(`${mode === 'update' ? 'Updated' : 'Captured'} for ${selectedStudent.displayName}`);
+  }
+
+  function removeCapture(captureId) {
+    setSessionCaptures((currentCaptures) => currentCaptures.filter((capture) => capture.id !== captureId));
+  }
+
+  function openContextPanel(event) {
+    setContextAnchorEl(event.currentTarget);
+  }
+
+  function closeContextPanel() {
+    const trigger = contextAnchorEl;
+    setContextAnchorEl(null);
+    window.requestAnimationFrame(() => trigger?.focus?.());
+  }
+
+  function chooseUnit(unit) {
+    setActiveUnitId(unit.id);
+    setActiveTopicId(unit.topics[0]?.id || '');
+    setRecentActionId('');
+  }
+
+  function chooseTopic(topicId) {
+    setActiveTopicId(topicId);
+    setRecentActionId('');
+    closeContextPanel();
   }
 
   return (
-    <Panel title="Capture something">
-      <Typography sx={{ color: 'text.secondary', lineHeight: 1.55 }}>What felt worth keeping?</Typography>
-      <ToggleButtonGroup
-        exclusive
-        value={mode}
-        onChange={(_, nextMode) => nextMode && setMode(nextMode)}
-        aria-label="Capture mode"
-        sx={{ flexWrap: 'wrap', gap: 1, '& .MuiToggleButtonGroup-grouped': { borderRadius: '999px !important', border: '1px solid rgba(23, 21, 26, 0.14) !important' } }}
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: '210px minmax(0, 1fr)' },
+        gap: { xs: 1.15, md: 1.6 },
+        alignItems: 'start',
+        minWidth: 0,
+      }}
+    >
+      <Paper
+        elevation={0}
+        aria-label="Maths 7A students"
+        sx={{
+          p: { xs: 0.75, md: 1 },
+          borderRadius: '14px',
+          border: '1px solid rgba(23, 21, 26, 0.14)',
+          bgcolor: '#fff',
+          maxHeight: { xs: 96, md: 560 },
+          overflow: { xs: 'hidden', md: 'auto' },
+          minWidth: 0,
+        }}
       >
-        <ToggleButton value="observation">Observation</ToggleButton>
-        <ToggleButton value="assessment">Add assessment result</ToggleButton>
-      </ToggleButtonGroup>
+        <Stack
+          spacing={0.7}
+          sx={{
+            display: { xs: 'grid', md: 'flex' },
+            gridAutoFlow: { xs: 'column', md: 'row' },
+            gridAutoColumns: { xs: 'minmax(132px, 1fr)', md: 'auto' },
+            overflowX: { xs: 'auto', md: 'visible' },
+            overflowY: 'hidden',
+            pb: { xs: 0.4, md: 0 },
+          }}
+        >
+          {students.map((student) => {
+            const isSelected = student.id === selectedStudent.id;
+            const captureCount = captureCountsByStudentId[student.id] || 0;
+            return (
+              <ButtonBase
+                key={student.id}
+                onClick={() => onStudentChange(student.id)}
+                aria-pressed={isSelected}
+                sx={{
+                  width: '100%',
+                  justifyContent: 'flex-start',
+                  textAlign: 'left',
+                  px: 1.1,
+                  py: 0.85,
+                  borderRadius: '10px',
+                  border: isSelected ? `1px solid ${purple}` : '1px solid rgba(23, 21, 26, 0.12)',
+                  bgcolor: isSelected ? purple : '#fff',
+                  color: isSelected ? '#fff' : darkText,
+                  fontWeight: isSelected ? 860 : 720,
+                  '&:hover': {
+                    bgcolor: isSelected ? purple : '#fff',
+                    borderColor: isSelected ? purple : darkText,
+                  },
+                  '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                }}
+              >
+                <Stack direction="row" spacing={0.65} alignItems="center" sx={{ width: '100%', minWidth: 0 }}>
+                  <Typography sx={{ flex: '1 1 auto', minWidth: 0, fontSize: 13.5, fontWeight: 'inherit', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {student.displayName}
+                  </Typography>
+                  {!!captureCount && (
+                    <Box
+                      component="span"
+                      aria-label={`${captureCount} temporary ${captureCount === 1 ? 'observation' : 'observations'}`}
+                      sx={{
+                        minWidth: 22,
+                        height: 22,
+                        px: 0.65,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '999px',
+                        border: isSelected ? '1px solid rgba(255, 255, 255, 0.72)' : '1px solid rgba(23, 21, 26, 0.16)',
+                        color: isSelected ? '#fff' : darkText,
+                        fontSize: 11.5,
+                        fontWeight: 850,
+                        lineHeight: 1,
+                      }}
+                    >
+                      {captureCount}
+                    </Box>
+                  )}
+                </Stack>
+              </ButtonBase>
+            );
+          })}
+        </Stack>
+      </Paper>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.4 }}>
-        <FormControl fullWidth>
-          <InputLabel id="maths7a-student-label">Select student</InputLabel>
-          <Select labelId="maths7a-student-label" label="Select student" value={selectedStudentId} onChange={(event) => onStudentChange(event.target.value)}>
-            {students.map((student) => <MenuItem key={student.id} value={student.id}>{student.displayName}</MenuItem>)}
-          </Select>
-        </FormControl>
-        <FormControl fullWidth>
-          <InputLabel id="maths7a-topic-label">Optional topic</InputLabel>
-          <Select labelId="maths7a-topic-label" label="Optional topic" value={topicId} onChange={(event) => setTopicId(event.target.value)}>
-            {maths7AClassData.topics.map((topic) => <MenuItem key={topic.id} value={topic.id}>{topic.label}</MenuItem>)}
-          </Select>
-        </FormControl>
-      </Box>
+      <Panel sx={{ p: { xs: 1.25, sm: 1.75, md: 2 }, borderRadius: '14px' }}>
+        <Stack spacing={{ xs: 1.15, sm: 1.4 }}>
+          <Box>
+            <Typography sx={{ color: 'text.secondary', fontSize: 12.5, fontWeight: 760 }}>
+              Current lesson
+            </Typography>
+            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mt: 0.2 }}>
+              <Typography
+                component="button"
+                type="button"
+                aria-label="Change lesson or capture focus"
+                aria-haspopup="dialog"
+                aria-expanded={contextPanelOpen ? 'true' : undefined}
+                onClick={openContextPanel}
+                sx={{
+                  appearance: 'none',
+                  p: 0,
+                  m: 0,
+                  border: 0,
+                  bgcolor: 'transparent',
+                  color: darkText,
+                  font: 'inherit',
+                  fontSize: { xs: 24, sm: 28 },
+                  lineHeight: 1.15,
+                  fontWeight: 880,
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  '&:hover': { color: purple },
+                  '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 3, borderRadius: '4px' },
+                }}
+              >
+                {activeUnit.label}
+              </Typography>
+            </Stack>
+            <Typography sx={{ mt: 0.35, color: 'text.secondary', fontSize: 13.5, fontWeight: 650 }}>
+              {activeTopic.label}
+            </Typography>
+            <Typography sx={{ mt: 0.1, color: 'text.secondary', fontSize: 12.8, fontWeight: 650 }}>
+              Mathematics 7A
+            </Typography>
+          </Box>
 
-      {mode === 'observation' ? (
-        <FormControl fullWidth>
-          <InputLabel id="maths7a-template-label">Select what felt worth keeping</InputLabel>
-          <Select labelId="maths7a-template-label" label="Select what felt worth keeping" value={templateId} onChange={(event) => setTemplateId(event.target.value)}>
-            {maths7AClassData.quickCaptureTemplates.map((template) => <MenuItem key={template.id} value={template.id}>{template.label}</MenuItem>)}
-          </Select>
-        </FormControl>
-      ) : (
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1fr) 160px' }, gap: 1.4 }}>
-          <FormControl fullWidth>
-            <InputLabel id="maths7a-assessment-type-label">Assessment type</InputLabel>
-            <Select labelId="maths7a-assessment-type-label" label="Assessment type" value={assessmentType} onChange={(event) => setAssessmentType(event.target.value)}>
-              {maths7AClassData.assessmentTypes.map((type) => <MenuItem key={type.id} value={type.id}>{type.label}</MenuItem>)}
-            </Select>
-          </FormControl>
-          <TextField label="Result" value={result} onChange={(event) => setResult(event.target.value)} inputProps={{ inputMode: 'numeric' }} />
-        </Box>
-      )}
+          <Popover
+            open={contextPanelOpen}
+            anchorEl={contextAnchorEl}
+            onClose={closeContextPanel}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+            PaperProps={{
+              sx: {
+                mt: 0.8,
+                width: { xs: 'calc(100vw - 32px)', sm: 380 },
+                maxWidth: 'calc(100vw - 32px)',
+                p: 0,
+                borderRadius: '14px',
+                border: '1px solid rgba(23, 21, 26, 0.14)',
+                boxShadow: '0 18px 45px rgba(23, 21, 26, 0.14)',
+              },
+            }}
+          >
+            <Box sx={{ p: { xs: 2.25, sm: 2.6 } }}>
+              <Stack spacing={1.7} role="dialog" aria-label="Capture focus">
+                <Typography sx={{ color: darkText, fontSize: 15, fontWeight: 880 }}>
+                  Capture focus
+                </Typography>
+                <Box>
+                  <Typography sx={{ mb: 0.75, color: 'text.secondary', fontSize: 12.4, fontWeight: 760 }}>
+                    Teaching unit
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.65 }}>
+                    {nowCaptureFocuses.map((unit) => {
+                      const isActive = unit.id === activeUnit.id;
+                      return (
+                        <Button
+                          key={unit.id}
+                          type="button"
+                          aria-pressed={isActive}
+                          onClick={() => chooseUnit(unit)}
+                          variant="outlined"
+                          sx={{
+                            borderRadius: '999px',
+                            borderColor: isActive ? purple : 'rgba(23, 21, 26, 0.14)',
+                            bgcolor: isActive ? purple : '#fff',
+                            color: isActive ? '#fff' : darkText,
+                            fontSize: 12.5,
+                            fontWeight: isActive ? 850 : 720,
+                            textTransform: 'none',
+                            '&:hover': { bgcolor: isActive ? purple : '#fff', borderColor: isActive ? purple : darkText },
+                            '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                          }}
+                        >
+                          {unit.label}
+                        </Button>
+                      );
+                    })}
+                  </Box>
+                </Box>
+                <Box>
+                  <Typography sx={{ mb: 0.75, color: 'text.secondary', fontSize: 12.4, fontWeight: 760 }}>
+                    Topic
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.65 }}>
+                    {activeUnit.topics.map((topic) => {
+                      const isActive = topic.id === activeTopic.id;
+                      return (
+                        <Button
+                          key={topic.id}
+                          type="button"
+                          aria-pressed={isActive}
+                          onClick={() => chooseTopic(topic.id)}
+                          variant="outlined"
+                          sx={{
+                            borderRadius: '999px',
+                            borderColor: isActive ? purple : 'rgba(23, 21, 26, 0.14)',
+                            bgcolor: isActive ? purple : '#fff',
+                            color: isActive ? '#fff' : darkText,
+                            fontSize: 12.5,
+                            fontWeight: isActive ? 850 : 720,
+                            textTransform: 'none',
+                            '&:hover': { bgcolor: isActive ? purple : '#fff', borderColor: isActive ? purple : darkText },
+                            '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                          }}
+                        >
+                          {topic.label}
+                        </Button>
+                      );
+                    })}
+                  </Box>
+                </Box>
+              </Stack>
+            </Box>
+          </Popover>
 
-      <TextField label="Optional note" value={note} onChange={(event) => setNote(event.target.value)} multiline minRows={3} fullWidth />
+          <Box aria-live="polite" sx={{ minHeight: 19 }}>
+            {!!confirmation && (
+              <Typography sx={{ color: darkText, fontSize: 12.8, fontWeight: 760 }}>
+                {confirmation}
+              </Typography>
+            )}
+          </Box>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
-        <Button variant="contained" onClick={save} sx={{ bgcolor: purple, '&:hover': { bgcolor: '#842194' } }}>Save</Button>
-        <Button variant="text" onClick={() => { setNote(''); setResult(''); }} sx={{ color: 'text.secondary' }}>Clear draft</Button>
-      </Stack>
-    </Panel>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'repeat(2, minmax(0, 1fr))' }, gap: { xs: 0.9, sm: 1.05 } }}>
+            {activeUnit.capturePoints.map((capturePoint) => (
+              <Paper
+                key={capturePoint.id}
+                elevation={0}
+                sx={{
+                  p: { xs: 1, sm: 1.15 },
+                  borderRadius: '12px',
+                  border: '1px solid rgba(23, 21, 26, 0.14)',
+                  bgcolor: '#fff',
+                }}
+              >
+                <Stack spacing={1}>
+                  <Typography sx={{ color: darkText, fontSize: 15.5, fontWeight: 850 }}>
+                    {capturePoint.label}
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.7 }}>
+                    {nowCaptureLevels.map((level) => {
+                      const isRecentAction = recentActionId === `${capturePoint.id}-${level}`;
+                      const isCurrentLevel = currentLevelByCapturePointId[capturePoint.id] === level;
+                      const isActive = isRecentAction || isCurrentLevel;
+                      const hasCurrentLevel = Boolean(currentLevelByCapturePointId[capturePoint.id]);
+                      const mainLabel = hasCurrentLevel ? `Update ${capturePoint.label} to ${level}` : `Capture ${capturePoint.label} as ${level}`;
+                      if (!hasCurrentLevel) {
+                        return (
+                          <Button
+                            key={level}
+                            type="button"
+                            aria-label={mainLabel}
+                            aria-pressed={isRecentAction}
+                            onClick={() => captureLevel(capturePoint, level, 'update')}
+                            variant="outlined"
+                            sx={{
+                              minHeight: 38,
+                              borderRadius: '999px',
+                              borderColor: isRecentAction ? purple : 'rgba(23, 21, 26, 0.14)',
+                              bgcolor: isRecentAction ? purple : '#fff',
+                              color: isRecentAction ? '#fff' : darkText,
+                              fontSize: 12.8,
+                              fontWeight: isRecentAction ? 850 : 720,
+                              textTransform: 'none',
+                              transition: 'background-color 140ms ease, border-color 140ms ease, color 140ms ease',
+                              '&:hover': {
+                                borderColor: isRecentAction ? purple : darkText,
+                                bgcolor: isRecentAction ? purple : '#fff',
+                              },
+                              '&:focus-visible': {
+                                outline: `2px solid ${purple}`,
+                                outlineOffset: 2,
+                              },
+                            }}
+                          >
+                            {level}
+                          </Button>
+                        );
+                      }
+
+                      return (
+                        <ButtonGroup
+                          key={level}
+                          variant="outlined"
+                          aria-label={`${level} capture actions`}
+                          sx={{
+                            width: '100%',
+                            borderRadius: '999px',
+                            '& .MuiButtonGroup-grouped': {
+                              minWidth: 0,
+                              borderColor: isActive ? purple : 'rgba(23, 21, 26, 0.14)',
+                              textTransform: 'none',
+                              '&:focus-visible': {
+                                outline: `2px solid ${purple}`,
+                                outlineOffset: 2,
+                              },
+                            },
+                          }}
+                        >
+                          <Button
+                            type="button"
+                            aria-label={mainLabel}
+                            aria-pressed={isActive}
+                            onClick={() => captureLevel(capturePoint, level, 'update')}
+                            sx={{
+                              flex: '1 1 auto',
+                              minHeight: 38,
+                              borderTopLeftRadius: '999px',
+                              borderBottomLeftRadius: '999px',
+                              borderTopRightRadius: isActive ? '999px' : 0,
+                              borderBottomRightRadius: isActive ? '999px' : 0,
+                              borderColor: isActive ? purple : 'rgba(23, 21, 26, 0.14)',
+                              bgcolor: isActive ? purple : '#fff',
+                              color: isActive ? '#fff' : darkText,
+                              fontSize: 12.8,
+                              fontWeight: isActive ? 850 : 720,
+                              transition: 'background-color 140ms ease, border-color 140ms ease, color 140ms ease',
+                              '&:hover': {
+                                borderColor: isActive ? purple : darkText,
+                                bgcolor: isActive ? purple : '#fff',
+                              },
+                            }}
+                          >
+                            {level}
+                          </Button>
+                          {!isActive && (
+                            <Button
+                              type="button"
+                              aria-label={`Add new ${capturePoint.label}, ${level}, for ${selectedStudent.displayName}`}
+                              onClick={() => captureLevel(capturePoint, level, 'new')}
+                              sx={{
+                                flex: '0 0 48px',
+                                minHeight: 38,
+                                minWidth: 0,
+                                borderTopRightRadius: '999px',
+                                borderBottomRightRadius: '999px',
+                                borderColor: 'rgba(23, 21, 26, 0.14)',
+                                bgcolor: '#fff',
+                                color: 'text.secondary',
+                                px: 0,
+                                '&:hover': {
+                                  borderColor: darkText,
+                                  bgcolor: '#fff',
+                                  color: darkText,
+                                },
+                              }}
+                            >
+                              <AddIcon sx={{ fontSize: 18 }} />
+                            </Button>
+                          )}
+                        </ButtonGroup>
+                      );
+                    })}
+                  </Box>
+                </Stack>
+              </Paper>
+            ))}
+          </Box>
+
+          <Paper
+            elevation={0}
+            aria-live="polite"
+            sx={{
+              p: { xs: 1, sm: 1.1 },
+              borderRadius: '12px',
+              border: '1px solid rgba(23, 21, 26, 0.12)',
+              bgcolor: '#fff',
+            }}
+          >
+            <Stack spacing={0.75}>
+              <Typography sx={{ color: darkText, fontSize: 14.2, fontWeight: 850 }}>
+                {`Captured for ${selectedStudent.displayName}`}
+              </Typography>
+              {selectedCaptureSections.length ? (
+                <Stack spacing={1.15}>
+                  {selectedCaptureSections.map(({ unit, topicSections }) => (
+                    <Box key={unit.id} component="section" aria-labelledby={`now-capture-unit-${unit.id}`}>
+                      <Typography id={`now-capture-unit-${unit.id}`} component="h3" sx={{ color: darkText, fontSize: 13.4, fontWeight: 880 }}>
+                        {unit.label}
+                      </Typography>
+                      <Stack spacing={0.75} sx={{ mt: 0.55 }}>
+                        {topicSections.map(({ topic, captures }) => (
+                          <Box key={topic.id} component="section" aria-labelledby={`now-capture-topic-${unit.id}-${topic.id}`} sx={{ pl: { xs: 0, sm: 1 } }}>
+                            <Typography id={`now-capture-topic-${unit.id}-${topic.id}`} component="h4" sx={{ color: 'text.secondary', fontSize: 12.5, fontWeight: 820 }}>
+                              {topic.label}
+                            </Typography>
+                            <Box component="ul" sx={{ m: 0, mt: 0.4, p: 0, listStyle: 'none', display: 'grid', gap: 0.45 }}>
+                              {captures.map((capture) => (
+                                <Box
+                                  key={capture.id}
+                                  component="li"
+                                  sx={{
+                                    display: 'grid',
+                                    gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', sm: 'minmax(0, 1fr) auto auto' },
+                                    gap: { xs: 0.5, sm: 1 },
+                                    alignItems: 'center',
+                                    py: 0.55,
+                                    px: 0.65,
+                                    borderRadius: '10px',
+                                    border: '1px solid rgba(23, 21, 26, 0.08)',
+                                  }}
+                                >
+                                  <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 760, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {capture.capturePointLabel}
+                                  </Typography>
+                                  <Typography sx={{ color: darkText, fontSize: 12.6, fontWeight: 850, justifySelf: { xs: 'start', sm: 'end' }, gridColumn: { xs: '1 / 2', sm: 'auto' } }}>
+                                    {capture.level}
+                                  </Typography>
+                                  <IconButton
+                                    aria-label={`Remove ${capture.capturePointLabel}, ${capture.level}, ${capture.evidenceTopicLabel}, for ${selectedStudent.displayName}`}
+                                    onClick={() => removeCapture(capture.id)}
+                                    size="small"
+                                    sx={{
+                                      width: 34,
+                                      height: 34,
+                                      color: 'text.secondary',
+                                      justifySelf: 'end',
+                                      gridColumn: { xs: '2 / 3', sm: 'auto' },
+                                      gridRow: { xs: '1 / span 2', sm: 'auto' },
+                                      '&:hover': { color: darkText, bgcolor: '#fff' },
+                                      '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+                                    }}
+                                  >
+                                    <CloseIcon sx={{ fontSize: 17 }} />
+                                  </IconButton>
+                                </Box>
+                              ))}
+                            </Box>
+                          </Box>
+                        ))}
+                      </Stack>
+                    </Box>
+                  ))}
+                </Stack>
+              ) : (
+                <Typography sx={{ color: 'text.secondary', fontSize: 13.2, lineHeight: 1.5 }}>
+                  {`No observations captured for ${selectedStudent.firstName} yet.`}
+                </Typography>
+              )}
+            </Stack>
+          </Paper>
+        </Stack>
+      </Panel>
+    </Box>
   );
 }
 
@@ -1146,9 +1714,8 @@ function ClassPictureStudents({
 
 export default function Maths7AModule({ onBackToWeek, onClose }) {
   const [activeMode, setActiveMode] = useState('plan');
-  const [selectedStudentId, setSelectedStudentId] = useState(maths7AStudents[0]?.id || '');
+  const [selectedStudentId, setSelectedStudentId] = useState(defaultNowStudentId);
   const [localEvidence, setLocalEvidence] = useState([]);
-  const [confirmation, setConfirmation] = useState('');
   const [studentPictureOpen, setStudentPictureOpen] = useState(false);
   const [studentProfileOpen, setStudentProfileOpen] = useState(false);
   const [profileStudentId, setProfileStudentId] = useState(maths7AStudents[0]?.id || '');
@@ -1231,18 +1798,9 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
     [normalizedPlanningBlocks],
   );
   const currentPlanningUnitTitle = getCurrentPlanningUnitTitle(currentPlanningBlock);
-  const selectedStudentSummary = studentSummaries.find((summary) => summary.student.id === selectedStudent.id) || studentSummaries[0];
-
   useEffect(() => {
     setLocalEvidence(readJsonStorage(evidenceStorageKey, []));
   }, []);
-
-  function saveEvidence(entry) {
-    const nextLocalEvidence = sortEvidenceByDate([entry, ...localEvidence]);
-    setLocalEvidence(nextLocalEvidence);
-    writeJsonStorage(evidenceStorageKey, nextLocalEvidence);
-    setConfirmation(`Saved to ${selectedStudent.firstName}'s maths picture.`);
-  }
 
   function resetDemo() {
     if (typeof window !== 'undefined') {
@@ -1253,13 +1811,6 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
     resetGroups();
     resetPlanning();
     resetPlanningCurriculumNotes();
-    setConfirmation('Maths 7A demo evidence, planning and focus reset.');
-  }
-
-  function focusCapturePanel() {
-    setActiveMode('now');
-    capturePanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    capturePanelRef.current?.focus({ preventScroll: true });
   }
 
   function openStudentProfile(studentId) {
@@ -1278,72 +1829,12 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
   }
 
   const nowMode = (
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.12fr) minmax(300px, 0.88fr)' }, gap: { xs: 2, md: 3 }, alignItems: 'start' }}>
-      <Stack spacing={2.25} sx={{ minWidth: 0 }}>
-        <Panel title="Today's lesson">
-          <Typography sx={{ color: darkText, fontSize: 20, fontWeight: 850 }}>
-            {currentPlanningUnitTitle}
-          </Typography>
-          <Typography sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
-            Add something only when it feels useful to keep.
-          </Typography>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-            <Button variant="contained" onClick={focusCapturePanel} sx={{ bgcolor: purple, '&:hover': { bgcolor: '#842194' } }}>Capture something</Button>
-            <Button variant="outlined" onClick={() => setActiveMode('class-picture')} sx={{ color: darkText, borderColor: 'rgba(23, 21, 26, 0.16)' }}>Open class picture</Button>
-          </Stack>
-        </Panel>
-
-        <Panel title="Recent things Anna chose to save">
-          <Stack spacing={1}>{allEvidence.slice(0, 4).map((item) => <EvidenceCard key={item.id} item={item} />)}</Stack>
-        </Panel>
-
-        <Box ref={capturePanelRef} tabIndex={-1} sx={{ scrollMarginTop: 120 }}>
-          <QuickCapture students={maths7AStudents} selectedStudentId={selectedStudentId} onStudentChange={setSelectedStudentId} onSave={saveEvidence} />
-        </Box>
-
-        {!!confirmation && (
-          <Paper elevation={0} aria-live="polite" sx={{ p: 1.4, borderRadius: '15px', border: '1px solid rgba(156, 40, 175, 0.18)', bgcolor: palePurple, color: darkText }}>
-            <Typography sx={{ fontWeight: 750 }}>{confirmation}</Typography>
-          </Paper>
-        )}
-      </Stack>
-
-      <Stack spacing={2.25}>
-        <Panel title="SmartDesk noticed" sx={{ bgcolor: '#fdf9fe', borderColor: 'rgba(156, 40, 175, 0.14)' }}>
-          <Typography sx={{ color: 'text.secondary', lineHeight: 1.6 }}>{classPicture.noticed}</Typography>
-          <Typography sx={{ color: 'text.secondary', lineHeight: 1.6 }}>{classPicture.suggestion}</Typography>
-        </Panel>
-
-        <Panel title="Leo's developing picture">
-          <Typography sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
-            The available information suggests Leo may understand calculations more securely than written questions indicate.
-          </Typography>
-          <Button variant="outlined" onClick={() => { setSelectedStudentId('leo-andersson'); setStudentPictureOpen(true); }} sx={{ alignSelf: 'flex-start', color: darkText, borderColor: 'rgba(23, 21, 26, 0.16)' }}>
-            Open Leo
-          </Button>
-        </Panel>
-
-        <Panel title="Linked follow-up">
-          {linkedTasks.length ? linkedTasks.slice(0, 2).map((task) => (
-            <Paper key={task.id} elevation={0} sx={{ p: 1.4, borderRadius: '15px', border: '1px solid rgba(23, 21, 26, 0.08)' }}>
-              <Typography sx={{ color: darkText, fontWeight: 800 }}>{task.title}</Typography>
-              <Typography sx={{ mt: 0.35, color: 'text.secondary', fontSize: 13.5 }}>
-                {[task.classId?.toUpperCase(), task.date].filter(Boolean).join(' - ')}
-              </Typography>
-            </Paper>
-          )) : (
-            <Typography sx={{ color: 'text.secondary', lineHeight: 1.55 }}>No maths follow-up is currently being kept in view.</Typography>
-          )}
-        </Panel>
-
-        <Panel title="Recent class picture">
-          <Stack spacing={1}>
-            {classPicture.examples.map((example) => (
-              <Typography key={example} sx={{ color: 'text.secondary', lineHeight: 1.55 }}>{example}</Typography>
-            ))}
-          </Stack>
-        </Panel>
-      </Stack>
+    <Box ref={capturePanelRef} tabIndex={-1} sx={{ scrollMarginTop: 120 }}>
+      <QuickCapture
+        students={maths7AStudents}
+        selectedStudentId={selectedStudentId}
+        onStudentChange={setSelectedStudentId}
+      />
     </Box>
   );
 
