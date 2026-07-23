@@ -62,6 +62,10 @@ export default function SubjectWorkspaceContainer({
   }
 
   function handleMenuItemClick(item) {
+    if (item.disabled) {
+      return;
+    }
+
     closeMenu();
     item.onClick?.();
   }
@@ -143,7 +147,7 @@ export default function SubjectWorkspaceContainer({
                   transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                 >
                   {menuItems.map((item) => (
-                    <MenuItem key={item.id || item.label} onClick={() => handleMenuItemClick(item)}>
+                    <MenuItem key={item.id || item.label} disabled={item.disabled} onClick={() => handleMenuItemClick(item)}>
                       {item.icon && (
                         <ListItemIcon sx={{ minWidth: 34, color: 'inherit' }}>
                           {item.icon}

@@ -4,6 +4,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import SkipNextIcon from '@mui/icons-material/SkipNext';
 import Tooltip from '@mui/material/Tooltip';
 import {
   Box,
@@ -23,7 +24,6 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { annaSchedule } from '../data/annaSchedule.js';
 import { annaTasks } from '../data/annaTasks.js';
 import { maths7AEvidence } from '../data/Maths7AEvidence.js';
 import {
@@ -33,6 +33,13 @@ import {
   getMathsCapturePointsForTopic,
   mathsCaptureLevels,
 } from '../data/mathsCaptureConfig.js';
+import {
+  buildMaths7ADemoLessonSequence,
+  MATHS_7A_LESSON_INDEX_STORAGE_KEY,
+  readMaths7ALessonIndex,
+  resetMaths7ALessonIndex,
+  writeMaths7ALessonIndex,
+} from '../data/maths7ADemoLessons.js';
 import {
   addMaths7ALocalObservation,
   MATHS_7A_EVIDENCE_STORAGE_KEY,
@@ -71,7 +78,6 @@ import {
   sortEvidenceByDate,
 } from '../utils/maths7APictureUtils.js';
 import { getGroupsForStudent } from '../utils/classGroupUtils.js';
-import { getCurrentWeekContext } from '../utils/weekDataUtils.js';
 import { GroupDialog } from './classPicture/ClassWorkingGroups.jsx';
 import StudentProfileDataDialog from './classPicture/StudentProfileDataDialog.jsx';
 import SubjectPlanningBoard from './planning/SubjectPlanningBoard.jsx';
@@ -121,6 +127,14 @@ function formatDemoDate(date) {
   return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(new Date(`${date}T12:00:00`));
 }
 
+function formatDemoLessonDate(date) {
+  if (!date) {
+    return 'No saved lesson date';
+  }
+
+  return new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(`${date}T12:00:00`));
+}
+
 function getCaptureLevelValue(levelId) {
   return mathsCaptureLevels.find((level) => level.id === levelId)?.order || 0;
 }
@@ -148,20 +162,16 @@ function buildCaptureProgressSeries(observations) {
         items,
         change: latestValue - firstValue,
         latestValue,
+        hasLocalObservation: items.some((item) => item.source === 'observed' || item.id?.startsWith('local-observation-')),
       };
     })
     .sort((first, second) => (
-      Number(second.items.length >= 2) - Number(first.items.length >= 2)
+      Number(second.hasLocalObservation) - Number(first.hasLocalObservation)
+      || Number(second.items.length >= 2) - Number(first.items.length >= 2)
       || second.items.length - first.items.length
       || second.latestValue - first.latestValue
       || first.capturePoint.label.localeCompare(second.capturePoint.label)
     ));
-}
-
-function getMondayMathsLesson() {
-  return getCurrentWeekContext(annaSchedule).days
-    .find((day) => day.id === annaSchedule.currentContext.currentDayId)
-    ?.events.find((event) => event.originalId === 'mon-maths-7a');
 }
 
 function getCurrentPlanningUnitTitle(block) {
@@ -310,7 +320,15 @@ function StudentPictureDialog({ student, evidence, tasks, open, onClose, onCaptu
   );
 }
 
-function QuickCapture({ students, selectedStudentId, localEvidencePayload, onLocalEvidencePayloadChange, onStudentChange }) {
+function QuickCapture({
+  students,
+  selectedStudentId,
+  localEvidencePayload,
+  activeLesson,
+  onRestartLessonSequence,
+  onLocalEvidencePayloadChange,
+  onStudentChange,
+}) {
   const selectedStudent = students.find((student) => student.id === selectedStudentId) || students[0];
   const [activeUnitId, setActiveUnitId] = useState(nowCaptureFocuses[0].id);
   const [activeTopicId, setActiveTopicId] = useState(nowCaptureFocuses[0].topics[0].id);
@@ -325,37 +343,57 @@ function QuickCapture({ students, selectedStudentId, localEvidencePayload, onLoc
   });
   const contextPanelOpen = Boolean(contextAnchorEl);
   const localObservations = localEvidencePayload?.observations || [];
-  const captureCountsByStudentId = useMemo(() => localObservations.reduce((counts, capture) => {
+  const visibleLocalObservations = useMemo(
+    () => localObservations.filter((capture) => capture.date <= activeLesson.date),
+    [activeLesson.date, localObservations],
+  );
+  const captureCountsByStudentId = useMemo(() => visibleLocalObservations.reduce((counts, capture) => {
     counts[capture.studentId] = (counts[capture.studentId] || 0) + 1;
     return counts;
-  }, {}), [localObservations]);
+  }, {}), [visibleLocalObservations]);
   const selectedStudentCaptures = useMemo(
-    () => localObservations.filter((capture) => capture.studentId === selectedStudent.id),
-    [localObservations, selectedStudent.id],
+    () => visibleLocalObservations.filter((capture) => capture.studentId === selectedStudent.id),
+    [selectedStudent.id, visibleLocalObservations],
   );
   const selectedCaptureSections = useMemo(() => nowCaptureFocuses
-    .map((unit) => {
-      const topicSections = unit.topics
-        .map((topic) => {
-          const captures = selectedStudentCaptures
-            .filter((capture) => capture.teachingUnitId === unit.id && capture.evidenceTopicId === topic.id)
-            .sort((first, second) => (
-              (second.updatedAt || second.createdAt || second.date).localeCompare(first.updatedAt || first.createdAt || first.date)
-            ));
+    .reduce((dateSections, unit) => {
+      unit.topics.forEach((topic) => {
+        selectedStudentCaptures
+          .filter((capture) => capture.teachingUnitId === unit.id && capture.evidenceTopicId === topic.id)
+          .forEach((capture) => {
+            const dateSection = dateSections.get(capture.date) || new Map();
+            const unitSection = dateSection.get(unit.id) || { unit, topicSections: new Map() };
+            const captures = unitSection.topicSections.get(topic.id) || { topic, captures: [] };
+            captures.captures.push(capture);
+            unitSection.topicSections.set(topic.id, captures);
+            dateSection.set(unit.id, unitSection);
+            dateSections.set(capture.date, dateSection);
+          });
+      });
 
-          return captures.length ? { topic, captures } : null;
-        })
-        .filter(Boolean);
-
-      return topicSections.length ? { unit, topicSections } : null;
-    })
-    .filter(Boolean), [selectedStudentCaptures]);
+      return dateSections;
+    }, new Map()), [selectedStudentCaptures]);
+  const selectedCaptureDateSections = useMemo(() => [...selectedCaptureSections.entries()]
+    .sort(([firstDate], [secondDate]) => secondDate.localeCompare(firstDate))
+    .map(([date, unitSections]) => ({
+      date,
+      unitSections: [...unitSections.values()].map((unitSection) => ({
+        unit: unitSection.unit,
+        topicSections: [...unitSection.topicSections.values()].map((topicSection) => ({
+          topic: topicSection.topic,
+          captures: topicSection.captures.sort((first, second) => (
+            (second.updatedAt || second.createdAt || second.date).localeCompare(first.updatedAt || first.createdAt || first.date)
+          )),
+        })),
+      })),
+    })), [selectedCaptureSections]);
   const currentLevelByCapturePointId = useMemo(() => activeCapturePoints.reduce((levels, capturePoint) => {
     const matchingCaptures = selectedStudentCaptures
       .filter((capture) => (
         capture.teachingUnitId === activeUnit.id
         && capture.evidenceTopicId === activeTopic.id
         && capture.capturePointId === capturePoint.id
+        && capture.date === activeLesson.date
       ))
       .sort((first, second) => (
         (second.updatedAt || second.createdAt || second.date).localeCompare(first.updatedAt || first.createdAt || first.date)
@@ -366,7 +404,7 @@ function QuickCapture({ students, selectedStudentId, localEvidencePayload, onLoc
     }
 
     return levels;
-  }, {}), [activeCapturePoints, activeTopic.id, activeUnit.id, selectedStudentCaptures]);
+  }, {}), [activeCapturePoints, activeLesson.date, activeTopic.id, activeUnit.id, selectedStudentCaptures]);
 
   useEffect(() => {
     if (!confirmation) {
@@ -392,6 +430,7 @@ function QuickCapture({ students, selectedStudentId, localEvidencePayload, onLoc
         capture.teachingUnitId === activeUnit.id
         && capture.evidenceTopicId === activeTopic.id
         && capture.capturePointId === capturePoint.id
+        && capture.date === activeLesson.date
       ))
       .sort((first, second) => (
         (second.updatedAt || second.createdAt || second.date).localeCompare(first.updatedAt || first.createdAt || first.date)
@@ -399,6 +438,7 @@ function QuickCapture({ students, selectedStudentId, localEvidencePayload, onLoc
     const shouldUpdate = mode === 'update' && latestLocalObservation;
     const observationInput = {
       studentId: selectedStudent.id,
+      date: activeLesson.date,
       teachingUnitId: activeUnit.id,
       evidenceTopicId: activeTopic.id,
       capturePointId: capturePoint.id,
@@ -676,6 +716,26 @@ function QuickCapture({ students, selectedStudentId, localEvidencePayload, onLoc
                     })}
                   </Box>
                 </Box>
+                <Divider />
+                <Button
+                  type="button"
+                  onClick={() => {
+                    onRestartLessonSequence();
+                    closeContextPanel();
+                  }}
+                  startIcon={<RestartAltIcon fontSize="small" />}
+                  sx={{
+                    alignSelf: 'flex-start',
+                    color: 'text.secondary',
+                    fontSize: 12.6,
+                    fontWeight: 760,
+                    textTransform: 'none',
+                    '&:hover': { color: purple, bgcolor: '#fff' },
+                    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                  }}
+                >
+                  Restart lesson sequence
+                </Button>
               </Stack>
             </Box>
           </Popover>
@@ -838,68 +898,77 @@ function QuickCapture({ students, selectedStudentId, localEvidencePayload, onLoc
               <Typography sx={{ color: darkText, fontSize: 14.2, fontWeight: 850 }}>
                 {`Captured for ${selectedStudent.displayName}`}
               </Typography>
-              {selectedCaptureSections.length ? (
+              {selectedCaptureDateSections.length ? (
                 <Stack spacing={1.15}>
-                  {selectedCaptureSections.map(({ unit, topicSections }) => (
-                    <Box key={unit.id} component="section" aria-labelledby={`now-capture-unit-${unit.id}`}>
-                      <Typography id={`now-capture-unit-${unit.id}`} component="h3" sx={{ color: darkText, fontSize: 13.4, fontWeight: 880 }}>
-                        {unit.label}
+                  {selectedCaptureDateSections.map(({ date, unitSections }) => (
+                    <Box key={date} component="section" aria-labelledby={`now-capture-date-${date}`}>
+                      <Typography id={`now-capture-date-${date}`} component="h3" sx={{ color: darkText, fontSize: 13.4, fontWeight: 880 }}>
+                        {formatDemoLessonDate(date)}
                       </Typography>
-                      <Stack spacing={0.75} sx={{ mt: 0.55 }}>
-                        {topicSections.map(({ topic, captures }) => (
-                          <Box key={topic.id} component="section" aria-labelledby={`now-capture-topic-${unit.id}-${topic.id}`} sx={{ pl: { xs: 0, sm: 1 } }}>
-                            <Typography id={`now-capture-topic-${unit.id}-${topic.id}`} component="h4" sx={{ color: 'text.secondary', fontSize: 12.5, fontWeight: 820 }}>
-                              {topic.label}
+                      <Stack spacing={0.95} sx={{ mt: 0.55 }}>
+                        {unitSections.map(({ unit, topicSections }) => (
+                          <Box key={unit.id} component="section" aria-labelledby={`now-capture-unit-${date}-${unit.id}`}>
+                            <Typography id={`now-capture-unit-${date}-${unit.id}`} component="h4" sx={{ color: 'text.secondary', fontSize: 12.5, fontWeight: 820 }}>
+                              {unit.label}
                             </Typography>
-                            <Box component="ul" sx={{ m: 0, mt: 0.4, p: 0, listStyle: 'none', display: 'grid', gap: 0.45 }}>
-                              {captures.map((capture) => {
-                                const capturePoint = getMathsCapturePointById(capture.capturePointId);
-                                const captureLevel = getMathsCaptureLevelById(capture.levelId);
-                                const capturePointLabel = capturePoint?.label || capture.capturePointId || 'Observation';
-                                const levelLabel = captureLevel?.label || capture.levelId || 'Level';
+                            <Stack spacing={0.75} sx={{ mt: 0.5, pl: { xs: 0, sm: 1 } }}>
+                              {topicSections.map(({ topic, captures }) => (
+                                <Box key={topic.id} component="section" aria-labelledby={`now-capture-topic-${date}-${unit.id}-${topic.id}`}>
+                                  <Typography id={`now-capture-topic-${date}-${unit.id}-${topic.id}`} component="h5" sx={{ color: 'text.secondary', fontSize: 12.1, fontWeight: 760 }}>
+                                    {topic.label}
+                                  </Typography>
+                                  <Box component="ul" sx={{ m: 0, mt: 0.4, p: 0, listStyle: 'none', display: 'grid', gap: 0.45 }}>
+                                    {captures.map((capture) => {
+                                      const capturePoint = getMathsCapturePointById(capture.capturePointId);
+                                      const captureLevel = getMathsCaptureLevelById(capture.levelId);
+                                      const capturePointLabel = capturePoint?.label || capture.capturePointId || 'Observation';
+                                      const levelLabel = captureLevel?.label || capture.levelId || 'Level';
 
-                                return (
-                                  <Box
-                                    key={capture.id}
-                                    component="li"
-                                    sx={{
-                                      display: 'grid',
-                                      gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', sm: 'minmax(0, 1fr) auto auto' },
-                                      gap: { xs: 0.5, sm: 1 },
-                                      alignItems: 'center',
-                                      py: 0.55,
-                                      px: 0.65,
-                                      borderRadius: '10px',
-                                      border: '1px solid rgba(23, 21, 26, 0.08)',
-                                    }}
-                                  >
-                                    <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 760, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                      {capturePointLabel}
-                                    </Typography>
-                                    <Typography sx={{ color: darkText, fontSize: 12.6, fontWeight: 850, justifySelf: { xs: 'start', sm: 'end' }, gridColumn: { xs: '1 / 2', sm: 'auto' } }}>
-                                      {levelLabel}
-                                    </Typography>
-                                    <IconButton
-                                      aria-label={`Remove ${capturePointLabel}, ${levelLabel}, ${topic.label}, for ${selectedStudent.displayName}`}
-                                      onClick={() => removeCapture(capture.id)}
-                                      size="small"
-                                      sx={{
-                                        width: 34,
-                                        height: 34,
-                                        color: 'text.secondary',
-                                        justifySelf: 'end',
-                                        gridColumn: { xs: '2 / 3', sm: 'auto' },
-                                        gridRow: { xs: '1 / span 2', sm: 'auto' },
-                                        '&:hover': { color: darkText, bgcolor: '#fff' },
-                                        '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
-                                      }}
-                                    >
-                                      <CloseIcon sx={{ fontSize: 17 }} />
-                                    </IconButton>
+                                      return (
+                                        <Box
+                                          key={capture.id}
+                                          component="li"
+                                          sx={{
+                                            display: 'grid',
+                                            gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', sm: 'minmax(0, 1fr) auto auto' },
+                                            gap: { xs: 0.5, sm: 1 },
+                                            alignItems: 'center',
+                                            py: 0.55,
+                                            px: 0.65,
+                                            borderRadius: '10px',
+                                            border: '1px solid rgba(23, 21, 26, 0.08)',
+                                          }}
+                                        >
+                                          <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 760, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {capturePointLabel}
+                                          </Typography>
+                                          <Typography sx={{ color: darkText, fontSize: 12.6, fontWeight: 850, justifySelf: { xs: 'start', sm: 'end' }, gridColumn: { xs: '1 / 2', sm: 'auto' } }}>
+                                            {levelLabel}
+                                          </Typography>
+                                          <IconButton
+                                            aria-label={`Remove ${capturePointLabel}, ${levelLabel}, ${topic.label}, for ${selectedStudent.displayName}`}
+                                            onClick={() => removeCapture(capture.id)}
+                                            size="small"
+                                            sx={{
+                                              width: 34,
+                                              height: 34,
+                                              color: 'text.secondary',
+                                              justifySelf: 'end',
+                                              gridColumn: { xs: '2 / 3', sm: 'auto' },
+                                              gridRow: { xs: '1 / span 2', sm: 'auto' },
+                                              '&:hover': { color: darkText, bgcolor: '#fff' },
+                                              '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+                                            }}
+                                          >
+                                            <CloseIcon sx={{ fontSize: 17 }} />
+                                          </IconButton>
+                                        </Box>
+                                      );
+                                    })}
                                   </Box>
-                                );
-                              })}
-                            </Box>
+                                </Box>
+                              ))}
+                            </Stack>
                           </Box>
                         ))}
                       </Stack>
@@ -1093,7 +1162,7 @@ function CaptureProgressChart({ observations, evidenceTopics }) {
   const padding = { top: 24, right: 24, bottom: 34, left: 82 };
   const topicById = new Map(evidenceTopics.map((topic) => [topic.id, topic]));
   const progressSeries = buildCaptureProgressSeries(observations);
-  const visibleSeries = progressSeries.slice(0, 4);
+  const visibleSeries = progressSeries;
   const visibleItems = visibleSeries.flatMap((series) => series.items);
   const sortedVisibleItems = sortEvidenceByDate(visibleItems, 'asc');
   const dates = visibleItems.map((item) => new Date(`${item.date}T12:00:00`).getTime());
@@ -1252,6 +1321,129 @@ function CaptureProgressChart({ observations, evidenceTopics }) {
   );
 }
 
+function ObservationContentGraph({ contentRows }) {
+  const rows = contentRows
+    .map((entry) => {
+      const observations = entry.observations || [];
+      const levelCounts = mathsCaptureLevels.reduce((counts, level) => ({
+        ...counts,
+        [level.id]: observations.filter((item) => item.levelId === level.id).length,
+      }), {});
+      const latestStructured = observations.find((item) => item.capturePointId && item.levelId) || null;
+      const latestLevel = latestStructured ? getMathsCaptureLevelById(latestStructured.levelId) : null;
+
+      return {
+        unit: entry.topic,
+        observations,
+        count: observations.length,
+        levelCounts,
+        latestLevel,
+      };
+    })
+    .filter((row) => row.count);
+  const maxCount = Math.max(...rows.map((row) => row.count), 1);
+  const levelColors = {
+    emerging: 'rgba(23, 21, 26, 0.3)',
+    developing: 'rgba(23, 21, 26, 0.52)',
+    secure: purple,
+    advanced: darkText,
+  };
+
+  return (
+    <Paper elevation={0} sx={{ p: 1.3, borderRadius: '16px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+      <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 860 }}>Observation spread</Typography>
+      {rows.length ? (
+        <Stack spacing={0.9} sx={{ mt: 1 }}>
+          {rows.map((row) => {
+            const topicLabels = (row.unit.evidenceTopicIds || [])
+              .map((id) => getEvidenceTopicById(id)?.title || id)
+              .join(', ');
+
+            return (
+              <Box key={row.unit.id}>
+                <Stack direction="row" spacing={1} alignItems="baseline" justifyContent="space-between">
+                  <Typography sx={{ color: darkText, fontSize: 12.8, fontWeight: 820, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {row.unit.label || row.unit.title}
+                  </Typography>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 11.8, fontWeight: 760, whiteSpace: 'nowrap' }}>
+                    {row.count} observation{row.count === 1 ? '' : 's'}
+                  </Typography>
+                </Stack>
+                <Box
+                  role="img"
+                  aria-label={`${row.unit.label || row.unit.title}: ${row.count} observation${row.count === 1 ? '' : 's'}${row.latestLevel ? `, latest structured level ${row.latestLevel.label}` : ''}.`}
+                  sx={{
+                    mt: 0.45,
+                    height: 14,
+                    display: 'flex',
+                    width: `${Math.max((row.count / maxCount) * 100, 12)}%`,
+                    minWidth: 72,
+                    borderRadius: '999px',
+                    overflow: 'hidden',
+                    bgcolor: 'rgba(23, 21, 26, 0.07)',
+                  }}
+                >
+                  {mathsCaptureLevels.map((level) => {
+                    const count = row.levelCounts[level.id] || 0;
+                    if (!count) return null;
+                    return (
+                      <Box
+                        key={level.id}
+                        title={`${level.label}: ${count}`}
+                        sx={{
+                          width: `${(count / row.count) * 100}%`,
+                          minWidth: 7,
+                          bgcolor: levelColors[level.id],
+                        }}
+                      />
+                    );
+                  })}
+                  {observationsWithoutLevel(row.observations) > 0 && (
+                    <Box
+                      title={`Unlevelled observations: ${observationsWithoutLevel(row.observations)}`}
+                      sx={{
+                        flex: '1 1 auto',
+                        minWidth: 7,
+                        bgcolor: 'rgba(23, 21, 26, 0.14)',
+                      }}
+                    />
+                  )}
+                </Box>
+                <Stack direction="row" spacing={0.7} alignItems="center" sx={{ mt: 0.35 }}>
+                  {row.latestLevel && (
+                    <Chip
+                      label={row.latestLevel.label}
+                      size="small"
+                      sx={{ height: 20, bgcolor: row.latestLevel.id === 'secure' || row.latestLevel.id === 'advanced' ? purple : '#fff', color: row.latestLevel.id === 'secure' || row.latestLevel.id === 'advanced' ? '#fff' : darkText, fontSize: 11, fontWeight: 780 }}
+                    />
+                  )}
+                  <Typography sx={{ color: 'text.secondary', fontSize: 11.7, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {topicLabels || 'No linked topics'}
+                  </Typography>
+                </Stack>
+              </Box>
+            );
+          })}
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ pt: 0.2 }}>
+            {mathsCaptureLevels.map((level) => (
+              <Stack key={level.id} direction="row" spacing={0.45} alignItems="center">
+                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: levelColors[level.id] }} />
+                <Typography sx={{ color: 'text.secondary', fontSize: 11.4 }}>{level.label}</Typography>
+              </Stack>
+            ))}
+          </Stack>
+        </Stack>
+      ) : (
+        <Typography sx={{ mt: 0.7, color: 'text.secondary', fontSize: 13 }}>No saved observations yet.</Typography>
+      )}
+    </Paper>
+  );
+}
+
+function observationsWithoutLevel(observations) {
+  return (observations || []).filter((item) => !item.levelId).length;
+}
+
 function StudentInsightPanel({ student, teachingUnits, evidenceTopics, evidence, onOpenStudent }) {
   const assessments = getStudentAssessments(evidence, student.id);
   const observations = getStudentObservations(evidence, student.id);
@@ -1259,6 +1451,7 @@ function StudentInsightPanel({ student, teachingUnits, evidenceTopics, evidence,
   const contentRows = getStudentEvidenceByContent(evidence, student.id, teachingUnits);
   const patterns = getStudentVisiblePatterns(evidence, student.id, teachingUnits);
   const topicById = new Map(evidenceTopics.map((topic) => [topic.id, topic]));
+  const [teachingUnitDetailsOpen, setTeachingUnitDetailsOpen] = useState(false);
 
   return (
     <Box sx={{ p: { xs: 1, sm: 1.25 }, bgcolor: '#fbfafc', borderTop: '1px solid rgba(23, 21, 26, 0.07)' }}>
@@ -1302,30 +1495,47 @@ function StudentInsightPanel({ student, teachingUnits, evidenceTopics, evidence,
             </Stack>
 
             <Stack spacing={1.25}>
-              <Paper elevation={0} sx={{ p: 1.3, borderRadius: '16px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
-                <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 860 }}>Evidence by teaching unit</Typography>
-                <Stack spacing={0.75} sx={{ mt: 0.85 }}>
-                  {contentRows.map((entry) => (
-                    <Box key={entry.topic.id} sx={{ borderTop: '1px solid rgba(23, 21, 26, 0.07)', pt: 0.65 }}>
-                      <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 820 }}>{entry.topic.label}</Typography>
-                      <Typography sx={{ color: 'text.secondary', fontSize: 12.1 }}>
-                        Topics: {(entry.topic.evidenceTopicIds || []).map((id) => getEvidenceTopicById(id)?.title || id).join(', ') || 'None linked'}
-                      </Typography>
-                      <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
-                        {entry.assessments.length ? `${entry.assessments.length} assessment${entry.assessments.length === 1 ? '' : 's'}` : 'No assessments'} · {entry.observations.length ? `${entry.observations.length} observation${entry.observations.length === 1 ? '' : 's'}` : 'No observations'}
-                      </Typography>
-                      <Typography sx={{ mt: 0.15, color: 'text.secondary', fontSize: 12.2 }}>
-                        {entry.latestItem ? `Latest: ${entry.latestItem.assessmentTitle || entry.latestItem.observationText || entry.latestItem.label}` : 'No saved information'}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Stack>
-              </Paper>
+              <ObservationContentGraph contentRows={contentRows} />
               <Paper elevation={0} sx={{ p: 1.3, borderRadius: '16px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
                 <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 860 }}>Visible in the saved information</Typography>
                 <Stack component="ul" spacing={0.65} sx={{ mt: 0.8, pl: 2.2, color: 'text.secondary' }}>
                   {patterns.map((pattern) => <Typography component="li" key={pattern} sx={{ fontSize: 12.8, lineHeight: 1.45 }}>{pattern}</Typography>)}
                 </Stack>
+              </Paper>
+              <Paper elevation={0} sx={{ borderRadius: '16px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff', overflow: 'hidden' }}>
+                <ButtonBase
+                  onClick={() => setTeachingUnitDetailsOpen((open) => !open)}
+                  aria-expanded={teachingUnitDetailsOpen}
+                  sx={{
+                    width: '100%',
+                    p: 1.3,
+                    justifyContent: 'space-between',
+                    textAlign: 'left',
+                    gap: 1,
+                    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: -2 },
+                  }}
+                >
+                  <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 860 }}>Evidence by teaching unit</Typography>
+                  <KeyboardArrowDownIcon sx={{ color: 'text.secondary', fontSize: 20, transform: teachingUnitDetailsOpen ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
+                </ButtonBase>
+                {teachingUnitDetailsOpen && (
+                  <Stack spacing={0.75} sx={{ px: 1.3, pb: 1.3 }}>
+                    {contentRows.map((entry) => (
+                      <Box key={entry.topic.id} sx={{ borderTop: '1px solid rgba(23, 21, 26, 0.07)', pt: 0.65 }}>
+                        <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 820 }}>{entry.topic.label}</Typography>
+                        <Typography sx={{ color: 'text.secondary', fontSize: 12.1 }}>
+                          Topics: {(entry.topic.evidenceTopicIds || []).map((id) => getEvidenceTopicById(id)?.title || id).join(', ') || 'None linked'}
+                        </Typography>
+                        <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
+                          {entry.assessments.length ? `${entry.assessments.length} assessment${entry.assessments.length === 1 ? '' : 's'}` : 'No assessments'} · {entry.observations.length ? `${entry.observations.length} observation${entry.observations.length === 1 ? '' : 's'}` : 'No observations'}
+                        </Typography>
+                        <Typography sx={{ mt: 0.15, color: 'text.secondary', fontSize: 12.2 }}>
+                          {entry.latestItem ? `Latest: ${entry.latestItem.assessmentTitle || entry.latestItem.observationText || entry.latestItem.label}` : 'No saved information'}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+                )}
               </Paper>
             </Stack>
           </Box>
@@ -1867,6 +2077,8 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
   const [activeMode, setActiveMode] = useState('plan');
   const [selectedStudentId, setSelectedStudentId] = useState(defaultNowStudentId);
   const [localEvidencePayload, setLocalEvidencePayload] = useState(() => readMaths7ALocalEvidence());
+  const [activeLessonIndex, setActiveLessonIndex] = useState(() => readMaths7ALessonIndex());
+  const [lessonAnnouncement, setLessonAnnouncement] = useState('');
   const [studentPictureOpen, setStudentPictureOpen] = useState(false);
   const [studentProfileOpen, setStudentProfileOpen] = useState(false);
   const [profileStudentId, setProfileStudentId] = useState(maths7AStudents[0]?.id || '');
@@ -1904,24 +2116,27 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
     initialNotes: [],
   });
   const capturePanelRef = useRef(null);
-  const mathsLesson = getMondayMathsLesson();
+  const demoLessons = useMemo(() => buildMaths7ADemoLessonSequence(), []);
+  const activeLesson = demoLessons[activeLessonIndex] || demoLessons[0];
+  const canAdvanceLesson = activeLessonIndex < demoLessons.length - 1;
   const allEvidence = useMemo(() => getMergedMathsEvidence(maths7AEvidence, localEvidencePayload), [localEvidencePayload]);
+  const visibleEvidence = useMemo(() => allEvidence.filter((item) => item.date <= activeLesson.date), [activeLesson.date, allEvidence]);
   const selectedStudent = maths7AStudents.find((student) => student.id === selectedStudentId) || maths7AStudents[0];
-  const selectedEvidence = getEvidenceForStudent(allEvidence, selectedStudent.id);
+  const selectedEvidence = getEvidenceForStudent(visibleEvidence, selectedStudent.id);
   const linkedTasks = findLinkedTasks(annaTasks, selectedStudent);
   const profileStudent = maths7AStudents.find((student) => student.id === profileStudentId) || null;
-  const profileEvidence = profileStudent ? getEvidenceForStudent(allEvidence, profileStudent.id) : [];
+  const profileEvidence = profileStudent ? getEvidenceForStudent(visibleEvidence, profileStudent.id) : [];
   const profileTasks = profileStudent ? findLinkedTasks(annaTasks, profileStudent) : [];
   const profileGroups = profileStudent ? getGroupsForStudent(workingGroups, profileStudent.id) : [];
-  const profileSummary = profileStudent ? getStudentPictureSummary(profileStudent, allEvidence) : null;
+  const profileSummary = profileStudent ? getStudentPictureSummary(profileStudent, visibleEvidence) : null;
   const profileDataSections = profileStudent ? buildMathsStudentProfileSections({
     student: profileStudent,
     evidence: profileEvidence,
     tasks: profileTasks,
   }) : [];
   const studentSummaries = useMemo(
-    () => maths7AStudents.map((student) => getStudentPictureSummary(student, allEvidence)),
-    [allEvidence],
+    () => maths7AStudents.map((student) => getStudentPictureSummary(student, visibleEvidence)),
+    [visibleEvidence],
   );
   const normalizedPlanningBlocks = useMemo(
     () => planningBlocks.map(normalizeMathsPlanningBlock),
@@ -1954,6 +2169,9 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       if (event.key === MATHS_7A_EVIDENCE_STORAGE_KEY) {
         setLocalEvidencePayload(readMaths7ALocalEvidence());
       }
+      if (event.key === MATHS_7A_LESSON_INDEX_STORAGE_KEY) {
+        setActiveLessonIndex(readMaths7ALessonIndex());
+      }
     }
 
     window.addEventListener('storage', handleStorageChange);
@@ -1965,9 +2183,27 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       window.localStorage.removeItem(planningStorageKey);
     }
     setLocalEvidencePayload(resetMaths7ALocalEvidence().payload);
+    setActiveLessonIndex(resetMaths7ALessonIndex());
+    setLessonAnnouncement('');
     resetGroups();
     resetPlanning();
     resetPlanningCurriculumNotes();
+  }
+
+  function advanceLesson() {
+    if (!canAdvanceLesson) {
+      return;
+    }
+
+    const nextIndex = writeMaths7ALessonIndex(activeLessonIndex + 1);
+    const nextLesson = demoLessons[nextIndex] || activeLesson;
+    setActiveLessonIndex(nextIndex);
+    setLessonAnnouncement(`Moved to Maths 7A on ${formatDemoLessonDate(nextLesson.date)}, ${nextLesson.startTime}.`);
+  }
+
+  function restartLessonSequence() {
+    setActiveLessonIndex(resetMaths7ALessonIndex());
+    setLessonAnnouncement('Lesson sequence restarted.');
   }
 
   function openStudentProfile(studentId) {
@@ -1987,10 +2223,15 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
 
   const nowMode = (
     <Box ref={capturePanelRef} tabIndex={-1} sx={{ scrollMarginTop: 120 }}>
+      <Box aria-live="polite" sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
+        {lessonAnnouncement}
+      </Box>
       <QuickCapture
         students={maths7AStudents}
         selectedStudentId={selectedStudentId}
         localEvidencePayload={localEvidencePayload}
+        activeLesson={activeLesson}
+        onRestartLessonSequence={restartLessonSequence}
         onLocalEvidencePayloadChange={setLocalEvidencePayload}
         onStudentChange={setSelectedStudentId}
       />
@@ -2012,7 +2253,7 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
         content: 'Content',
         ability: 'Abilities',
       }}
-      referenceDate={annaSchedule.currentContext.date}
+      referenceDate={activeLesson.date}
       workingGroups={workingGroups}
       groupDefinitions={classGroupDefinitions}
       onCreateBlock={createPlanningBlock}
@@ -2030,7 +2271,7 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       studentSummaries={studentSummaries}
       teachingUnits={evidenceMapTeachingUnits}
       evidenceTopics={mathsEvidenceTopics}
-      evidence={allEvidence}
+      evidence={visibleEvidence}
       workingGroups={workingGroups}
       groupDefinitions={classGroupDefinitions}
       onCreateGroup={createGroup}
@@ -2050,16 +2291,25 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
     <SubjectWorkspaceContainer
       title="Mathematics · 7A"
       subtitle={currentPlanningUnitTitle}
-      contextLine={`Monday ${mathsLesson?.start || '08:40'}-${mathsLesson?.end || '09:30'}`}
+      contextLine={`${formatDemoLessonDate(activeLesson.date)} · ${activeLesson.startTime}-${activeLesson.endTime}`}
       activeMode={activeMode}
       onModeChange={setActiveMode}
       onBack={onClose || onBackToWeek}
-      menuItems={[{
-        id: 'reset-maths-7a-demo',
-        label: 'Reset demo',
-        icon: <RestartAltIcon fontSize="small" />,
-        onClick: resetDemo,
-      }]}
+      menuItems={[
+        {
+          id: 'next-maths-7a-lesson',
+          label: canAdvanceLesson ? 'Next lesson' : 'Final demo lesson',
+          icon: <SkipNextIcon fontSize="small" />,
+          disabled: !canAdvanceLesson,
+          onClick: advanceLesson,
+        },
+        {
+          id: 'reset-maths-7a-demo',
+          label: 'Reset demo',
+          icon: <RestartAltIcon fontSize="small" />,
+          onClick: resetDemo,
+        },
+      ]}
     >
       {activeMode === 'now' && nowMode}
       {activeMode === 'plan' && planMode}
