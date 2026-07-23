@@ -75,7 +75,6 @@ import {
   getStudentEvidenceSummary,
   getStudentObservations,
   getStudentPictureSummary,
-  getStudentTopicCell,
   getStudentVisiblePatterns,
   sortEvidenceByDate,
 } from '../utils/maths7APictureUtils.js';
@@ -1791,6 +1790,48 @@ function getRepeatedSequenceGroups(summary) {
   return buildCapturePointSequences(summary).filter((sequence) => sequence.observations.length >= 2);
 }
 
+function StudentUnitEvidenceCell({ summary, maxLessonCount }) {
+  const repeatedCount = getRepeatedSequenceGroups(summary).length;
+  const hasEvidence = summary.items.length > 0;
+  const barWidth = summary.lessonCount ? Math.max((summary.lessonCount / maxLessonCount) * 100, 18) : 0;
+  const capturePointTotal = summary.capturePoints.length || 0;
+  const capturePointCoverage = capturePointTotal
+    ? Math.max((summary.observedCapturePointCount / capturePointTotal) * 100, summary.observedCapturePointCount ? 14 : 0)
+    : 0;
+
+  return (
+    <Box sx={{ minHeight: 33, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 0.55 }}>
+      <Box sx={{ height: 8, borderRadius: '999px', bgcolor: 'rgba(23, 21, 26, 0.08)', overflow: 'hidden' }}>
+        {!!summary.lessonCount && <Box sx={{ width: `${barWidth}%`, height: '100%', bgcolor: purple }} />}
+      </Box>
+      <Stack direction="row" spacing={0.5} alignItems="center" sx={{ minHeight: 12 }}>
+        {hasEvidence ? (
+          <>
+            <Box
+              title={`${summary.observedCapturePointCount} of ${capturePointTotal} capture points observed`}
+              sx={{
+                width: 24,
+                height: 4,
+                borderRadius: '999px',
+                bgcolor: 'rgba(23, 21, 26, 0.09)',
+                overflow: 'hidden',
+                flexShrink: 0,
+              }}
+            >
+              {!!capturePointCoverage && <Box sx={{ width: `${capturePointCoverage}%`, height: '100%', bgcolor: darkText }} />}
+            </Box>
+            {!!summary.assessments.length && <Box component="span" title="Assessment recorded" sx={{ width: 7, height: 7, bgcolor: darkText, flexShrink: 0 }} />}
+            {!!repeatedCount && <Box component="span" title="Repeated capture point" sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: purple, flexShrink: 0 }} />}
+            {!!summary.judgement?.levelId && <Box component="span" title="Anna added a judgement" sx={{ width: 7, height: 7, border: `1.5px solid ${darkText}`, borderRadius: '2px', flexShrink: 0 }} />}
+          </>
+        ) : (
+          <Box sx={{ width: 22, height: 2, borderRadius: '999px', bgcolor: 'rgba(23, 21, 26, 0.2)' }} />
+        )}
+      </Stack>
+    </Box>
+  );
+}
+
 function StudentInsightPanelV3({
   student,
   teachingUnits,
@@ -2336,6 +2377,13 @@ function EvidenceMap({
 
   function renderStudentRow(student, groupId = '', rowIndex) {
     const isExpanded = expandedStudentId === student.id;
+    const studentEvidence = getEvidenceForStudent(evidence, student.id);
+    const unitSummaries = teachingUnits.map((unit) => buildTeachingUnitEvidenceSummary(
+      unit,
+      studentEvidence,
+      teacherWorkingJudgements[getJudgementKey(student.id, unit.id)] || null,
+    ));
+    const maxLessonCount = Math.max(...unitSummaries.map((summary) => summary.lessonCount), 1);
 
     return (
       <Box key={`${groupId || 'flat'}-${student.id}`} role="rowgroup" sx={{ display: 'contents' }}>
@@ -2395,28 +2443,26 @@ function EvidenceMap({
               <Typography sx={{ color: darkText, fontSize: 13, fontWeight: 820, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{student.displayName}</Typography>
             </ButtonBase>
           </Box>
-          {teachingUnits.map((unit) => {
-            const cell = getStudentTopicCell(student.id, unit.id, evidence);
+          {teachingUnits.map((unit, unitIndex) => {
+            const summary = unitSummaries[unitIndex];
+            const repeatedCount = getRepeatedSequenceGroups(summary).length;
+            const visualDetail = summary.items.length
+              ? `${summary.lessonCount} lesson${summary.lessonCount === 1 ? '' : 's'} with evidence, ${summary.assessments.length} assessment${summary.assessments.length === 1 ? '' : 's'}, ${summary.observedCapturePointCount} of ${summary.capturePoints.length} capture points observed${repeatedCount ? `, ${repeatedCount} repeated capture point${repeatedCount === 1 ? '' : 's'}` : ''}${summary.judgement?.levelId ? ', Anna judgement added' : ''}`
+              : 'No evidence recorded';
             return (
               <Box
                 key={`${student.id}-${unit.id}`}
                 role="cell"
-                aria-label={`${student.displayName}, ${unit.title || unit.label}: ${cell.detail}`}
+                aria-label={`${student.displayName}, ${unit.title || unit.label}: ${visualDetail}`}
                 sx={{
                   p: 1,
                   borderTop: '1px solid rgba(23, 21, 26, 0.08)',
                   borderLeft: '1px solid rgba(23, 21, 26, 0.055)',
                   textAlign: 'left',
-                  bgcolor: draggedStudentId === student.id
-                    ? 'rgba(156, 40, 175, 0.08)'
-                    : cell.count
-                      ? '#fff'
-                      : '#fff',
+                  bgcolor: draggedStudentId === student.id ? 'rgba(156, 40, 175, 0.08)' : '#fff',
                 }}
               >
-                <Typography sx={{ color: cell.count ? darkText : 'rgba(23, 21, 26, 0.46)', fontSize: 12.2, lineHeight: 1.35, fontWeight: cell.count ? 760 : 520 }}>
-                  {cell.label}
-                </Typography>
+                <StudentUnitEvidenceCell summary={summary} maxLessonCount={maxLessonCount} />
               </Box>
             );
           })}
