@@ -26,6 +26,13 @@ import {
 import { annaSchedule } from '../data/annaSchedule.js';
 import { annaTasks } from '../data/annaTasks.js';
 import { maths7AEvidence } from '../data/Maths7AEvidence.js';
+import {
+  getMathsCaptureFocuses,
+  getMathsCaptureLevelById,
+  getMathsCapturePointById,
+  getMathsCapturePointsForTopic,
+  mathsCaptureLevels,
+} from '../data/mathsCaptureConfig.js';
 import { maths7APlanningBlocks, maths7APlanningPeriods } from '../data/maths7APlanning.js';
 import { maths7AStudents } from '../data/Maths7AStudents.js';
 import { classGroupDefinitions } from '../data/classGroupDefinitions.js';
@@ -75,86 +82,10 @@ const classPicture = {
   suggestion: 'You may want to include one short language-focused example today.',
 };
 
-const nowCaptureFocuses = [
-  {
-    id: 'fractions-percentages',
-    label: 'Fractions and percentages',
-    topics: [
-      { id: 'fractions', label: 'Fractions' },
-      { id: 'percentages', label: 'Percentages' },
-    ],
-    capturePoints: [
-      { id: 'concept-understanding', label: 'Concept understanding' },
-      { id: 'method-selection', label: 'Method selection' },
-      { id: 'explains-reasoning', label: 'Explains reasoning' },
-      { id: 'works-independently', label: 'Works independently' },
-    ],
-  },
-  {
-    id: 'geometry',
-    label: 'Geometry',
-    topics: [
-      { id: 'shape-measurement', label: 'Shape and measurement' },
-      { id: 'geometric-reasoning', label: 'Geometric reasoning' },
-    ],
-    capturePoints: [
-      { id: 'identifies-relevant-properties', label: 'Identifies relevant properties' },
-      { id: 'uses-diagrams-effectively', label: 'Uses diagrams effectively' },
-      { id: 'applies-suitable-method', label: 'Applies a suitable method' },
-      { id: 'explains-geometric-reasoning', label: 'Explains geometric reasoning' },
-    ],
-  },
-  {
-    id: 'algebra-basics',
-    label: 'Algebra basics',
-    topics: [
-      { id: 'expressions', label: 'Expressions' },
-      { id: 'equations', label: 'Equations' },
-      { id: 'patterns', label: 'Patterns' },
-    ],
-    capturePoints: [
-      { id: 'interprets-expressions', label: 'Interprets expressions' },
-      { id: 'selects-algebraic-method', label: 'Selects an algebraic method' },
-      { id: 'uses-symbols-accurately', label: 'Uses symbols accurately' },
-      { id: 'explains-each-step', label: 'Explains each step' },
-    ],
-  },
-  {
-    id: 'probability-statistics',
-    label: 'Probability and statistics',
-    topics: [
-      { id: 'probability', label: 'Probability' },
-      { id: 'statistics', label: 'Statistics' },
-    ],
-    capturePoints: [
-      { id: 'interprets-information', label: 'Interprets information' },
-      { id: 'selects-suitable-method', label: 'Selects a suitable method' },
-      { id: 'reasons-from-data', label: 'Reasons from data' },
-      { id: 'communicates-conclusion', label: 'Communicates a conclusion' },
-    ],
-  },
-  {
-    id: 'relationships-change',
-    label: 'Relationships and change',
-    topics: [
-      { id: 'relationships', label: 'Relationships' },
-      { id: 'change', label: 'Change' },
-    ],
-    capturePoints: [
-      { id: 'identifies-relationship', label: 'Identifies a relationship' },
-      { id: 'recognises-pattern', label: 'Recognises a pattern' },
-      { id: 'represents-change', label: 'Represents change' },
-      { id: 'explains-relationship', label: 'Explains the relationship' },
-    ],
-  },
-];
-
-const nowCaptureLevels = [
-  'Emerging',
-  'Developing',
-  'Secure',
-  'Advanced',
-];
+const nowCaptureFocuses = getMathsCaptureFocuses({
+  teachingUnits: mathsTeachingUnits,
+  evidenceTopics: mathsEvidenceTopics,
+});
 
 const defaultNowStudentId = maths7AStudents.find((student) => student.id === 'leo-andersson')?.id || maths7AStudents[0]?.id || '';
 
@@ -236,19 +167,19 @@ function Panel({ title, children, sx }) {
 }
 
 function EvidenceCard({ item }) {
-  const topic = item.topicId ? getTopicLabel(item.topicId) : null;
+  const topic = item.evidenceTopicId ? getTopicLabel(item.evidenceTopicId) : null;
   const helper = [
     item.type === 'assessment' ? 'Assessment anchor' : 'Observation',
     topic,
-    item.value ? `${item.value}${item.valueType === 'percentage' ? '%' : ''}` : null,
+    item.percentage !== null ? `${item.percentage}%` : null,
   ].filter(Boolean);
 
   return (
     <Paper elevation={0} sx={{ p: 1.45, borderRadius: '16px', border: '1px solid rgba(23, 21, 26, 0.09)', bgcolor: '#fff' }}>
-      <Typography sx={{ color: darkText, fontWeight: 800, lineHeight: 1.3 }}>{item.label}</Typography>
+      <Typography sx={{ color: darkText, fontWeight: 800, lineHeight: 1.3 }}>{item.assessmentTitle || item.observationText || item.label}</Typography>
       <Typography sx={{ mt: 0.45, color: 'text.secondary', fontSize: 13.2 }}>{helper.join(' - ')}</Typography>
-      {item.note && (
-        <Typography sx={{ mt: 0.7, color: 'text.secondary', fontSize: 13.5, lineHeight: 1.45 }}>{item.note}</Typography>
+      {item.observationText && item.observationText !== item.label && (
+        <Typography sx={{ mt: 0.7, color: 'text.secondary', fontSize: 13.5, lineHeight: 1.45 }}>{item.observationText}</Typography>
       )}
     </Paper>
   );
@@ -358,6 +289,10 @@ function QuickCapture({ students, selectedStudentId, onStudentChange }) {
   const [confirmation, setConfirmation] = useState('');
   const activeUnit = nowCaptureFocuses.find((unit) => unit.id === activeUnitId) || nowCaptureFocuses[0];
   const activeTopic = activeUnit.topics.find((topic) => topic.id === activeTopicId) || activeUnit.topics[0];
+  const activeCapturePoints = getMathsCapturePointsForTopic({
+    teachingUnitId: activeUnit.id,
+    evidenceTopicId: activeTopic.id,
+  });
   const contextPanelOpen = Boolean(contextAnchorEl);
   const captureCountsByStudentId = useMemo(() => sessionCaptures.reduce((counts, capture) => {
     counts[capture.studentId] = (counts[capture.studentId] || 0) + 1;
@@ -382,7 +317,7 @@ function QuickCapture({ students, selectedStudentId, onStudentChange }) {
       return topicSections.length ? { unit, topicSections } : null;
     })
     .filter(Boolean), [selectedStudentCaptures]);
-  const currentLevelByCapturePointId = useMemo(() => activeUnit.capturePoints.reduce((levels, capturePoint) => {
+  const currentLevelByCapturePointId = useMemo(() => activeCapturePoints.reduce((levels, capturePoint) => {
     const matchingCaptures = selectedStudentCaptures
       .filter((capture) => (
         capture.teachingUnitId === activeUnit.id
@@ -392,11 +327,11 @@ function QuickCapture({ students, selectedStudentId, onStudentChange }) {
       .sort((first, second) => second.capturedAt.localeCompare(first.capturedAt));
 
     if (matchingCaptures[0]) {
-      levels[capturePoint.id] = matchingCaptures[0].level;
+      levels[capturePoint.id] = matchingCaptures[0].levelId;
     }
 
     return levels;
-  }, {}), [activeTopic.id, activeUnit, selectedStudentCaptures]);
+  }, {}), [activeCapturePoints, activeTopic.id, activeUnit.id, selectedStudentCaptures]);
 
   useEffect(() => {
     if (!confirmation) {
@@ -421,14 +356,13 @@ function QuickCapture({ students, selectedStudentId, onStudentChange }) {
     const capture = {
       id,
       studentId: selectedStudent.id,
+      type: 'observation',
+      date: annaSchedule.currentContext.date,
       teachingUnitId: activeUnit.id,
-      teachingUnitLabel: activeUnit.label,
       evidenceTopicId: activeTopic.id,
-      evidenceTopicLabel: activeTopic.label,
       capturePointId: capturePoint.id,
-      capturePointLabel: capturePoint.label,
-      level,
-      evidenceSource: 'observed',
+      levelId: level.id,
+      source: 'observed',
       capturedAt: new Date().toISOString(),
     };
 
@@ -447,7 +381,7 @@ function QuickCapture({ students, selectedStudentId, onStudentChange }) {
 
       return [...currentCaptures, capture];
     });
-    setRecentActionId(`${capturePoint.id}-${level}`);
+    setRecentActionId(`${capturePoint.id}-${level.id}`);
     setConfirmation(`${mode === 'update' ? 'Updated' : 'Captured'} for ${selectedStudent.displayName}`);
   }
 
@@ -712,7 +646,7 @@ function QuickCapture({ students, selectedStudentId, onStudentChange }) {
           </Box>
 
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'repeat(2, minmax(0, 1fr))' }, gap: { xs: 0.9, sm: 1.05 } }}>
-            {activeUnit.capturePoints.map((capturePoint) => (
+            {activeCapturePoints.map((capturePoint) => (
               <Paper
                 key={capturePoint.id}
                 elevation={0}
@@ -728,16 +662,16 @@ function QuickCapture({ students, selectedStudentId, onStudentChange }) {
                     {capturePoint.label}
                   </Typography>
                   <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.7 }}>
-                    {nowCaptureLevels.map((level) => {
-                      const isRecentAction = recentActionId === `${capturePoint.id}-${level}`;
-                      const isCurrentLevel = currentLevelByCapturePointId[capturePoint.id] === level;
+                    {mathsCaptureLevels.map((level) => {
+                      const isRecentAction = recentActionId === `${capturePoint.id}-${level.id}`;
+                      const isCurrentLevel = currentLevelByCapturePointId[capturePoint.id] === level.id;
                       const isActive = isRecentAction || isCurrentLevel;
                       const hasCurrentLevel = Boolean(currentLevelByCapturePointId[capturePoint.id]);
-                      const mainLabel = hasCurrentLevel ? `Update ${capturePoint.label} to ${level}` : `Capture ${capturePoint.label} as ${level}`;
+                      const mainLabel = hasCurrentLevel ? `Update ${capturePoint.label} to ${level.label}` : `Capture ${capturePoint.label} as ${level.label}`;
                       if (!hasCurrentLevel) {
                         return (
                           <Button
-                            key={level}
+                            key={level.id}
                             type="button"
                             aria-label={mainLabel}
                             aria-pressed={isRecentAction}
@@ -761,18 +695,18 @@ function QuickCapture({ students, selectedStudentId, onStudentChange }) {
                                 outline: `2px solid ${purple}`,
                                 outlineOffset: 2,
                               },
-                            }}
-                          >
-                            {level}
+                          }}
+                        >
+                            {level.label}
                           </Button>
                         );
                       }
 
                       return (
                         <ButtonGroup
-                          key={level}
+                          key={level.id}
                           variant="outlined"
-                          aria-label={`${level} capture actions`}
+                          aria-label={`${level.label} capture actions`}
                           sx={{
                             width: '100%',
                             borderRadius: '999px',
@@ -811,12 +745,12 @@ function QuickCapture({ students, selectedStudentId, onStudentChange }) {
                               },
                             }}
                           >
-                            {level}
+                            {level.label}
                           </Button>
                           {!isActive && (
                             <Button
                               type="button"
-                              aria-label={`Add new ${capturePoint.label}, ${level}, for ${selectedStudent.displayName}`}
+                              aria-label={`Add new ${capturePoint.label}, ${level.label}, for ${selectedStudent.displayName}`}
                               onClick={() => captureLevel(capturePoint, level, 'new')}
                               sx={{
                                 flex: '0 0 48px',
@@ -875,46 +809,53 @@ function QuickCapture({ students, selectedStudentId, onStudentChange }) {
                               {topic.label}
                             </Typography>
                             <Box component="ul" sx={{ m: 0, mt: 0.4, p: 0, listStyle: 'none', display: 'grid', gap: 0.45 }}>
-                              {captures.map((capture) => (
-                                <Box
-                                  key={capture.id}
-                                  component="li"
-                                  sx={{
-                                    display: 'grid',
-                                    gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', sm: 'minmax(0, 1fr) auto auto' },
-                                    gap: { xs: 0.5, sm: 1 },
-                                    alignItems: 'center',
-                                    py: 0.55,
-                                    px: 0.65,
-                                    borderRadius: '10px',
-                                    border: '1px solid rgba(23, 21, 26, 0.08)',
-                                  }}
-                                >
-                                  <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 760, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    {capture.capturePointLabel}
-                                  </Typography>
-                                  <Typography sx={{ color: darkText, fontSize: 12.6, fontWeight: 850, justifySelf: { xs: 'start', sm: 'end' }, gridColumn: { xs: '1 / 2', sm: 'auto' } }}>
-                                    {capture.level}
-                                  </Typography>
-                                  <IconButton
-                                    aria-label={`Remove ${capture.capturePointLabel}, ${capture.level}, ${capture.evidenceTopicLabel}, for ${selectedStudent.displayName}`}
-                                    onClick={() => removeCapture(capture.id)}
-                                    size="small"
+                              {captures.map((capture) => {
+                                const capturePoint = getMathsCapturePointById(capture.capturePointId);
+                                const captureLevel = getMathsCaptureLevelById(capture.levelId);
+                                const capturePointLabel = capturePoint?.label || capture.capturePointId || 'Observation';
+                                const levelLabel = captureLevel?.label || capture.levelId || 'Level';
+
+                                return (
+                                  <Box
+                                    key={capture.id}
+                                    component="li"
                                     sx={{
-                                      width: 34,
-                                      height: 34,
-                                      color: 'text.secondary',
-                                      justifySelf: 'end',
-                                      gridColumn: { xs: '2 / 3', sm: 'auto' },
-                                      gridRow: { xs: '1 / span 2', sm: 'auto' },
-                                      '&:hover': { color: darkText, bgcolor: '#fff' },
-                                      '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+                                      display: 'grid',
+                                      gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', sm: 'minmax(0, 1fr) auto auto' },
+                                      gap: { xs: 0.5, sm: 1 },
+                                      alignItems: 'center',
+                                      py: 0.55,
+                                      px: 0.65,
+                                      borderRadius: '10px',
+                                      border: '1px solid rgba(23, 21, 26, 0.08)',
                                     }}
                                   >
-                                    <CloseIcon sx={{ fontSize: 17 }} />
-                                  </IconButton>
-                                </Box>
-                              ))}
+                                    <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 760, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                      {capturePointLabel}
+                                    </Typography>
+                                    <Typography sx={{ color: darkText, fontSize: 12.6, fontWeight: 850, justifySelf: { xs: 'start', sm: 'end' }, gridColumn: { xs: '1 / 2', sm: 'auto' } }}>
+                                      {levelLabel}
+                                    </Typography>
+                                    <IconButton
+                                      aria-label={`Remove ${capturePointLabel}, ${levelLabel}, ${topic.label}, for ${selectedStudent.displayName}`}
+                                      onClick={() => removeCapture(capture.id)}
+                                      size="small"
+                                      sx={{
+                                        width: 34,
+                                        height: 34,
+                                        color: 'text.secondary',
+                                        justifySelf: 'end',
+                                        gridColumn: { xs: '2 / 3', sm: 'auto' },
+                                        gridRow: { xs: '1 / span 2', sm: 'auto' },
+                                        '&:hover': { color: darkText, bgcolor: '#fff' },
+                                        '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+                                      }}
+                                    >
+                                      <CloseIcon sx={{ fontSize: 17 }} />
+                                    </IconButton>
+                                  </Box>
+                                );
+                              })}
                             </Box>
                           </Box>
                         ))}
@@ -965,17 +906,17 @@ function buildMathsStudentProfileSections({ student, evidence, tasks }) {
       title: 'Saved evidence',
       description: 'Moments Anna chose to keep for this subject.',
       items: evidence.slice(0, 6).map((item) => {
-        const topic = item.topicId ? getTopicLabel(item.topicId) : null;
+        const topic = item.evidenceTopicId ? getTopicLabel(item.evidenceTopicId) : null;
         const detail = [
           item.type === 'assessment' ? 'Assessment anchor' : 'Observation',
           topic,
-          item.value ? `${item.value}${item.valueType === 'percentage' ? '%' : ''}` : null,
+          item.percentage !== null ? `${item.percentage}%` : null,
         ].filter(Boolean).join(' - ');
 
         return {
           id: item.id,
-          label: item.label,
-          detail: item.note || detail,
+          label: item.assessmentTitle || item.observationText || item.label,
+          detail: item.observationText || detail,
           meta: [detail, item.date].filter(Boolean).join(' - '),
         };
       }),
@@ -1011,7 +952,7 @@ function AssessmentResultsChart({ assessments, evidenceTopics }) {
     const value = new Date(`${item.date}T12:00:00`).getTime();
     return padding.left + ((value - minDate) / (maxDate - minDate)) * (width - padding.left - padding.right);
   };
-  const yFor = (item) => padding.top + (1 - (Number(item.value) || 0) / 100) * (height - padding.top - padding.bottom);
+  const yFor = (item) => padding.top + (1 - (Number(item.percentage) || 0) / 100) * (height - padding.top - padding.bottom);
   const points = sortedAssessments.map((item) => `${xFor(item)},${yFor(item)}`).join(' ');
   const activeAssessment = sortedAssessments.find((item) => item.id === activeAssessmentId) || null;
   const activeTooltip = activeAssessment ? {
@@ -1044,8 +985,9 @@ function AssessmentResultsChart({ assessments, evidenceTopics }) {
             })}
             {sortedAssessments.length > 1 && <polyline points={points} fill="none" stroke={purple} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />}
             {sortedAssessments.map((item) => {
-              const topic = topicById.get(item.evidenceTopicId || item.topicId);
+              const topic = topicById.get(item.evidenceTopicId);
               const unit = getTeachingUnitById(item.teachingUnitId);
+              const label = item.assessmentTitle || item.label;
               return (
                 <g key={item.id}>
                   <circle
@@ -1057,14 +999,14 @@ function AssessmentResultsChart({ assessments, evidenceTopics }) {
                     strokeWidth="2.2"
                     tabIndex={0}
                     role="graphics-symbol"
-                    aria-label={`${item.label}, ${item.value}%, ${formatDemoDate(item.date)}, ${topic?.label || item.topicId}, ${unit?.title || 'teaching unit not shown'}.`}
+                    aria-label={`${label}, ${item.percentage}%, ${formatDemoDate(item.date)}, ${topic?.label || item.evidenceTopicId}, ${unit?.title || 'teaching unit not shown'}.`}
                     onMouseEnter={() => setActiveAssessmentId(item.id)}
                     onMouseLeave={() => setActiveAssessmentId(null)}
                     onFocus={() => setActiveAssessmentId(item.id)}
                     onBlur={() => setActiveAssessmentId(null)}
                     style={{ cursor: 'default', outline: 'none' }}
                   >
-                    <title>{`${formatDemoDate(item.date)} · ${item.label} · ${topic?.label || item.topicId} · ${unit?.title || ''} · ${item.value}%`}</title>
+                    <title>{`${formatDemoDate(item.date)} · ${label} · ${topic?.label || item.evidenceTopicId} · ${unit?.title || ''} · ${item.percentage}%`}</title>
                   </circle>
                   <text x={xFor(item)} y={height - 9} textAnchor="middle" fill="rgba(23, 21, 26, 0.58)" fontSize="10.5">{formatDemoDate(item.date)}</text>
                 </g>
@@ -1074,10 +1016,10 @@ function AssessmentResultsChart({ assessments, evidenceTopics }) {
               <g pointerEvents="none">
                 <rect x={activeTooltip.x} y={activeTooltip.y} width="152" height="40" rx="8" fill="#fff" stroke="rgba(23, 21, 26, 0.16)" />
                 <text x={activeTooltip.x + 10} y={activeTooltip.y + 16} fill={darkText} fontSize="11.5" fontWeight="700">
-                  {activeAssessment.label.length > 24 ? `${activeAssessment.label.slice(0, 24)}...` : activeAssessment.label}
+                  {(activeAssessment.assessmentTitle || activeAssessment.label).length > 24 ? `${(activeAssessment.assessmentTitle || activeAssessment.label).slice(0, 24)}...` : activeAssessment.assessmentTitle || activeAssessment.label}
                 </text>
                 <text x={activeTooltip.x + 10} y={activeTooltip.y + 31} fill="rgba(23, 21, 26, 0.62)" fontSize="11">
-                  {activeAssessment.value}% result
+                  {activeAssessment.percentage}% result
                 </text>
               </g>
             )}
@@ -1088,9 +1030,9 @@ function AssessmentResultsChart({ assessments, evidenceTopics }) {
           <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>Results relate to different areas of mathematics.</Typography>
           <Box component="ul" sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
             {sortedAssessments.map((item) => {
-              const topic = topicById.get(item.evidenceTopicId || item.topicId);
+              const topic = topicById.get(item.evidenceTopicId);
               const unit = getTeachingUnitById(item.teachingUnitId);
-              return <li key={item.id}>{formatDemoDate(item.date)}. {item.label}. {topic?.label || item.topicId}. {unit?.title || 'Teaching unit not shown'}. {item.value}%.</li>;
+              return <li key={item.id}>{formatDemoDate(item.date)}. {item.assessmentTitle || item.label}. {topic?.label || item.evidenceTopicId}. {unit?.title || 'Teaching unit not shown'}. {item.percentage}%.</li>;
             })}
           </Box>
         </>
@@ -1133,13 +1075,12 @@ function StudentInsightPanel({ student, teachingUnits, evidenceTopics, evidence,
                 {observations.length ? (
                   <Stack spacing={0.9} sx={{ mt: 0.85 }}>
                     {observations.slice(0, 7).map((item) => {
-                      const topic = topicById.get(item.evidenceTopicId || item.topicId);
+                      const topic = topicById.get(item.evidenceTopicId);
                       const unit = getTeachingUnitById(item.teachingUnitId);
                       return (
                         <Box key={item.id} sx={{ borderTop: '1px solid rgba(23, 21, 26, 0.07)', pt: 0.75 }}>
-                          <Typography sx={{ color: 'text.secondary', fontSize: 11.8, fontWeight: 760 }}>{formatDemoDate(item.date)} · {unit?.title || 'Teaching unit'} · {topic?.label || item.topicId}</Typography>
-                          <Typography sx={{ mt: 0.2, color: darkText, fontSize: 13.2, fontWeight: 780 }}>{item.label}</Typography>
-                          {item.note && <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 12.6, lineHeight: 1.4 }}>{item.note}</Typography>}
+                          <Typography sx={{ color: 'text.secondary', fontSize: 11.8, fontWeight: 760 }}>{formatDemoDate(item.date)} · {unit?.title || 'Teaching unit'} · {topic?.label || item.evidenceTopicId}</Typography>
+                          <Typography sx={{ mt: 0.2, color: darkText, fontSize: 13.2, fontWeight: 780 }}>{item.observationText || item.label}</Typography>
                         </Box>
                       );
                     })}
@@ -1164,7 +1105,7 @@ function StudentInsightPanel({ student, teachingUnits, evidenceTopics, evidence,
                         {entry.assessments.length ? `${entry.assessments.length} assessment${entry.assessments.length === 1 ? '' : 's'}` : 'No assessments'} · {entry.observations.length ? `${entry.observations.length} observation${entry.observations.length === 1 ? '' : 's'}` : 'No observations'}
                       </Typography>
                       <Typography sx={{ mt: 0.15, color: 'text.secondary', fontSize: 12.2 }}>
-                        {entry.latestItem ? `Latest: ${entry.latestItem.label}` : 'No saved information'}
+                        {entry.latestItem ? `Latest: ${entry.latestItem.assessmentTitle || entry.latestItem.observationText || entry.latestItem.label}` : 'No saved information'}
                       </Typography>
                     </Box>
                   ))}

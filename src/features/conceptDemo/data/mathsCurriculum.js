@@ -1,3 +1,10 @@
+import {
+  getMathsCaptureLevelById,
+  getMathsCapturePointById,
+  getMathsCapturePointIdFromLegacy,
+  validateMathsCaptureConfig,
+} from './mathsCaptureConfig.js';
+
 export const mathsCurriculumAreas = [
   {
     id: 'numbers-and-calculation',
@@ -401,17 +408,51 @@ export function normalizeMathsPlanningBlock(block) {
 }
 
 export function normalizeMathsEvidenceItem(item) {
+  if (!item || typeof item !== 'object') {
+    return null;
+  }
+
+  const type = item.type === 'assessment' ? 'assessment' : 'observation';
   const topic = getEvidenceTopicById(item.evidenceTopicId || item.topicId);
+  if (!item.id || !item.studentId || !topic) {
+    return null;
+  }
+
   const linkedUnitIds = topic?.teachingUnitIds || [];
   const explicitTeachingUnit = getTeachingUnitById(item.teachingUnitId);
   const teachingUnitId = explicitTeachingUnit?.id || (linkedUnitIds.length === 1 ? linkedUnitIds[0] : null);
+  const percentage = item.percentage !== undefined
+    ? Number(item.percentage)
+    : item.valueType === 'percentage'
+      ? Number(item.value)
+      : null;
+  const capturePointId = item.capturePointId && getMathsCapturePointById(item.capturePointId)
+    ? item.capturePointId
+    : getMathsCapturePointIdFromLegacy({ signal: item.signal, label: item.label });
+  const levelId = item.levelId && getMathsCaptureLevelById(item.levelId) ? item.levelId : null;
+  const assessmentTitle = item.assessmentTitle || (type === 'assessment' ? item.label || '' : '');
+  const observationText = item.observationText || (type === 'observation' ? item.note || item.label || '' : '');
 
   return {
     ...item,
-    topicId: topic?.id || item.topicId,
-    evidenceTopicId: topic?.id || item.evidenceTopicId || item.topicId || '',
+    type,
+    date: item.date || '',
+    evidenceTopicId: topic.id,
     teachingUnitId,
-    contentAreaId: topic?.curriculumAreaId || item.contentAreaId || '',
+    planningBlockId: item.planningBlockId || '',
+    source: item.source || 'teacher',
+    dimensions: Array.isArray(item.dimensions) ? item.dimensions : [],
+    percentage: Number.isFinite(percentage) ? percentage : null,
+    assessmentTitle,
+    capturePointId,
+    levelId,
+    observationText,
+    topicId: topic.id,
+    contentAreaId: topic.curriculumAreaId || item.contentAreaId || '',
+    value: item.value !== undefined ? item.value : Number.isFinite(percentage) ? percentage : undefined,
+    valueType: item.valueType || (Number.isFinite(percentage) ? 'percentage' : undefined),
+    label: item.label || assessmentTitle || observationText || '',
+    note: item.note ?? observationText ?? null,
   };
 }
 
@@ -419,18 +460,38 @@ export function validateMathsEvidenceItems(evidenceItems = []) {
   const errors = [];
   const legacyContentAreaIds = [];
 
-  (evidenceItems || []).forEach((item) => {
-    const topicId = item?.evidenceTopicId || item?.topicId;
-    const topic = getEvidenceTopicById(topicId);
+  (evidenceItems || []).forEach((rawItem) => {
+    const item = normalizeMathsEvidenceItem(rawItem);
+    const topic = getEvidenceTopicById(item?.evidenceTopicId);
 
-    if (!topicId) {
-      errors.push(`${item?.id || 'evidence item'} is missing evidenceTopicId/topicId.`);
+    if (!item) {
+      errors.push(`${rawItem?.id || 'evidence item'} could not be normalised.`);
       return;
     }
 
     if (!topic) {
-      errors.push(`${item?.id || 'evidence item'} references missing evidence topic ${topicId}.`);
+      errors.push(`${item?.id || 'evidence item'} references missing evidence topic ${item.evidenceTopicId}.`);
       return;
+    }
+
+    if (item.teachingUnitId && !getTeachingUnitById(item.teachingUnitId)) {
+      errors.push(`${item.id} references missing teaching unit ${item.teachingUnitId}.`);
+    }
+
+    if (item.capturePointId && !getMathsCapturePointById(item.capturePointId)) {
+      errors.push(`${item.id} references missing capture point ${item.capturePointId}.`);
+    }
+
+    if (item.levelId && !getMathsCaptureLevelById(item.levelId)) {
+      errors.push(`${item.id} references missing capture level ${item.levelId}.`);
+    }
+
+    if (item.capturePointId && !item.levelId) {
+      errors.push(`${item.id} has a capture point but no valid level.`);
+    }
+
+    if (item.percentage !== null && (!Number.isFinite(Number(item.percentage)) || item.percentage < 0 || item.percentage > 100)) {
+      errors.push(`${item.id} has invalid percentage ${item.percentage}.`);
     }
 
     if (!topic.curriculumAreaId || !getCurriculumAreaById(topic.curriculumAreaId)) {
@@ -496,5 +557,8 @@ export function validateMathsCurriculumConfig() {
     });
   });
 
-  return errors;
+  return [
+    ...errors,
+    ...validateMathsCaptureConfig({ getTeachingUnitById, getEvidenceTopicById, getAbilityById }),
+  ];
 }

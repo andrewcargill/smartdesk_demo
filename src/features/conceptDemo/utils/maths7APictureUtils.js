@@ -6,8 +6,15 @@ import {
 } from '../data/mathsCurriculum.js';
 
 export function getMergedMathsEvidence(baseEvidence, storedEvidence) {
-  return [...baseEvidence, ...storedEvidence]
+  const storedItems = Array.isArray(storedEvidence)
+    ? storedEvidence
+    : Array.isArray(storedEvidence?.items)
+      ? storedEvidence.items
+      : [];
+
+  return [...(baseEvidence || []), ...storedItems]
     .map(normalizeMathsEvidenceItem)
+    .filter(Boolean)
     .sort((first, second) => second.date.localeCompare(first.date));
 }
 
@@ -38,7 +45,7 @@ export function getStudentObservations(evidence, studentId) {
 }
 
 export function getEvidenceForTopic(evidence, topicId) {
-  return evidence.filter((item) => (item.evidenceTopicId || item.topicId) === topicId);
+  return evidence.filter((item) => item.evidenceTopicId === topicId);
 }
 
 export function getStudentEvidenceForTeachingUnit({ studentId, teachingUnitId, evidenceItems = [] }) {
@@ -48,11 +55,6 @@ export function getStudentEvidenceForTeachingUnit({ studentId, teachingUnitId, e
     item.studentId === studentId
     && (
       item.teachingUnitId === teachingUnitId
-      || (
-        !item.teachingUnitId
-        && getEvidenceTopicById(item.evidenceTopicId || item.topicId)?.teachingUnitIds?.length === 1
-        && getEvidenceTopicById(item.evidenceTopicId || item.topicId)?.teachingUnitIds?.[0] === teachingUnitId
-      )
     )
   ));
 }
@@ -86,7 +88,7 @@ export function getStudentEvidenceByContent(evidence, studentId, topics) {
     const items = sortEvidenceByDate(
       unit
         ? getStudentEvidenceForTeachingUnit({ studentId, teachingUnitId: unit.id, evidenceItems: studentEvidence })
-        : studentEvidence.filter((item) => (item.evidenceTopicId || item.topicId) === topic.id),
+        : studentEvidence.filter((item) => item.evidenceTopicId === topic.id),
       'desc',
     );
     const assessments = items.filter((item) => item.type === 'assessment');
@@ -108,7 +110,7 @@ export function getStudentEvidenceSummary(evidence, studentId, topics = []) {
   const assessments = studentEvidence.filter((item) => item.type === 'assessment');
   const observations = studentEvidence.filter((item) => item.type !== 'assessment');
   const contentAreas = new Set(studentEvidence
-    .map((item) => getCurriculumAreaForEvidenceTopic(item.evidenceTopicId || item.topicId)?.id)
+    .map((item) => getCurriculumAreaForEvidenceTopic(item.evidenceTopicId)?.id)
     .filter(Boolean));
   const evidenceByContent = getStudentEvidenceByContent(evidence, studentId, topics);
 
@@ -142,8 +144,8 @@ export function getStudentVisiblePatterns(evidence, studentId, topics = []) {
 
   const latestObservation = getStudentObservations(evidence, studentId)[0] || null;
   if (latestObservation) {
-    const topic = topics.find((item) => item.id === latestObservation.topicId);
-    patterns.push(`The latest saved observation relates to ${topic?.label || latestObservation.topicId || 'mathematics'}.`);
+    const topic = topics.find((item) => item.id === latestObservation.evidenceTopicId);
+    patterns.push(`The latest saved observation relates to ${topic?.label || latestObservation.evidenceTopicId || 'mathematics'}.`);
   }
 
   const emptyTopics = summary.evidenceByContent.filter((entry) => !entry.items.length);
@@ -156,7 +158,7 @@ export function getStudentVisiblePatterns(evidence, studentId, topics = []) {
     const chronological = sortEvidenceByDate(firstComparableTopic.assessments, 'asc');
     const first = chronological[0];
     const latest = chronological[chronological.length - 1];
-    const difference = Number(latest.value) - Number(first.value);
+    const difference = Number(latest.percentage) - Number(first.percentage);
     if (Number.isFinite(difference) && difference !== 0) {
       patterns.push(`The latest ${firstComparableTopic.topic.label} result is ${Math.abs(difference)} percentage points ${difference > 0 ? 'higher' : 'lower'} than the earlier ${firstComparableTopic.topic.label} result.`);
     }
@@ -173,7 +175,7 @@ export function getStudentTopicCell(studentId, topicId, evidence) {
   const unit = getTeachingUnitById(topicId);
   const items = unit
     ? getStudentEvidenceForTeachingUnit({ studentId, teachingUnitId: topicId, evidenceItems: evidence })
-    : evidence.filter((item) => studentId === item.studentId && (item.evidenceTopicId || item.topicId) === topicId);
+    : evidence.filter((item) => studentId === item.studentId && item.evidenceTopicId === topicId);
   const assessments = items.filter((item) => item.type === 'assessment');
   const observations = items.filter((item) => item.type !== 'assessment');
 
@@ -199,7 +201,7 @@ export function getStudentTopicCell(studentId, topicId, evidence) {
 
   if (assessments.length) {
     const latestAssessment = [...assessments].sort((first, second) => second.date.localeCompare(first.date))[0];
-    const value = latestAssessment.value ? ` ${latestAssessment.value}${latestAssessment.valueType === 'percentage' ? '%' : ''}` : '';
+    const value = latestAssessment.percentage !== null ? ` ${latestAssessment.percentage}%` : '';
     return {
       label: `Assessment${value}`,
       detail: `${assessments.length} saved assessment anchor${assessments.length === 1 ? '' : 's'}`,
@@ -222,9 +224,9 @@ export function getEvidenceTimeline(evidence, classSignals = []) {
   const evidenceItems = evidence.map((item) => ({
     id: item.id,
     date: item.date,
-    label: item.label,
-    note: item.note,
-    topicId: item.evidenceTopicId || item.topicId,
+    label: item.assessmentTitle || item.observationText || item.label,
+    note: item.observationText || item.note,
+    topicId: item.evidenceTopicId,
     teachingUnitId: item.teachingUnitId || '',
     kind: item.type === 'assessment' ? 'Assessment anchor' : 'Observation',
   }));
@@ -244,10 +246,10 @@ export function getStudentPictureSummary(student, evidence) {
   const studentEvidence = getEvidenceForStudent(evidence, student.id);
   const assessments = studentEvidence.filter((item) => item.type === 'assessment');
   const observations = studentEvidence.filter((item) => item.type !== 'assessment');
-  const topics = [...new Set(studentEvidence.map((item) => item.evidenceTopicId || item.topicId).filter(Boolean))];
+  const topics = [...new Set(studentEvidence.map((item) => item.evidenceTopicId).filter(Boolean))];
   const latestDate = getLatestEvidenceDate(studentEvidence);
   const averageAssessment = assessments.length
-    ? Math.round(assessments.reduce((sum, item) => sum + (Number(item.value) || 0), 0) / assessments.length)
+    ? Math.round(assessments.reduce((sum, item) => sum + (Number(item.percentage) || 0), 0) / assessments.length)
     : null;
 
   let summary = 'The current picture is limited, with no saved Maths 7A information yet.';
@@ -315,7 +317,7 @@ export function getStudentScanRows(students, evidence) {
       id: student.id,
       displayName: student.displayName,
       summary: summary.summary,
-      latestItemLabel: latestItem?.label || 'No saved information',
+      latestItemLabel: latestItem?.assessmentTitle || latestItem?.observationText || latestItem?.label || 'No saved information',
       latestItemDate: latestItem?.date || null,
       topicsRepresented: summary.topics.length,
     };
