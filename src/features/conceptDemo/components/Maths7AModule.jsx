@@ -33,6 +33,14 @@ import {
   getMathsCapturePointsForTopic,
   mathsCaptureLevels,
 } from '../data/mathsCaptureConfig.js';
+import {
+  addMaths7ALocalObservation,
+  MATHS_7A_EVIDENCE_STORAGE_KEY,
+  readMaths7ALocalEvidence,
+  removeMaths7ALocalObservation,
+  resetMaths7ALocalEvidence,
+  updateMaths7ALocalObservation,
+} from '../data/maths7AEvidenceStorage.js';
 import { maths7APlanningBlocks, maths7APlanningPeriods } from '../data/maths7APlanning.js';
 import { maths7AStudents } from '../data/Maths7AStudents.js';
 import { classGroupDefinitions } from '../data/classGroupDefinitions.js';
@@ -72,7 +80,6 @@ import SubjectWorkspaceContainer from './SubjectWorkspaceContainer.jsx';
 const purple = '#9c28af';
 const palePurple = '#fbf5fd';
 const darkText = '#17151a';
-const evidenceStorageKey = 'smartdesk_demo_maths7a_evidence';
 const planningStorageKey = 'smartdesk_demo_maths7a_plan';
 
 const classPicture = {
@@ -88,19 +95,6 @@ const nowCaptureFocuses = getMathsCaptureFocuses({
 });
 
 const defaultNowStudentId = maths7AStudents.find((student) => student.id === 'leo-andersson')?.id || maths7AStudents[0]?.id || '';
-
-function readJsonStorage(key, fallback) {
-  if (typeof window === 'undefined') {
-    return fallback;
-  }
-
-  try {
-    const value = window.localStorage.getItem(key);
-    return value ? JSON.parse(value) : fallback;
-  } catch {
-    return fallback;
-  }
-}
 
 function findLinkedTasks(tasks, student) {
   return tasks.filter((task) => (
@@ -316,12 +310,11 @@ function StudentPictureDialog({ student, evidence, tasks, open, onClose, onCaptu
   );
 }
 
-function QuickCapture({ students, selectedStudentId, onStudentChange }) {
+function QuickCapture({ students, selectedStudentId, localEvidencePayload, onLocalEvidencePayloadChange, onStudentChange }) {
   const selectedStudent = students.find((student) => student.id === selectedStudentId) || students[0];
   const [activeUnitId, setActiveUnitId] = useState(nowCaptureFocuses[0].id);
   const [activeTopicId, setActiveTopicId] = useState(nowCaptureFocuses[0].topics[0].id);
   const [contextAnchorEl, setContextAnchorEl] = useState(null);
-  const [sessionCaptures, setSessionCaptures] = useState([]);
   const [recentActionId, setRecentActionId] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const activeUnit = nowCaptureFocuses.find((unit) => unit.id === activeUnitId) || nowCaptureFocuses[0];
@@ -331,13 +324,14 @@ function QuickCapture({ students, selectedStudentId, onStudentChange }) {
     evidenceTopicId: activeTopic.id,
   });
   const contextPanelOpen = Boolean(contextAnchorEl);
-  const captureCountsByStudentId = useMemo(() => sessionCaptures.reduce((counts, capture) => {
+  const localObservations = localEvidencePayload?.observations || [];
+  const captureCountsByStudentId = useMemo(() => localObservations.reduce((counts, capture) => {
     counts[capture.studentId] = (counts[capture.studentId] || 0) + 1;
     return counts;
-  }, {}), [sessionCaptures]);
+  }, {}), [localObservations]);
   const selectedStudentCaptures = useMemo(
-    () => sessionCaptures.filter((capture) => capture.studentId === selectedStudent.id),
-    [selectedStudent.id, sessionCaptures],
+    () => localObservations.filter((capture) => capture.studentId === selectedStudent.id),
+    [localObservations, selectedStudent.id],
   );
   const selectedCaptureSections = useMemo(() => nowCaptureFocuses
     .map((unit) => {
@@ -345,7 +339,9 @@ function QuickCapture({ students, selectedStudentId, onStudentChange }) {
         .map((topic) => {
           const captures = selectedStudentCaptures
             .filter((capture) => capture.teachingUnitId === unit.id && capture.evidenceTopicId === topic.id)
-            .sort((first, second) => second.capturedAt.localeCompare(first.capturedAt));
+            .sort((first, second) => (
+              (second.updatedAt || second.createdAt || second.date).localeCompare(first.updatedAt || first.createdAt || first.date)
+            ));
 
           return captures.length ? { topic, captures } : null;
         })
@@ -361,7 +357,9 @@ function QuickCapture({ students, selectedStudentId, onStudentChange }) {
         && capture.evidenceTopicId === activeTopic.id
         && capture.capturePointId === capturePoint.id
       ))
-      .sort((first, second) => second.capturedAt.localeCompare(first.capturedAt));
+      .sort((first, second) => (
+        (second.updatedAt || second.createdAt || second.date).localeCompare(first.updatedAt || first.createdAt || first.date)
+      ));
 
     if (matchingCaptures[0]) {
       levels[capturePoint.id] = matchingCaptures[0].levelId;
@@ -389,41 +387,49 @@ function QuickCapture({ students, selectedStudentId, onStudentChange }) {
   }, [recentActionId]);
 
   function captureLevel(capturePoint, level, mode = 'update') {
-    const id = `capture-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-    const capture = {
-      id,
+    const latestLocalObservation = selectedStudentCaptures
+      .filter((capture) => (
+        capture.teachingUnitId === activeUnit.id
+        && capture.evidenceTopicId === activeTopic.id
+        && capture.capturePointId === capturePoint.id
+      ))
+      .sort((first, second) => (
+        (second.updatedAt || second.createdAt || second.date).localeCompare(first.updatedAt || first.createdAt || first.date)
+      ))[0] || null;
+    const shouldUpdate = mode === 'update' && latestLocalObservation;
+    const observationInput = {
       studentId: selectedStudent.id,
-      type: 'observation',
-      date: annaSchedule.currentContext.date,
       teachingUnitId: activeUnit.id,
       evidenceTopicId: activeTopic.id,
       capturePointId: capturePoint.id,
       levelId: level.id,
-      source: 'observed',
-      capturedAt: new Date().toISOString(),
     };
+    const outcome = shouldUpdate
+      ? updateMaths7ALocalObservation(localEvidencePayload, latestLocalObservation.id, { levelId: level.id })
+      : addMaths7ALocalObservation(localEvidencePayload, observationInput);
 
-    setSessionCaptures((currentCaptures) => {
-      if (mode === 'update') {
-        return [
-          ...currentCaptures.filter((currentCapture) => !(
-            currentCapture.studentId === selectedStudent.id
-            && currentCapture.teachingUnitId === activeUnit.id
-            && currentCapture.evidenceTopicId === activeTopic.id
-            && currentCapture.capturePointId === capturePoint.id
-          )),
-          capture,
-        ];
-      }
-
-      return [...currentCaptures, capture];
-    });
+    onLocalEvidencePayloadChange(outcome.payload);
     setRecentActionId(`${capturePoint.id}-${level.id}`);
-    setConfirmation(`${mode === 'update' ? 'Updated' : 'Captured'} for ${selectedStudent.displayName}`);
+
+    if (!outcome.persisted) {
+      setConfirmation(`Observation ${shouldUpdate ? 'updated' : 'added'} for this session but could not be saved locally.`);
+      return;
+    }
+
+    setConfirmation(`Observation ${shouldUpdate ? 'updated' : 'added'} for ${selectedStudent.displayName}.`);
   }
 
   function removeCapture(captureId) {
-    setSessionCaptures((currentCaptures) => currentCaptures.filter((capture) => capture.id !== captureId));
+    const outcome = removeMaths7ALocalObservation(localEvidencePayload, captureId);
+
+    onLocalEvidencePayloadChange(outcome.payload);
+
+    if (!outcome.persisted) {
+      setConfirmation('Observation removed for this session but could not be saved locally.');
+      return;
+    }
+
+    setConfirmation(`Observation removed for ${selectedStudent.displayName}.`);
   }
 
   function openContextPanel(event) {
@@ -515,7 +521,7 @@ function QuickCapture({ students, selectedStudentId, onStudentChange }) {
                   {!!captureCount && (
                     <Box
                       component="span"
-                      aria-label={`${captureCount} temporary ${captureCount === 1 ? 'observation' : 'observations'}`}
+                      aria-label={`${captureCount} local ${captureCount === 1 ? 'observation' : 'observations'}`}
                       sx={{
                         minWidth: 22,
                         height: 22,
@@ -704,7 +710,7 @@ function QuickCapture({ students, selectedStudentId, onStudentChange }) {
                       const isCurrentLevel = currentLevelByCapturePointId[capturePoint.id] === level.id;
                       const isActive = isRecentAction || isCurrentLevel;
                       const hasCurrentLevel = Boolean(currentLevelByCapturePointId[capturePoint.id]);
-                      const mainLabel = hasCurrentLevel ? `Update ${capturePoint.label} to ${level.label}` : `Capture ${capturePoint.label} as ${level.label}`;
+                      const mainLabel = hasCurrentLevel ? `Update ${capturePoint.label} to ${level.label}` : `Add ${capturePoint.label} as ${level.label}`;
                       if (!hasCurrentLevel) {
                         return (
                           <Button
@@ -712,7 +718,7 @@ function QuickCapture({ students, selectedStudentId, onStudentChange }) {
                             type="button"
                             aria-label={mainLabel}
                             aria-pressed={isRecentAction}
-                            onClick={() => captureLevel(capturePoint, level, 'update')}
+                            onClick={() => captureLevel(capturePoint, level, 'new')}
                             variant="outlined"
                             sx={{
                               minHeight: 38,
@@ -1860,7 +1866,7 @@ function ClassPictureStudents({
 export default function Maths7AModule({ onBackToWeek, onClose }) {
   const [activeMode, setActiveMode] = useState('plan');
   const [selectedStudentId, setSelectedStudentId] = useState(defaultNowStudentId);
-  const [localEvidence, setLocalEvidence] = useState([]);
+  const [localEvidencePayload, setLocalEvidencePayload] = useState(() => readMaths7ALocalEvidence());
   const [studentPictureOpen, setStudentPictureOpen] = useState(false);
   const [studentProfileOpen, setStudentProfileOpen] = useState(false);
   const [profileStudentId, setProfileStudentId] = useState(maths7AStudents[0]?.id || '');
@@ -1899,7 +1905,7 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
   });
   const capturePanelRef = useRef(null);
   const mathsLesson = getMondayMathsLesson();
-  const allEvidence = useMemo(() => getMergedMathsEvidence(maths7AEvidence, localEvidence), [localEvidence]);
+  const allEvidence = useMemo(() => getMergedMathsEvidence(maths7AEvidence, localEvidencePayload), [localEvidencePayload]);
   const selectedStudent = maths7AStudents.find((student) => student.id === selectedStudentId) || maths7AStudents[0];
   const selectedEvidence = getEvidenceForStudent(allEvidence, selectedStudent.id);
   const linkedTasks = findLinkedTasks(annaTasks, selectedStudent);
@@ -1944,15 +1950,21 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
   );
   const currentPlanningUnitTitle = getCurrentPlanningUnitTitle(currentPlanningBlock);
   useEffect(() => {
-    setLocalEvidence(readJsonStorage(evidenceStorageKey, []));
+    function handleStorageChange(event) {
+      if (event.key === MATHS_7A_EVIDENCE_STORAGE_KEY) {
+        setLocalEvidencePayload(readMaths7ALocalEvidence());
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   function resetDemo() {
     if (typeof window !== 'undefined') {
-      window.localStorage.removeItem(evidenceStorageKey);
       window.localStorage.removeItem(planningStorageKey);
     }
-    setLocalEvidence([]);
+    setLocalEvidencePayload(resetMaths7ALocalEvidence().payload);
     resetGroups();
     resetPlanning();
     resetPlanningCurriculumNotes();
@@ -1978,6 +1990,8 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       <QuickCapture
         students={maths7AStudents}
         selectedStudentId={selectedStudentId}
+        localEvidencePayload={localEvidencePayload}
+        onLocalEvidencePayloadChange={setLocalEvidencePayload}
         onStudentChange={setSelectedStudentId}
       />
     </Box>
@@ -2040,7 +2054,12 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       activeMode={activeMode}
       onModeChange={setActiveMode}
       onBack={onClose || onBackToWeek}
-      menuItems={[{ id: 'reset-maths-7a-demo', label: 'Reset Maths 7A demo', onClick: resetDemo }]}
+      menuItems={[{
+        id: 'reset-maths-7a-demo',
+        label: 'Reset demo',
+        icon: <RestartAltIcon fontSize="small" />,
+        onClick: resetDemo,
+      }]}
     >
       {activeMode === 'now' && nowMode}
       {activeMode === 'plan' && planMode}

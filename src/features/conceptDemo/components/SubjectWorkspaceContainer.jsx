@@ -7,6 +7,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
   Box,
   IconButton,
+  ListItemIcon,
   Menu,
   MenuItem,
   Stack,
@@ -143,6 +144,11 @@ export default function SubjectWorkspaceContainer({
                 >
                   {menuItems.map((item) => (
                     <MenuItem key={item.id || item.label} onClick={() => handleMenuItemClick(item)}>
+                      {item.icon && (
+                        <ListItemIcon sx={{ minWidth: 34, color: 'inherit' }}>
+                          {item.icon}
+                        </ListItemIcon>
+                      )}
                       {item.label}
                     </MenuItem>
                   ))}

@@ -8,13 +8,30 @@ import {
 export function getMergedMathsEvidence(baseEvidence, storedEvidence) {
   const storedItems = Array.isArray(storedEvidence)
     ? storedEvidence
-    : Array.isArray(storedEvidence?.items)
-      ? storedEvidence.items
-      : [];
+    : Array.isArray(storedEvidence?.observations)
+      ? storedEvidence.observations
+      : Array.isArray(storedEvidence?.items)
+        ? storedEvidence.items
+        : [];
+  const deletedSeededEvidenceIds = new Set(Array.isArray(storedEvidence?.deletedSeededEvidenceIds) ? storedEvidence.deletedSeededEvidenceIds : []);
+  const evidenceById = new Map();
 
-  return [...(baseEvidence || []), ...storedItems]
+  (baseEvidence || [])
+    .map(normalizeMathsEvidenceItem)
+    .filter((item) => item && !deletedSeededEvidenceIds.has(item.id))
+    .forEach((item) => evidenceById.set(item.id, item));
+
+  storedItems
     .map(normalizeMathsEvidenceItem)
     .filter(Boolean)
+    .forEach((item) => {
+      if (evidenceById.has(item.id) && typeof console !== 'undefined') {
+        console.warn(`[Maths 7A evidence] Local evidence ID ${item.id} collides with seeded evidence. Using the local record.`);
+      }
+      evidenceById.set(item.id, item);
+    });
+
+  return [...evidenceById.values()]
     .sort((first, second) => second.date.localeCompare(first.date));
 }
 
