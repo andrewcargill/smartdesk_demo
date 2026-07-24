@@ -1524,7 +1524,7 @@ function CaptureCoverageTile({ summary }) {
 
   return (
     <Paper elevation={0} sx={{ p: 1.1, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff', minHeight: 126 }}>
-      <Typography sx={{ color: darkText, fontSize: 12.8, fontWeight: 880 }}>Capture points</Typography>
+      <Typography sx={{ color: darkText, fontSize: 12.8, fontWeight: 880 }}>Observation focus</Typography>
       <Stack direction="row" spacing={0.7} flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
         {sequences.map((sequence) => {
           const pointObservations = sortEvidenceByDate(observationsByCapturePoint.get(sequence.capturePoint.id) || [], 'desc');
@@ -1546,10 +1546,10 @@ function CaptureCoverageTile({ summary }) {
             />
           );
         })}
-        {!sequences.length && <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>No capture points configured.</Typography>}
+        {!sequences.length && <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>No observation focuses configured.</Typography>}
       </Stack>
       <Typography sx={{ mt: 1, color: 'text.secondary', fontSize: 11.8 }}>
-        {summary.observedCapturePointCount}/{summary.capturePoints.length} capture points observed
+        {summary.observedCapturePointCount}/{summary.capturePoints.length} observation focuses seen
         {!!unstructuredObservationCount && ` · ${unstructuredObservationCount} other observation${unstructuredObservationCount === 1 ? '' : 's'}`}
       </Typography>
     </Paper>
@@ -1604,7 +1604,7 @@ function StudentUnitEvidenceCell({ summary, maxLessonCount }) {
         {hasEvidence ? (
           <>
             <Box
-              title={`${summary.observedCapturePointCount} of ${capturePointTotal} capture points observed`}
+              title={`${summary.observedCapturePointCount} of ${capturePointTotal} observation focuses seen`}
               sx={{
                 width: 24,
                 height: 4,
@@ -1617,7 +1617,7 @@ function StudentUnitEvidenceCell({ summary, maxLessonCount }) {
               {!!capturePointCoverage && <Box sx={{ width: `${capturePointCoverage}%`, height: '100%', bgcolor: darkText }} />}
             </Box>
             {!!summary.assessments.length && <Box component="span" title="Assessment recorded" sx={{ width: 7, height: 7, bgcolor: darkText, flexShrink: 0 }} />}
-            {!!repeatedCount && <Box component="span" title="Repeated capture point" sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: purple, flexShrink: 0 }} />}
+            {!!repeatedCount && <Box component="span" title="Repeated observation focus" sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: purple, flexShrink: 0 }} />}
             {!!summary.judgement?.levelId && <Box component="span" title="Anna added a judgement" sx={{ width: 7, height: 7, border: `1.5px solid ${darkText}`, borderRadius: '2px', flexShrink: 0 }} />}
           </>
         ) : (
@@ -1757,7 +1757,7 @@ function StudentInsightPanelV3({
                         {summary.lessonCount ? `${summary.lessonCount} lesson${summary.lessonCount === 1 ? '' : 's'}` : 'No evidence yet'}
                       </Typography>
                       {!!summary.assessments.length && <Box component="span" title="Assessment recorded" sx={{ width: 7, height: 7, bgcolor: darkText }} />}
-                      {!!repeatedCount && <Box component="span" title="Repeated capture point" sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: purple }} />}
+                      {!!repeatedCount && <Box component="span" title="Repeated observation focus" sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: purple }} />}
                       {!!judgement && <Box component="span" title="Anna added a judgement" sx={{ width: 7, height: 7, border: `1.5px solid ${darkText}`, borderRadius: '2px' }} />}
                     </Stack>
                   </ButtonBase>
@@ -1768,7 +1768,7 @@ function StudentInsightPanelV3({
               {[
                 'Bar length = lessons with evidence',
                 'Square = assessment',
-                'Dot = repeated capture point',
+                'Dot = repeated observation focus',
                 'Outlined square = Anna judgement',
               ].map((item) => <Typography key={item} sx={{ color: 'text.secondary', fontSize: 11.6 }}>{item}</Typography>)}
             </Stack>
@@ -1787,7 +1787,7 @@ function StudentInsightPanelV3({
               <Box sx={{ flex: '1 1 260px', minWidth: 0 }}>
                 <Typography component="h3" sx={{ color: darkText, fontSize: 16, fontWeight: 900 }}>{selectedSummary.unit.label || selectedSummary.unit.title}</Typography>
                 <Typography sx={{ mt: 0.35, color: 'text.secondary', fontSize: 12.8 }}>
-                  {selectedSummary.observations.length} observation{selectedSummary.observations.length === 1 ? '' : 's'} · {selectedSummary.assessments.length} assessment{selectedSummary.assessments.length === 1 ? '' : 's'} · {selectedSummary.observedCapturePointCount}/{selectedSummary.capturePoints.length} capture points observed{selectedSummary.unstructuredObservationCount ? ` · ${selectedSummary.unstructuredObservationCount} other observation${selectedSummary.unstructuredObservationCount === 1 ? '' : 's'}` : ''}
+                  {selectedSummary.observations.length} observation{selectedSummary.observations.length === 1 ? '' : 's'} · {selectedSummary.assessments.length} assessment{selectedSummary.assessments.length === 1 ? '' : 's'} · {selectedSummary.observedCapturePointCount}/{selectedSummary.capturePoints.length} observation focuses seen{selectedSummary.unstructuredObservationCount ? ` · ${selectedSummary.unstructuredObservationCount} other observation${selectedSummary.unstructuredObservationCount === 1 ? '' : 's'}` : ''}
                 </Typography>
                 <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 12.5 }}>
                   Anna’s working judgement: {judgementLevel?.label || 'Not set'}
@@ -1808,10 +1808,10 @@ function StudentInsightPanelV3({
                         </Typography>
                       );
                     })}
-                    {repeatedSequences.length > 3 && <Typography sx={{ color: 'text.secondary', fontSize: 12.2 }}>{repeatedSequences.length - 3} more repeated capture point{repeatedSequences.length - 3 === 1 ? '' : 's'}</Typography>}
+                    {repeatedSequences.length > 3 && <Typography sx={{ color: 'text.secondary', fontSize: 12.2 }}>{repeatedSequences.length - 3} more repeated observation focus{repeatedSequences.length - 3 === 1 ? '' : 'es'}</Typography>}
                   </Stack>
                 ) : (
-                  <Typography sx={{ mt: 0.55, color: 'text.secondary', fontSize: 12.5 }}>No capture point has been observed more than once yet.</Typography>
+                  <Typography sx={{ mt: 0.55, color: 'text.secondary', fontSize: 12.5 }}>No observation focus has been seen more than once yet.</Typography>
                 )}
               </Box>
               <Button variant="outlined" onClick={() => setDetailOpen(true)} sx={{ flexShrink: 0, alignSelf: { xs: 'flex-start', md: 'center' }, color: darkText, borderColor: 'rgba(23, 21, 26, 0.16)', textTransform: 'none', fontWeight: 820 }}>
@@ -2433,7 +2433,7 @@ function EvidenceMap({
             const summary = summariesByUnitId.get(unit.id) || buildTeachingUnitEvidenceSummary(unit, [], null);
             const repeatedCount = getRepeatedSequenceGroups(summary).length;
             const visualDetail = summary.items.length
-              ? `${summary.lessonCount} lesson${summary.lessonCount === 1 ? '' : 's'} with evidence, ${summary.assessments.length} assessment${summary.assessments.length === 1 ? '' : 's'}, ${summary.observedCapturePointCount} of ${summary.capturePoints.length} capture points observed${repeatedCount ? `, ${repeatedCount} repeated capture point${repeatedCount === 1 ? '' : 's'}` : ''}${summary.judgement?.levelId ? ', Anna judgement added' : ''}`
+              ? `${summary.lessonCount} lesson${summary.lessonCount === 1 ? '' : 's'} with evidence, ${summary.assessments.length} assessment${summary.assessments.length === 1 ? '' : 's'}, ${summary.observedCapturePointCount} of ${summary.capturePoints.length} observation focuses seen${repeatedCount ? `, ${repeatedCount} repeated observation focus${repeatedCount === 1 ? '' : 'es'}` : ''}${summary.judgement?.levelId ? ', Anna judgement added' : ''}`
               : 'No evidence recorded';
             const cellDetail = savedNote ? `Manual note ${savedNote}` : visualDetail;
             return (
