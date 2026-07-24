@@ -75,6 +75,7 @@ import {
 import { getGroupsForStudent } from '../utils/classGroupUtils.js';
 import { GroupDialog } from './classPicture/ClassWorkingGroups.jsx';
 import QuickCapture from './maths7A/QuickCapture.jsx';
+import QuickCaptureV2 from './maths7A/QuickCaptureV2.jsx';
 import StudentUnitEvidenceCell from './maths7A/StudentUnitEvidenceCell.jsx';
 import StudentUnitInsightPanelV4 from './maths7A/StudentUnitInsightPanelV4.jsx';
 import StudentUnitInsightPanelV5 from './maths7A/StudentUnitInsightPanelV5.jsx';
@@ -1950,6 +1951,7 @@ function ClassPictureStudents({
 
 export default function Maths7AModule({ onBackToWeek, onClose }) {
   const [activeMode, setActiveMode] = useState('class-picture');
+  const [nowCaptureVersion, setNowCaptureVersion] = useState('original');
   const [selectedStudentId, setSelectedStudentId] = useState(defaultNowStudentId);
   const [localEvidencePayload, setLocalEvidencePayload] = useState(() => readMaths7ALocalEvidence());
   const [cellNotes, setCellNotes] = useState(() => readMaths7ACellNotes());
@@ -2162,16 +2164,75 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       <Box aria-live="polite" sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
         {lessonAnnouncement}
       </Box>
-      <QuickCapture
-        students={maths7AStudents}
-        selectedStudentId={selectedStudentId}
-        localEvidencePayload={localEvidencePayload}
-        activeLesson={activeLesson}
-        captureFocuses={nowCaptureFocuses}
-        onRestartLessonSequence={restartLessonSequence}
-        onLocalEvidencePayloadChange={setLocalEvidencePayload}
-        onStudentChange={setSelectedStudentId}
-      />
+      <Stack spacing={1.2}>
+        <ButtonGroup
+          variant="outlined"
+          size="small"
+          aria-label="Now capture version"
+          sx={{
+            alignSelf: 'flex-end',
+            '& .MuiButtonGroup-grouped': {
+              borderColor: 'rgba(23, 21, 26, 0.14)',
+              color: darkText,
+              fontSize: 12.4,
+              fontWeight: 780,
+              textTransform: 'none',
+              '&:hover': { borderColor: purple, bgcolor: '#fff' },
+              '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+            },
+          }}
+        >
+          <Button
+            type="button"
+            aria-pressed={nowCaptureVersion === 'original'}
+            onClick={() => setNowCaptureVersion('original')}
+            sx={{
+              bgcolor: nowCaptureVersion === 'original' ? purple : '#fff',
+              color: nowCaptureVersion === 'original' ? '#fff !important' : darkText,
+              borderColor: nowCaptureVersion === 'original' ? `${purple} !important` : undefined,
+              '&:hover': { bgcolor: nowCaptureVersion === 'original' ? purple : '#fff' },
+            }}
+          >
+            Original
+          </Button>
+          <Button
+            type="button"
+            aria-pressed={nowCaptureVersion === 'v2'}
+            onClick={() => setNowCaptureVersion('v2')}
+            sx={{
+              bgcolor: nowCaptureVersion === 'v2' ? purple : '#fff',
+              color: nowCaptureVersion === 'v2' ? '#fff !important' : darkText,
+              borderColor: nowCaptureVersion === 'v2' ? `${purple} !important` : undefined,
+              '&:hover': { bgcolor: nowCaptureVersion === 'v2' ? purple : '#fff' },
+            }}
+          >
+            V2
+          </Button>
+        </ButtonGroup>
+        {nowCaptureVersion === 'v2' ? (
+          <QuickCaptureV2
+            students={maths7AStudents}
+            selectedStudentId={selectedStudentId}
+            localEvidencePayload={localEvidencePayload}
+            activeLesson={activeLesson}
+            captureFocuses={nowCaptureFocuses}
+            onRestartLessonSequence={restartLessonSequence}
+            onLocalEvidencePayloadChange={setLocalEvidencePayload}
+            onStudentChange={setSelectedStudentId}
+          />
+        ) : (
+          <QuickCapture
+            students={maths7AStudents}
+            selectedStudentId={selectedStudentId}
+            localEvidencePayload={localEvidencePayload}
+            activeLesson={activeLesson}
+            captureFocuses={nowCaptureFocuses}
+            onRestartLessonSequence={restartLessonSequence}
+            onLocalEvidencePayloadChange={setLocalEvidencePayload}
+            onStudentChange={setSelectedStudentId}
+          />
+        )}
+      </Stack>
     </Box>
   );
 
