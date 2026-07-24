@@ -1583,8 +1583,8 @@ function StudentGlobalInsightPanel({ student, evidence, rowNote }) {
   const subjectLabel = student.subjectId === 'mathematics' ? 'Mathematics' : student.subjectId;
 
   return (
-    <Box sx={{ p: { xs: 1, sm: 1.25 }, bgcolor: purple, borderTop: '1px solid rgba(23, 21, 26, 0.07)' }}>
-      <Paper elevation={0} id={`student-insight-global-${student.id}`} sx={{ p: { xs: 1.25, sm: 1.55 }, borderRadius: '18px', border: '1px solid rgba(23, 21, 26, 0.1)', bgcolor: '#fff' }}>
+    <Box sx={{ p: { xs: 1, sm: 1.25 }, bgcolor: '#fbfafc', borderTop: '1px solid rgba(23, 21, 26, 0.07)' }}>
+      <Paper elevation={0} id={`student-insight-global-${student.id}`} sx={{ p: { xs: 1.25, sm: 1.55 }, borderRadius: '18px', border: `4px solid ${purple}`, bgcolor: '#fff' }}>
         <Stack spacing={1.25}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
             <Box>
