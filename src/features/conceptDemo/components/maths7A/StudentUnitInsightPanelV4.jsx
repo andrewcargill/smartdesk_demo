@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Box, ButtonBase, Paper, Stack, Typography } from '@mui/material';
 import {
-  getMathsCaptureLevelById,
   mathsCaptureLevels,
 } from '../../data/mathsCaptureConfig.js';
 
@@ -40,52 +39,127 @@ function getSortedAssessments(summary) {
     .sort((first, second) => (first.date || '').localeCompare(second.date || ''));
 }
 
-function getObservationDateGroups(summary) {
-  const groupsByDate = new Map();
-
-  [...(summary.observations || [])]
-    .sort((first, second) => (first.date || '').localeCompare(second.date || ''))
-    .forEach((item) => {
-      if (!item.date) return;
-      const group = groupsByDate.get(item.date) || { date: item.date, items: [] };
-      group.items.push(item);
-      groupsByDate.set(item.date, group);
-    });
-
-  return [...groupsByDate.values()];
-}
-
-function getObservationFocusOptions(summary) {
-  const observationsByCapturePoint = new Map();
-
-  (summary.observations || [])
-    .filter((item) => item.capturePointId)
-    .forEach((item) => {
-      const group = observationsByCapturePoint.get(item.capturePointId) || [];
-      group.push(item);
-      observationsByCapturePoint.set(item.capturePointId, group);
-    });
-
-  const options = (summary.capturePoints || []).map((capturePoint) => ({
-    id: capturePoint.id,
-    label: capturePoint.label,
-    observations: [...(observationsByCapturePoint.get(capturePoint.id) || [])]
-      .sort((first, second) => (first.date || '').localeCompare(second.date || '')),
-  }));
-
-  const otherObservations = [...(summary.observations || [])]
-    .filter((item) => !item.capturePointId)
-    .sort((first, second) => (first.date || '').localeCompare(second.date || ''));
-
-  if (otherObservations.length) {
-    options.push({
-      id: 'other-observations',
-      label: 'Other observations',
-      observations: otherObservations,
-    });
+function getObservationTimestamp(item) {
+  if (!item?.date) {
+    return null;
   }
 
-  return options;
+  const time = new Date(`${item.date}T12:00:00`).getTime();
+  return Number.isFinite(time) ? time : null;
+}
+
+function sortObservationsChronologically(items) {
+  return [...(items || [])].sort((first, second) => {
+    const firstTime = getObservationTimestamp(first);
+    const secondTime = getObservationTimestamp(second);
+
+    if (firstTime !== null && secondTime !== null) return firstTime - secondTime;
+    if (firstTime !== null) return -1;
+    if (secondTime !== null) return 1;
+    return String(first.id || '').localeCompare(String(second.id || ''));
+  });
+}
+
+function getObservationNote(item) {
+  return item?.observationText || item?.note || item?.label || '';
+}
+
+function getLevelMap(levels) {
+  return new Map((levels || []).map((level) => [level.id, level]));
+}
+
+function getFocusDisplayKey(focus) {
+  return String(focus?.label || focus?.id || '');
+}
+
+function normaliseObservationFocuses({ configuredFocuses = [], observations = [], levels = [] }) {
+  const levelById = getLevelMap(levels);
+  const configuredFocusById = new Map();
+  const configuredFocusGroupsByLabel = new Map();
+
+  configuredFocuses.forEach((focus) => {
+    if (!focus?.id) return;
+    configuredFocusById.set(focus.id, focus);
+    const displayKey = getFocusDisplayKey(focus);
+    const group = configuredFocusGroupsByLabel.get(displayKey) || {
+      focusId: `configured:${focus.id}`,
+      focusIds: [],
+      focusLabel: focus.label || focus.id,
+      observations: [],
+      count: 0,
+      isOther: false,
+    };
+    group.focusIds.push(focus.id);
+    group.focusId = `configured:${group.focusIds.join('|')}`;
+    configuredFocusGroupsByLabel.set(displayKey, group);
+  });
+
+  const groupedFocuses = [...configuredFocusGroupsByLabel.values()];
+  const groupByFocusId = new Map();
+  groupedFocuses.forEach((group) => {
+    group.focusIds.forEach((focusId) => {
+      groupByFocusId.set(focusId, group);
+    });
+  });
+
+  const otherFocus = {
+    focusId: 'other-observations',
+    focusIds: [],
+    focusLabel: 'Other observations',
+    observations: [],
+    count: 0,
+    isOther: true,
+  };
+
+  (observations || []).forEach((item) => {
+    const configuredFocus = item?.capturePointId ? configuredFocusById.get(item.capturePointId) : null;
+    const group = configuredFocus ? groupByFocusId.get(configuredFocus.id) : otherFocus;
+    const level = item?.levelId ? levelById.get(item.levelId) : null;
+
+    group.observations.push({
+      ...item,
+      id: item.id,
+      date: item.date || '',
+      levelId: item.levelId || '',
+      levelLabel: level?.label || '',
+      levelOrder: level?.order || null,
+      note: getObservationNote(item),
+      timestamp: getObservationTimestamp(item),
+    });
+  });
+
+  const configuredOptions = groupedFocuses
+    .map((group) => ({
+      ...group,
+      observations: sortObservationsChronologically(group.observations),
+      count: group.observations.length,
+    }))
+    .sort((first, second) => {
+      const firstHasObservations = first.count > 0 ? 1 : 0;
+      const secondHasObservations = second.count > 0 ? 1 : 0;
+      return secondHasObservations - firstHasObservations || second.count - first.count || first.focusLabel.localeCompare(second.focusLabel);
+    });
+
+  const representedConfiguredOptions = configuredOptions.filter((option) => option.count > 0);
+  const unrepresentedConfiguredOptions = configuredOptions.filter((option) => option.count === 0);
+  const options = otherFocus.observations.length
+    ? [
+      ...representedConfiguredOptions,
+      {
+        ...otherFocus,
+        observations: sortObservationsChronologically(otherFocus.observations),
+        count: otherFocus.observations.length,
+      },
+      ...unrepresentedConfiguredOptions,
+    ]
+    : configuredOptions;
+
+  return {
+    options,
+    configuredFocusCount: configuredOptions.length,
+    representedConfiguredFocusCount: representedConfiguredOptions.length,
+    otherObservationCount: otherFocus.observations.length,
+  };
 }
 
 function AssessmentPie({ assessment, size = 86 }) {
@@ -132,7 +206,7 @@ function getAssessmentStats(assessments) {
   };
 }
 
-function ObservationFocusStack({ options, activeId, onActiveIdChange }) {
+function ObservationFocusSelector({ options, activeId, onActiveIdChange }) {
   if (!options.length) {
     return (
       <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
@@ -144,25 +218,28 @@ function ObservationFocusStack({ options, activeId, onActiveIdChange }) {
   return (
     <Stack spacing={0.45}>
       {options.map((option) => {
-        const isActive = option.id === activeId;
-        const hasObservation = option.observations.length > 0;
+        const isActive = option.focusId === activeId;
+        const hasObservation = option.count > 0;
 
         return (
           <ButtonBase
-            key={option.id}
-            onMouseEnter={() => onActiveIdChange(option.id)}
-            onFocus={() => onActiveIdChange(option.id)}
-            onClick={() => onActiveIdChange(option.id)}
-            title={`${option.label}${hasObservation ? ` · ${option.observations.length} observation${option.observations.length === 1 ? '' : 's'}` : ' · no observation yet'}`}
+            key={option.focusId}
+            onMouseEnter={() => onActiveIdChange(option.focusId)}
+            onFocus={() => onActiveIdChange(option.focusId)}
+            onClick={() => onActiveIdChange(option.focusId)}
+            title={`${option.focusLabel}${hasObservation ? ` · ${option.count} observation${option.count === 1 ? '' : 's'}` : ' · no observation yet'}`}
             sx={{
               width: '100%',
-              p: 0.65,
+              p: 0.72,
               borderRadius: '10px',
               justifyContent: 'flex-start',
               textAlign: 'left',
               bgcolor: isActive ? 'rgba(156, 40, 175, 0.055)' : 'transparent',
               boxShadow: isActive ? `inset 0 0 0 1px rgba(156, 40, 175, 0.24)` : 'inset 0 0 0 1px transparent',
               transition: 'background-color 140ms ease, box-shadow 140ms ease',
+              '&:focus-visible': {
+                boxShadow: `inset 0 0 0 1px rgba(156, 40, 175, 0.34), 0 0 0 3px rgba(156, 40, 175, 0.12)`,
+              },
               '&:hover': {
                 bgcolor: isActive ? 'rgba(156, 40, 175, 0.07)' : 'rgba(23, 21, 26, 0.035)',
               },
@@ -185,10 +262,10 @@ function ObservationFocusStack({ options, activeId, onActiveIdChange }) {
                 }}
               />
               <Typography noWrap sx={{ color: hasObservation ? darkText : 'text.secondary', fontSize: 12.4, fontWeight: isActive ? 850 : 720, minWidth: 0, flex: 1 }}>
-                {option.label}
+                {option.focusLabel}
               </Typography>
               <Typography sx={{ color: 'text.secondary', fontSize: 11.4, fontWeight: 800, flexShrink: 0 }}>
-                {option.observations.length}
+                {option.count}
               </Typography>
             </Stack>
           </ButtonBase>
@@ -198,284 +275,243 @@ function ObservationFocusStack({ options, activeId, onActiveIdChange }) {
   );
 }
 
-function getObservationPointLabel(item) {
-  const level = item.levelId ? getMathsCaptureLevelById(item.levelId) : null;
-  return level?.label || item.label || item.observationText || 'Observed';
+function getObservationRecordKey(item, index) {
+  return item.id || `${item.date || 'no-date'}-${item.levelId || 'no-level'}-${index}`;
 }
 
-function getObservationLevelOrder(item) {
-  const level = item.levelId ? getMathsCaptureLevelById(item.levelId) : null;
-  return level?.order || null;
+function ObservationRecordsList({ observations }) {
+  return (
+    <Stack spacing={0.55}>
+      {observations.map((item, index) => (
+        <Box key={getObservationRecordKey(item, index)} sx={{ p: 0.75, borderRadius: '9px', bgcolor: 'rgba(23, 21, 26, 0.025)', border: '1px solid rgba(23, 21, 26, 0.07)' }}>
+          <Typography sx={{ color: darkText, fontSize: 12.1, fontWeight: 800 }}>
+            {formatDemoDate(item.date)}{item.levelLabel ? ` · ${item.levelLabel}` : ''}
+          </Typography>
+          {!!item.note && (
+            <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 11.8, lineHeight: 1.35 }}>
+              {item.note}
+            </Typography>
+          )}
+        </Box>
+      ))}
+    </Stack>
+  );
 }
 
-function getObservationTimestamp(item) {
-  if (!item?.date) {
+function LatestObservationBlock({ observation }) {
+  if (!observation) {
     return null;
   }
 
-  const time = new Date(`${item.date}T12:00:00`).getTime();
-  return Number.isFinite(time) ? time : null;
+  return (
+    <Box sx={{ p: 0.85, borderRadius: '10px', bgcolor: 'rgba(23, 21, 26, 0.025)', border: '1px solid rgba(23, 21, 26, 0.07)' }}>
+      <Typography sx={{ color: 'text.secondary', fontSize: 11.6, fontWeight: 760 }}>Latest observation</Typography>
+      <Typography sx={{ mt: 0.25, color: darkText, fontSize: 12.4, fontWeight: 850 }}>
+        {formatDemoDate(observation.date)}{observation.levelLabel ? ` · ${observation.levelLabel}` : ''}
+      </Typography>
+      {!!observation.note && (
+        <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 11.8, lineHeight: 1.35 }}>
+          {observation.note}
+        </Typography>
+      )}
+    </Box>
+  );
 }
 
-function ObservationLevelGraph({ focus }) {
+function ObservationLevelChart({ observations, levels }) {
   const [activePointId, setActivePointId] = useState('');
-  const observations = focus?.observations || [];
   const graphLeft = 16;
   const graphRight = 98;
-  const graphTop = 10;
-  const graphBottom = 41;
-  const levelCount = mathsCaptureLevels.length;
-
-  const timelinePoints = observations.map((item, index) => ({
-    item,
-    index,
-    timestamp: getObservationTimestamp(item),
-  }));
-  const datedPoints = timelinePoints.filter((point) => point.timestamp !== null);
-  const minDate = datedPoints.length ? Math.min(...datedPoints.map((point) => point.timestamp)) : null;
-  const maxDate = datedPoints.length ? Math.max(...datedPoints.map((point) => point.timestamp)) : null;
-
-  const points = timelinePoints.map((entry, index) => {
-    const { item } = entry;
-    const levelOrder = getObservationLevelOrder(item);
-    const levelPosition = levelOrder
-      ? (levelOrder - 1) / Math.max(levelCount - 1, 1)
-      : 0.5;
-    let x = (graphLeft + graphRight) / 2;
-
-    if (entry.timestamp !== null && minDate !== null && maxDate !== null) {
-      x = minDate === maxDate
-        ? (graphLeft + graphRight) / 2
-        : graphLeft + ((entry.timestamp - minDate) / (maxDate - minDate)) * (graphRight - graphLeft);
-    } else if (observations.length > 1) {
-      x = graphLeft + (index / (observations.length - 1)) * (graphRight - graphLeft);
-    }
+  const graphTop = 9;
+  const graphBottom = 43;
+  const levelCount = levels.length;
+  const minDate = Math.min(...observations.map((item) => item.timestamp));
+  const maxDate = Math.max(...observations.map((item) => item.timestamp));
+  const points = observations.map((item, index) => {
+    const levelPosition = (item.levelOrder - 1) / Math.max(levelCount - 1, 1);
+    const x = minDate === maxDate
+      ? (graphLeft + graphRight) / 2
+      : graphLeft + ((item.timestamp - minDate) / (maxDate - minDate)) * (graphRight - graphLeft);
 
     return {
       item,
       x,
       y: graphBottom - levelPosition * (graphBottom - graphTop),
-      hasLevel: !!levelOrder,
-      levelLabel: getObservationPointLabel(item),
-      pointId: item.id || `${item.date || 'no-date'}-${index}`,
+      pointId: getObservationRecordKey(item, index),
     };
   });
-
   const linePoints = points.map((point) => `${point.x},${point.y}`).join(' ');
-  const gradientId = `observationTrendFill-${String(focus?.id || 'focus').replace(/[^a-z0-9_-]/gi, '-')}`;
-  const areaPath = points.length > 1
-    ? `M ${points[0].x} ${graphBottom} L ${linePoints} L ${points[points.length - 1].x} ${graphBottom} Z`
-    : '';
   const activePoint = points.find((point) => point.pointId === activePointId) || points[points.length - 1] || null;
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: { xs: 0.95, sm: 1.05 },
-        borderRadius: '12px',
-        border: '1px solid rgba(156, 40, 175, 0.14)',
-        bgcolor: '#fefbff',
-        boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.74)',
-      }}
-    >
-      <Stack spacing={0.45}>
-        <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="baseline">
-          <Typography noWrap title={focus?.label || 'Observation focus'} sx={{ color: darkText, fontSize: 13.2, fontWeight: 900 }}>
-            {focus?.label || 'Observation focus'}
-          </Typography>
-          <Typography sx={{ color: 'text.secondary', fontSize: 11.8, fontWeight: 740 }}>
-            {observations.length} observation{observations.length === 1 ? '' : 's'}
-          </Typography>
-        </Stack>
+    <Stack spacing={0.65}>
+      <Box
+        component="svg"
+        role="img"
+        aria-label="Teacher-recorded levels over time"
+        viewBox="0 0 100 54"
+        sx={{
+          width: '100%',
+          height: 150,
+          display: 'block',
+          overflow: 'visible',
+          '& circle': { transition: 'r 140ms ease, fill 140ms ease' },
+          '& circle:hover': { r: 4.9, fill: darkText },
+        }}
+      >
+        {levels.map((level) => {
+          const levelPosition = (level.order - 1) / Math.max(levelCount - 1, 1);
+          const y = graphBottom - levelPosition * (graphBottom - graphTop);
 
-        <Box
-          component="svg"
-          role="img"
-          aria-label={`${focus?.label || 'Observation focus'} over time`}
-          viewBox="0 0 100 48"
-          sx={{
-            width: '100%',
-            height: 108,
-            display: 'block',
-            overflow: 'visible',
-            '& circle': { transition: 'r 140ms ease, fill 140ms ease' },
-            '& circle:hover': { r: 4.8, fill: purple },
-          }}
-        >
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="rgba(156, 40, 175, 0.18)" />
-              <stop offset="100%" stopColor="rgba(156, 40, 175, 0.02)" />
-            </linearGradient>
-          </defs>
-          {mathsCaptureLevels.map((level) => {
-            const levelPosition = (level.order - 1) / Math.max(levelCount - 1, 1);
-            const y = graphBottom - levelPosition * (graphBottom - graphTop);
-
-            return (
-              <g key={level.id}>
-                <line x1={graphLeft} y1={y} x2={graphRight} y2={y} stroke="rgba(156, 40, 175, 0.11)" strokeWidth="1" strokeDasharray="1.2 1.4" />
-                <text x="2" y={y + 1.8} fill="rgba(23, 21, 26, 0.56)" fontSize="4.2" fontWeight="700">
-                  {level.label}
-                </text>
-              </g>
-            );
-          })}
-          <line x1={graphLeft} y1={graphTop} x2={graphLeft} y2={graphBottom} stroke="rgba(156, 40, 175, 0.16)" strokeWidth="1.1" />
-          <line x1={graphLeft} y1={graphBottom} x2={graphRight} y2={graphBottom} stroke="rgba(156, 40, 175, 0.16)" strokeWidth="1.1" />
-          {points.length > 1 && <path d={areaPath} fill={`url(#${gradientId})`} />}
-          {points.length > 1 && <polyline points={linePoints} fill="none" stroke="rgba(156, 40, 175, 0.72)" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" />}
-          {points.length === 1 && <line x1={points[0].x - 8} y1={points[0].y} x2={points[0].x + 8} y2={points[0].y} stroke="rgba(156, 40, 175, 0.68)" strokeWidth="2.1" strokeLinecap="round" />}
-          {points.map((point, index) => (
+          return (
+            <g key={level.id}>
+              <line x1={graphLeft} y1={y} x2={graphRight} y2={y} stroke="rgba(23, 21, 26, 0.055)" strokeWidth="1" />
+              <text x="2" y={y + 1.8} fill="rgba(23, 21, 26, 0.52)" fontSize="4.15" fontWeight="700">
+                {level.label}
+              </text>
+            </g>
+          );
+        })}
+        <line x1={graphLeft} y1={graphTop} x2={graphLeft} y2={graphBottom} stroke="rgba(23, 21, 26, 0.12)" strokeWidth="1.1" />
+        <line x1={graphLeft} y1={graphBottom} x2={graphRight} y2={graphBottom} stroke="rgba(23, 21, 26, 0.12)" strokeWidth="1.1" />
+        {points.length > 1 && <polyline points={linePoints} fill="none" stroke="rgba(23, 21, 26, 0.5)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />}
+        {points.map((point) => (
+          <g
+            key={point.pointId}
+            role="button"
+            tabIndex={0}
+            aria-label={`${formatDemoDate(point.item.date)} ${point.item.levelLabel}${point.item.note ? ` ${point.item.note}` : ''}`}
+            onMouseEnter={() => setActivePointId(point.pointId)}
+            onFocus={() => setActivePointId(point.pointId)}
+            onClick={() => setActivePointId(point.pointId)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                setActivePointId(point.pointId);
+              }
+            }}
+          >
             <circle
-              key={point.pointId}
               cx={point.x}
               cy={point.y}
-              r={point.hasLevel ? 3.6 : 3}
-              fill={point.hasLevel ? 'rgba(156, 40, 175, 0.86)' : 'rgba(156, 40, 175, 0.42)'}
+              r="4"
+              fill="rgba(23, 21, 26, 0.78)"
               stroke="#fff"
-              strokeWidth="1.4"
-              onMouseEnter={() => setActivePointId(point.pointId)}
-              onFocus={() => setActivePointId(point.pointId)}
+              strokeWidth="1.6"
             >
-              <title>{`${formatDemoDate(point.item.date)} · ${getObservationPointLabel(point.item)}${point.item.observationText ? ` · ${point.item.observationText}` : ''}`}</title>
+              <title>{`${formatDemoDate(point.item.date)} · ${point.item.levelLabel}${point.item.note ? ` · ${point.item.note}` : ''}`}</title>
             </circle>
-          ))}
-          {!points.length && (
-            <>
-              <line x1="35" y1="34" x2="80" y2="34" stroke="rgba(23, 21, 26, 0.14)" strokeWidth="2.2" strokeLinecap="round" />
-              <circle cx="58" cy="34" r="3.2" fill="rgba(23, 21, 26, 0.18)" />
-            </>
+          </g>
+        ))}
+      </Box>
+
+      {points.length === 1 && (
+        <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+          One recorded point - no trend is shown.
+        </Typography>
+      )}
+
+      {!!activePoint && (
+        <Box sx={{ p: 0.75, borderRadius: '9px', bgcolor: 'rgba(23, 21, 26, 0.025)', border: '1px solid rgba(23, 21, 26, 0.07)' }}>
+          <Typography sx={{ color: darkText, fontSize: 12.1, fontWeight: 820 }}>
+            {formatDemoDate(activePoint.item.date)} · {activePoint.item.levelLabel}
+          </Typography>
+          {!!activePoint.item.note && (
+            <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 11.8, lineHeight: 1.35 }}>
+              {activePoint.item.note}
+            </Typography>
           )}
         </Box>
-
-        {!!activePoint && (
-          <Box sx={{ px: 0.75, py: 0.5, borderRadius: '8px', bgcolor: 'rgba(156, 40, 175, 0.05)', border: '1px solid rgba(156, 40, 175, 0.12)' }}>
-            <Typography sx={{ color: darkText, fontSize: 11.9, fontWeight: 780 }}>
-              {formatDemoDate(activePoint.item.date)} · {activePoint.levelLabel}
-            </Typography>
-            {!!activePoint.item.observationText && (
-              <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 11.5, lineHeight: 1.35 }}>
-                {activePoint.item.observationText}
-              </Typography>
-            )}
-          </Box>
-        )}
-
-        <Stack direction="row" spacing={0.55} flexWrap="wrap" useFlexGap>
-          {observations.slice(-3).map((item, index) => (
-            <Box
-              key={`${item.id || item.date}-${index}`}
-              title={item.observationText || item.label || getObservationPointLabel(item)}
-              sx={{
-                px: 0.7,
-                py: 0.32,
-                borderRadius: '999px',
-                bgcolor: 'rgba(156, 40, 175, 0.06)',
-                border: '1px solid rgba(156, 40, 175, 0.12)',
-              }}
-            >
-              <Typography sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 740 }}>
-                {formatDemoDate(item.date)} · {getObservationPointLabel(item)}
-              </Typography>
-            </Box>
-          ))}
-          {!observations.length && (
-            <Typography sx={{ color: 'text.secondary', fontSize: 12.2 }}>
-              No observations recorded for this focus yet.
-            </Typography>
-          )}
-        </Stack>
-      </Stack>
-    </Paper>
+      )}
+    </Stack>
   );
 }
 
-function ObservationFocusTimelineGrid({ options, activeFocusId, onActiveFocusChange }) {
-  const focusesWithData = (options || []).filter((option) => option.observations.length > 0);
-  const levelCount = mathsCaptureLevels.length;
-
-  if (!focusesWithData.length) {
+function SelectedObservationFocusPanel({ focus, levels }) {
+  if (!focus) {
     return (
-      <Paper elevation={0} sx={{ p: 1, borderRadius: '10px', border: '1px dashed rgba(156, 40, 175, 0.2)', bgcolor: '#fff' }}>
-        <Typography sx={{ color: 'text.secondary', fontSize: 12.2 }}>
-          No focus has timeline data yet.
+      <Paper elevation={0} sx={{ p: 1.1, borderRadius: '12px', border: '1px solid rgba(23, 21, 26, 0.07)', bgcolor: '#fff' }}>
+        <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
+          No observation focus selected.
         </Typography>
       </Paper>
     );
   }
 
+  const validLevelObservations = focus.isOther
+    ? []
+    : focus.observations.filter((item) => item.levelOrder !== null && item.timestamp !== null);
+  const latestObservation = focus.observations[focus.observations.length - 1] || null;
+
   return (
-    <Stack spacing={0.55}>
-      {focusesWithData.map((focus) => {
-        const points = focus.observations.map((item, index) => {
-          const levelOrder = getObservationLevelOrder(item);
-          const levelPosition = levelOrder
-            ? (levelOrder - 1) / Math.max(levelCount - 1, 1)
-            : 0.5;
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 1, sm: 1.15 },
+        borderRadius: '12px',
+        border: '1px solid rgba(23, 21, 26, 0.07)',
+        bgcolor: '#fff',
+      }}
+    >
+      <Stack spacing={0.9}>
+        <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="baseline">
+          <Typography noWrap title={focus.focusLabel} sx={{ color: darkText, fontSize: 13.2, fontWeight: 900 }}>
+            {focus.focusLabel}
+          </Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: 11.8, fontWeight: 740 }}>
+            {focus.count} observation{focus.count === 1 ? '' : 's'}
+          </Typography>
+        </Stack>
+        <Typography sx={{ mt: -0.55, color: 'text.secondary', fontSize: 12.2 }}>
+          Teacher-recorded levels over time
+        </Typography>
 
-          return {
-            x: focus.observations.length === 1 ? 50 : 6 + (index / (focus.observations.length - 1)) * 88,
-            y: 22 - levelPosition * 16,
-            label: getObservationPointLabel(item),
-            date: item.date,
-          };
-        });
-        const isActive = focus.id === activeFocusId;
-        const linePoints = points.map((point) => `${point.x},${point.y}`).join(' ');
+        {focus.count === 0 ? (
+          <Paper elevation={0} sx={{ p: 1.2, borderRadius: '11px', border: '1px dashed rgba(23, 21, 26, 0.14)', bgcolor: 'rgba(23, 21, 26, 0.015)' }}>
+            <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>
+              No observations recorded for this focus in this unit.
+            </Typography>
+          </Paper>
+        ) : focus.isOther ? (
+          <ObservationRecordsList observations={focus.observations} />
+        ) : validLevelObservations.length ? (
+          <ObservationLevelChart observations={validLevelObservations} levels={levels} />
+        ) : (
+          <Paper elevation={0} sx={{ p: 1.2, borderRadius: '11px', border: '1px dashed rgba(23, 21, 26, 0.14)', bgcolor: 'rgba(23, 21, 26, 0.015)' }}>
+            <Typography sx={{ color: 'text.secondary', fontSize: 12.2 }}>
+              No recorded levels for this focus in this unit.
+            </Typography>
+          </Paper>
+        )}
 
-        return (
-          <ButtonBase
-            key={focus.id}
-            onMouseEnter={() => onActiveFocusChange(focus.id)}
-            onFocus={() => onActiveFocusChange(focus.id)}
-            onClick={() => onActiveFocusChange(focus.id)}
-            sx={{
-              width: '100%',
-              p: 0.7,
-              borderRadius: '10px',
-              justifyContent: 'space-between',
-              textAlign: 'left',
-              bgcolor: isActive ? 'rgba(156, 40, 175, 0.06)' : '#fff',
-              border: isActive ? '1px solid rgba(156, 40, 175, 0.26)' : '1px solid rgba(23, 21, 26, 0.08)',
-              transition: 'background-color 140ms ease, border-color 140ms ease',
-            }}
-          >
-            <Stack spacing={0.1} sx={{ minWidth: 0, mr: 0.9, flex: '1 1 auto' }}>
-              <Typography noWrap sx={{ color: darkText, fontSize: 12.1, fontWeight: 820 }}>
-                {focus.label}
-              </Typography>
-              <Typography sx={{ color: 'text.secondary', fontSize: 11.2 }}>
-                {focus.observations.length} observation{focus.observations.length === 1 ? '' : 's'}
-              </Typography>
-            </Stack>
-            <Box component="svg" viewBox="0 0 100 26" sx={{ width: 132, height: 28, flexShrink: 0 }}>
-              <line x1="6" y1="22" x2="94" y2="22" stroke="rgba(156, 40, 175, 0.14)" strokeWidth="1" />
-              {points.length > 1 && <polyline points={linePoints} fill="none" stroke="rgba(156, 40, 175, 0.62)" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />}
-              {points.map((point, index) => (
-                <circle key={`${focus.id}-${index}`} cx={point.x} cy={point.y} r="2.2" fill="rgba(156, 40, 175, 0.82)">
-                  <title>{`${formatDemoDate(point.date)} · ${point.label}`}</title>
-                </circle>
-              ))}
-            </Box>
-          </ButtonBase>
-        );
-      })}
-    </Stack>
+        <LatestObservationBlock observation={latestObservation} />
+        {focus.isOther && focus.count > 1 && (
+          <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
+            Other observations are shown as records rather than a shared level timeline.
+          </Typography>
+        )}
+      </Stack>
+    </Paper>
   );
 }
 
 export default function StudentUnitInsightPanelV4({ student, summary }) {
   const assessments = getSortedAssessments(summary);
   const assessmentStats = getAssessmentStats(assessments);
-  const observationGroups = getObservationDateGroups(summary);
   const observationCount = (summary.observations || []).length;
-  const observationFocusOptions = useMemo(() => getObservationFocusOptions(summary), [summary]);
-  const firstObservedFocusId = observationFocusOptions.find((option) => option.observations.length)?.id || observationFocusOptions[0]?.id || '';
+  const observationFocusModel = useMemo(() => normaliseObservationFocuses({
+    configuredFocuses: summary.capturePoints || [],
+    observations: summary.observations || [],
+    levels: mathsCaptureLevels,
+  }), [summary]);
+  const observationFocusOptions = observationFocusModel.options;
+  const firstObservedFocusId = observationFocusOptions.find((option) => option.count > 0)?.focusId || observationFocusOptions[0]?.focusId || '';
   const [activeObservationFocusId, setActiveObservationFocusId] = useState(firstObservedFocusId);
-  const activeObservationFocus = observationFocusOptions.find((option) => option.id === activeObservationFocusId)
-    || observationFocusOptions.find((option) => option.observations.length)
+  useEffect(() => {
+    setActiveObservationFocusId(firstObservedFocusId);
+  }, [firstObservedFocusId, summary.unit.id]);
+  const activeObservationFocus = observationFocusOptions.find((option) => option.focusId === activeObservationFocusId)
+    || observationFocusOptions.find((option) => option.count > 0)
     || observationFocusOptions[0]
     || null;
   const latestEvidence = [...(summary.items || [])]
@@ -545,48 +581,22 @@ export default function StudentUnitInsightPanelV4({ student, summary }) {
                 <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 900 }}>Observations</Typography>
                 <Typography sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 720 }}>Focus trend over time</Typography>
               </Stack>
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(220px, 0.42fr) minmax(0, 1.58fr)' }, gap: 1.4, alignItems: 'stretch' }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(260px, 300px) minmax(0, 1fr)' }, gap: 1.4, alignItems: 'start' }}>
                 <Paper elevation={0} sx={{ p: 1, borderRadius: '12px', border: '1px solid rgba(23, 21, 26, 0.07)', bgcolor: '#fff' }}>
                   <Stack spacing={0.85}>
                     <Typography sx={{ color: darkText, fontSize: 12.8, fontWeight: 880 }}>Observation focus</Typography>
-                    <ObservationFocusStack
+                    <ObservationFocusSelector
                       options={observationFocusOptions}
-                      activeId={activeObservationFocus?.id || ''}
+                      activeId={activeObservationFocus?.focusId || ''}
                       onActiveIdChange={setActiveObservationFocusId}
                     />
                     <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
-                      {summary.observedCapturePointCount}/{summary.capturePoints.length} focuses seen
-                      {!!summary.unstructuredObservationCount && ` · ${summary.unstructuredObservationCount} other observation${summary.unstructuredObservationCount === 1 ? '' : 's'}`}
+                      {observationFocusModel.representedConfiguredFocusCount}/{observationFocusModel.configuredFocusCount} configured focus{observationFocusModel.configuredFocusCount === 1 ? '' : 'es'} represented
+                      {!!observationFocusModel.otherObservationCount && ` · ${observationFocusModel.otherObservationCount} other observation${observationFocusModel.otherObservationCount === 1 ? '' : 's'}`}
                     </Typography>
                   </Stack>
                 </Paper>
-                <Stack spacing={0.85}>
-                  <ObservationLevelGraph focus={activeObservationFocus} />
-                  <Paper elevation={0} sx={{ p: 0.85, borderRadius: '11px', border: '1px solid rgba(23, 21, 26, 0.07)', bgcolor: '#fff' }}>
-                    <Stack spacing={0.65}>
-                      <Typography sx={{ color: darkText, fontSize: 12.2, fontWeight: 820 }}>
-                        Focus timelines with data
-                      </Typography>
-                      <ObservationFocusTimelineGrid
-                        options={observationFocusOptions}
-                        activeFocusId={activeObservationFocus?.id || ''}
-                        onActiveFocusChange={setActiveObservationFocusId}
-                      />
-                    </Stack>
-                  </Paper>
-                  <Stack direction="row" spacing={0.7} flexWrap="wrap" useFlexGap>
-                    {[
-                      ['Total', observationCount],
-                      ['Dates', observationGroups.length],
-                      ['Focuses', `${summary.observedCapturePointCount}/${summary.capturePoints.length}`],
-                    ].map(([label, value]) => (
-                      <Box key={label} sx={{ minWidth: 86, flex: '1 1 86px', p: 0.8, borderRadius: '10px', bgcolor: 'rgba(23, 21, 26, 0.035)', border: '1px solid rgba(23, 21, 26, 0.08)' }}>
-                        <Typography sx={{ color: 'text.secondary', fontSize: 11.4, fontWeight: 740 }}>{label}</Typography>
-                        <Typography sx={{ mt: 0.2, color: darkText, fontSize: 12.7, fontWeight: 850 }}>{value}</Typography>
-                      </Box>
-                    ))}
-                  </Stack>
-                </Stack>
+                <SelectedObservationFocusPanel focus={activeObservationFocus} levels={mathsCaptureLevels} />
               </Box>
             </Stack>
           </Paper>
