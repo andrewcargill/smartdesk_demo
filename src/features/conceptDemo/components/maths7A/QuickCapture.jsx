@@ -284,7 +284,7 @@ export default function QuickCapture({
         bgcolor: '#fff',
       }}
     >
-      <Stack spacing={0.55}>
+      <Stack spacing={5.75}>
         <Typography sx={{ color: darkText, fontSize: { xs: 17.5, sm: 19.5 }, lineHeight: 1.15, fontWeight: 880 }}>
           Learn observations
         </Typography>
@@ -299,7 +299,7 @@ export default function QuickCapture({
                 alignItems: 'center',
               }}
             >
-              <Typography sx={{ color: darkText, fontSize: 12.6, fontWeight: 760 }}>
+              <Typography sx={{ color: darkText, fontSize: 13.4, fontWeight: 850, lineHeight: 1.2 }}>
                 {item.label}
               </Typography>
               <ButtonGroup
@@ -517,10 +517,12 @@ export default function QuickCapture({
         aria-label="Maths 7A students"
         sx={{
           p: { xs: 0.75, md: 1 },
+          pb: { xs: 1.25, md: 1.75 },
           borderRadius: '14px',
           border: `2px solid ${purple}`,
           bgcolor: '#fff',
-          maxHeight: { xs: 96, md: 560 },
+          maxHeight: { xs: 96, md: 700 },
+          minHeight: { xs: 96, md: 560 },
           overflow: { xs: 'hidden', md: 'auto' },
           minWidth: 0,
         }}
@@ -537,6 +539,13 @@ export default function QuickCapture({
             overflowX: { xs: 'auto', md: 'visible' },
             overflowY: 'hidden',
             pb: { xs: 0.4, md: 0 },
+            '&::after': {
+              content: '""',
+              display: 'block',
+              flex: { md: '0 0 18px' },
+              width: { xs: 18, md: 'auto' },
+              height: { xs: 'auto', md: 18 },
+            },
           }}
         >
           {students.map((student) => {
