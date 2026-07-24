@@ -72,12 +72,7 @@ import {
   getEvidenceForStudent,
   getLatestEvidenceDate,
   getMergedMathsEvidence,
-  getStudentAssessments,
-  getStudentEvidenceByContent,
-  getStudentEvidenceSummary,
-  getStudentObservations,
   getStudentPictureSummary,
-  getStudentVisiblePatterns,
   sortEvidenceByDate,
 } from '../utils/maths7APictureUtils.js';
 import { getGroupsForStudent } from '../utils/classGroupUtils.js';
@@ -1249,403 +1244,6 @@ function buildMathsStudentProfileSections({ student, evidence, tasks }) {
   ];
 }
 
-function AssessmentResultsChart({ assessments, evidenceTopics }) {
-  const [activeAssessmentId, setActiveAssessmentId] = useState(null);
-  const width = 520;
-  const height = 190;
-  const padding = { top: 18, right: 22, bottom: 30, left: 34 };
-  const topicById = new Map(evidenceTopics.map((topic) => [topic.id, topic]));
-  const sortedAssessments = sortEvidenceByDate(assessments, 'asc');
-  const dates = sortedAssessments.map((item) => new Date(`${item.date}T12:00:00`).getTime());
-  const minDate = Math.min(...dates);
-  const maxDate = Math.max(...dates);
-  const xFor = (item) => {
-    if (sortedAssessments.length <= 1 || minDate === maxDate) {
-      return width / 2;
-    }
-    const value = new Date(`${item.date}T12:00:00`).getTime();
-    return padding.left + ((value - minDate) / (maxDate - minDate)) * (width - padding.left - padding.right);
-  };
-  const yFor = (item) => padding.top + (1 - (Number(item.percentage) || 0) / 100) * (height - padding.top - padding.bottom);
-  const points = sortedAssessments.map((item) => `${xFor(item)},${yFor(item)}`).join(' ');
-  const activeAssessment = sortedAssessments.find((item) => item.id === activeAssessmentId) || null;
-  const activeTooltip = activeAssessment ? {
-    x: Math.min(Math.max(xFor(activeAssessment) - 76, padding.left), width - padding.right - 152),
-    y: Math.max(yFor(activeAssessment) - 52, 6),
-  } : null;
-
-  return (
-    <Paper elevation={0} sx={{ p: 1.3, borderRadius: '16px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
-      <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 860 }}>Assessment results</Typography>
-      {sortedAssessments.length ? (
-        <>
-          <Box
-            component="svg"
-            viewBox={`0 0 ${width} ${height}`}
-            role="img"
-            aria-label={`${sortedAssessments.length} saved assessment result${sortedAssessments.length === 1 ? '' : 's'} from ${formatDemoDate(sortedAssessments[0].date)} to ${formatDemoDate(sortedAssessments[sortedAssessments.length - 1].date)}.`}
-            sx={{ mt: 0.8, width: '100%', height: 190, overflow: 'visible' }}
-          >
-            <line x1={padding.left} y1={padding.top} x2={padding.left} y2={height - padding.bottom} stroke="rgba(23, 21, 26, 0.18)" />
-            <line x1={padding.left} y1={height - padding.bottom} x2={width - padding.right} y2={height - padding.bottom} stroke="rgba(23, 21, 26, 0.18)" />
-            {[0, 50, 100].map((tick) => {
-              const y = padding.top + (1 - tick / 100) * (height - padding.top - padding.bottom);
-              return (
-                <g key={tick}>
-                  <line x1={padding.left} y1={y} x2={width - padding.right} y2={y} stroke="rgba(23, 21, 26, 0.055)" />
-                  <text x={padding.left - 8} y={y + 4} textAnchor="end" fill="rgba(23, 21, 26, 0.54)" fontSize="11">{tick}</text>
-                </g>
-              );
-            })}
-            {sortedAssessments.length > 1 && <polyline points={points} fill="none" stroke={purple} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />}
-            {sortedAssessments.map((item) => {
-              const topic = topicById.get(item.evidenceTopicId);
-              const unit = getTeachingUnitById(item.teachingUnitId);
-              const label = item.assessmentTitle || item.label;
-              return (
-                <g key={item.id}>
-                  <circle
-                    cx={xFor(item)}
-                    cy={yFor(item)}
-                    r="6"
-                    fill="#fff"
-                    stroke={purple}
-                    strokeWidth="2.2"
-                    tabIndex={0}
-                    role="graphics-symbol"
-                    aria-label={`${label}, ${item.percentage}%, ${formatDemoDate(item.date)}, ${topic?.label || item.evidenceTopicId}, ${unit?.title || 'teaching unit not shown'}.`}
-                    onMouseEnter={() => setActiveAssessmentId(item.id)}
-                    onMouseLeave={() => setActiveAssessmentId(null)}
-                    onFocus={() => setActiveAssessmentId(item.id)}
-                    onBlur={() => setActiveAssessmentId(null)}
-                    style={{ cursor: 'default', outline: 'none' }}
-                  >
-                    <title>{`${formatDemoDate(item.date)} · ${label} · ${topic?.label || item.evidenceTopicId} · ${unit?.title || ''} · ${item.percentage}%`}</title>
-                  </circle>
-                  <text x={xFor(item)} y={height - 9} textAnchor="middle" fill="rgba(23, 21, 26, 0.58)" fontSize="10.5">{formatDemoDate(item.date)}</text>
-                </g>
-              );
-            })}
-            {activeAssessment && activeTooltip && (
-              <g pointerEvents="none">
-                <rect x={activeTooltip.x} y={activeTooltip.y} width="152" height="40" rx="8" fill="#fff" stroke="rgba(23, 21, 26, 0.16)" />
-                <text x={activeTooltip.x + 10} y={activeTooltip.y + 16} fill={darkText} fontSize="11.5" fontWeight="700">
-                  {(activeAssessment.assessmentTitle || activeAssessment.label).length > 24 ? `${(activeAssessment.assessmentTitle || activeAssessment.label).slice(0, 24)}...` : activeAssessment.assessmentTitle || activeAssessment.label}
-                </text>
-                <text x={activeTooltip.x + 10} y={activeTooltip.y + 31} fill="rgba(23, 21, 26, 0.62)" fontSize="11">
-                  {activeAssessment.percentage}% result
-                </text>
-              </g>
-            )}
-          </Box>
-          {sortedAssessments.length === 1 && (
-            <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>One saved result is available. More results are needed before a same-area comparison is possible.</Typography>
-          )}
-          <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>Results relate to different areas of mathematics.</Typography>
-          <Box component="ul" sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
-            {sortedAssessments.map((item) => {
-              const topic = topicById.get(item.evidenceTopicId);
-              const unit = getTeachingUnitById(item.teachingUnitId);
-              return <li key={item.id}>{formatDemoDate(item.date)}. {item.assessmentTitle || item.label}. {topic?.label || item.evidenceTopicId}. {unit?.title || 'Teaching unit not shown'}. {item.percentage}%.</li>;
-            })}
-          </Box>
-        </>
-      ) : (
-        <Typography sx={{ mt: 0.7, color: 'text.secondary', fontSize: 13 }}>No saved assessment results yet.</Typography>
-      )}
-    </Paper>
-  );
-}
-
-function CaptureProgressChart({ observations, evidenceTopics }) {
-  const [activeObservationId, setActiveObservationId] = useState(null);
-  const width = 520;
-  const height = 210;
-  const padding = { top: 24, right: 24, bottom: 34, left: 82 };
-  const topicById = new Map(evidenceTopics.map((topic) => [topic.id, topic]));
-  const progressSeries = buildCaptureProgressSeries(observations);
-  const visibleSeries = progressSeries;
-  const visibleItems = visibleSeries.flatMap((series) => series.items);
-  const sortedVisibleItems = sortEvidenceByDate(visibleItems, 'asc');
-  const dates = visibleItems.map((item) => new Date(`${item.date}T12:00:00`).getTime());
-  const minDate = Math.min(...dates);
-  const maxDate = Math.max(...dates);
-  const levelValueById = new Map(mathsCaptureLevels.map((level) => [level.id, level.order]));
-  const levelDistribution = mathsCaptureLevels.map((level) => ({
-    ...level,
-    count: visibleItems.filter((item) => item.levelId === level.id).length,
-  }));
-  const totalStructured = visibleItems.length;
-  const lineColors = [purple, darkText, 'rgba(23, 21, 26, 0.56)', 'rgba(156, 40, 175, 0.58)'];
-  const xFor = (item) => {
-    if (visibleItems.length <= 1 || minDate === maxDate) {
-      return padding.left + (width - padding.left - padding.right) / 2;
-    }
-
-    const value = new Date(`${item.date}T12:00:00`).getTime();
-    return padding.left + ((value - minDate) / (maxDate - minDate)) * (width - padding.left - padding.right);
-  };
-  const yForLevel = (levelId) => {
-    const value = levelValueById.get(levelId) || 1;
-    return padding.top + (1 - (value - 1) / Math.max(mathsCaptureLevels.length - 1, 1)) * (height - padding.top - padding.bottom);
-  };
-  const activeObservation = visibleItems.find((item) => item.id === activeObservationId) || null;
-  const activePoint = activeObservation ? getMathsCapturePointById(activeObservation.capturePointId) : null;
-  const activeLevel = activeObservation ? getMathsCaptureLevelById(activeObservation.levelId) : null;
-  const activeTooltip = activeObservation ? {
-    x: Math.min(Math.max(xFor(activeObservation) - 78, padding.left), width - padding.right - 156),
-    y: Math.max(yForLevel(activeObservation.levelId) - 54, 8),
-  } : null;
-
-  return (
-    <Paper elevation={0} sx={{ p: 1.3, borderRadius: '16px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.7} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }}>
-        <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 860 }}>Capture progress</Typography>
-        {!!totalStructured && (
-          <Typography sx={{ color: 'text.secondary', fontSize: 12.1 }}>
-            {totalStructured} structured observation{totalStructured === 1 ? '' : 's'}
-          </Typography>
-        )}
-      </Stack>
-      {visibleSeries.length ? (
-        <>
-          <Box
-            component="svg"
-            viewBox={`0 0 ${width} ${height}`}
-            role="img"
-            aria-label={`${totalStructured} structured capture observation${totalStructured === 1 ? '' : 's'} showing progress by capture level.`}
-            sx={{ mt: 0.8, width: '100%', height: 210, overflow: 'visible' }}
-          >
-            <line x1={padding.left} y1={padding.top} x2={padding.left} y2={height - padding.bottom} stroke="rgba(23, 21, 26, 0.18)" />
-            <line x1={padding.left} y1={height - padding.bottom} x2={width - padding.right} y2={height - padding.bottom} stroke="rgba(23, 21, 26, 0.18)" />
-            {mathsCaptureLevels.map((level) => {
-              const y = yForLevel(level.id);
-              return (
-                <g key={level.id}>
-                  <line x1={padding.left} y1={y} x2={width - padding.right} y2={y} stroke="rgba(23, 21, 26, 0.055)" />
-                  <text x={padding.left - 10} y={y + 4} textAnchor="end" fill="rgba(23, 21, 26, 0.58)" fontSize="10.5">{level.label}</text>
-                </g>
-              );
-            })}
-            {visibleSeries.map((series, index) => {
-              const points = series.items.map((item) => `${xFor(item)},${yForLevel(item.levelId)}`).join(' ');
-              const color = lineColors[index % lineColors.length];
-
-              return (
-                <g key={series.capturePoint.id}>
-                  {series.items.length > 1 && <polyline points={points} fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />}
-                  {series.items.map((item) => {
-                    const topic = topicById.get(item.evidenceTopicId);
-                    const level = getMathsCaptureLevelById(item.levelId);
-                    return (
-                      <circle
-                        key={item.id}
-                        cx={xFor(item)}
-                        cy={yForLevel(item.levelId)}
-                        r="5.7"
-                        fill="#fff"
-                        stroke={color}
-                        strokeWidth="2.2"
-                        tabIndex={0}
-                        role="graphics-symbol"
-                        aria-label={`${series.capturePoint.label}, ${level?.label || item.levelId}, ${formatDemoDate(item.date)}, ${topic?.label || item.evidenceTopicId}.`}
-                        onMouseEnter={() => setActiveObservationId(item.id)}
-                        onMouseLeave={() => setActiveObservationId(null)}
-                        onFocus={() => setActiveObservationId(item.id)}
-                        onBlur={() => setActiveObservationId(null)}
-                        style={{ cursor: 'default', outline: 'none' }}
-                      >
-                        <title>{`${formatDemoDate(item.date)} · ${series.capturePoint.label} · ${level?.label || item.levelId} · ${topic?.label || item.evidenceTopicId}`}</title>
-                      </circle>
-                    );
-                  })}
-                </g>
-              );
-            })}
-            {visibleItems.length > 0 && (
-              <>
-                <text x={padding.left} y={height - 10} textAnchor="start" fill="rgba(23, 21, 26, 0.58)" fontSize="10.5">{formatDemoDate(sortedVisibleItems[0].date)}</text>
-                <text x={width - padding.right} y={height - 10} textAnchor="end" fill="rgba(23, 21, 26, 0.58)" fontSize="10.5">{formatDemoDate(sortedVisibleItems[sortedVisibleItems.length - 1].date)}</text>
-              </>
-            )}
-            {activeObservation && activeTooltip && (
-              <g pointerEvents="none">
-                <rect x={activeTooltip.x} y={activeTooltip.y} width="156" height="44" rx="8" fill="#fff" stroke="rgba(23, 21, 26, 0.16)" />
-                <text x={activeTooltip.x + 10} y={activeTooltip.y + 16} fill={darkText} fontSize="11.2" fontWeight="700">
-                  {activePoint?.label || activeObservation.capturePointId}
-                </text>
-                <text x={activeTooltip.x + 10} y={activeTooltip.y + 32} fill="rgba(23, 21, 26, 0.62)" fontSize="11">
-                  {activeLevel?.label || activeObservation.levelId} · {formatDemoDate(activeObservation.date)}
-                </text>
-              </g>
-            )}
-          </Box>
-          <Stack spacing={0.7}>
-            {visibleSeries.map((series, index) => {
-              const firstLevel = getMathsCaptureLevelById(series.items[0]?.levelId);
-              const latestLevel = getMathsCaptureLevelById(series.items[series.items.length - 1]?.levelId);
-              const movement = series.change > 0 ? '+' : '';
-              return (
-                <Stack key={series.capturePoint.id} direction="row" spacing={0.8} alignItems="center" sx={{ minWidth: 0 }}>
-                  <Box sx={{ width: 9, height: 9, borderRadius: '50%', bgcolor: lineColors[index % lineColors.length], flexShrink: 0 }} />
-                  <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 780, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{series.capturePoint.label}</Typography>
-                  <Typography sx={{ ml: 'auto', color: 'text.secondary', fontSize: 12.1, whiteSpace: 'nowrap' }}>
-                    {firstLevel?.label || 'Level'} to {latestLevel?.label || 'Level'}{series.change ? ` (${movement}${series.change})` : ''}
-                  </Typography>
-                </Stack>
-              );
-            })}
-          </Stack>
-          <Stack spacing={0.55} sx={{ mt: 1 }}>
-            {levelDistribution.filter((level) => level.count).map((level) => (
-              <Stack key={level.id} direction="row" spacing={0.8} alignItems="center">
-                <Typography sx={{ width: 76, color: 'text.secondary', fontSize: 11.8 }}>{level.label}</Typography>
-                <Box sx={{ flex: '1 1 auto', height: 8, borderRadius: '999px', bgcolor: 'rgba(23, 21, 26, 0.07)', overflow: 'hidden' }}>
-                  <Box sx={{ width: `${(level.count / totalStructured) * 100}%`, height: '100%', bgcolor: level.id === 'advanced' || level.id === 'secure' ? purple : 'rgba(23, 21, 26, 0.42)' }} />
-                </Box>
-                <Typography sx={{ width: 18, textAlign: 'right', color: darkText, fontSize: 11.8, fontWeight: 780 }}>{level.count}</Typography>
-              </Stack>
-            ))}
-          </Stack>
-          <Box component="ul" sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
-            {visibleItems.map((item) => {
-              const capturePoint = getMathsCapturePointById(item.capturePointId);
-              const level = getMathsCaptureLevelById(item.levelId);
-              const topic = topicById.get(item.evidenceTopicId);
-              return <li key={item.id}>{formatDemoDate(item.date)}. {capturePoint?.label || item.capturePointId}. {level?.label || item.levelId}. {topic?.label || item.evidenceTopicId}.</li>;
-            })}
-          </Box>
-        </>
-      ) : (
-        <Typography sx={{ mt: 0.7, color: 'text.secondary', fontSize: 13 }}>No structured capture observations yet.</Typography>
-      )}
-    </Paper>
-  );
-}
-
-function ObservationContentGraph({ contentRows }) {
-  const rows = contentRows
-    .map((entry) => {
-      const observations = entry.observations || [];
-      const levelCounts = mathsCaptureLevels.reduce((counts, level) => ({
-        ...counts,
-        [level.id]: observations.filter((item) => item.levelId === level.id).length,
-      }), {});
-      const latestStructured = observations.find((item) => item.capturePointId && item.levelId) || null;
-      const latestLevel = latestStructured ? getMathsCaptureLevelById(latestStructured.levelId) : null;
-
-      return {
-        unit: entry.topic,
-        observations,
-        count: observations.length,
-        levelCounts,
-        latestLevel,
-      };
-    })
-    .filter((row) => row.count);
-  const maxCount = Math.max(...rows.map((row) => row.count), 1);
-  const levelColors = {
-    emerging: 'rgba(23, 21, 26, 0.3)',
-    developing: 'rgba(23, 21, 26, 0.52)',
-    secure: purple,
-    advanced: darkText,
-  };
-
-  return (
-    <Paper elevation={0} sx={{ p: 1.3, borderRadius: '16px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
-      <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 860 }}>Observation spread</Typography>
-      {rows.length ? (
-        <Stack spacing={0.9} sx={{ mt: 1 }}>
-          {rows.map((row) => {
-            const topicLabels = (row.unit.evidenceTopicIds || [])
-              .map((id) => getEvidenceTopicById(id)?.title || id)
-              .join(', ');
-
-            return (
-              <Box key={row.unit.id}>
-                <Stack direction="row" spacing={1} alignItems="baseline" justifyContent="space-between">
-                  <Typography sx={{ color: darkText, fontSize: 12.8, fontWeight: 820, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {row.unit.label || row.unit.title}
-                  </Typography>
-                  <Typography sx={{ color: 'text.secondary', fontSize: 11.8, fontWeight: 760, whiteSpace: 'nowrap' }}>
-                    {row.count} observation{row.count === 1 ? '' : 's'}
-                  </Typography>
-                </Stack>
-                <Box
-                  role="img"
-                  aria-label={`${row.unit.label || row.unit.title}: ${row.count} observation${row.count === 1 ? '' : 's'}${row.latestLevel ? `, latest structured level ${row.latestLevel.label}` : ''}.`}
-                  sx={{
-                    mt: 0.45,
-                    height: 14,
-                    display: 'flex',
-                    width: `${Math.max((row.count / maxCount) * 100, 12)}%`,
-                    minWidth: 72,
-                    borderRadius: '999px',
-                    overflow: 'hidden',
-                    bgcolor: 'rgba(23, 21, 26, 0.07)',
-                  }}
-                >
-                  {mathsCaptureLevels.map((level) => {
-                    const count = row.levelCounts[level.id] || 0;
-                    if (!count) return null;
-                    return (
-                      <Box
-                        key={level.id}
-                        title={`${level.label}: ${count}`}
-                        sx={{
-                          width: `${(count / row.count) * 100}%`,
-                          minWidth: 7,
-                          bgcolor: levelColors[level.id],
-                        }}
-                      />
-                    );
-                  })}
-                  {observationsWithoutLevel(row.observations) > 0 && (
-                    <Box
-                      title={`Unlevelled observations: ${observationsWithoutLevel(row.observations)}`}
-                      sx={{
-                        flex: '1 1 auto',
-                        minWidth: 7,
-                        bgcolor: 'rgba(23, 21, 26, 0.14)',
-                      }}
-                    />
-                  )}
-                </Box>
-                <Stack direction="row" spacing={0.7} alignItems="center" sx={{ mt: 0.35 }}>
-                  {row.latestLevel && (
-                    <Chip
-                      label={row.latestLevel.label}
-                      size="small"
-                      sx={{ height: 20, bgcolor: row.latestLevel.id === 'secure' || row.latestLevel.id === 'advanced' ? purple : '#fff', color: row.latestLevel.id === 'secure' || row.latestLevel.id === 'advanced' ? '#fff' : darkText, fontSize: 11, fontWeight: 780 }}
-                    />
-                  )}
-                  <Typography sx={{ color: 'text.secondary', fontSize: 11.7, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {topicLabels || 'No linked topics'}
-                  </Typography>
-                </Stack>
-              </Box>
-            );
-          })}
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ pt: 0.2 }}>
-            {mathsCaptureLevels.map((level) => (
-              <Stack key={level.id} direction="row" spacing={0.45} alignItems="center">
-                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: levelColors[level.id] }} />
-                <Typography sx={{ color: 'text.secondary', fontSize: 11.4 }}>{level.label}</Typography>
-              </Stack>
-            ))}
-          </Stack>
-        </Stack>
-      ) : (
-        <Typography sx={{ mt: 0.7, color: 'text.secondary', fontSize: 13 }}>No saved observations yet.</Typography>
-      )}
-    </Paper>
-  );
-}
-
-function observationsWithoutLevel(observations) {
-  return (observations || []).filter((item) => !item.levelId).length;
-}
-
 function getUnitEvidenceItems(evidence, unit) {
   return (evidence || []).filter((item) => (
     item.teachingUnitId === unit.id
@@ -1666,6 +1264,7 @@ function buildTeachingUnitEvidenceSummary(unit, evidence, judgement) {
   const assessments = items.filter((item) => item.type === 'assessment');
   const capturePoints = getCapturePointsForUnit(unit);
   const observedCapturePointIds = new Set(observations.map((item) => item.capturePointId).filter(Boolean));
+  const unstructuredObservations = observations.filter((item) => !item.capturePointId);
   const dates = [...new Set(items.map((item) => item.date).filter(Boolean))].sort();
 
   return {
@@ -1676,6 +1275,7 @@ function buildTeachingUnitEvidenceSummary(unit, evidence, judgement) {
     capturePoints,
     observedCapturePointIds,
     observedCapturePointCount: capturePoints.filter((point) => observedCapturePointIds.has(point.id)).length,
+    unstructuredObservationCount: unstructuredObservations.length,
     lessonCount: dates.length,
     earliestDate: dates[0] || null,
     latestDate: dates[dates.length - 1] || null,
@@ -1707,288 +1307,283 @@ function getJudgementKey(studentId, teachingUnitId) {
   return `${studentId}:${teachingUnitId}`;
 }
 
-function StudentInsightPanelV2({
-  student,
-  teachingUnits,
-  evidence,
-  judgements,
-  onSaveJudgement,
-}) {
-  const unitSummaries = useMemo(() => teachingUnits.map((unit) => buildTeachingUnitEvidenceSummary(
-    unit,
-    evidence,
-    judgements[getJudgementKey(student.id, unit.id)] || null,
-  )), [evidence, judgements, student.id, teachingUnits]);
-  const defaultUnit = unitSummaries.find((summary) => summary.items.length) || unitSummaries[0] || null;
-  const [selectedUnitId, setSelectedUnitId] = useState(defaultUnit?.unit.id || '');
-  const selectedSummary = unitSummaries.find((summary) => summary.unit.id === selectedUnitId) || defaultUnit;
-  const [judgementEditorOpen, setJudgementEditorOpen] = useState(false);
-  const [draftLevelId, setDraftLevelId] = useState('not-set');
-  const [draftNote, setDraftNote] = useState('');
+function getRepeatedSequenceGroups(summary) {
+  return buildCapturePointSequences(summary).filter((sequence) => sequence.observations.length >= 2);
+}
 
-  useEffect(() => {
-    if (!selectedSummary) return;
-    setSelectedUnitId((currentId) => (
-      unitSummaries.some((summary) => summary.unit.id === currentId)
-        ? currentId
-        : selectedSummary.unit.id
-    ));
-  }, [selectedSummary, unitSummaries]);
+function getAssessmentPercentage(item) {
+  const percentage = item?.percentage !== undefined && item?.percentage !== null
+    ? Number(item.percentage)
+    : item?.valueType === 'percentage'
+      ? Number(item.value)
+      : null;
 
-  useEffect(() => {
-    const judgement = selectedSummary?.judgement || null;
-    setDraftLevelId(judgement?.levelId || 'not-set');
-    setDraftNote(judgement?.note || '');
-    setJudgementEditorOpen(false);
-  }, [selectedSummary?.unit.id, selectedSummary?.judgement]);
+  return Number.isFinite(percentage) ? percentage : null;
+}
 
-  if (!selectedSummary) {
-    return null;
-  }
+function getEvidenceDateGroups(items) {
+  const groupsByDate = new Map();
 
-  const studentEvidence = getEvidenceForStudent(evidence, student.id);
-  const studentObservations = studentEvidence.filter((item) => item.type !== 'assessment');
-  const studentAssessments = studentEvidence.filter((item) => item.type === 'assessment');
-  const unitsWithEvidenceCount = unitSummaries.filter((summary) => summary.items.length).length;
-  const latestEvidenceDate = getLatestEvidenceDate(studentEvidence);
-  const sequences = buildCapturePointSequences(selectedSummary);
-  const observedSequences = sequences.filter((sequence) => sequence.observations.length);
-  const unobservedSequences = sequences.filter((sequence) => !sequence.observations.length);
-  const repeatedSequences = observedSequences.filter((sequence) => sequence.observations.length >= 2);
-  const changedSequences = repeatedSequences.filter((sequence) => sequence.observations[0].levelId !== sequence.observations[sequence.observations.length - 1].levelId);
-  const unchangedSequences = repeatedSequences.filter((sequence) => sequence.observations[0].levelId === sequence.observations[sequence.observations.length - 1].levelId);
-  const structuredObservationIds = new Set(selectedSummary.observations.filter((item) => item.capturePointId).map((item) => item.id));
-  const otherObservations = selectedSummary.observations.filter((item) => !structuredObservationIds.has(item.id));
-  const judgementLevel = selectedSummary.judgement?.levelId ? getMathsCaptureLevelById(selectedSummary.judgement.levelId) : null;
+  sortEvidenceByDate(items || [], 'asc').forEach((item) => {
+    if (!item.date) return;
+    const existingGroup = groupsByDate.get(item.date) || {
+      date: item.date,
+      observations: 0,
+      assessments: 0,
+      labels: [],
+    };
 
-  function saveJudgement() {
-    onSaveJudgement({
-      studentId: student.id,
-      teachingUnitId: selectedSummary.unit.id,
-      levelId: draftLevelId === 'not-set' ? null : draftLevelId,
-      note: draftNote.trim(),
-    });
-    setJudgementEditorOpen(false);
-  }
+    if (item.type === 'assessment') {
+      existingGroup.assessments += 1;
+    } else {
+      existingGroup.observations += 1;
+    }
+
+    existingGroup.labels.push(item.assessmentTitle || item.observationText || item.label || 'Evidence');
+    groupsByDate.set(item.date, existingGroup);
+  });
+
+  return [...groupsByDate.values()].map((group) => ({
+    ...group,
+    count: group.observations + group.assessments,
+  }));
+}
+
+function EvidenceTimelineTile({ title, items }) {
+  const dateGroups = getEvidenceDateGroups(items);
+  const maxCount = Math.max(...dateGroups.map((group) => group.count), 1);
+  const points = dateGroups.map((group, index) => ({
+    ...group,
+    x: dateGroups.length === 1 ? 50 : 8 + (index / (dateGroups.length - 1)) * 84,
+    y: 54 - (group.count / maxCount) * 38,
+  }));
+  const linePoints = points.map((point) => `${point.x},${point.y}`).join(' ');
+  const firstDate = dateGroups[0]?.date || null;
+  const latestDate = dateGroups[dateGroups.length - 1]?.date || null;
 
   return (
-    <Box sx={{ p: { xs: 1, sm: 1.25 }, bgcolor: '#fbfafc', borderTop: '1px solid rgba(23, 21, 26, 0.07)' }}>
-      <Paper elevation={0} id={`student-insight-v2-${student.id}`} sx={{ p: { xs: 1.25, sm: 1.6 }, borderRadius: '18px', border: '1px solid rgba(23, 21, 26, 0.1)', bgcolor: '#fff' }}>
-        <Stack spacing={1.4}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
-            <Box>
-              <Typography component="h2" sx={{ color: darkText, fontSize: 16.5, fontWeight: 900 }}>Evidence picture</Typography>
-              <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 12.8 }}>Prototype V2 · factual evidence view</Typography>
-            </Box>
-            <Stack direction="row" spacing={0.6} flexWrap="wrap" useFlexGap>
-              {[
-                `${studentEvidence.length} evidence item${studentEvidence.length === 1 ? '' : 's'}`,
-                `${studentAssessments.length} assessment${studentAssessments.length === 1 ? '' : 's'}`,
-                `${studentObservations.length} observation${studentObservations.length === 1 ? '' : 's'}`,
-                `${unitsWithEvidenceCount} teaching unit${unitsWithEvidenceCount === 1 ? '' : 's'} with evidence`,
-                `Latest evidence: ${latestEvidenceDate ? formatDemoDate(latestEvidenceDate) : 'None'}`,
-              ].map((item) => <Chip key={item} label={item} size="small" sx={{ bgcolor: '#fff', border: '1px solid rgba(23, 21, 26, 0.12)', color: darkText, fontWeight: 760 }} />)}
-            </Stack>
-          </Stack>
-
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(260px, 0.78fr) minmax(0, 1.22fr)' }, gap: 1.25, alignItems: 'start' }}>
-            <Stack spacing={0.75}>
-              {unitSummaries.map((summary) => {
-                const selected = summary.unit.id === selectedSummary.unit.id;
-                const judgement = summary.judgement?.levelId ? getMathsCaptureLevelById(summary.judgement.levelId) : null;
-                return (
-                  <ButtonBase
-                    key={summary.unit.id}
-                    onClick={() => setSelectedUnitId(summary.unit.id)}
-                    aria-pressed={selected}
-                    sx={{
-                      width: '100%',
-                      p: 1,
-                      display: 'block',
-                      textAlign: 'left',
-                      borderRadius: '12px',
-                      border: selected ? `1px solid ${purple}` : '1px solid rgba(23, 21, 26, 0.1)',
-                      bgcolor: selected ? palePurple : '#fff',
-                      '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
-                    }}
-                  >
-                    <Typography sx={{ color: darkText, fontSize: 13.4, fontWeight: 880 }}>{summary.unit.label || summary.unit.title}</Typography>
-                    <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 12.2 }}>
-                      {summary.observations.length ? `${summary.observations.length} observation${summary.observations.length === 1 ? '' : 's'}` : 'No observations'} · {summary.assessments.length ? `${summary.assessments.length} assessment${summary.assessments.length === 1 ? '' : 's'}` : 'no assessments'} · {summary.observedCapturePointCount}/{summary.capturePoints.length} capture points
-                    </Typography>
-                    <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 12 }}>
-                      Evidence spans {summary.lessonCount || 0} lesson{summary.lessonCount === 1 ? '' : 's'} · Latest {summary.latestDate ? formatDemoDate(summary.latestDate) : 'none'}
-                    </Typography>
-                    <Typography sx={{ mt: 0.35, color: darkText, fontSize: 12, fontWeight: 760 }}>
-                      Teacher judgement: {judgement?.label || 'Not set'}
-                    </Typography>
-                  </ButtonBase>
-                );
-              })}
-            </Stack>
-
-            <Stack spacing={1.15}>
-              <Paper elevation={0} sx={{ p: 1.25, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
-                <Typography component="h3" sx={{ color: darkText, fontSize: 16, fontWeight: 900 }}>{selectedSummary.unit.label || selectedSummary.unit.title}</Typography>
-                <Stack direction="row" spacing={0.65} flexWrap="wrap" useFlexGap sx={{ mt: 0.75 }}>
-                  {[
-                    `${selectedSummary.observations.length} observation${selectedSummary.observations.length === 1 ? '' : 's'}`,
-                    `${selectedSummary.assessments.length} assessment${selectedSummary.assessments.length === 1 ? '' : 's'}`,
-                    `${selectedSummary.observedCapturePointCount} of ${selectedSummary.capturePoints.length} capture points observed`,
-                    `Evidence across ${selectedSummary.lessonCount || 0} lesson${selectedSummary.lessonCount === 1 ? '' : 's'}`,
-                    selectedSummary.earliestDate && selectedSummary.latestDate ? `${formatDemoDate(selectedSummary.earliestDate)}-${formatDemoDate(selectedSummary.latestDate)}` : 'No evidence dates',
-                  ].map((item) => <Chip key={item} label={item} size="small" sx={{ bgcolor: '#fff', border: '1px solid rgba(23, 21, 26, 0.12)', color: darkText, fontWeight: 740 }} />)}
-                </Stack>
-              </Paper>
-
-              <Paper elevation={0} sx={{ p: 1.25, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
-                <Typography component="h3" sx={{ color: darkText, fontSize: 14, fontWeight: 880 }}>Capture-point coverage</Typography>
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 1.1, mt: 0.8 }}>
-                  <Box>
-                    <Typography component="h4" sx={{ color: darkText, fontSize: 12.8, fontWeight: 850 }}>Observed</Typography>
-                    <Stack spacing={0.45} sx={{ mt: 0.45 }}>
-                      {observedSequences.length ? observedSequences.map((sequence) => (
-                        <Typography key={sequence.capturePoint.id} sx={{ color: 'text.secondary', fontSize: 12.4 }}>
-                          {sequence.capturePoint.label} · {sequence.observations.length} observation{sequence.observations.length === 1 ? '' : 's'}
-                        </Typography>
-                      )) : <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>None</Typography>}
-                    </Stack>
-                  </Box>
-                  <Box>
-                    <Typography component="h4" sx={{ color: darkText, fontSize: 12.8, fontWeight: 850 }}>Not yet observed</Typography>
-                    <Stack spacing={0.45} sx={{ mt: 0.45 }}>
-                      {unobservedSequences.length ? unobservedSequences.map((sequence) => (
-                        <Typography key={sequence.capturePoint.id} sx={{ color: 'text.secondary', fontSize: 12.4 }}>{sequence.capturePoint.label}</Typography>
-                      )) : <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>None</Typography>}
-                    </Stack>
-                  </Box>
-                </Box>
-              </Paper>
-
-              <Paper elevation={0} sx={{ p: 1.25, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
-                <Typography component="h3" sx={{ color: darkText, fontSize: 14, fontWeight: 880 }}>Changes in repeated observations</Typography>
-                <Stack spacing={0.8} sx={{ mt: 0.75 }}>
-                  {[
-                    ['Changed', changedSequences],
-                    ['No recorded change', unchangedSequences],
-                  ].map(([label, sequencesForSection]) => (
-                    <Box key={label}>
-                      <Typography component="h4" sx={{ color: darkText, fontSize: 12.8, fontWeight: 850 }}>{label}</Typography>
-                      <Stack spacing={0.45} sx={{ mt: 0.35 }}>
-                        {sequencesForSection.length ? sequencesForSection.map((sequence) => {
-                          const first = sequence.observations[0];
-                          const latest = sequence.observations[sequence.observations.length - 1];
-                          const firstLevel = getMathsCaptureLevelById(first.levelId);
-                          const latestLevel = getMathsCaptureLevelById(latest.levelId);
-                          return (
-                            <Typography key={sequence.capturePoint.id} sx={{ color: 'text.secondary', fontSize: 12.4 }}>
-                              {sequence.capturePoint.label}: recorded change {firstLevel?.label || first.levelId} to {latestLevel?.label || latest.levelId} · {formatDemoDate(first.date)}-{formatDemoDate(latest.date)}
-                            </Typography>
-                          );
-                        }) : <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>No capture point has been observed more than once yet.</Typography>}
-                      </Stack>
-                    </Box>
-                  ))}
-                </Stack>
-              </Paper>
-
-              <Paper elevation={0} sx={{ p: 1.25, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
-                <Typography component="h3" sx={{ color: darkText, fontSize: 14, fontWeight: 880 }}>Observation evidence</Typography>
-                <Stack spacing={0.75} sx={{ mt: 0.75 }}>
-                  {observedSequences.length ? observedSequences.map((sequence) => (
-                    <Box key={sequence.capturePoint.id} sx={{ borderTop: '1px solid rgba(23, 21, 26, 0.07)', pt: 0.65 }}>
-                      <Typography sx={{ color: darkText, fontSize: 13, fontWeight: 820 }}>{sequence.capturePoint.label}</Typography>
-                      {sequence.observations.map((item) => {
-                        const level = getMathsCaptureLevelById(item.levelId);
-                        return (
-                          <Typography key={item.id} sx={{ mt: 0.2, color: 'text.secondary', fontSize: 12.4 }}>
-                            {formatDemoDate(item.date)} · {level?.label || item.levelId}{item.observationText ? ` · ${item.observationText}` : ''}
-                          </Typography>
-                        );
-                      })}
-                    </Box>
-                  )) : <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>No structured observations recorded for this teaching unit.</Typography>}
-                  {!!otherObservations.length && (
-                    <Box sx={{ borderTop: '1px solid rgba(23, 21, 26, 0.07)', pt: 0.65 }}>
-                      <Typography sx={{ color: darkText, fontSize: 13, fontWeight: 820 }}>Other teacher observations</Typography>
-                      {otherObservations.map((item) => (
-                        <Typography key={item.id} sx={{ mt: 0.2, color: 'text.secondary', fontSize: 12.4 }}>
-                          {item.observationText || item.label} · {formatDemoDate(item.date)}
-                        </Typography>
-                      ))}
-                    </Box>
-                  )}
-                </Stack>
-              </Paper>
-
-              <Paper elevation={0} sx={{ p: 1.25, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
-                <Typography component="h3" sx={{ color: darkText, fontSize: 14, fontWeight: 880 }}>Assessment evidence</Typography>
-                <Stack spacing={0.75} sx={{ mt: 0.75 }}>
-                  {selectedSummary.assessments.length ? selectedSummary.assessments.map((item) => (
-                    <Box key={item.id} sx={{ borderTop: '1px solid rgba(23, 21, 26, 0.07)', pt: 0.65 }}>
-                      <Typography sx={{ color: darkText, fontSize: 13, fontWeight: 820 }}>{item.assessmentTitle || item.label}</Typography>
-                      <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>{formatDemoDate(item.date)} · {item.percentage}%</Typography>
-                      {item.note && <Typography sx={{ mt: 0.15, color: 'text.secondary', fontSize: 12.3 }}>{item.note}</Typography>}
-                    </Box>
-                  )) : <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>No assessments recorded for this teaching unit.</Typography>}
-                </Stack>
-              </Paper>
-
-              <Paper elevation={0} sx={{ p: 1.25, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
-                  <Box>
-                    <Typography component="h3" sx={{ color: darkText, fontSize: 14, fontWeight: 880 }}>Teacher working judgement</Typography>
-                    <Typography sx={{ mt: 0.3, color: 'text.secondary', fontSize: 12.5 }}>
-                      {judgementLevel ? `Teacher judgement · ${judgementLevel.label}` : 'Teacher judgement not set'}
-                    </Typography>
-                    {selectedSummary.judgement?.updatedAt && (
-                      <Typography sx={{ mt: 0.15, color: 'text.secondary', fontSize: 12.1 }}>Set by Anna · {formatDemoDate(selectedSummary.judgement.effectiveDate || selectedSummary.judgement.updatedAt.slice(0, 10))}</Typography>
-                    )}
-                    {selectedSummary.judgement?.note && <Typography sx={{ mt: 0.35, color: darkText, fontSize: 12.6 }}>{selectedSummary.judgement.note}</Typography>}
-                  </Box>
-                  <Button variant="outlined" onClick={() => setJudgementEditorOpen(true)} sx={{ color: darkText, borderColor: 'rgba(23, 21, 26, 0.14)', textTransform: 'none', fontWeight: 780 }}>
-                    Add judgement
-                  </Button>
-                </Stack>
-                {judgementEditorOpen && (
-                  <Stack spacing={0.9} sx={{ mt: 1, pt: 1, borderTop: '1px solid rgba(23, 21, 26, 0.08)' }}>
-                    <FormControl size="small">
-                      <InputLabel id={`teacher-judgement-level-${student.id}-${selectedSummary.unit.id}`}>Teacher judgement</InputLabel>
-                      <Select
-                        labelId={`teacher-judgement-level-${student.id}-${selectedSummary.unit.id}`}
-                        label="Teacher judgement"
-                        value={draftLevelId}
-                        onChange={(event) => setDraftLevelId(event.target.value)}
-                      >
-                        <MenuItem value="not-set">Not set</MenuItem>
-                        {mathsCaptureLevels.map((level) => <MenuItem key={level.id} value={level.id}>{level.label}</MenuItem>)}
-                      </Select>
-                    </FormControl>
-                    <TextField
-                      label="Teacher note"
-                      value={draftNote}
-                      onChange={(event) => setDraftNote(event.target.value)}
-                      size="small"
-                      multiline
-                      minRows={2}
-                    />
-                    <Stack direction="row" spacing={0.8}>
-                      <Button variant="contained" onClick={saveJudgement} sx={{ bgcolor: purple, textTransform: 'none', fontWeight: 820, '&:hover': { bgcolor: purple } }}>Save</Button>
-                      <Button onClick={() => setJudgementEditorOpen(false)} sx={{ color: darkText, textTransform: 'none', fontWeight: 760 }}>Cancel</Button>
-                    </Stack>
-                  </Stack>
-                )}
-              </Paper>
-            </Stack>
-          </Box>
+    <Paper elevation={0} sx={{ p: 1.1, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff', minHeight: 126 }}>
+      <Stack spacing={0.8}>
+        <Stack direction="row" spacing={1} alignItems="baseline" justifyContent="space-between">
+          <Typography sx={{ color: darkText, fontSize: 12.8, fontWeight: 880 }}>{title}</Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>{dateGroups.length} date{dateGroups.length === 1 ? '' : 's'}</Typography>
         </Stack>
-      </Paper>
-    </Box>
+        <Box
+          component="svg"
+          role="img"
+          aria-label={title}
+          viewBox="0 0 100 64"
+          sx={{
+            width: '100%',
+            height: 66,
+            display: 'block',
+            overflow: 'visible',
+            '& circle': { transition: 'r 140ms ease, fill 140ms ease' },
+            '& circle:hover': { r: 4.8, fill: purple },
+          }}
+        >
+          <line x1="8" y1="54" x2="92" y2="54" stroke="rgba(23, 21, 26, 0.12)" strokeWidth="1.5" />
+          <line x1="8" y1="16" x2="92" y2="16" stroke="rgba(23, 21, 26, 0.05)" strokeWidth="1" />
+          {points.length > 1 && <polyline points={linePoints} fill="none" stroke={purple} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />}
+          {points.length === 1 && <line x1="22" y1={points[0].y} x2="78" y2={points[0].y} stroke={purple} strokeWidth="2.6" strokeLinecap="round" />}
+          {points.map((point) => (
+            <circle key={point.date} cx={point.x} cy={point.y} r="3.7" fill={darkText} stroke="#fff" strokeWidth="1.5">
+              <title>{`${formatDemoDate(point.date)} · ${point.count} item${point.count === 1 ? '' : 's'} · ${point.labels.slice(0, 2).join(' · ')}`}</title>
+            </circle>
+          ))}
+          {!points.length && (
+            <>
+              <line x1="22" y1="35" x2="78" y2="35" stroke="rgba(23, 21, 26, 0.18)" strokeWidth="2.2" strokeLinecap="round" />
+              <circle cx="50" cy="35" r="3.5" fill="rgba(23, 21, 26, 0.22)" />
+            </>
+          )}
+        </Box>
+        <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
+          {latestDate ? `${formatDemoDate(firstDate)} to ${formatDemoDate(latestDate)}` : 'No dated evidence yet'}
+        </Typography>
+      </Stack>
+    </Paper>
   );
 }
 
-function getRepeatedSequenceGroups(summary) {
-  return buildCapturePointSequences(summary).filter((sequence) => sequence.observations.length >= 2);
+function AssessmentResultTile({ assessments, title = 'Assessment line' }) {
+  const sortedAssessments = sortEvidenceByDate(assessments || [], 'asc')
+    .filter((item) => getAssessmentPercentage(item) !== null);
+  const points = sortedAssessments.map((item, index) => ({
+    item,
+    x: sortedAssessments.length === 1 ? 50 : 8 + (index / (sortedAssessments.length - 1)) * 84,
+    y: 54 - (getAssessmentPercentage(item) / 100) * 38,
+  }));
+  const linePoints = points.map((point) => `${point.x},${point.y}`).join(' ');
+
+  return (
+    <Paper elevation={0} sx={{ p: 1.1, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff', minHeight: 126 }}>
+      <Stack spacing={0.8}>
+        <Stack direction="row" spacing={1} alignItems="baseline" justifyContent="space-between">
+          <Typography sx={{ color: darkText, fontSize: 12.8, fontWeight: 880 }}>{title}</Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>{sortedAssessments.length} result{sortedAssessments.length === 1 ? '' : 's'}</Typography>
+        </Stack>
+        <Box
+          component="svg"
+          role="img"
+          aria-label={title}
+          viewBox="0 0 100 64"
+          sx={{
+            width: '100%',
+            height: 66,
+            display: 'block',
+            overflow: 'visible',
+            '& circle': { transition: 'r 140ms ease, fill 140ms ease' },
+            '& circle:hover': { r: 4.8, fill: purple },
+          }}
+        >
+          {[25, 50, 75].map((tick) => {
+            const y = 54 - (tick / 100) * 38;
+            return <line key={tick} x1="8" y1={y} x2="92" y2={y} stroke="rgba(23, 21, 26, 0.055)" strokeWidth="1" />;
+          })}
+          <line x1="8" y1="54" x2="92" y2="54" stroke="rgba(23, 21, 26, 0.12)" strokeWidth="1.5" />
+          {points.length > 1 && <polyline points={linePoints} fill="none" stroke={purple} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />}
+          {points.length === 1 && <line x1="22" y1={points[0].y} x2="78" y2={points[0].y} stroke={purple} strokeWidth="2.6" strokeLinecap="round" />}
+          {points.map((point) => (
+            <circle key={point.item.id} cx={point.x} cy={point.y} r="3.7" fill={darkText} stroke="#fff" strokeWidth="1.5">
+              <title>{`${formatDemoDate(point.item.date)} · ${point.item.assessmentTitle || point.item.label || 'Assessment'} · ${getAssessmentPercentage(point.item)}%`}</title>
+            </circle>
+          ))}
+          {!points.length && (
+            <>
+              <line x1="22" y1="35" x2="78" y2="35" stroke="rgba(23, 21, 26, 0.18)" strokeWidth="2.2" strokeLinecap="round" />
+              <circle cx="50" cy="35" r="3.5" fill="rgba(23, 21, 26, 0.22)" />
+            </>
+          )}
+        </Box>
+        <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
+          {sortedAssessments.length
+            ? `${getAssessmentPercentage(sortedAssessments[0])}% to ${getAssessmentPercentage(sortedAssessments[sortedAssessments.length - 1])}%`
+            : 'No assessment result yet'}
+        </Typography>
+      </Stack>
+    </Paper>
+  );
+}
+
+function EvidenceTypeTile({ observations, assessments }) {
+  const total = observations + assessments;
+  const assessmentShare = total ? Math.round((assessments / total) * 100) : 0;
+  const observationShare = total ? 100 - assessmentShare : 0;
+
+  return (
+    <Paper elevation={0} sx={{ p: 1.1, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff', minHeight: 126 }}>
+      <Stack direction="row" spacing={1.1} alignItems="center" sx={{ height: '100%' }}>
+        <Box
+          title={total ? `${assessments} assessment, ${observations} observation` : 'No evidence yet'}
+          sx={{
+            width: 62,
+            height: 62,
+            borderRadius: '50%',
+            flexShrink: 0,
+            bgcolor: total ? 'transparent' : 'rgba(23, 21, 26, 0.08)',
+            background: total
+              ? `conic-gradient(${purple} 0 ${assessmentShare}%, ${darkText} ${assessmentShare}% 100%)`
+              : undefined,
+            border: '6px solid #fff',
+            boxShadow: '0 0 0 1px rgba(23, 21, 26, 0.1)',
+            transition: 'transform 140ms ease',
+            '&:hover': { transform: 'scale(1.04)' },
+          }}
+        />
+        <Box sx={{ minWidth: 0 }}>
+          <Typography sx={{ color: darkText, fontSize: 12.8, fontWeight: 880 }}>Evidence type</Typography>
+          <Stack spacing={0.45} sx={{ mt: 0.75 }}>
+            <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+              <Box component="span" sx={{ display: 'inline-block', width: 8, height: 8, bgcolor: purple, mr: 0.6 }} />
+              Assessment · {assessmentShare}%
+            </Typography>
+            <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+              <Box component="span" sx={{ display: 'inline-block', width: 8, height: 8, bgcolor: darkText, mr: 0.6 }} />
+              Observation · {observationShare}%
+            </Typography>
+          </Stack>
+        </Box>
+      </Stack>
+    </Paper>
+  );
+}
+
+function CaptureCoverageTile({ summary }) {
+  const sequences = buildCapturePointSequences(summary);
+  const observationsByCapturePoint = new Map();
+  summary.observations
+    .filter((item) => item.capturePointId)
+    .forEach((item) => {
+      if (!observationsByCapturePoint.has(item.capturePointId)) {
+        observationsByCapturePoint.set(item.capturePointId, []);
+      }
+      observationsByCapturePoint.get(item.capturePointId).push(item);
+    });
+  const unstructuredObservationCount = summary.unstructuredObservationCount || 0;
+
+  return (
+    <Paper elevation={0} sx={{ p: 1.1, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff', minHeight: 126 }}>
+      <Typography sx={{ color: darkText, fontSize: 12.8, fontWeight: 880 }}>Capture points</Typography>
+      <Stack direction="row" spacing={0.7} flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
+        {sequences.map((sequence) => {
+          const pointObservations = sortEvidenceByDate(observationsByCapturePoint.get(sequence.capturePoint.id) || [], 'desc');
+          const latestObservation = pointObservations[0] || null;
+          const level = latestObservation?.levelId ? getMathsCaptureLevelById(latestObservation.levelId) : null;
+          return (
+            <Box
+              key={sequence.capturePoint.id}
+              title={`${sequence.capturePoint.label}${latestObservation ? ` · ${level?.label || 'Observed'} · ${formatDemoDate(latestObservation.date)}` : ' · no observation yet'}`}
+              sx={{
+                width: 13,
+                height: 13,
+                borderRadius: '50%',
+                bgcolor: latestObservation ? purple : '#fff',
+                border: latestObservation ? `1px solid ${purple}` : '1px solid rgba(23, 21, 26, 0.22)',
+                transition: 'transform 140ms ease, box-shadow 140ms ease',
+                '&:hover': { transform: 'scale(1.22)', boxShadow: '0 0 0 3px rgba(156, 40, 175, 0.13)' },
+              }}
+            />
+          );
+        })}
+        {!sequences.length && <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>No capture points configured.</Typography>}
+      </Stack>
+      <Typography sx={{ mt: 1, color: 'text.secondary', fontSize: 11.8 }}>
+        {summary.observedCapturePointCount}/{summary.capturePoints.length} capture points observed
+        {!!unstructuredObservationCount && ` · ${unstructuredObservationCount} other observation${unstructuredObservationCount === 1 ? '' : 's'}`}
+      </Typography>
+    </Paper>
+  );
+}
+
+function UnitEvidenceBarsTile({ summaries }) {
+  const rows = [...summaries]
+    .filter((summary) => summary.items.length)
+    .sort((first, second) => second.items.length - first.items.length)
+    .slice(0, 5);
+  const maxItems = Math.max(...rows.map((summary) => summary.items.length), 1);
+
+  return (
+    <Paper elevation={0} sx={{ p: 1.1, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff', minHeight: 126 }}>
+      <Typography sx={{ color: darkText, fontSize: 12.8, fontWeight: 880 }}>Evidence by unit</Typography>
+      <Stack spacing={0.7} sx={{ mt: 0.9 }}>
+        {rows.map((summary) => {
+          const width = Math.max((summary.items.length / maxItems) * 100, 12);
+          return (
+            <Box key={summary.unit.id} title={`${summary.unit.label || summary.unit.title} · ${summary.items.length} item${summary.items.length === 1 ? '' : 's'}`}>
+              <Stack direction="row" spacing={0.8} alignItems="center">
+                <Typography noWrap sx={{ width: 92, color: 'text.secondary', fontSize: 11.7 }}>{summary.unit.label || summary.unit.title}</Typography>
+                <Box sx={{ flex: 1, height: 7, borderRadius: '999px', bgcolor: 'rgba(23, 21, 26, 0.08)', overflow: 'hidden' }}>
+                  <Box sx={{ width: `${width}%`, height: '100%', bgcolor: purple }} />
+                </Box>
+              </Stack>
+            </Box>
+          );
+        })}
+        {!rows.length && <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>No unit evidence yet.</Typography>}
+      </Stack>
+    </Paper>
+  );
 }
 
 function StudentUnitEvidenceCell({ summary, maxLessonCount }) {
@@ -2039,27 +1634,34 @@ function StudentInsightPanelV3({
   evidence,
   judgements,
   onSaveJudgement,
+  focusUnitId = '',
 }) {
+  const studentEvidence = useMemo(() => getEvidenceForStudent(evidence, student.id), [evidence, student.id]);
   const unitSummaries = useMemo(() => teachingUnits.map((unit) => buildTeachingUnitEvidenceSummary(
     unit,
-    evidence,
+    studentEvidence,
     judgements[getJudgementKey(student.id, unit.id)] || null,
-  )), [evidence, judgements, student.id, teachingUnits]);
-  const defaultUnit = unitSummaries.find((summary) => summary.items.length) || unitSummaries[0] || null;
-  const [selectedUnitId, setSelectedUnitId] = useState(defaultUnit?.unit.id || '');
+  )), [judgements, student.id, studentEvidence, teachingUnits]);
+  const focusedUnit = focusUnitId ? unitSummaries.find((summary) => summary.unit.id === focusUnitId) : null;
+  const defaultUnit = focusedUnit || unitSummaries.find((summary) => summary.items.length) || unitSummaries[0] || null;
+  const [selectedUnitId, setSelectedUnitId] = useState(focusUnitId || defaultUnit?.unit.id || '');
   const selectedSummary = unitSummaries.find((summary) => summary.unit.id === selectedUnitId) || defaultUnit;
   const [detailOpen, setDetailOpen] = useState(false);
   const [draftLevelId, setDraftLevelId] = useState('not-set');
   const [draftNote, setDraftNote] = useState('');
 
   useEffect(() => {
+    if (focusUnitId && unitSummaries.some((summary) => summary.unit.id === focusUnitId)) {
+      setSelectedUnitId(focusUnitId);
+      return;
+    }
     if (!defaultUnit) return;
     setSelectedUnitId((currentId) => (
       unitSummaries.some((summary) => summary.unit.id === currentId)
         ? currentId
         : defaultUnit.unit.id
     ));
-  }, [defaultUnit, unitSummaries]);
+  }, [defaultUnit, focusUnitId, unitSummaries]);
 
   useEffect(() => {
     const judgement = selectedSummary?.judgement || null;
@@ -2071,10 +1673,10 @@ function StudentInsightPanelV3({
     return null;
   }
 
-  const studentEvidence = getEvidenceForStudent(evidence, student.id);
   const studentAssessments = studentEvidence.filter((item) => item.type === 'assessment');
   const unitsWithEvidenceCount = unitSummaries.filter((summary) => summary.items.length).length;
   const latestEvidenceDate = getLatestEvidenceDate(studentEvidence);
+  const focusedUnitMode = Boolean(focusUnitId);
   const maxLessonCount = Math.max(...unitSummaries.map((summary) => summary.lessonCount), 1);
   const selectedSequences = buildCapturePointSequences(selectedSummary);
   const observedSequences = selectedSequences.filter((sequence) => sequence.observations.length);
@@ -2101,16 +1703,23 @@ function StudentInsightPanelV3({
         <Stack spacing={1.35}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }}>
             <Box>
-              <Typography component="h2" sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>{student.displayName}</Typography>
+              <Typography component="h2" sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>
+                {focusedUnitMode ? `${student.displayName} · ${selectedSummary.unit.label || selectedSummary.unit.title}` : student.displayName}
+              </Typography>
               <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 12.8 }}>
-                Evidence across {unitsWithEvidenceCount} of {unitSummaries.length} teaching units · Latest evidence: {latestEvidenceDate ? formatDemoDate(latestEvidenceDate) : 'None'}
+                {focusedUnitMode
+                  ? `${selectedSummary.items.length} evidence item${selectedSummary.items.length === 1 ? '' : 's'} in this unit · Latest evidence: ${selectedSummary.latestDate ? formatDemoDate(selectedSummary.latestDate) : 'None'}`
+                  : `Evidence across ${unitsWithEvidenceCount} of ${unitSummaries.length} teaching units · Latest evidence: ${latestEvidenceDate ? formatDemoDate(latestEvidenceDate) : 'None'}`}
               </Typography>
             </Box>
             <Typography sx={{ color: 'text.secondary', fontSize: 12.5, fontWeight: 760 }}>
-              {studentEvidence.length} evidence item{studentEvidence.length === 1 ? '' : 's'} · {studentAssessments.length} assessment{studentAssessments.length === 1 ? '' : 's'}
+              {focusedUnitMode
+                ? `${selectedSummary.observations.length} observation${selectedSummary.observations.length === 1 ? '' : 's'} · ${selectedSummary.assessments.length} assessment${selectedSummary.assessments.length === 1 ? '' : 's'}`
+                : `${studentEvidence.length} evidence item${studentEvidence.length === 1 ? '' : 's'} · ${studentAssessments.length} assessment${studentAssessments.length === 1 ? '' : 's'}`}
             </Typography>
           </Stack>
 
+          {!focusedUnitMode && (
           <Box>
             <Stack direction="row" spacing={0.8} flexWrap="wrap" useFlexGap role="list" aria-label="Visual curriculum journey">
               {unitSummaries.map((summary) => {
@@ -2164,13 +1773,21 @@ function StudentInsightPanelV3({
               ].map((item) => <Typography key={item} sx={{ color: 'text.secondary', fontSize: 11.6 }}>{item}</Typography>)}
             </Stack>
           </Box>
+          )}
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', lg: 'minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(190px, 0.75fr) minmax(210px, 0.9fr)' }, gap: 1 }}>
+            <EvidenceTimelineTile title="Unit timeline" items={selectedSummary.items} />
+            <AssessmentResultTile assessments={selectedSummary.assessments} title="Unit result line" />
+            <EvidenceTypeTile observations={selectedSummary.observations.length} assessments={selectedSummary.assessments.length} />
+            <CaptureCoverageTile summary={selectedSummary} />
+          </Box>
 
           <Paper elevation={0} sx={{ p: 1.25, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.25} alignItems={{ xs: 'stretch', md: 'center' }}>
               <Box sx={{ flex: '1 1 260px', minWidth: 0 }}>
                 <Typography component="h3" sx={{ color: darkText, fontSize: 16, fontWeight: 900 }}>{selectedSummary.unit.label || selectedSummary.unit.title}</Typography>
                 <Typography sx={{ mt: 0.35, color: 'text.secondary', fontSize: 12.8 }}>
-                  {selectedSummary.observations.length} observation{selectedSummary.observations.length === 1 ? '' : 's'} · {selectedSummary.assessments.length} assessment{selectedSummary.assessments.length === 1 ? '' : 's'} · {selectedSummary.observedCapturePointCount}/{selectedSummary.capturePoints.length} capture points observed
+                  {selectedSummary.observations.length} observation{selectedSummary.observations.length === 1 ? '' : 's'} · {selectedSummary.assessments.length} assessment{selectedSummary.assessments.length === 1 ? '' : 's'} · {selectedSummary.observedCapturePointCount}/{selectedSummary.capturePoints.length} capture points observed{selectedSummary.unstructuredObservationCount ? ` · ${selectedSummary.unstructuredObservationCount} other observation${selectedSummary.unstructuredObservationCount === 1 ? '' : 's'}` : ''}
                 </Typography>
                 <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 12.5 }}>
                   Anna’s working judgement: {judgementLevel?.label || 'Not set'}
@@ -2260,7 +1877,7 @@ function StudentInsightPanelV3({
                 {selectedSummary.assessments.map((item) => (
                   <Box key={item.id} sx={{ borderTop: '1px solid rgba(23, 21, 26, 0.07)', pt: 0.65 }}>
                     <Typography sx={{ color: darkText, fontSize: 12.9, fontWeight: 820 }}>{item.assessmentTitle || item.label}</Typography>
-                    <Typography sx={{ color: 'text.secondary', fontSize: 12.3 }}>{formatDemoDate(item.date)} · {item.percentage}%</Typography>
+                    <Typography sx={{ color: 'text.secondary', fontSize: 12.3 }}>{formatDemoDate(item.date)}{getAssessmentPercentage(item) !== null ? ` · ${getAssessmentPercentage(item)}%` : ''}</Typography>
                     {item.note && <Typography sx={{ color: 'text.secondary', fontSize: 12.2 }}>{item.note}</Typography>}
                   </Box>
                 ))}
@@ -2317,107 +1934,6 @@ function StudentInsightPanelV3({
   );
 }
 
-function StudentInsightPanel({ student, teachingUnits, evidenceTopics, evidence, onOpenStudent }) {
-  const assessments = getStudentAssessments(evidence, student.id);
-  const observations = getStudentObservations(evidence, student.id);
-  const summary = getStudentEvidenceSummary(evidence, student.id, teachingUnits);
-  const contentRows = getStudentEvidenceByContent(evidence, student.id, teachingUnits);
-  const patterns = getStudentVisiblePatterns(evidence, student.id, teachingUnits);
-  const topicById = new Map(evidenceTopics.map((topic) => [topic.id, topic]));
-  const [teachingUnitDetailsOpen, setTeachingUnitDetailsOpen] = useState(false);
-
-  return (
-    <Box sx={{ p: { xs: 1, sm: 1.25 }, bgcolor: '#fbfafc', borderTop: '1px solid rgba(23, 21, 26, 0.07)' }}>
-      <Paper elevation={0} id={`student-insight-${student.id}`} sx={{ p: { xs: 1.25, sm: 1.6 }, borderRadius: '18px', border: '1px solid rgba(156, 40, 175, 0.14)', bgcolor: '#fff' }}>
-        <Stack spacing={1.35}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
-            <Stack direction="row" spacing={0.6} flexWrap="wrap" useFlexGap>
-              {[
-                `${summary.savedItemCount} saved item${summary.savedItemCount === 1 ? '' : 's'}`,
-                `${summary.assessmentCount} assessment${summary.assessmentCount === 1 ? '' : 's'}`,
-                `${summary.observationCount} observation${summary.observationCount === 1 ? '' : 's'}`,
-                `${summary.contentAreaCount} content area${summary.contentAreaCount === 1 ? '' : 's'}`,
-              ].map((item) => <Chip key={item} label={item} size="small" sx={{ bgcolor: palePurple, color: darkText, fontWeight: 760 }} />)}
-            </Stack>
-            <Button onClick={() => onOpenStudent(student.id)} sx={{ color: purple, fontWeight: 850 }}>Open full profile</Button>
-          </Stack>
-
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.08fr) minmax(280px, 0.92fr)' }, gap: 1.25, alignItems: 'start' }}>
-            <Stack spacing={1.25}>
-              <AssessmentResultsChart assessments={assessments} evidenceTopics={evidenceTopics} />
-              <CaptureProgressChart observations={observations} evidenceTopics={evidenceTopics} />
-              <Paper elevation={0} sx={{ p: 1.3, borderRadius: '16px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
-                <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 860 }}>Saved observation timeline</Typography>
-                {observations.length ? (
-                  <Stack spacing={0.9} sx={{ mt: 0.85 }}>
-                    {observations.slice(0, 7).map((item) => {
-                      const topic = topicById.get(item.evidenceTopicId);
-                      const unit = getTeachingUnitById(item.teachingUnitId);
-                      return (
-                        <Box key={item.id} sx={{ borderTop: '1px solid rgba(23, 21, 26, 0.07)', pt: 0.75 }}>
-                          <Typography sx={{ color: 'text.secondary', fontSize: 11.8, fontWeight: 760 }}>{formatDemoDate(item.date)} · {unit?.title || 'Teaching unit'} · {topic?.label || item.evidenceTopicId}</Typography>
-                          <Typography sx={{ mt: 0.2, color: darkText, fontSize: 13.2, fontWeight: 780 }}>{item.observationText || item.label}</Typography>
-                        </Box>
-                      );
-                    })}
-                  </Stack>
-                ) : (
-                  <Typography sx={{ mt: 0.7, color: 'text.secondary', fontSize: 13 }}>No saved observations yet.</Typography>
-                )}
-              </Paper>
-            </Stack>
-
-            <Stack spacing={1.25}>
-              <ObservationContentGraph contentRows={contentRows} />
-              <Paper elevation={0} sx={{ p: 1.3, borderRadius: '16px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
-                <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 860 }}>Visible in the saved information</Typography>
-                <Stack component="ul" spacing={0.65} sx={{ mt: 0.8, pl: 2.2, color: 'text.secondary' }}>
-                  {patterns.map((pattern) => <Typography component="li" key={pattern} sx={{ fontSize: 12.8, lineHeight: 1.45 }}>{pattern}</Typography>)}
-                </Stack>
-              </Paper>
-              <Paper elevation={0} sx={{ borderRadius: '16px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff', overflow: 'hidden' }}>
-                <ButtonBase
-                  onClick={() => setTeachingUnitDetailsOpen((open) => !open)}
-                  aria-expanded={teachingUnitDetailsOpen}
-                  sx={{
-                    width: '100%',
-                    p: 1.3,
-                    justifyContent: 'space-between',
-                    textAlign: 'left',
-                    gap: 1,
-                    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: -2 },
-                  }}
-                >
-                  <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 860 }}>Evidence by teaching unit</Typography>
-                  <KeyboardArrowDownIcon sx={{ color: 'text.secondary', fontSize: 20, transform: teachingUnitDetailsOpen ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
-                </ButtonBase>
-                {teachingUnitDetailsOpen && (
-                  <Stack spacing={0.75} sx={{ px: 1.3, pb: 1.3 }}>
-                    {contentRows.map((entry) => (
-                      <Box key={entry.topic.id} sx={{ borderTop: '1px solid rgba(23, 21, 26, 0.07)', pt: 0.65 }}>
-                        <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 820 }}>{entry.topic.label}</Typography>
-                        <Typography sx={{ color: 'text.secondary', fontSize: 12.1 }}>
-                          Topics: {(entry.topic.evidenceTopicIds || []).map((id) => getEvidenceTopicById(id)?.title || id).join(', ') || 'None linked'}
-                        </Typography>
-                        <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
-                          {entry.assessments.length ? `${entry.assessments.length} assessment${entry.assessments.length === 1 ? '' : 's'}` : 'No assessments'} · {entry.observations.length ? `${entry.observations.length} observation${entry.observations.length === 1 ? '' : 's'}` : 'No observations'}
-                        </Typography>
-                        <Typography sx={{ mt: 0.15, color: 'text.secondary', fontSize: 12.2 }}>
-                          {entry.latestItem ? `Latest: ${entry.latestItem.assessmentTitle || entry.latestItem.observationText || entry.latestItem.label}` : 'No saved information'}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Stack>
-                )}
-              </Paper>
-            </Stack>
-          </Box>
-        </Stack>
-      </Paper>
-    </Box>
-  );
-}
-
 function getStudentCountLabel(count) {
   return `${count} ${count === 1 ? 'student' : 'students'}`;
 }
@@ -2443,10 +1959,95 @@ function getUngroupedStudentsForType(students, groups, typeId) {
   return (students || []).filter((student) => !groupedStudentIds.has(student.id));
 }
 
+function StudentGlobalInsightPanel({ student, evidence, rowNote }) {
+  const studentEvidence = getEvidenceForStudent(evidence, student.id);
+  const assessments = studentEvidence.filter((item) => item.type === 'assessment');
+  const observations = studentEvidence.filter((item) => item.type !== 'assessment');
+  const unitSummaries = mathsTeachingUnits.map((unit) => buildTeachingUnitEvidenceSummary(unit, studentEvidence, null));
+  const previousResult = readHistoricalResult(student);
+  const latestEvidenceDate = getLatestEvidenceDate(studentEvidence);
+  const linkedTasks = annaTasks.filter((task) => (
+    task.studentId === student.id
+    || (task.linkedContexts || []).some((context) => context.studentId === student.id)
+  ));
+  const latestEvidenceItems = sortEvidenceByDate(studentEvidence, 'desc').slice(0, 3);
+  const hasSavedContext = Boolean(rowNote || linkedTasks.length || latestEvidenceItems.length);
+  const subjectLabel = student.subjectId === 'mathematics' ? 'Mathematics' : student.subjectId;
+
+  return (
+    <Box sx={{ p: { xs: 1, sm: 1.25 }, bgcolor: '#fbfafc', borderTop: '1px solid rgba(23, 21, 26, 0.07)' }}>
+      <Paper elevation={0} id={`student-insight-global-${student.id}`} sx={{ p: { xs: 1.25, sm: 1.55 }, borderRadius: '18px', border: '1px solid rgba(23, 21, 26, 0.1)', bgcolor: '#fff' }}>
+        <Stack spacing={1.25}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
+            <Box>
+              <Typography component="h2" sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>{student.displayName}</Typography>
+              <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 12.8 }}>
+                Global student picture · Latest evidence: {latestEvidenceDate ? formatDemoDate(latestEvidenceDate) : 'None'}
+              </Typography>
+            </Box>
+            <Typography sx={{ color: 'text.secondary', fontSize: 12.5, fontWeight: 760 }}>
+              {studentEvidence.length} evidence item{studentEvidence.length === 1 ? '' : 's'} · {assessments.length} assessment{assessments.length === 1 ? '' : 's'} · {observations.length} observation{observations.length === 1 ? '' : 's'}
+            </Typography>
+          </Stack>
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', lg: 'minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(190px, 0.7fr) minmax(220px, 0.95fr)' }, gap: 1 }}>
+            <EvidenceTimelineTile title="Student evidence over time" items={studentEvidence} />
+            <AssessmentResultTile assessments={assessments} />
+            <EvidenceTypeTile observations={observations.length} assessments={assessments.length} />
+            <UnitEvidenceBarsTile summaries={unitSummaries} />
+          </Box>
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(190px, 0.55fr) minmax(0, 1.45fr)' }, gap: 1.1 }}>
+            <Paper elevation={0} sx={{ p: 1.15, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+              <Typography sx={{ color: darkText, fontSize: 13.6, fontWeight: 880 }}>Known anchors</Typography>
+              <Stack spacing={0.55} sx={{ mt: 0.8 }}>
+                <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
+                  Year 6 maths result · <Box component="span" sx={{ color: darkText, fontWeight: 820 }}>{previousResult?.grade || 'Not shown'}</Box>
+                </Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
+                  Current class · <Box component="span" sx={{ color: darkText, fontWeight: 820 }}>{subjectLabel} {String(student.classId || '').toUpperCase()}</Box>
+                </Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
+                  Quick note · <Box component="span" sx={{ color: rowNote ? darkText : 'text.secondary', fontWeight: rowNote ? 820 : 650 }}>{rowNote || 'None added'}</Box>
+                </Typography>
+              </Stack>
+            </Paper>
+
+            <Paper elevation={0} sx={{ p: 1.15, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+              <Typography sx={{ color: darkText, fontSize: 13.6, fontWeight: 880 }}>Saved evidence and linked records</Typography>
+              <Stack spacing={0.65} sx={{ mt: 0.8 }}>
+                {rowNote && (
+                  <Typography sx={{ color: 'text.secondary', fontSize: 12.7, lineHeight: 1.45 }}>
+                    Quick note · <Box component="span" sx={{ color: darkText, fontWeight: 760 }}>{rowNote}</Box>
+                  </Typography>
+                )}
+                {linkedTasks.map((task) => (
+                  <Typography key={task.id} sx={{ color: 'text.secondary', fontSize: 12.7, lineHeight: 1.45 }}>
+                    Linked task · <Box component="span" sx={{ color: darkText, fontWeight: 760 }}>{task.title}</Box>{task.date ? ` · ${formatDemoDate(task.date)}` : ''}
+                  </Typography>
+                ))}
+                {latestEvidenceItems.map((item) => (
+                  <Typography key={item.id} sx={{ color: 'text.secondary', fontSize: 12.7, lineHeight: 1.45 }}>
+                    {formatDemoDate(item.date)} · <Box component="span" sx={{ color: darkText, fontWeight: 760 }}>{item.assessmentTitle || item.observationText || item.label}</Box>
+                  </Typography>
+                ))}
+                {!hasSavedContext && (
+                  <Typography sx={{ color: 'text.secondary', fontSize: 12.7, lineHeight: 1.45 }}>
+                    No saved notes, linked tasks, or evidence records yet.
+                  </Typography>
+                )}
+              </Stack>
+            </Paper>
+          </Box>
+        </Stack>
+      </Paper>
+    </Box>
+  );
+}
+
 function EvidenceMap({
   students,
   teachingUnits,
-  evidenceTopics,
   evidence,
   cellNotes = {},
   unitNotes = {},
@@ -2462,10 +2063,9 @@ function EvidenceMap({
   onMoveStudentToGroup,
   onMoveStudentToUngrouped,
   onResetGroups,
-  onOpenStudent,
 }) {
   const [expandedStudentId, setExpandedStudentId] = useState(null);
-  const [expandedStudentViewVersion, setExpandedStudentViewVersion] = useState('original');
+  const [expandedUnitId, setExpandedUnitId] = useState('');
   const [teacherWorkingJudgements, setTeacherWorkingJudgements] = useState({});
   const [activeGroupingSetId, setActiveGroupingSetId] = useState('none');
   const [collapsedGroupIds, setCollapsedGroupIds] = useState([]);
@@ -2521,8 +2121,14 @@ function EvidenceMap({
     };
   }, [evidence, students, teacherWorkingJudgements, teachingUnits]);
 
-  function toggleStudent(studentId) {
-    setExpandedStudentId((currentId) => (currentId === studentId ? null : studentId));
+  function toggleStudent(studentId, unitId = '') {
+    if (expandedStudentId === studentId && expandedUnitId === unitId) {
+      setExpandedStudentId(null);
+      setExpandedUnitId('');
+    } else {
+      setExpandedStudentId(studentId);
+      setExpandedUnitId(unitId);
+    }
   }
 
   function saveTeacherWorkingJudgement(judgement) {
@@ -2732,7 +2338,7 @@ function EvidenceMap({
               </ButtonBase>
             )}
             <ButtonBase
-              onClick={() => toggleStudent(student.id)}
+              onClick={() => toggleStudent(student.id, '')}
               aria-expanded={isExpanded}
               aria-controls={`student-insight-${student.id}`}
               sx={{
@@ -2857,12 +2463,12 @@ function EvidenceMap({
                 {!isEditingCell && (
                   <IconButton
                     className="StudentUnitExpandButton"
-                    aria-label={isExpanded ? `Hide expanded view for ${student.displayName}` : `Open expanded view for ${student.displayName}`}
-                    aria-expanded={isExpanded}
+                    aria-label={isExpanded && expandedUnitId === unit.id ? `Hide ${unit.title || unit.label} view for ${student.displayName}` : `Open ${unit.title || unit.label} view for ${student.displayName}`}
+                    aria-expanded={isExpanded && expandedUnitId === unit.id}
                     size="small"
                     onClick={(event) => {
                       event.stopPropagation();
-                      toggleStudent(student.id);
+                      toggleStudent(student.id, unit.id);
                       event.currentTarget.blur();
                     }}
                     sx={{
@@ -2947,52 +2553,17 @@ function EvidenceMap({
         {isExpanded && (
           <Box role="row" sx={{ display: 'contents' }}>
             <Box role="cell" sx={{ gridColumn: `1 / span ${teachingUnits.length + 2}`, minWidth: 0 }}>
-              <Box sx={{ p: { xs: 1, sm: 1.25 }, pb: 0, bgcolor: '#fbfafc', borderTop: '1px solid rgba(23, 21, 26, 0.07)' }}>
-                <ButtonGroup variant="outlined" size="small" aria-label="Expanded student view version">
-                  {[
-                    { id: 'original', label: 'Original' },
-                    { id: 'v2', label: 'V2 evidence view' },
-                    { id: 'v3', label: 'V3 visual view' },
-                  ].map((option) => {
-                    const selected = expandedStudentViewVersion === option.id;
-                    return (
-                      <Button
-                        key={option.id}
-                        onClick={() => setExpandedStudentViewVersion(option.id)}
-                        aria-pressed={selected}
-                        sx={{
-                          borderColor: selected ? purple : 'rgba(23, 21, 26, 0.14)',
-                          bgcolor: selected ? purple : '#fff',
-                          color: selected ? '#fff' : darkText,
-                          textTransform: 'none',
-                          fontWeight: 780,
-                          '&:hover': { bgcolor: selected ? purple : '#fff', borderColor: selected ? purple : darkText },
-                        }}
-                      >
-                        {option.label}
-                      </Button>
-                    );
-                  })}
-                </ButtonGroup>
-              </Box>
-              {expandedStudentViewVersion === 'v3' ? (
+              {expandedUnitId ? (
                 <StudentInsightPanelV3
                   student={student}
                   teachingUnits={teachingUnits}
                   evidence={evidence}
                   judgements={teacherWorkingJudgements}
                   onSaveJudgement={saveTeacherWorkingJudgement}
-                />
-              ) : expandedStudentViewVersion === 'v2' ? (
-                <StudentInsightPanelV2
-                  student={student}
-                  teachingUnits={teachingUnits}
-                  evidence={evidence}
-                  judgements={teacherWorkingJudgements}
-                  onSaveJudgement={saveTeacherWorkingJudgement}
+                  focusUnitId={expandedUnitId}
                 />
               ) : (
-                <StudentInsightPanel student={student} teachingUnits={teachingUnits} evidenceTopics={evidenceTopics} evidence={evidence} onOpenStudent={onOpenStudent} />
+                <StudentGlobalInsightPanel student={student} evidence={evidence} rowNote={rowNote} />
               )}
             </Box>
           </Box>
@@ -3346,7 +2917,6 @@ function SelectedStudentPicture({ summary, evidence, tasks, onOpenDetail, onCapt
 function ClassPictureStudents({
   studentSummaries,
   teachingUnits,
-  evidenceTopics,
   evidence,
   cellNotes,
   unitNotes,
@@ -3362,14 +2932,12 @@ function ClassPictureStudents({
   onMoveStudentToGroup,
   onMoveStudentToUngrouped,
   onResetGroups,
-  onOpenStudentProfile,
 }) {
   return (
     <Stack spacing={2.25} sx={{ minWidth: 0 }}>
       <EvidenceMap
         students={studentSummaries.map((summary) => summary.student)}
         teachingUnits={teachingUnits}
-        evidenceTopics={evidenceTopics}
         evidence={evidence}
         cellNotes={cellNotes}
         unitNotes={unitNotes}
@@ -3385,7 +2953,6 @@ function ClassPictureStudents({
         onMoveStudentToGroup={onMoveStudentToGroup}
         onMoveStudentToUngrouped={onMoveStudentToUngrouped}
         onResetGroups={onResetGroups}
-        onOpenStudent={onOpenStudentProfile}
       />
     </Stack>
   );
@@ -3649,7 +3216,6 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
     <ClassPictureStudents
       studentSummaries={studentSummaries}
       teachingUnits={evidenceMapTeachingUnits}
-      evidenceTopics={mathsEvidenceTopics}
       evidence={visibleEvidence}
       cellNotes={cellNotes}
       unitNotes={unitNotes}
@@ -3665,10 +3231,6 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       onMoveStudentToGroup={moveStudentToGroup}
       onMoveStudentToUngrouped={moveStudentToUngrouped}
       onResetGroups={resetGroups}
-      onOpenStudentProfile={(studentId) => {
-        setSelectedStudentId(studentId);
-        openStudentProfile(studentId);
-      }}
     />
   );
 
