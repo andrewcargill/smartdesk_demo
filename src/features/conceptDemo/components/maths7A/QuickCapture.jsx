@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
+import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import {
   Box,
@@ -12,6 +13,7 @@ import {
   Paper,
   Popover,
   Stack,
+  TextField,
   Typography,
 } from '@mui/material';
 import {
@@ -28,6 +30,16 @@ import {
 
 const purple = '#9c28af';
 const darkText = '#17151a';
+const learnObservationItems = [
+  { id: 'focus', label: 'Focus' },
+  { id: 'participation', label: 'Participation' },
+  { id: 'independence', label: 'Independence' },
+];
+const learnObservationChoices = [
+  { id: 'minus', label: '−' },
+  { id: 'neutral', label: '○' },
+  { id: 'plus', label: '+' },
+];
 
 function formatDemoLessonDate(date) {
   if (!date) {
@@ -72,6 +84,9 @@ export default function QuickCapture({
   const [contextAnchorEl, setContextAnchorEl] = useState(null);
   const [recentActionId, setRecentActionId] = useState('');
   const [confirmation, setConfirmation] = useState('');
+  const [learnObservationSelections, setLearnObservationSelections] = useState({});
+  const [learnObservationNotes, setLearnObservationNotes] = useState({});
+  const [visibleLearnObservationNoteFields, setVisibleLearnObservationNoteFields] = useState({});
   const activeUnit = captureFocuses.find((unit) => unit.id === activeUnitId) || captureFocuses[0];
   const activeTopic = activeUnit?.topics.find((topic) => topic.id === activeTopicId) || activeUnit?.topics[0];
   const activeCapturePoints = activeUnit && activeTopic ? getMathsCapturePointsForTopic({
@@ -238,6 +253,27 @@ export default function QuickCapture({
     closeContextPanel();
   }
 
+  function chooseLearnObservation(itemId, choiceId) {
+    setLearnObservationSelections((currentSelections) => ({
+      ...currentSelections,
+      [itemId]: choiceId,
+    }));
+  }
+
+  function updateLearnObservationNote(itemId, value) {
+    setLearnObservationNotes((currentNotes) => ({
+      ...currentNotes,
+      [itemId]: value.slice(0, 100),
+    }));
+  }
+
+  function showLearnObservationNoteField(itemId) {
+    setVisibleLearnObservationNoteFields((currentFields) => ({
+      ...currentFields,
+      [itemId]: true,
+    }));
+  }
+
   if (!selectedStudent || !activeUnit || !activeTopic) {
     return null;
   }
@@ -258,13 +294,16 @@ export default function QuickCapture({
         sx={{
           p: { xs: 0.75, md: 1 },
           borderRadius: '14px',
-          border: '1px solid rgba(23, 21, 26, 0.14)',
+          border: `2px solid ${purple}`,
           bgcolor: '#fff',
           maxHeight: { xs: 96, md: 560 },
           overflow: { xs: 'hidden', md: 'auto' },
           minWidth: 0,
         }}
       >
+        <Typography sx={{ px: 0.35, pb: { xs: 5.75, md: 6.75 }, color: darkText, fontSize: { xs: 17.5, sm: 19.5 }, lineHeight: 1.15, fontWeight: 880 }}>
+          Students
+        </Typography>
         <Stack
           spacing={0.7}
           sx={{
@@ -303,7 +342,7 @@ export default function QuickCapture({
                 }}
               >
                 <Stack direction="row" spacing={0.65} alignItems="center" sx={{ width: '100%', minWidth: 0 }}>
-                  <Typography sx={{ flex: '1 1 auto', minWidth: 0, fontSize: 13.5, fontWeight: 'inherit', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <Typography sx={{ flex: '1 1 auto', minWidth: 0, fontSize: 15, fontWeight: 'inherit', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {student.displayName}
                   </Typography>
                   {!!captureCount && (
@@ -335,13 +374,10 @@ export default function QuickCapture({
         </Stack>
       </Paper>
 
-      <Panel sx={{ p: { xs: 1.25, sm: 1.75, md: 2 }, borderRadius: '14px' }}>
-        <Stack spacing={{ xs: 1.15, sm: 1.4 }}>
+      <Panel sx={{ p: { xs: 0.95, sm: 1.2, md: 1.35 }, borderRadius: '14px' }}>
+        <Stack spacing={{ xs: 0.8, sm: 0.95 }}>
             <Box>
-              <Typography sx={{ color: 'text.secondary', fontSize: 12.5, fontWeight: 760 }}>
-                Current lesson
-              </Typography>
-              <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mt: 0.2 }}>
+              <Stack direction="row" spacing={0.65} alignItems="center">
                 <Typography
                   component="button"
                   type="button"
@@ -357,7 +393,7 @@ export default function QuickCapture({
                     bgcolor: 'transparent',
                     color: darkText,
                     font: 'inherit',
-                    fontSize: { xs: 24, sm: 28 },
+                    fontSize: { xs: 17.5, sm: 19.5 },
                     lineHeight: 1.15,
                     fontWeight: 880,
                     textAlign: 'left',
@@ -369,11 +405,8 @@ export default function QuickCapture({
                   {activeUnit.label}
                 </Typography>
               </Stack>
-              <Typography sx={{ mt: 0.35, color: 'text.secondary', fontSize: 13.5, fontWeight: 650 }}>
+              <Typography sx={{ mt: 0.15, color: 'text.secondary', fontSize: 12.6, fontWeight: 650 }}>
                 {activeTopic.label}
-              </Typography>
-              <Typography sx={{ mt: 0.1, color: 'text.secondary', fontSize: 12.8, fontWeight: 650 }}>
-                Mathematics 7A
               </Typography>
             </Box>
 
@@ -385,7 +418,7 @@ export default function QuickCapture({
               transformOrigin={{ vertical: 'top', horizontal: 'left' }}
               PaperProps={{
                 sx: {
-                  mt: 0.8,
+                  mt: 0.55,
                   width: { xs: 'calc(100vw - 32px)', sm: 380 },
                   maxWidth: 'calc(100vw - 32px)',
                   p: 0,
@@ -395,16 +428,16 @@ export default function QuickCapture({
                 },
               }}
             >
-              <Box sx={{ p: { xs: 2.25, sm: 2.6 } }}>
-                <Stack spacing={1.7} role="dialog" aria-label="Capture focus">
-                  <Typography sx={{ color: darkText, fontSize: 15, fontWeight: 880 }}>
+              <Box sx={{ p: { xs: 1.55, sm: 1.75 } }}>
+                <Stack spacing={1.2} role="dialog" aria-label="Capture focus">
+                  <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 880 }}>
                     Capture focus
                   </Typography>
                   <Box>
-                    <Typography sx={{ mb: 0.75, color: 'text.secondary', fontSize: 12.4, fontWeight: 760 }}>
+                    <Typography sx={{ mb: 0.55, color: 'text.secondary', fontSize: 11.8, fontWeight: 760 }}>
                       Teaching unit
                     </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.65 }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.45 }}>
                       {captureFocuses.map((unit) => {
                         const isActive = unit.id === activeUnit.id;
                         return (
@@ -419,7 +452,7 @@ export default function QuickCapture({
                               borderColor: isActive ? purple : 'rgba(23, 21, 26, 0.14)',
                               bgcolor: isActive ? purple : '#fff',
                               color: isActive ? '#fff' : darkText,
-                              fontSize: 12.5,
+                              fontSize: 11.8,
                               fontWeight: isActive ? 850 : 720,
                               textTransform: 'none',
                               '&:hover': { bgcolor: isActive ? purple : '#fff', borderColor: isActive ? purple : darkText },
@@ -433,10 +466,10 @@ export default function QuickCapture({
                     </Box>
                   </Box>
                   <Box>
-                    <Typography sx={{ mb: 0.75, color: 'text.secondary', fontSize: 12.4, fontWeight: 760 }}>
+                    <Typography sx={{ mb: 0.55, color: 'text.secondary', fontSize: 11.8, fontWeight: 760 }}>
                       Topic
                     </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.65 }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.45 }}>
                       {activeUnit.topics.map((topic) => {
                         const isActive = topic.id === activeTopic.id;
                         return (
@@ -451,7 +484,7 @@ export default function QuickCapture({
                               borderColor: isActive ? purple : 'rgba(23, 21, 26, 0.14)',
                               bgcolor: isActive ? purple : '#fff',
                               color: isActive ? '#fff' : darkText,
-                              fontSize: 12.5,
+                              fontSize: 11.8,
                               fontWeight: isActive ? 850 : 720,
                               textTransform: 'none',
                               '&:hover': { bgcolor: isActive ? purple : '#fff', borderColor: isActive ? purple : darkText },
@@ -475,7 +508,7 @@ export default function QuickCapture({
                     sx={{
                       alignSelf: 'flex-start',
                       color: 'text.secondary',
-                      fontSize: 12.6,
+                      fontSize: 12,
                       fontWeight: 760,
                       textTransform: 'none',
                       '&:hover': { color: purple, bgcolor: '#fff' },
@@ -488,31 +521,31 @@ export default function QuickCapture({
               </Box>
             </Popover>
 
-            <Box aria-live="polite" sx={{ minHeight: 19 }}>
+            <Box aria-live="polite" sx={{ minHeight: 16 }}>
               {!!confirmation && (
-                <Typography sx={{ color: darkText, fontSize: 12.8, fontWeight: 760 }}>
+                <Typography sx={{ color: darkText, fontSize: 12.1, fontWeight: 760 }}>
                   {confirmation}
                 </Typography>
               )}
             </Box>
 
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'repeat(2, minmax(0, 1fr))' }, gap: { xs: 0.9, sm: 1.05 } }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'repeat(2, minmax(0, 1fr))' }, gap: { xs: 0.6, sm: 0.7 } }}>
               {activeCapturePoints.map((capturePoint) => (
                 <Paper
                   key={capturePoint.id}
                   elevation={0}
                   sx={{
-                    p: { xs: 1, sm: 1.15 },
-                    borderRadius: '12px',
-                    border: '1px solid rgba(23, 21, 26, 0.14)',
+                    p: { xs: 0.75, sm: 0.85 },
+                    borderRadius: '10px',
+                    border: `2px solid ${purple}`,
                     bgcolor: '#fff',
                   }}
                 >
-                  <Stack spacing={1}>
-                    <Typography sx={{ color: darkText, fontSize: 15.5, fontWeight: 850 }}>
+                  <Stack spacing={0.65}>
+                    <Typography sx={{ color: darkText, fontSize: 13.4, fontWeight: 850, lineHeight: 1.2 }}>
                       {capturePoint.label}
                     </Typography>
-                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.7 }}>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.45 }}>
                       {mathsCaptureLevels.map((level) => {
                         const isRecentAction = recentActionId === `${capturePoint.id}-${level.id}`;
                         const isCurrentLevel = currentLevelByCapturePointId[capturePoint.id] === level.id;
@@ -529,12 +562,12 @@ export default function QuickCapture({
                               onClick={() => captureLevel(capturePoint, level, 'new')}
                               variant="outlined"
                               sx={{
-                                minHeight: 38,
+                                minHeight: 32,
                                 borderRadius: '999px',
                                 borderColor: isRecentAction ? purple : 'rgba(23, 21, 26, 0.14)',
                                 bgcolor: isRecentAction ? purple : '#fff',
                                 color: isRecentAction ? '#fff' : darkText,
-                                fontSize: 12.8,
+                                fontSize: 11.8,
                                 fontWeight: isRecentAction ? 850 : 720,
                                 textTransform: 'none',
                                 transition: 'background-color 140ms ease, border-color 140ms ease, color 140ms ease',
@@ -579,7 +612,7 @@ export default function QuickCapture({
                               onClick={() => captureLevel(capturePoint, level, 'update')}
                               sx={{
                                 flex: '1 1 auto',
-                                minHeight: 38,
+                                minHeight: 32,
                                 borderTopLeftRadius: '999px',
                                 borderBottomLeftRadius: '999px',
                                 borderTopRightRadius: isActive ? '999px' : 0,
@@ -587,7 +620,7 @@ export default function QuickCapture({
                                 borderColor: isActive ? purple : 'rgba(23, 21, 26, 0.14)',
                                 bgcolor: isActive ? purple : '#fff',
                                 color: isActive ? '#fff' : darkText,
-                                fontSize: 12.8,
+                                fontSize: 11.8,
                                 fontWeight: isActive ? 850 : 720,
                                 transition: 'background-color 140ms ease, border-color 140ms ease, color 140ms ease',
                                 '&:hover': {
@@ -604,8 +637,8 @@ export default function QuickCapture({
                                 aria-label={`Add new ${capturePoint.label}, ${level.label}, for ${selectedStudent.displayName}`}
                                 onClick={() => captureLevel(capturePoint, level, 'new')}
                                 sx={{
-                                  flex: '0 0 48px',
-                                  minHeight: 38,
+                                  flex: '0 0 40px',
+                                  minHeight: 32,
                                   minWidth: 0,
                                   borderTopRightRadius: '999px',
                                   borderBottomRightRadius: '999px',
@@ -620,7 +653,7 @@ export default function QuickCapture({
                                   },
                                 }}
                               >
-                                <AddIcon sx={{ fontSize: 18 }} />
+                              <AddIcon sx={{ fontSize: 16 }} />
                               </Button>
                             )}
                           </ButtonGroup>
@@ -634,38 +667,159 @@ export default function QuickCapture({
 
             <Paper
               elevation={0}
+              sx={{
+                p: { xs: 0.75, sm: 0.85 },
+                borderRadius: '10px',
+                border: `2px solid ${purple}`,
+                bgcolor: '#fff',
+              }}
+            >
+              <Stack spacing={0.55}>
+                <Typography sx={{ color: darkText, fontSize: { xs: 17.5, sm: 19.5 }, lineHeight: 1.15, fontWeight: 880 }}>
+                  Learn observations
+                </Typography>
+                <Box sx={{ display: 'grid', gap: 0.45 }}>
+                  {learnObservationItems.map((item) => (
+                    <Box
+                      key={item.id}
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: '120px auto minmax(260px, 1fr)' },
+                        gap: { xs: 0.45, sm: 0.55 },
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Typography sx={{ color: darkText, fontSize: 12.6, fontWeight: 760 }}>
+                        {item.label}
+                      </Typography>
+                      <ButtonGroup
+                        variant="outlined"
+                        size="small"
+                        aria-label={`${item.label} learn observation`}
+                        sx={{
+                          justifySelf: { xs: 'stretch', sm: 'start' },
+                          '& .MuiButtonGroup-grouped': {
+                            minWidth: 34,
+                            minHeight: 30,
+                            borderColor: 'rgba(23, 21, 26, 0.14)',
+                            color: darkText,
+                            fontSize: 13,
+                            fontWeight: 850,
+                            textTransform: 'none',
+                            '&:hover': { borderColor: purple, bgcolor: '#fff' },
+                            '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                          },
+                        }}
+                      >
+                        {learnObservationChoices.map((choice) => {
+                          const isSelected = learnObservationSelections[item.id] === choice.id;
+                          return (
+                            <Button
+                              key={choice.id}
+                              type="button"
+                              aria-pressed={isSelected}
+                              onClick={() => chooseLearnObservation(item.id, choice.id)}
+                              sx={{
+                                flex: { xs: '1 1 0', sm: '0 0 36px' },
+                                bgcolor: isSelected ? purple : '#fff',
+                                color: isSelected ? '#fff !important' : darkText,
+                                borderColor: isSelected ? `${purple} !important` : undefined,
+                                '&:hover': { bgcolor: isSelected ? purple : '#fff' },
+                              }}
+                            >
+                              {choice.label}
+                            </Button>
+                          );
+                        })}
+                      </ButtonGroup>
+                      <TextField
+                        value={learnObservationNotes[item.id] || ''}
+                        onChange={(event) => updateLearnObservationNote(item.id, event.target.value)}
+                        placeholder="Optional short note"
+                        size="small"
+                        fullWidth
+                        inputProps={{ maxLength: 100, 'aria-label': `${item.label} note` }}
+                        sx={{
+                          display: visibleLearnObservationNoteFields[item.id] || learnObservationNotes[item.id] ? 'block' : 'none',
+                          '& .MuiInputBase-root': {
+                            minHeight: 30,
+                            borderRadius: '999px',
+                            fontSize: 12.4,
+                            bgcolor: '#fff',
+                          },
+                          '& .MuiInputBase-input': {
+                            py: 0.55,
+                            px: 1.2,
+                          },
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(23, 21, 26, 0.14)',
+                          },
+                          '& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(23, 21, 26, 0.28)',
+                          },
+                          '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: purple,
+                            borderWidth: 1,
+                          },
+                        }}
+                      />
+                      {!visibleLearnObservationNoteFields[item.id] && !learnObservationNotes[item.id] && (
+                        <IconButton
+                          type="button"
+                          aria-label={`Add ${item.label} note`}
+                          onClick={() => showLearnObservationNoteField(item.id)}
+                          sx={{
+                            width: 30,
+                            height: 30,
+                            justifySelf: 'start',
+                            color: darkText,
+                            '&:hover': { bgcolor: '#fff', color: purple },
+                            '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                          }}
+                        >
+                          <NoteAddIcon sx={{ fontSize: 17 }} />
+                        </IconButton>
+                      )}
+                    </Box>
+                  ))}
+                </Box>
+              </Stack>
+            </Paper>
+
+            <Paper
+              elevation={0}
               aria-live="polite"
               sx={{
-                p: { xs: 1, sm: 1.1 },
-                borderRadius: '12px',
+                p: { xs: 0.75, sm: 0.85 },
+                borderRadius: '10px',
                 border: '1px solid rgba(23, 21, 26, 0.12)',
                 bgcolor: '#fff',
               }}
             >
-              <Stack spacing={0.75}>
-                <Typography sx={{ color: darkText, fontSize: 14.2, fontWeight: 850 }}>
+              <Stack spacing={0.55}>
+                <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 850 }}>
                   {`Captured for ${selectedStudent.displayName}`}
                 </Typography>
                 {selectedCaptureDateSections.length ? (
-                  <Stack spacing={1.15}>
+                  <Stack spacing={0.85}>
                     {selectedCaptureDateSections.map(({ date, unitSections }) => (
                       <Box key={date} component="section" aria-labelledby={`now-capture-date-${date}`}>
-                        <Typography id={`now-capture-date-${date}`} component="h3" sx={{ color: darkText, fontSize: 13.4, fontWeight: 880 }}>
+                        <Typography id={`now-capture-date-${date}`} component="h3" sx={{ color: darkText, fontSize: 12.6, fontWeight: 880 }}>
                           {formatDemoLessonDate(date)}
                         </Typography>
-                        <Stack spacing={0.95} sx={{ mt: 0.55 }}>
+                        <Stack spacing={0.65} sx={{ mt: 0.35 }}>
                           {unitSections.map(({ unit, topicSections }) => (
                             <Box key={unit.id} component="section" aria-labelledby={`now-capture-unit-${date}-${unit.id}`}>
-                              <Typography id={`now-capture-unit-${date}-${unit.id}`} component="h4" sx={{ color: 'text.secondary', fontSize: 12.5, fontWeight: 820 }}>
+                              <Typography id={`now-capture-unit-${date}-${unit.id}`} component="h4" sx={{ color: 'text.secondary', fontSize: 11.9, fontWeight: 820 }}>
                                 {unit.label}
                               </Typography>
-                              <Stack spacing={0.75} sx={{ mt: 0.5, pl: { xs: 0, sm: 1 } }}>
+                              <Stack spacing={0.5} sx={{ mt: 0.3, pl: { xs: 0, sm: 0.75 } }}>
                                 {topicSections.map(({ topic, captures }) => (
                                   <Box key={topic.id} component="section" aria-labelledby={`now-capture-topic-${date}-${unit.id}-${topic.id}`}>
-                                    <Typography id={`now-capture-topic-${date}-${unit.id}-${topic.id}`} component="h5" sx={{ color: 'text.secondary', fontSize: 12.1, fontWeight: 760 }}>
+                                    <Typography id={`now-capture-topic-${date}-${unit.id}-${topic.id}`} component="h5" sx={{ color: 'text.secondary', fontSize: 11.6, fontWeight: 760 }}>
                                       {topic.label}
                                     </Typography>
-                                    <Box component="ul" sx={{ m: 0, mt: 0.4, p: 0, listStyle: 'none', display: 'grid', gap: 0.45 }}>
+                                    <Box component="ul" sx={{ m: 0, mt: 0.25, p: 0, listStyle: 'none', display: 'grid', gap: 0.35 }}>
                                       {captures.map((capture) => {
                                         const capturePoint = getMathsCapturePointById(capture.capturePointId);
                                         const captureLevel = getMathsCaptureLevelById(capture.levelId);
@@ -679,18 +833,18 @@ export default function QuickCapture({
                                             sx={{
                                               display: 'grid',
                                               gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', sm: 'minmax(0, 1fr) auto auto' },
-                                              gap: { xs: 0.5, sm: 1 },
+                                              gap: { xs: 0.4, sm: 0.75 },
                                               alignItems: 'center',
-                                              py: 0.55,
-                                              px: 0.65,
-                                              borderRadius: '10px',
+                                              py: 0.4,
+                                              px: 0.55,
+                                              borderRadius: '8px',
                                               border: '1px solid rgba(23, 21, 26, 0.08)',
                                             }}
                                           >
-                                            <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 760, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            <Typography sx={{ color: darkText, fontSize: 12.5, fontWeight: 760, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                               {capturePointLabel}
                                             </Typography>
-                                            <Typography sx={{ color: darkText, fontSize: 12.6, fontWeight: 850, justifySelf: { xs: 'start', sm: 'end' }, gridColumn: { xs: '1 / 2', sm: 'auto' } }}>
+                                            <Typography sx={{ color: darkText, fontSize: 12, fontWeight: 850, justifySelf: { xs: 'start', sm: 'end' }, gridColumn: { xs: '1 / 2', sm: 'auto' } }}>
                                               {levelLabel}
                                             </Typography>
                                             <IconButton
@@ -698,8 +852,8 @@ export default function QuickCapture({
                                               onClick={() => removeCapture(capture.id)}
                                               size="small"
                                               sx={{
-                                                width: 34,
-                                                height: 34,
+                                                width: 30,
+                                                height: 30,
                                                 color: 'text.secondary',
                                                 justifySelf: 'end',
                                                 gridColumn: { xs: '2 / 3', sm: 'auto' },
@@ -708,7 +862,7 @@ export default function QuickCapture({
                                                 '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
                                               }}
                                             >
-                                              <CloseIcon sx={{ fontSize: 17 }} />
+                                              <CloseIcon sx={{ fontSize: 15 }} />
                                             </IconButton>
                                           </Box>
                                         );
@@ -724,7 +878,7 @@ export default function QuickCapture({
                     ))}
                   </Stack>
                 ) : (
-                  <Typography sx={{ color: 'text.secondary', fontSize: 13.2, lineHeight: 1.5 }}>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 12.6, lineHeight: 1.45 }}>
                     {`No observations captured for ${selectedStudent.firstName} yet.`}
                   </Typography>
                 )}
