@@ -320,7 +320,7 @@ function LatestObservationBlock({ observation }) {
 
 function ObservationLevelChart({ observations, levels }) {
   const [activePointId, setActivePointId] = useState('');
-  const graphLeft = 16;
+  const graphLeft = 28;
   const graphRight = 98;
   const graphTop = 9;
   const graphBottom = 43;
@@ -356,7 +356,7 @@ function ObservationLevelChart({ observations, levels }) {
           display: 'block',
           overflow: 'visible',
           '& circle': { transition: 'r 140ms ease, fill 140ms ease' },
-          '& circle:hover': { r: 4.9, fill: darkText },
+          '& circle:hover': { r: 3.8, fill: purple },
         }}
       >
         {levels.map((level) => {
@@ -366,7 +366,7 @@ function ObservationLevelChart({ observations, levels }) {
           return (
             <g key={level.id}>
               <line x1={graphLeft} y1={y} x2={graphRight} y2={y} stroke="rgba(23, 21, 26, 0.055)" strokeWidth="1" />
-              <text x="2" y={y + 1.8} fill="rgba(23, 21, 26, 0.52)" fontSize="4.15" fontWeight="700">
+              <text x={graphLeft - 3} y={y + 1.8} textAnchor="end" fill="rgba(23, 21, 26, 0.52)" fontSize="3.8" fontWeight="700">
                 {level.label}
               </text>
             </g>
@@ -374,7 +374,7 @@ function ObservationLevelChart({ observations, levels }) {
         })}
         <line x1={graphLeft} y1={graphTop} x2={graphLeft} y2={graphBottom} stroke="rgba(23, 21, 26, 0.12)" strokeWidth="1.1" />
         <line x1={graphLeft} y1={graphBottom} x2={graphRight} y2={graphBottom} stroke="rgba(23, 21, 26, 0.12)" strokeWidth="1.1" />
-        {points.length > 1 && <polyline points={linePoints} fill="none" stroke="rgba(23, 21, 26, 0.5)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />}
+        {points.length > 1 && <polyline points={linePoints} fill="none" stroke="rgba(156, 40, 175, 0.32)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />}
         {points.map((point) => (
           <g
             key={point.pointId}
@@ -394,10 +394,10 @@ function ObservationLevelChart({ observations, levels }) {
             <circle
               cx={point.x}
               cy={point.y}
-              r="4"
-              fill="rgba(23, 21, 26, 0.78)"
+              r="3"
+              fill={purple}
               stroke="#fff"
-              strokeWidth="1.6"
+              strokeWidth="1.2"
             >
               <title>{`${formatDemoDate(point.item.date)} · ${point.item.levelLabel}${point.item.note ? ` · ${point.item.note}` : ''}`}</title>
             </circle>
