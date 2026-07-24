@@ -81,6 +81,7 @@ import StudentUnitEvidenceCell from './maths7A/StudentUnitEvidenceCell.jsx';
 import StudentUnitInsightPanel from './maths7A/StudentUnitInsightPanel.jsx';
 import StudentUnitInsightPanelV2 from './maths7A/StudentUnitInsightPanelV2.jsx';
 import StudentUnitInsightPanelV3 from './maths7A/StudentUnitInsightPanelV3.jsx';
+import StudentUnitInsightPanelV4 from './maths7A/StudentUnitInsightPanelV4.jsx';
 import StudentProfileDataDialog from './classPicture/StudentProfileDataDialog.jsx';
 import SubjectPlanningBoard from './planning/SubjectPlanningBoard.jsx';
 import SubjectWorkspaceContainer from './SubjectWorkspaceContainer.jsx';
@@ -1589,9 +1590,9 @@ function StudentGlobalInsightPanel({ student, evidence, rowNote }) {
         <Stack spacing={1.25}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
             <Box>
-              <Typography component="h2" sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>{student.displayName}</Typography>
+              <Typography component="h2" sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>Global student picture</Typography>
               <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 12.8 }}>
-                Global student picture · Latest evidence: {latestEvidenceDate ? formatDemoDate(latestEvidenceDate) : 'None'}
+                Latest evidence: {latestEvidenceDate ? formatDemoDate(latestEvidenceDate) : 'None'}
               </Typography>
             </Box>
             <Typography sx={{ color: 'text.secondary', fontSize: 12.5, fontWeight: 760 }}>
@@ -1899,6 +1900,7 @@ function EvidenceMap({
     setUnitInsightVersion((currentVersion) => {
       if (currentVersion === 'v1') return 'v2';
       if (currentVersion === 'v2') return 'v3';
+      if (currentVersion === 'v3') return 'v4';
       return 'v1';
     });
   }
@@ -2175,7 +2177,12 @@ function EvidenceMap({
         {isExpanded && (
           <Box role="row" sx={{ display: 'contents' }}>
             <Box role="cell" sx={{ gridColumn: `1 / span ${teachingUnits.length + 2}`, minWidth: 0 }}>
-              {expandedUnitId && unitInsightVersion === 'v3' && expandedUnitSummary ? (
+              {expandedUnitId && unitInsightVersion === 'v4' && expandedUnitSummary ? (
+                <StudentUnitInsightPanelV4
+                  student={student}
+                  summary={expandedUnitSummary}
+                />
+              ) : expandedUnitId && unitInsightVersion === 'v3' && expandedUnitSummary ? (
                 <StudentUnitInsightPanelV3
                   student={student}
                   summary={expandedUnitSummary}

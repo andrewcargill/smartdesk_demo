@@ -111,7 +111,7 @@ export default function StudentUnitInsightPanelV2({ student, summary }) {
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }}>
             <Box>
               <Typography component="h2" sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>
-                {student.displayName} · {summary.unit.label || summary.unit.title}
+                {summary.unit.label || summary.unit.title}
               </Typography>
               <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 12.8 }}>
                 {summary.items.length} evidence item{summary.items.length === 1 ? '' : 's'} in this unit · Latest evidence: {summary.latestDate ? formatDemoDate(summary.latestDate) : 'None'}

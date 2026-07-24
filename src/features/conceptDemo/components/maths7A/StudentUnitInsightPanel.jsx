@@ -404,7 +404,7 @@ export default function StudentUnitInsightPanel({
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }}>
             <Box>
               <Typography component="h2" sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>
-                {`${student.displayName} · ${selectedSummary.unit.label || selectedSummary.unit.title}`}
+                {selectedSummary.unit.label || selectedSummary.unit.title}
               </Typography>
               <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 12.8 }}>
                 {`${selectedSummary.items.length} evidence item${selectedSummary.items.length === 1 ? '' : 's'} in this unit · Latest evidence: ${selectedSummary.latestDate ? formatDemoDate(selectedSummary.latestDate) : 'None'}`}

@@ -50,6 +50,26 @@ function getObservationDateGroups(summary) {
   return [...groupsByDate.values()];
 }
 
+function getObservationFocusGroups(summary) {
+  const focusById = new Map((summary.capturePoints || []).map((point) => [point.id, point]));
+  const groupsById = new Map();
+
+  (summary.observations || []).forEach((item) => {
+    const id = item.capturePointId || 'other';
+    const focus = focusById.get(id);
+    const group = groupsById.get(id) || {
+      id,
+      label: focus?.label || 'Other observations',
+      items: [],
+    };
+    group.items.push(item);
+    groupsById.set(id, group);
+  });
+
+  return [...groupsById.values()]
+    .sort((first, second) => second.items.length - first.items.length || first.label.localeCompare(second.label));
+}
+
 function AssessmentPie({ assessment, size = 86 }) {
   return (
     <Box
@@ -71,31 +91,68 @@ function AssessmentPie({ assessment, size = 86 }) {
   );
 }
 
-function ObservationDensityGraph({ summary }) {
+function ObservationTimeline({ summary }) {
   const observationGroups = getObservationDateGroups(summary);
   const maxCount = Math.max(...observationGroups.map((group) => group.items.length), 1);
+  const points = observationGroups.map((group, index) => ({
+    ...group,
+    x: observationGroups.length === 1 ? 50 : 8 + (index / (observationGroups.length - 1)) * 84,
+    y: 48 - (group.items.length / maxCount) * 28,
+  }));
+  const linePoints = points.map((point) => `${point.x},${point.y}`).join(' ');
 
   return (
-    <Stack direction="row" spacing={0.7} alignItems="flex-end" sx={{ minHeight: 104 }}>
-      {observationGroups.length ? observationGroups.map((group) => (
-        <Box
-          key={group.date}
-          title={`${formatDemoDate(group.date)} · ${group.items.length} observation${group.items.length === 1 ? '' : 's'}`}
-          sx={{
-            flex: '1 1 0',
-            minWidth: 18,
-            height: `${Math.max((group.items.length / maxCount) * 100, 16)}%`,
-            borderRadius: '7px 7px 2px 2px',
-            bgcolor: 'rgba(23, 21, 26, 0.52)',
-            transition: 'background-color 140ms ease, transform 140ms ease',
-            '&:hover': {
-              bgcolor: darkText,
-              transform: 'translateY(-2px)',
-            },
-          }}
-        />
+    <Box
+      component="svg"
+      role="img"
+      aria-label="Observation timeline"
+      viewBox="0 0 100 64"
+      sx={{
+        width: '100%',
+        minHeight: 126,
+        display: 'block',
+        overflow: 'visible',
+        '& circle': { transition: 'r 140ms ease, fill 140ms ease' },
+        '& circle:hover': { r: 5.6, fill: darkText },
+      }}
+    >
+      <line x1="8" y1="48" x2="92" y2="48" stroke="rgba(23, 21, 26, 0.12)" strokeWidth="1.5" />
+      <line x1="8" y1="20" x2="92" y2="20" stroke="rgba(23, 21, 26, 0.05)" strokeWidth="1" />
+      {points.length > 1 && <polyline points={linePoints} fill="none" stroke="rgba(23, 21, 26, 0.55)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />}
+      {points.length === 1 && <line x1="24" y1={points[0].y} x2="76" y2={points[0].y} stroke="rgba(23, 21, 26, 0.55)" strokeWidth="2.4" strokeLinecap="round" />}
+      {points.map((point) => (
+        <circle key={point.date} cx={point.x} cy={point.y} r={3.8 + Math.min(point.items.length, 4) * 0.8} fill="rgba(23, 21, 26, 0.72)" stroke="#fff" strokeWidth="1.5">
+          <title>{`${formatDemoDate(point.date)} · ${point.items.length} observation${point.items.length === 1 ? '' : 's'}`}</title>
+        </circle>
+      ))}
+      {!points.length && (
+        <>
+          <line x1="24" y1="34" x2="76" y2="34" stroke="rgba(23, 21, 26, 0.18)" strokeWidth="2.2" strokeLinecap="round" />
+          <circle cx="50" cy="34" r="3.5" fill="rgba(23, 21, 26, 0.22)" />
+        </>
+      )}
+    </Box>
+  );
+}
+
+function ObservationFocusList({ summary }) {
+  const focusGroups = getObservationFocusGroups(summary);
+  const maxCount = Math.max(...focusGroups.map((group) => group.items.length), 1);
+
+  return (
+    <Stack spacing={0.7}>
+      {focusGroups.length ? focusGroups.slice(0, 5).map((group) => (
+        <Box key={group.id} title={`${group.label} · ${group.items.length} observation${group.items.length === 1 ? '' : 's'}`}>
+          <Stack direction="row" spacing={0.8} alignItems="center">
+            <Typography noWrap sx={{ width: 128, color: 'text.secondary', fontSize: 12 }}>{group.label}</Typography>
+            <Box sx={{ flex: 1, height: 6, borderRadius: '999px', bgcolor: 'rgba(23, 21, 26, 0.08)', overflow: 'hidden' }}>
+              <Box sx={{ width: `${Math.max((group.items.length / maxCount) * 100, 16)}%`, height: '100%', borderRadius: '999px', bgcolor: 'rgba(23, 21, 26, 0.62)' }} />
+            </Box>
+            <Typography sx={{ width: 18, color: darkText, fontSize: 12, fontWeight: 850, textAlign: 'right' }}>{group.items.length}</Typography>
+          </Stack>
+        </Box>
       )) : (
-        <Box sx={{ width: 78, height: 6, borderRadius: '999px', bgcolor: 'rgba(23, 21, 26, 0.16)' }} />
+        <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>No observations recorded.</Typography>
       )}
     </Stack>
   );
@@ -141,7 +198,7 @@ export default function StudentUnitInsightPanelV3({ student, summary }) {
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }}>
             <Box>
               <Typography component="h2" sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>
-                {student.displayName} · {summary.unit.label || summary.unit.title}
+                {summary.unit.label || summary.unit.title}
               </Typography>
               <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 12.8 }}>
                 {summary.items.length} evidence item{summary.items.length === 1 ? '' : 's'} in this unit · Latest evidence: {summary.latestDate ? formatDemoDate(summary.latestDate) : 'None'}
@@ -197,27 +254,25 @@ export default function StudentUnitInsightPanelV3({ student, summary }) {
                 <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 900 }}>Observations</Typography>
                 <Typography sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 720 }}>Black · density</Typography>
               </Stack>
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.25fr) minmax(260px, 0.75fr)' }, gap: 1.4, alignItems: 'stretch' }}>
-                <ObservationDensityGraph summary={summary} />
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.2fr) minmax(300px, 0.8fr)' }, gap: 1.4, alignItems: 'stretch' }}>
+                <Paper elevation={0} sx={{ p: 1, borderRadius: '12px', border: '1px solid rgba(23, 21, 26, 0.07)', bgcolor: '#fff' }}>
+                  <ObservationTimeline summary={summary} />
+                </Paper>
                 <Stack spacing={0.8}>
-                  <Box sx={{ p: 0.85, borderRadius: '10px', bgcolor: 'rgba(23, 21, 26, 0.035)', border: '1px solid rgba(23, 21, 26, 0.08)' }}>
-                    <Typography sx={{ color: 'text.secondary', fontSize: 11.6, fontWeight: 740 }}>Total observations</Typography>
-                    <Typography sx={{ mt: 0.2, color: darkText, fontSize: 12.8, fontWeight: 850 }}>{observationCount}</Typography>
-                  </Box>
-                  <Box sx={{ p: 0.85, borderRadius: '10px', bgcolor: 'rgba(23, 21, 26, 0.035)', border: '1px solid rgba(23, 21, 26, 0.08)' }}>
-                    <Typography sx={{ color: 'text.secondary', fontSize: 11.6, fontWeight: 740 }}>Dates represented</Typography>
-                    <Typography sx={{ mt: 0.2, color: darkText, fontSize: 12.8, fontWeight: 850 }}>{observationGroups.length}</Typography>
-                  </Box>
-                  <Box sx={{ p: 0.85, borderRadius: '10px', bgcolor: 'rgba(23, 21, 26, 0.035)', border: '1px solid rgba(23, 21, 26, 0.08)' }}>
-                    <Typography sx={{ color: 'text.secondary', fontSize: 11.6, fontWeight: 740 }}>Observation focuses</Typography>
-                    <Typography sx={{ mt: 0.2, color: darkText, fontSize: 12.8, fontWeight: 850 }}>{summary.observedCapturePointCount}/{summary.capturePoints.length}</Typography>
-                  </Box>
-                  {latestObservation && (
-                    <Box sx={{ p: 0.85, borderRadius: '10px', bgcolor: 'rgba(23, 21, 26, 0.035)', border: '1px solid rgba(23, 21, 26, 0.08)' }}>
-                      <Typography sx={{ color: 'text.secondary', fontSize: 11.6, fontWeight: 740 }}>Latest observation</Typography>
-                      <Typography sx={{ mt: 0.2, color: darkText, fontSize: 12.8, fontWeight: 850 }}>{formatDemoDate(latestObservation.date)}</Typography>
-                    </Box>
-                  )}
+                  <Stack direction="row" spacing={0.7} flexWrap="wrap" useFlexGap>
+                    {[
+                      ['Total', observationCount],
+                      ['Dates', observationGroups.length],
+                      ['Focuses', `${summary.observedCapturePointCount}/${summary.capturePoints.length}`],
+                      latestObservation ? ['Latest', formatDemoDate(latestObservation.date)] : null,
+                    ].filter(Boolean).map(([label, value]) => (
+                      <Box key={label} sx={{ minWidth: 86, flex: '1 1 86px', p: 0.8, borderRadius: '10px', bgcolor: 'rgba(23, 21, 26, 0.035)', border: '1px solid rgba(23, 21, 26, 0.08)' }}>
+                        <Typography sx={{ color: 'text.secondary', fontSize: 11.4, fontWeight: 740 }}>{label}</Typography>
+                        <Typography sx={{ mt: 0.2, color: darkText, fontSize: 12.7, fontWeight: 850 }}>{value}</Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+                  <ObservationFocusList summary={summary} />
                 </Stack>
               </Box>
             </Stack>
