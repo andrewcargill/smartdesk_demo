@@ -78,9 +78,6 @@ import {
 import { getGroupsForStudent } from '../utils/classGroupUtils.js';
 import { GroupDialog } from './classPicture/ClassWorkingGroups.jsx';
 import StudentUnitEvidenceCell from './maths7A/StudentUnitEvidenceCell.jsx';
-import StudentUnitInsightPanel from './maths7A/StudentUnitInsightPanel.jsx';
-import StudentUnitInsightPanelV2 from './maths7A/StudentUnitInsightPanelV2.jsx';
-import StudentUnitInsightPanelV3 from './maths7A/StudentUnitInsightPanelV3.jsx';
 import StudentUnitInsightPanelV4 from './maths7A/StudentUnitInsightPanelV4.jsx';
 import StudentProfileDataDialog from './classPicture/StudentProfileDataDialog.jsx';
 import SubjectPlanningBoard from './planning/SubjectPlanningBoard.jsx';
@@ -1692,7 +1689,6 @@ function EvidenceMap({
   const [editingRowNoteStudentId, setEditingRowNoteStudentId] = useState('');
   const [draftRowNote, setDraftRowNote] = useState('');
   const [rowNotesVisible, setRowNotesVisible] = useState(true);
-  const [unitInsightVersion, setUnitInsightVersion] = useState('v1');
   const [hoveredStudentId, setHoveredStudentId] = useState('');
   const [hoveredRowNoteStudentId, setHoveredRowNoteStudentId] = useState('');
   const activeGroupingSet = groupDefinitions.find((definition) => definition.id === activeGroupingSetId) || null;
@@ -2168,33 +2164,11 @@ function EvidenceMap({
         {isExpanded && (
           <Box role="row" sx={{ display: 'contents' }}>
             <Box role="cell" sx={{ gridColumn: `1 / span ${teachingUnits.length + 2}`, minWidth: 0 }}>
-              {expandedUnitId && unitInsightVersion === 'v4' && expandedUnitSummary ? (
+              {expandedUnitId && expandedUnitSummary ? (
                 <StudentUnitInsightPanelV4
                   key={`${student.id}-${expandedUnitId}-v4`}
                   student={student}
                   summary={expandedUnitSummary}
-                />
-              ) : expandedUnitId && unitInsightVersion === 'v3' && expandedUnitSummary ? (
-                <StudentUnitInsightPanelV3
-                  key={`${student.id}-${expandedUnitId}-v3`}
-                  student={student}
-                  summary={expandedUnitSummary}
-                />
-              ) : expandedUnitId && unitInsightVersion === 'v2' && expandedUnitSummary ? (
-                <StudentUnitInsightPanelV2
-                  key={`${student.id}-${expandedUnitId}-v2`}
-                  student={student}
-                  summary={expandedUnitSummary}
-                />
-              ) : expandedUnitId ? (
-                <StudentUnitInsightPanel
-                  key={`${student.id}-${expandedUnitId}-v1`}
-                  student={student}
-                  teachingUnits={teachingUnits}
-                  evidence={evidence}
-                  judgements={teacherWorkingJudgements}
-                  onSaveJudgement={saveTeacherWorkingJudgement}
-                  focusUnitId={expandedUnitId}
                 />
               ) : (
                 <StudentGlobalInsightPanel student={student} evidence={evidence} rowNote={rowNote} />
@@ -2320,50 +2294,6 @@ function EvidenceMap({
     <Panel sx={{ p: 0, border: 'none', borderRadius: 0, bgcolor: 'transparent' }}>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'auto' }, gap: 1.2, alignItems: 'start', justifyContent: 'end', mb: 1 }}>
         <Stack direction="row" spacing={0.7} alignItems="center" sx={{ justifySelf: { xs: 'stretch', lg: 'end' }, alignSelf: 'start' }}>
-          <ButtonGroup
-            variant="outlined"
-            size="small"
-            aria-label="Unit insight version"
-            sx={{
-              borderRadius: '999px',
-              overflow: 'hidden',
-              '& .MuiButtonGroup-grouped': {
-                borderColor: 'rgba(23, 21, 26, 0.12)',
-                color: 'text.secondary',
-                textTransform: 'none',
-                fontSize: 12.2,
-                fontWeight: 780,
-                minWidth: 34,
-                px: 0.9,
-                '&:hover': {
-                  borderColor: 'rgba(156, 40, 175, 0.34)',
-                  bgcolor: 'rgba(156, 40, 175, 0.04)',
-                },
-              },
-            }}
-          >
-            {['v1', 'v2', 'v3', 'v4'].map((version) => {
-              const isSelected = unitInsightVersion === version;
-
-              return (
-                <Button
-                  key={version}
-                  onClick={() => setUnitInsightVersion(version)}
-                  aria-pressed={isSelected}
-                  sx={{
-                    color: isSelected ? purple : 'text.secondary',
-                    bgcolor: isSelected ? 'rgba(156, 40, 175, 0.06)' : '#fff',
-                    borderColor: isSelected ? 'rgba(156, 40, 175, 0.34)' : 'rgba(23, 21, 26, 0.12)',
-                    '&:hover': {
-                      bgcolor: isSelected ? 'rgba(156, 40, 175, 0.08)' : 'rgba(156, 40, 175, 0.04)',
-                    },
-                  }}
-                >
-                  {version.toUpperCase()}
-                </Button>
-              );
-            })}
-          </ButtonGroup>
           <Select
             value={activeGroupingSetId}
             onChange={(event) => {
