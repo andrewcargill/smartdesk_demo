@@ -79,6 +79,8 @@ import { getGroupsForStudent } from '../utils/classGroupUtils.js';
 import { GroupDialog } from './classPicture/ClassWorkingGroups.jsx';
 import StudentUnitEvidenceCell from './maths7A/StudentUnitEvidenceCell.jsx';
 import StudentUnitInsightPanel from './maths7A/StudentUnitInsightPanel.jsx';
+import StudentUnitInsightPanelV2 from './maths7A/StudentUnitInsightPanelV2.jsx';
+import StudentUnitInsightPanelV3 from './maths7A/StudentUnitInsightPanelV3.jsx';
 import StudentProfileDataDialog from './classPicture/StudentProfileDataDialog.jsx';
 import SubjectPlanningBoard from './planning/SubjectPlanningBoard.jsx';
 import SubjectWorkspaceContainer from './SubjectWorkspaceContainer.jsx';
@@ -1689,6 +1691,7 @@ function EvidenceMap({
   const [editingRowNoteStudentId, setEditingRowNoteStudentId] = useState('');
   const [draftRowNote, setDraftRowNote] = useState('');
   const [rowNotesVisible, setRowNotesVisible] = useState(true);
+  const [unitInsightVersion, setUnitInsightVersion] = useState('v1');
   const [hoveredStudentId, setHoveredStudentId] = useState('');
   const [hoveredRowNoteStudentId, setHoveredRowNoteStudentId] = useState('');
   const activeGroupingSet = groupDefinitions.find((definition) => definition.id === activeGroupingSetId) || null;
@@ -1892,6 +1895,14 @@ function EvidenceMap({
     setDraftRowNote('');
   }
 
+  function toggleUnitInsightVersion() {
+    setUnitInsightVersion((currentVersion) => {
+      if (currentVersion === 'v1') return 'v2';
+      if (currentVersion === 'v2') return 'v3';
+      return 'v1';
+    });
+  }
+
   function renderStudentRow(student, groupId = '', rowIndex) {
     const isExpanded = expandedStudentId === student.id;
     const isHovered = hoveredStudentId === student.id;
@@ -1899,6 +1910,10 @@ function EvidenceMap({
     const rowNote = rowNotes[student.id] || '';
     const isEditingRowNote = editingRowNoteStudentId === student.id;
     const summariesByUnitId = studentUnitEvidenceModel.summariesByStudentId.get(student.id) || new Map();
+    const expandedUnit = expandedUnitId ? teachingUnits.find((unit) => unit.id === expandedUnitId) : null;
+    const expandedUnitSummary = expandedUnitId
+      ? summariesByUnitId.get(expandedUnitId) || (expandedUnit ? buildTeachingUnitEvidenceSummary(expandedUnit, [], null) : null)
+      : null;
 
     return (
       <Box key={`${groupId || 'flat'}-${student.id}`} role="rowgroup" sx={{ display: 'contents' }}>
@@ -2160,7 +2175,17 @@ function EvidenceMap({
         {isExpanded && (
           <Box role="row" sx={{ display: 'contents' }}>
             <Box role="cell" sx={{ gridColumn: `1 / span ${teachingUnits.length + 2}`, minWidth: 0 }}>
-              {expandedUnitId ? (
+              {expandedUnitId && unitInsightVersion === 'v3' && expandedUnitSummary ? (
+                <StudentUnitInsightPanelV3
+                  student={student}
+                  summary={expandedUnitSummary}
+                />
+              ) : expandedUnitId && unitInsightVersion === 'v2' && expandedUnitSummary ? (
+                <StudentUnitInsightPanelV2
+                  student={student}
+                  summary={expandedUnitSummary}
+                />
+              ) : expandedUnitId ? (
                 <StudentUnitInsightPanel
                   student={student}
                   teachingUnits={teachingUnits}
@@ -2293,6 +2318,26 @@ function EvidenceMap({
     <Panel sx={{ p: 0, border: 'none', borderRadius: 0, bgcolor: 'transparent' }}>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'auto' }, gap: 1.2, alignItems: 'start', justifyContent: 'end', mb: 1 }}>
         <Stack direction="row" spacing={0.7} alignItems="center" sx={{ justifySelf: { xs: 'stretch', lg: 'end' }, alignSelf: 'start' }}>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={toggleUnitInsightVersion}
+            sx={{
+              borderRadius: '999px',
+              color: unitInsightVersion !== 'v1' ? purple : 'text.secondary',
+              borderColor: unitInsightVersion !== 'v1' ? 'rgba(156, 40, 175, 0.34)' : 'rgba(23, 21, 26, 0.12)',
+              textTransform: 'none',
+              fontSize: 12.4,
+              fontWeight: 780,
+              px: 1.35,
+              '&:hover': {
+                borderColor: 'rgba(156, 40, 175, 0.34)',
+                bgcolor: 'rgba(156, 40, 175, 0.04)',
+              },
+            }}
+          >
+            Unit insight {unitInsightVersion.toUpperCase()}
+          </Button>
           <Select
             value={activeGroupingSetId}
             onChange={(event) => {
