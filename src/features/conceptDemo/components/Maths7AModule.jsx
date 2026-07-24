@@ -88,6 +88,7 @@ const purple = '#9c28af';
 const palePurple = '#fbf5fd';
 const darkText = '#17151a';
 const planningStorageKey = 'smartdesk_demo_maths7a_plan';
+const maths7ACellNotesStorageKey = 'smartdesk_demo_maths7a_cell_notes';
 
 const classPicture = {
   summary: 'The available information suggests that Mathematics 7A is currently more secure with calculation than written problem-solving. Verbal modelling and paired explanation have produced several useful observations. The picture for algebra and statistics is still limited.',
@@ -102,6 +103,76 @@ const nowCaptureFocuses = getMathsCaptureFocuses({
 });
 
 const defaultNowStudentId = maths7AStudents.find((student) => student.id === 'leo-andersson')?.id || maths7AStudents[0]?.id || '';
+
+function getStudentUnitCellNoteKey(studentId, unitId) {
+  return `${studentId}:${unitId}`;
+}
+
+function normalizeCellNoteValue(value) {
+  const firstWord = String(value || '').trim().split(/\s+/)[0] || '';
+  return firstWord.slice(0, 16);
+}
+
+function readMaths7ACellNotes() {
+  if (typeof window === 'undefined') {
+    return {};
+  }
+
+  try {
+    const value = window.localStorage.getItem(maths7ACellNotesStorageKey);
+    const parsed = value ? JSON.parse(value) : {};
+
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {};
+    }
+
+    return Object.entries(parsed).reduce((notes, [key, noteValue]) => {
+      const note = normalizeCellNoteValue(noteValue);
+      if (note) {
+        notes[key] = note;
+      }
+      return notes;
+    }, {});
+  } catch {
+    return {};
+  }
+}
+
+function writeMaths7ACellNotes(notes) {
+  const safeNotes = Object.entries(notes || {}).reduce((nextNotes, [key, value]) => {
+    const note = normalizeCellNoteValue(value);
+    if (note) {
+      nextNotes[key] = note;
+    }
+    return nextNotes;
+  }, {});
+
+  if (typeof window !== 'undefined') {
+    try {
+      if (Object.keys(safeNotes).length) {
+        window.localStorage.setItem(maths7ACellNotesStorageKey, JSON.stringify(safeNotes));
+      } else {
+        window.localStorage.removeItem(maths7ACellNotesStorageKey);
+      }
+    } catch {
+      return safeNotes;
+    }
+  }
+
+  return safeNotes;
+}
+
+function resetMaths7ACellNotes() {
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.removeItem(maths7ACellNotesStorageKey);
+    } catch {
+      return {};
+    }
+  }
+
+  return {};
+}
 
 function findLinkedTasks(tasks, student) {
   return tasks.filter((task) => (
@@ -2247,6 +2318,8 @@ function EvidenceMap({
   teachingUnits,
   evidenceTopics,
   evidence,
+  cellNotes = {},
+  onSaveCellNote,
   workingGroups,
   groupDefinitions,
   onCreateGroup,
@@ -2268,6 +2341,8 @@ function EvidenceMap({
   const [groupDialogMode, setGroupDialogMode] = useState('create');
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [moveAnnouncement, setMoveAnnouncement] = useState('');
+  const [editingCellKey, setEditingCellKey] = useState('');
+  const [draftCellNote, setDraftCellNote] = useState('');
   const activeGroupingSet = groupDefinitions.find((definition) => definition.id === activeGroupingSetId) || null;
   const activeGroups = useMemo(
     () => sortGroupsForDisplay((workingGroups || []).filter((group) => group.status !== 'archived' && group.typeId === activeGroupingSetId)),
@@ -2401,6 +2476,28 @@ function EvidenceMap({
     setDragTargetId('');
   }
 
+  function startEditingCell(studentId, unitId) {
+    const key = getStudentUnitCellNoteKey(studentId, unitId);
+    setEditingCellKey(key);
+    setDraftCellNote(cellNotes[key] || '');
+  }
+
+  function saveEditingCell() {
+    if (!editingCellKey) {
+      return;
+    }
+
+    const [studentId, unitId] = editingCellKey.split(':');
+    onSaveCellNote?.(studentId, unitId, draftCellNote);
+    setEditingCellKey('');
+    setDraftCellNote('');
+  }
+
+  function cancelEditingCell() {
+    setEditingCellKey('');
+    setDraftCellNote('');
+  }
+
   function renderStudentRow(student, groupId = '', rowIndex) {
     const isExpanded = expandedStudentId === student.id;
     const summariesByUnitId = studentUnitEvidenceModel.summariesByStudentId.get(student.id) || new Map();
@@ -2464,25 +2561,74 @@ function EvidenceMap({
             </ButtonBase>
           </Box>
           {teachingUnits.map((unit) => {
+            const noteKey = getStudentUnitCellNoteKey(student.id, unit.id);
+            const savedNote = cellNotes[noteKey] || '';
+            const isEditingCell = editingCellKey === noteKey;
             const summary = summariesByUnitId.get(unit.id) || buildTeachingUnitEvidenceSummary(unit, [], null);
             const repeatedCount = getRepeatedSequenceGroups(summary).length;
             const visualDetail = summary.items.length
               ? `${summary.lessonCount} lesson${summary.lessonCount === 1 ? '' : 's'} with evidence, ${summary.assessments.length} assessment${summary.assessments.length === 1 ? '' : 's'}, ${summary.observedCapturePointCount} of ${summary.capturePoints.length} capture points observed${repeatedCount ? `, ${repeatedCount} repeated capture point${repeatedCount === 1 ? '' : 's'}` : ''}${summary.judgement?.levelId ? ', Anna judgement added' : ''}`
               : 'No evidence recorded';
+            const cellDetail = savedNote ? `Manual note ${savedNote}` : visualDetail;
             return (
               <Box
                 key={`${student.id}-${unit.id}`}
                 role="cell"
-                aria-label={`${student.displayName}, ${unit.title || unit.label}: ${visualDetail}`}
+                aria-label={`${student.displayName}, ${unit.title || unit.label}: ${cellDetail}`}
+                onClick={() => startEditingCell(student.id, unit.id)}
                 sx={{
                   p: 1,
                   borderTop: '1px solid rgba(23, 21, 26, 0.08)',
                   borderLeft: '1px solid rgba(23, 21, 26, 0.055)',
                   textAlign: 'left',
                   bgcolor: draggedStudentId === student.id ? 'rgba(156, 40, 175, 0.08)' : '#fff',
+                  cursor: 'text',
                 }}
               >
-                <StudentUnitEvidenceCell summary={summary} maxLessonCount={studentUnitEvidenceModel.maxLessonCount} />
+                {isEditingCell ? (
+                  <Box
+                    component="input"
+                    autoFocus
+                    aria-label={`One word note for ${student.displayName}, ${unit.title || unit.label}`}
+                    value={draftCellNote}
+                    maxLength={16}
+                    onClick={(event) => event.stopPropagation()}
+                    onChange={(event) => setDraftCellNote(event.target.value.replace(/\s+/g, ' '))}
+                    onBlur={saveEditingCell}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        saveEditingCell();
+                      }
+                      if (event.key === 'Escape') {
+                        event.preventDefault();
+                        cancelEditingCell();
+                      }
+                    }}
+                    sx={{
+                      width: '100%',
+                      height: 33,
+                      px: 0.55,
+                      border: `1px solid ${purple}`,
+                      borderRadius: '8px',
+                      color: darkText,
+                      bgcolor: '#fff',
+                      font: 'inherit',
+                      fontSize: 13,
+                      fontWeight: 860,
+                      textAlign: 'center',
+                      outline: 'none',
+                    }}
+                  />
+                ) : savedNote ? (
+                  <Box sx={{ minHeight: 33, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Typography sx={{ color: purple, fontSize: 13.4, fontWeight: 900, lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {savedNote}
+                    </Typography>
+                  </Box>
+                ) : (
+                  <StudentUnitEvidenceCell summary={summary} maxLessonCount={studentUnitEvidenceModel.maxLessonCount} />
+                )}
               </Box>
             );
           })}
@@ -2805,6 +2951,8 @@ function ClassPictureStudents({
   teachingUnits,
   evidenceTopics,
   evidence,
+  cellNotes,
+  onSaveCellNote,
   workingGroups,
   groupDefinitions,
   onCreateGroup,
@@ -2822,6 +2970,8 @@ function ClassPictureStudents({
         teachingUnits={teachingUnits}
         evidenceTopics={evidenceTopics}
         evidence={evidence}
+        cellNotes={cellNotes}
+        onSaveCellNote={onSaveCellNote}
         workingGroups={workingGroups}
         groupDefinitions={groupDefinitions}
         onCreateGroup={onCreateGroup}
@@ -2840,6 +2990,7 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
   const [activeMode, setActiveMode] = useState('plan');
   const [selectedStudentId, setSelectedStudentId] = useState(defaultNowStudentId);
   const [localEvidencePayload, setLocalEvidencePayload] = useState(() => readMaths7ALocalEvidence());
+  const [cellNotes, setCellNotes] = useState(() => readMaths7ACellNotes());
   const [activeLessonIndex, setActiveLessonIndex] = useState(() => readMaths7ALessonIndex());
   const [lessonAnnouncement, setLessonAnnouncement] = useState('');
   const [studentPictureOpen, setStudentPictureOpen] = useState(false);
@@ -2935,6 +3086,9 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       if (event.key === MATHS_7A_LESSON_INDEX_STORAGE_KEY) {
         setActiveLessonIndex(readMaths7ALessonIndex());
       }
+      if (event.key === maths7ACellNotesStorageKey) {
+        setCellNotes(readMaths7ACellNotes());
+      }
     }
 
     window.addEventListener('storage', handleStorageChange);
@@ -2946,6 +3100,7 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       window.localStorage.removeItem(planningStorageKey);
     }
     setLocalEvidencePayload(resetMaths7ALocalEvidence().payload);
+    setCellNotes(resetMaths7ACellNotes());
     setActiveLessonIndex(resetMaths7ALessonIndex());
     setLessonAnnouncement('');
     resetGroups();
@@ -2972,6 +3127,22 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
   function openStudentProfile(studentId) {
     setProfileStudentId(studentId);
     setStudentProfileOpen(true);
+  }
+
+  function saveCellNote(studentId, unitId, value) {
+    const key = getStudentUnitCellNoteKey(studentId, unitId);
+    setCellNotes((currentNotes) => {
+      const nextNotes = { ...currentNotes };
+      const note = normalizeCellNoteValue(value);
+
+      if (note) {
+        nextNotes[key] = note;
+      } else {
+        delete nextNotes[key];
+      }
+
+      return writeMaths7ACellNotes(nextNotes);
+    });
   }
 
   function captureForStudent(studentId = selectedStudent.id) {
@@ -3035,6 +3206,8 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       teachingUnits={evidenceMapTeachingUnits}
       evidenceTopics={mathsEvidenceTopics}
       evidence={visibleEvidence}
+      cellNotes={cellNotes}
+      onSaveCellNote={saveCellNote}
       workingGroups={workingGroups}
       groupDefinitions={classGroupDefinitions}
       onCreateGroup={createGroup}
