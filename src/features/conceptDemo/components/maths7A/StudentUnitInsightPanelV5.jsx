@@ -487,7 +487,7 @@ function SelectedObservationFocusDetails({ focus, validLevelObservations, active
   );
 }
 
-export default function StudentUnitInsightPanelV4({ student, summary }) {
+export default function StudentUnitInsightPanelV5({ student, summary }) {
   const assessments = getSortedAssessments(summary);
   const assessmentStats = getAssessmentStats(assessments);
   const observationFocusModel = useMemo(() => normaliseObservationFocuses({
@@ -521,8 +521,8 @@ export default function StudentUnitInsightPanelV4({ student, summary }) {
               <Typography component="h2" sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>
                 {summary.unit.label || summary.unit.title}
               </Typography>
-              <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 12.8 }}>
-                {summary.items.length} evidence item{summary.items.length === 1 ? '' : 's'} in this unit · Latest evidence: {summary.latestDate ? formatDemoDate(summary.latestDate) : 'None'}
+              <Typography aria-hidden="true" sx={{ mt: 0.2, fontSize: 12.8, lineHeight: 1.43, visibility: 'hidden' }}>
+                &nbsp;
               </Typography>
             </Box>
           </Stack>
