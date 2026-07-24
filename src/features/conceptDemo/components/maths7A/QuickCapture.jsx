@@ -274,6 +274,230 @@ export default function QuickCapture({
     }));
   }
 
+  const learnObservationsPanel = (
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 0.75, sm: 0.85 },
+        borderRadius: '10px',
+        border: `2px solid ${purple}`,
+        bgcolor: '#fff',
+      }}
+    >
+      <Stack spacing={0.55}>
+        <Typography sx={{ color: darkText, fontSize: { xs: 17.5, sm: 19.5 }, lineHeight: 1.15, fontWeight: 880 }}>
+          Learn observations
+        </Typography>
+        <Box sx={{ display: 'grid', gap: 0.45 }}>
+          {learnObservationItems.map((item) => (
+            <Box
+              key={item.id}
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: '120px auto minmax(260px, 1fr)' },
+                gap: { xs: 0.45, sm: 0.55 },
+                alignItems: 'center',
+              }}
+            >
+              <Typography sx={{ color: darkText, fontSize: 12.6, fontWeight: 760 }}>
+                {item.label}
+              </Typography>
+              <ButtonGroup
+                variant="outlined"
+                size="small"
+                aria-label={`${item.label} learn observation`}
+                sx={{
+                  justifySelf: { xs: 'stretch', sm: 'start' },
+                  '& .MuiButtonGroup-grouped': {
+                    minWidth: 34,
+                    minHeight: 30,
+                    borderColor: 'rgba(23, 21, 26, 0.14)',
+                    color: darkText,
+                    fontSize: 13,
+                    fontWeight: 850,
+                    textTransform: 'none',
+                    '&:hover': { borderColor: purple, bgcolor: '#fff' },
+                    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                  },
+                }}
+              >
+                {learnObservationChoices.map((choice) => {
+                  const isSelected = learnObservationSelections[item.id] === choice.id;
+                  return (
+                    <Button
+                      key={choice.id}
+                      type="button"
+                      aria-pressed={isSelected}
+                      onClick={() => chooseLearnObservation(item.id, choice.id)}
+                      sx={{
+                        flex: { xs: '1 1 0', sm: '0 0 36px' },
+                        bgcolor: isSelected ? purple : '#fff',
+                        color: isSelected ? '#fff !important' : darkText,
+                        borderColor: isSelected ? `${purple} !important` : undefined,
+                        '&:hover': { bgcolor: isSelected ? purple : '#fff' },
+                      }}
+                    >
+                      {choice.label}
+                    </Button>
+                  );
+                })}
+              </ButtonGroup>
+              <TextField
+                value={learnObservationNotes[item.id] || ''}
+                onChange={(event) => updateLearnObservationNote(item.id, event.target.value)}
+                placeholder="Optional short note"
+                size="small"
+                fullWidth
+                inputProps={{ maxLength: 100, 'aria-label': `${item.label} note` }}
+                sx={{
+                  display: visibleLearnObservationNoteFields[item.id] || learnObservationNotes[item.id] ? 'block' : 'none',
+                  '& .MuiInputBase-root': {
+                    minHeight: 30,
+                    borderRadius: '999px',
+                    fontSize: 12.4,
+                    bgcolor: '#fff',
+                  },
+                  '& .MuiInputBase-input': {
+                    py: 0.55,
+                    px: 1.2,
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(23, 21, 26, 0.14)',
+                  },
+                  '& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(23, 21, 26, 0.28)',
+                  },
+                  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: purple,
+                    borderWidth: 1,
+                  },
+                }}
+              />
+              {!visibleLearnObservationNoteFields[item.id] && !learnObservationNotes[item.id] && (
+                <IconButton
+                  type="button"
+                  aria-label={`Add ${item.label} note`}
+                  onClick={() => showLearnObservationNoteField(item.id)}
+                  sx={{
+                    width: 30,
+                    height: 30,
+                    justifySelf: 'start',
+                    color: darkText,
+                    '&:hover': { bgcolor: '#fff', color: purple },
+                    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                  }}
+                >
+                  <NoteAddIcon sx={{ fontSize: 17 }} />
+                </IconButton>
+              )}
+            </Box>
+          ))}
+        </Box>
+      </Stack>
+    </Paper>
+  );
+
+  const capturedObservationsPanel = (
+    <Paper
+      elevation={0}
+      aria-live="polite"
+      sx={{
+        p: { xs: 0.75, sm: 0.85 },
+        borderRadius: '10px',
+        border: '1px solid rgba(23, 21, 26, 0.12)',
+        bgcolor: '#fff',
+      }}
+    >
+      <Stack spacing={0.55}>
+        <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 850 }}>
+          {`Captured for ${selectedStudent.displayName}`}
+        </Typography>
+        {selectedCaptureDateSections.length ? (
+          <Stack spacing={0.85}>
+            {selectedCaptureDateSections.map(({ date, unitSections }) => (
+              <Box key={date} component="section" aria-labelledby={`now-capture-date-${date}`}>
+                <Typography id={`now-capture-date-${date}`} component="h3" sx={{ color: darkText, fontSize: 12.6, fontWeight: 880 }}>
+                  {formatDemoLessonDate(date)}
+                </Typography>
+                <Stack spacing={0.65} sx={{ mt: 0.35 }}>
+                  {unitSections.map(({ unit, topicSections }) => (
+                    <Box key={unit.id} component="section" aria-labelledby={`now-capture-unit-${date}-${unit.id}`}>
+                      <Typography id={`now-capture-unit-${date}-${unit.id}`} component="h4" sx={{ color: 'text.secondary', fontSize: 11.9, fontWeight: 820 }}>
+                        {unit.label}
+                      </Typography>
+                      <Stack spacing={0.5} sx={{ mt: 0.3, pl: { xs: 0, sm: 0.75 } }}>
+                        {topicSections.map(({ topic, captures }) => (
+                          <Box key={topic.id} component="section" aria-labelledby={`now-capture-topic-${date}-${unit.id}-${topic.id}`}>
+                            <Typography id={`now-capture-topic-${date}-${unit.id}-${topic.id}`} component="h5" sx={{ color: 'text.secondary', fontSize: 11.6, fontWeight: 760 }}>
+                              {topic.label}
+                            </Typography>
+                            <Box component="ul" sx={{ m: 0, mt: 0.25, p: 0, listStyle: 'none', display: 'grid', gap: 0.35 }}>
+                              {captures.map((capture) => {
+                                const capturePoint = getMathsCapturePointById(capture.capturePointId);
+                                const captureLevel = getMathsCaptureLevelById(capture.levelId);
+                                const capturePointLabel = capturePoint?.label || capture.capturePointId || 'Observation';
+                                const levelLabel = captureLevel?.label || capture.levelId || 'Level';
+
+                                return (
+                                  <Box
+                                    key={capture.id}
+                                    component="li"
+                                    sx={{
+                                      display: 'grid',
+                                      gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', sm: 'minmax(0, 1fr) auto auto' },
+                                      gap: { xs: 0.4, sm: 0.75 },
+                                      alignItems: 'center',
+                                      py: 0.4,
+                                      px: 0.55,
+                                      borderRadius: '8px',
+                                      border: '1px solid rgba(23, 21, 26, 0.08)',
+                                    }}
+                                  >
+                                    <Typography sx={{ color: darkText, fontSize: 12.5, fontWeight: 760, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                      {capturePointLabel}
+                                    </Typography>
+                                    <Typography sx={{ color: darkText, fontSize: 12, fontWeight: 850, justifySelf: { xs: 'start', sm: 'end' }, gridColumn: { xs: '1 / 2', sm: 'auto' } }}>
+                                      {levelLabel}
+                                    </Typography>
+                                    <IconButton
+                                      aria-label={`Remove ${capturePointLabel}, ${levelLabel}, ${topic.label}, for ${selectedStudent.displayName}`}
+                                      onClick={() => removeCapture(capture.id)}
+                                      size="small"
+                                      sx={{
+                                        width: 30,
+                                        height: 30,
+                                        color: 'text.secondary',
+                                        justifySelf: 'end',
+                                        gridColumn: { xs: '2 / 3', sm: 'auto' },
+                                        gridRow: { xs: '1 / span 2', sm: 'auto' },
+                                        '&:hover': { color: darkText, bgcolor: '#fff' },
+                                        '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+                                      }}
+                                    >
+                                      <CloseIcon sx={{ fontSize: 15 }} />
+                                    </IconButton>
+                                  </Box>
+                                );
+                              })}
+                            </Box>
+                          </Box>
+                        ))}
+                      </Stack>
+                    </Box>
+                  ))}
+                </Stack>
+              </Box>
+            ))}
+          </Stack>
+        ) : (
+          <Typography sx={{ color: 'text.secondary', fontSize: 12.6, lineHeight: 1.45 }}>
+            {`No observations captured for ${selectedStudent.firstName} yet.`}
+          </Typography>
+        )}
+      </Stack>
+    </Paper>
+  );
+
   if (!selectedStudent || !activeUnit || !activeTopic) {
     return null;
   }
@@ -374,7 +598,8 @@ export default function QuickCapture({
         </Stack>
       </Paper>
 
-      <Panel sx={{ p: { xs: 0.95, sm: 1.2, md: 1.35 }, borderRadius: '14px' }}>
+      <Stack spacing={{ xs: 0.8, sm: 0.95 }} sx={{ minWidth: 0 }}>
+        <Panel sx={{ p: { xs: 0.95, sm: 1.2, md: 1.35 }, borderRadius: '14px', border: `2px solid ${purple}` }}>
         <Stack spacing={{ xs: 0.8, sm: 0.95 }}>
             <Box>
               <Stack direction="row" spacing={0.65} alignItems="center">
@@ -537,7 +762,7 @@ export default function QuickCapture({
                   sx={{
                     p: { xs: 0.75, sm: 0.85 },
                     borderRadius: '10px',
-                    border: `2px solid ${purple}`,
+                    border: '1px solid rgba(23, 21, 26, 0.14)',
                     bgcolor: '#fff',
                   }}
                 >
@@ -664,228 +889,11 @@ export default function QuickCapture({
                 </Paper>
               ))}
             </Box>
-
-            <Paper
-              elevation={0}
-              sx={{
-                p: { xs: 0.75, sm: 0.85 },
-                borderRadius: '10px',
-                border: `2px solid ${purple}`,
-                bgcolor: '#fff',
-              }}
-            >
-              <Stack spacing={0.55}>
-                <Typography sx={{ color: darkText, fontSize: { xs: 17.5, sm: 19.5 }, lineHeight: 1.15, fontWeight: 880 }}>
-                  Learn observations
-                </Typography>
-                <Box sx={{ display: 'grid', gap: 0.45 }}>
-                  {learnObservationItems.map((item) => (
-                    <Box
-                      key={item.id}
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: '120px auto minmax(260px, 1fr)' },
-                        gap: { xs: 0.45, sm: 0.55 },
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Typography sx={{ color: darkText, fontSize: 12.6, fontWeight: 760 }}>
-                        {item.label}
-                      </Typography>
-                      <ButtonGroup
-                        variant="outlined"
-                        size="small"
-                        aria-label={`${item.label} learn observation`}
-                        sx={{
-                          justifySelf: { xs: 'stretch', sm: 'start' },
-                          '& .MuiButtonGroup-grouped': {
-                            minWidth: 34,
-                            minHeight: 30,
-                            borderColor: 'rgba(23, 21, 26, 0.14)',
-                            color: darkText,
-                            fontSize: 13,
-                            fontWeight: 850,
-                            textTransform: 'none',
-                            '&:hover': { borderColor: purple, bgcolor: '#fff' },
-                            '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
-                          },
-                        }}
-                      >
-                        {learnObservationChoices.map((choice) => {
-                          const isSelected = learnObservationSelections[item.id] === choice.id;
-                          return (
-                            <Button
-                              key={choice.id}
-                              type="button"
-                              aria-pressed={isSelected}
-                              onClick={() => chooseLearnObservation(item.id, choice.id)}
-                              sx={{
-                                flex: { xs: '1 1 0', sm: '0 0 36px' },
-                                bgcolor: isSelected ? purple : '#fff',
-                                color: isSelected ? '#fff !important' : darkText,
-                                borderColor: isSelected ? `${purple} !important` : undefined,
-                                '&:hover': { bgcolor: isSelected ? purple : '#fff' },
-                              }}
-                            >
-                              {choice.label}
-                            </Button>
-                          );
-                        })}
-                      </ButtonGroup>
-                      <TextField
-                        value={learnObservationNotes[item.id] || ''}
-                        onChange={(event) => updateLearnObservationNote(item.id, event.target.value)}
-                        placeholder="Optional short note"
-                        size="small"
-                        fullWidth
-                        inputProps={{ maxLength: 100, 'aria-label': `${item.label} note` }}
-                        sx={{
-                          display: visibleLearnObservationNoteFields[item.id] || learnObservationNotes[item.id] ? 'block' : 'none',
-                          '& .MuiInputBase-root': {
-                            minHeight: 30,
-                            borderRadius: '999px',
-                            fontSize: 12.4,
-                            bgcolor: '#fff',
-                          },
-                          '& .MuiInputBase-input': {
-                            py: 0.55,
-                            px: 1.2,
-                          },
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'rgba(23, 21, 26, 0.14)',
-                          },
-                          '& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'rgba(23, 21, 26, 0.28)',
-                          },
-                          '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: purple,
-                            borderWidth: 1,
-                          },
-                        }}
-                      />
-                      {!visibleLearnObservationNoteFields[item.id] && !learnObservationNotes[item.id] && (
-                        <IconButton
-                          type="button"
-                          aria-label={`Add ${item.label} note`}
-                          onClick={() => showLearnObservationNoteField(item.id)}
-                          sx={{
-                            width: 30,
-                            height: 30,
-                            justifySelf: 'start',
-                            color: darkText,
-                            '&:hover': { bgcolor: '#fff', color: purple },
-                            '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
-                          }}
-                        >
-                          <NoteAddIcon sx={{ fontSize: 17 }} />
-                        </IconButton>
-                      )}
-                    </Box>
-                  ))}
-                </Box>
-              </Stack>
-            </Paper>
-
-            <Paper
-              elevation={0}
-              aria-live="polite"
-              sx={{
-                p: { xs: 0.75, sm: 0.85 },
-                borderRadius: '10px',
-                border: '1px solid rgba(23, 21, 26, 0.12)',
-                bgcolor: '#fff',
-              }}
-            >
-              <Stack spacing={0.55}>
-                <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 850 }}>
-                  {`Captured for ${selectedStudent.displayName}`}
-                </Typography>
-                {selectedCaptureDateSections.length ? (
-                  <Stack spacing={0.85}>
-                    {selectedCaptureDateSections.map(({ date, unitSections }) => (
-                      <Box key={date} component="section" aria-labelledby={`now-capture-date-${date}`}>
-                        <Typography id={`now-capture-date-${date}`} component="h3" sx={{ color: darkText, fontSize: 12.6, fontWeight: 880 }}>
-                          {formatDemoLessonDate(date)}
-                        </Typography>
-                        <Stack spacing={0.65} sx={{ mt: 0.35 }}>
-                          {unitSections.map(({ unit, topicSections }) => (
-                            <Box key={unit.id} component="section" aria-labelledby={`now-capture-unit-${date}-${unit.id}`}>
-                              <Typography id={`now-capture-unit-${date}-${unit.id}`} component="h4" sx={{ color: 'text.secondary', fontSize: 11.9, fontWeight: 820 }}>
-                                {unit.label}
-                              </Typography>
-                              <Stack spacing={0.5} sx={{ mt: 0.3, pl: { xs: 0, sm: 0.75 } }}>
-                                {topicSections.map(({ topic, captures }) => (
-                                  <Box key={topic.id} component="section" aria-labelledby={`now-capture-topic-${date}-${unit.id}-${topic.id}`}>
-                                    <Typography id={`now-capture-topic-${date}-${unit.id}-${topic.id}`} component="h5" sx={{ color: 'text.secondary', fontSize: 11.6, fontWeight: 760 }}>
-                                      {topic.label}
-                                    </Typography>
-                                    <Box component="ul" sx={{ m: 0, mt: 0.25, p: 0, listStyle: 'none', display: 'grid', gap: 0.35 }}>
-                                      {captures.map((capture) => {
-                                        const capturePoint = getMathsCapturePointById(capture.capturePointId);
-                                        const captureLevel = getMathsCaptureLevelById(capture.levelId);
-                                        const capturePointLabel = capturePoint?.label || capture.capturePointId || 'Observation';
-                                        const levelLabel = captureLevel?.label || capture.levelId || 'Level';
-
-                                        return (
-                                          <Box
-                                            key={capture.id}
-                                            component="li"
-                                            sx={{
-                                              display: 'grid',
-                                              gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', sm: 'minmax(0, 1fr) auto auto' },
-                                              gap: { xs: 0.4, sm: 0.75 },
-                                              alignItems: 'center',
-                                              py: 0.4,
-                                              px: 0.55,
-                                              borderRadius: '8px',
-                                              border: '1px solid rgba(23, 21, 26, 0.08)',
-                                            }}
-                                          >
-                                            <Typography sx={{ color: darkText, fontSize: 12.5, fontWeight: 760, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                              {capturePointLabel}
-                                            </Typography>
-                                            <Typography sx={{ color: darkText, fontSize: 12, fontWeight: 850, justifySelf: { xs: 'start', sm: 'end' }, gridColumn: { xs: '1 / 2', sm: 'auto' } }}>
-                                              {levelLabel}
-                                            </Typography>
-                                            <IconButton
-                                              aria-label={`Remove ${capturePointLabel}, ${levelLabel}, ${topic.label}, for ${selectedStudent.displayName}`}
-                                              onClick={() => removeCapture(capture.id)}
-                                              size="small"
-                                              sx={{
-                                                width: 30,
-                                                height: 30,
-                                                color: 'text.secondary',
-                                                justifySelf: 'end',
-                                                gridColumn: { xs: '2 / 3', sm: 'auto' },
-                                                gridRow: { xs: '1 / span 2', sm: 'auto' },
-                                                '&:hover': { color: darkText, bgcolor: '#fff' },
-                                                '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
-                                              }}
-                                            >
-                                              <CloseIcon sx={{ fontSize: 15 }} />
-                                            </IconButton>
-                                          </Box>
-                                        );
-                                      })}
-                                    </Box>
-                                  </Box>
-                                ))}
-                              </Stack>
-                            </Box>
-                          ))}
-                        </Stack>
-                      </Box>
-                    ))}
-                  </Stack>
-                ) : (
-                  <Typography sx={{ color: 'text.secondary', fontSize: 12.6, lineHeight: 1.45 }}>
-                    {`No observations captured for ${selectedStudent.firstName} yet.`}
-                  </Typography>
-                )}
-              </Stack>
-          </Paper>
         </Stack>
-      </Panel>
+        </Panel>
+        {learnObservationsPanel}
+        {capturedObservationsPanel}
+      </Stack>
     </Box>
   );
 }
