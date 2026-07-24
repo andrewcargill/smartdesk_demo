@@ -77,6 +77,7 @@ import {
 } from '../utils/maths7APictureUtils.js';
 import { getGroupsForStudent } from '../utils/classGroupUtils.js';
 import { GroupDialog } from './classPicture/ClassWorkingGroups.jsx';
+import StudentUnitEvidenceCell from './maths7A/StudentUnitEvidenceCell.jsx';
 import StudentProfileDataDialog from './classPicture/StudentProfileDataDialog.jsx';
 import SubjectPlanningBoard from './planning/SubjectPlanningBoard.jsx';
 import SubjectWorkspaceContainer from './SubjectWorkspaceContainer.jsx';
@@ -1586,48 +1587,6 @@ function UnitEvidenceBarsTile({ summaries }) {
   );
 }
 
-function StudentUnitEvidenceCell({ summary, maxLessonCount }) {
-  const repeatedCount = getRepeatedSequenceGroups(summary).length;
-  const hasEvidence = summary.items.length > 0;
-  const barWidth = summary.lessonCount ? Math.max((summary.lessonCount / maxLessonCount) * 100, 18) : 0;
-  const capturePointTotal = summary.capturePoints.length || 0;
-  const capturePointCoverage = capturePointTotal
-    ? Math.max((summary.observedCapturePointCount / capturePointTotal) * 100, summary.observedCapturePointCount ? 14 : 0)
-    : 0;
-
-  return (
-    <Box sx={{ minHeight: 33, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 0.55 }}>
-      <Box sx={{ height: 8, borderRadius: '999px', bgcolor: 'rgba(23, 21, 26, 0.08)', overflow: 'hidden' }}>
-        {!!summary.lessonCount && <Box sx={{ width: `${barWidth}%`, height: '100%', bgcolor: purple }} />}
-      </Box>
-      <Stack direction="row" spacing={0.5} alignItems="center" sx={{ minHeight: 12 }}>
-        {hasEvidence ? (
-          <>
-            <Box
-              title={`${summary.observedCapturePointCount} of ${capturePointTotal} observation focuses seen`}
-              sx={{
-                width: 24,
-                height: 4,
-                borderRadius: '999px',
-                bgcolor: 'rgba(23, 21, 26, 0.09)',
-                overflow: 'hidden',
-                flexShrink: 0,
-              }}
-            >
-              {!!capturePointCoverage && <Box sx={{ width: `${capturePointCoverage}%`, height: '100%', bgcolor: darkText }} />}
-            </Box>
-            {!!summary.assessments.length && <Box component="span" title="Assessment recorded" sx={{ width: 7, height: 7, bgcolor: darkText, flexShrink: 0 }} />}
-            {!!repeatedCount && <Box component="span" title="Repeated observation focus" sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: purple, flexShrink: 0 }} />}
-            {!!summary.judgement?.levelId && <Box component="span" title="Anna added a judgement" sx={{ width: 7, height: 7, border: `1.5px solid ${darkText}`, borderRadius: '2px', flexShrink: 0 }} />}
-          </>
-        ) : (
-          <Box sx={{ width: 22, height: 2, borderRadius: '999px', bgcolor: 'rgba(23, 21, 26, 0.2)' }} />
-        )}
-      </Stack>
-    </Box>
-  );
-}
-
 function StudentInsightPanelV3({
   student,
   teachingUnits,
@@ -2959,7 +2918,7 @@ function ClassPictureStudents({
 }
 
 export default function Maths7AModule({ onBackToWeek, onClose }) {
-  const [activeMode, setActiveMode] = useState('plan');
+  const [activeMode, setActiveMode] = useState('class-picture');
   const [selectedStudentId, setSelectedStudentId] = useState(defaultNowStudentId);
   const [localEvidencePayload, setLocalEvidencePayload] = useState(() => readMaths7ALocalEvidence());
   const [cellNotes, setCellNotes] = useState(() => readMaths7ACellNotes());

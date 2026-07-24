@@ -22,18 +22,18 @@ const border = 'rgba(23, 21, 26, 0.1)';
 
 const modes = [
   {
-    id: 'plan',
-    icon: <AutoStoriesRoundedIcon fontSize="small" />,
-    ariaLabel: 'Plan mode: planning term and lesson sequence',
-    tooltipTitle: 'Plan',
-    tooltipDetail: 'Plan the term and lesson sequence.',
-  },
-  {
     id: 'class-picture',
     icon: <GroupsRoundedIcon fontSize="small" />,
     ariaLabel: 'Class picture mode: viewing class and student progress',
     tooltipTitle: 'Class picture',
     tooltipDetail: 'View the class and student progress.',
+  },
+  {
+    id: 'plan',
+    icon: <AutoStoriesRoundedIcon fontSize="small" />,
+    ariaLabel: 'Plan mode: planning term and lesson sequence',
+    tooltipTitle: 'Plan',
+    tooltipDetail: 'Plan the term and lesson sequence.',
   },
   {
     id: 'now',
