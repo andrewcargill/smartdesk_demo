@@ -199,50 +199,54 @@ export default function SubjectWorkspaceContainer({
             }}
           >
             {modes.map((mode) => (
-              <Tooltip
+              <Tab
                 key={mode.id}
-                title={(
-                  <Box>
-                    <Typography sx={{ fontSize: 12.8, fontWeight: 850, lineHeight: 1.2 }}>{mode.tooltipTitle}</Typography>
-                    <Typography sx={{ mt: 0.35, fontSize: 12.2, lineHeight: 1.35, color: 'rgba(23, 21, 26, 0.74)' }}>{mode.tooltipDetail}</Typography>
-                  </Box>
-                )}
-                arrow
-                placement="bottom"
-                enterDelay={560}
-                leaveDelay={80}
-                slotProps={{
-                  tooltip: {
-                    sx: {
-                      bgcolor: 'rgba(255, 255, 255, 0.98)',
-                      color: '#17151a',
-                      border: '1px solid rgba(23, 21, 26, 0.1)',
-                      borderRadius: '12px',
-                      boxShadow: '0 10px 26px rgba(23, 21, 26, 0.12)',
-                      px: 1.2,
-                      py: 0.9,
-                      maxWidth: 240,
-                    },
-                  },
-                  arrow: {
-                    sx: {
-                      color: 'rgba(255, 255, 255, 0.98)',
-                      '&:before': {
-                        border: '1px solid rgba(23, 21, 26, 0.1)',
+                value={mode.id}
+                icon={(
+                  <Tooltip
+                    title={(
+                      <Box>
+                        <Typography sx={{ fontSize: 12.8, fontWeight: 850, lineHeight: 1.2 }}>{mode.tooltipTitle}</Typography>
+                        <Typography sx={{ mt: 0.35, fontSize: 12.2, lineHeight: 1.35, color: 'rgba(23, 21, 26, 0.74)' }}>{mode.tooltipDetail}</Typography>
+                      </Box>
+                    )}
+                    arrow
+                    placement="bottom"
+                    enterDelay={560}
+                    leaveDelay={80}
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          bgcolor: 'rgba(255, 255, 255, 0.98)',
+                          color: '#17151a',
+                          border: '1px solid rgba(23, 21, 26, 0.1)',
+                          borderRadius: '12px',
+                          boxShadow: '0 10px 26px rgba(23, 21, 26, 0.12)',
+                          px: 1.2,
+                          py: 0.9,
+                          maxWidth: 240,
+                        },
                       },
-                    },
-                  },
+                      arrow: {
+                        sx: {
+                          color: 'rgba(255, 255, 255, 0.98)',
+                          '&:before': {
+                            border: '1px solid rgba(23, 21, 26, 0.1)',
+                          },
+                        },
+                      },
+                    }}
+                  >
+                    <Box component="span" sx={{ display: 'inline-flex' }}>
+                      {mode.icon}
+                    </Box>
+                  </Tooltip>
+                )}
+                aria-label={mode.ariaLabel}
+                sx={{
+                  color: activeMode === mode.id ? `${purple} !important` : 'rgba(156, 40, 175, 0.4)',
                 }}
-              >
-                <Tab
-                  value={mode.id}
-                  icon={mode.icon}
-                  aria-label={mode.ariaLabel}
-                  sx={{
-                    color: activeMode === mode.id ? `${purple} !important` : 'rgba(156, 40, 175, 0.4)',
-                  }}
-                />
-              </Tooltip>
+              />
             ))}
           </Tabs>
         </Box>
