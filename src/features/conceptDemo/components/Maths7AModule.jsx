@@ -3,6 +3,8 @@ import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import NotesIcon from '@mui/icons-material/Notes';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import Tooltip from '@mui/material/Tooltip';
@@ -90,6 +92,7 @@ const darkText = '#17151a';
 const planningStorageKey = 'smartdesk_demo_maths7a_plan';
 const maths7ACellNotesStorageKey = 'smartdesk_demo_maths7a_cell_notes';
 const maths7AUnitNotesStorageKey = 'smartdesk_demo_maths7a_unit_notes';
+const maths7ARowNotesStorageKey = 'smartdesk_demo_maths7a_row_notes';
 
 const classPicture = {
   summary: 'The available information suggests that Mathematics 7A is currently more secure with calculation than written problem-solving. Verbal modelling and paired explanation have produced several useful observations. The picture for algebra and statistics is still limited.',
@@ -112,6 +115,10 @@ function getStudentUnitCellNoteKey(studentId, unitId) {
 function normalizeCellNoteValue(value) {
   const firstWord = String(value || '').trim().split(/\s+/)[0] || '';
   return firstWord.slice(0, 16);
+}
+
+function normalizeRowNoteValue(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim().slice(0, 60);
 }
 
 function readMaths7ACellNotes() {
@@ -154,6 +161,31 @@ function readMaths7AUnitNotes() {
 
     return Object.entries(parsed).reduce((notes, [key, noteValue]) => {
       const note = normalizeCellNoteValue(noteValue);
+      if (note) {
+        notes[key] = note;
+      }
+      return notes;
+    }, {});
+  } catch {
+    return {};
+  }
+}
+
+function readMaths7ARowNotes() {
+  if (typeof window === 'undefined') {
+    return {};
+  }
+
+  try {
+    const value = window.localStorage.getItem(maths7ARowNotesStorageKey);
+    const parsed = value ? JSON.parse(value) : {};
+
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {};
+    }
+
+    return Object.entries(parsed).reduce((notes, [key, noteValue]) => {
+      const note = normalizeRowNoteValue(noteValue);
       if (note) {
         notes[key] = note;
       }
@@ -212,10 +244,46 @@ function writeMaths7AUnitNotes(notes) {
   return safeNotes;
 }
 
+function writeMaths7ARowNotes(notes) {
+  const safeNotes = Object.entries(notes || {}).reduce((nextNotes, [key, value]) => {
+    const note = normalizeRowNoteValue(value);
+    if (note) {
+      nextNotes[key] = note;
+    }
+    return nextNotes;
+  }, {});
+
+  if (typeof window !== 'undefined') {
+    try {
+      if (Object.keys(safeNotes).length) {
+        window.localStorage.setItem(maths7ARowNotesStorageKey, JSON.stringify(safeNotes));
+      } else {
+        window.localStorage.removeItem(maths7ARowNotesStorageKey);
+      }
+    } catch {
+      return safeNotes;
+    }
+  }
+
+  return safeNotes;
+}
+
 function resetMaths7ACellNotes() {
   if (typeof window !== 'undefined') {
     try {
       window.localStorage.removeItem(maths7ACellNotesStorageKey);
+    } catch {
+      return {};
+    }
+  }
+
+  return {};
+}
+
+function resetMaths7ARowNotes() {
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.removeItem(maths7ARowNotesStorageKey);
     } catch {
       return {};
     }
@@ -2382,8 +2450,10 @@ function EvidenceMap({
   evidence,
   cellNotes = {},
   unitNotes = {},
+  rowNotes = {},
   onSaveCellNote,
   onSaveUnitNote,
+  onSaveRowNote,
   workingGroups,
   groupDefinitions,
   onCreateGroup,
@@ -2409,7 +2479,11 @@ function EvidenceMap({
   const [draftCellNote, setDraftCellNote] = useState('');
   const [editingUnitId, setEditingUnitId] = useState('');
   const [draftUnitNote, setDraftUnitNote] = useState('');
+  const [editingRowNoteStudentId, setEditingRowNoteStudentId] = useState('');
+  const [draftRowNote, setDraftRowNote] = useState('');
+  const [rowNotesVisible, setRowNotesVisible] = useState(true);
   const [hoveredStudentId, setHoveredStudentId] = useState('');
+  const [hoveredRowNoteStudentId, setHoveredRowNoteStudentId] = useState('');
   const activeGroupingSet = groupDefinitions.find((definition) => definition.id === activeGroupingSetId) || null;
   const activeGroups = useMemo(
     () => sortGroupsForDisplay((workingGroups || []).filter((group) => group.status !== 'archived' && group.typeId === activeGroupingSetId)),
@@ -2585,9 +2659,32 @@ function EvidenceMap({
     setDraftUnitNote('');
   }
 
+  function startEditingRowNote(studentId) {
+    setEditingRowNoteStudentId(studentId);
+    setDraftRowNote(rowNotes[studentId] || '');
+  }
+
+  function saveEditingRowNote() {
+    if (!editingRowNoteStudentId) {
+      return;
+    }
+
+    onSaveRowNote?.(editingRowNoteStudentId, draftRowNote);
+    setEditingRowNoteStudentId('');
+    setDraftRowNote('');
+  }
+
+  function cancelEditingRowNote() {
+    setEditingRowNoteStudentId('');
+    setDraftRowNote('');
+  }
+
   function renderStudentRow(student, groupId = '', rowIndex) {
     const isExpanded = expandedStudentId === student.id;
     const isHovered = hoveredStudentId === student.id;
+    const isRowNoteHovered = hoveredRowNoteStudentId === student.id;
+    const rowNote = rowNotes[student.id] || '';
+    const isEditingRowNote = editingRowNoteStudentId === student.id;
     const summariesByUnitId = studentUnitEvidenceModel.summariesByStudentId.get(student.id) || new Map();
 
     return (
@@ -2652,6 +2749,77 @@ function EvidenceMap({
               <Typography sx={{ color: darkText, fontSize: 13, fontWeight: 820, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{student.displayName}</Typography>
             </ButtonBase>
           </Box>
+          <Box
+            role="cell"
+            aria-label={rowNotesVisible ? `${student.displayName} quick note${rowNote ? `: ${rowNote}` : ''}` : `${student.displayName} quick note hidden`}
+            onClick={rowNotesVisible ? () => startEditingRowNote(student.id) : undefined}
+            onMouseEnter={() => setHoveredRowNoteStudentId(student.id)}
+            onMouseLeave={() => setHoveredRowNoteStudentId('')}
+            sx={{
+              p: 0.85,
+              display: 'flex',
+              alignItems: 'center',
+              minWidth: 0,
+              borderTop: isHovered ? `1px solid rgba(156, 40, 175, 0.34)` : '1px solid rgba(23, 21, 26, 0.08)',
+              borderBottom: isHovered ? `1px solid rgba(156, 40, 175, 0.22)` : '1px solid transparent',
+              bgcolor: draggedStudentId === student.id ? 'rgba(156, 40, 175, 0.08)' : isHovered ? 'rgba(156, 40, 175, 0.045)' : '#fff',
+              cursor: rowNotesVisible ? 'pointer' : 'default',
+              transition: 'background-color 140ms ease, border-color 140ms ease',
+            }}
+          >
+            {rowNotesVisible && isEditingRowNote ? (
+              <Box
+                component="input"
+                autoFocus
+                aria-label={`Quick note for ${student.displayName}`}
+                value={draftRowNote}
+                maxLength={60}
+                onClick={(event) => event.stopPropagation()}
+                onChange={(event) => setDraftRowNote(event.target.value.replace(/\s+/g, ' '))}
+                onBlur={saveEditingRowNote}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    saveEditingRowNote();
+                  }
+                  if (event.key === 'Escape') {
+                    event.preventDefault();
+                    cancelEditingRowNote();
+                  }
+                }}
+                sx={{
+                  width: '100%',
+                  height: 30,
+                  px: 0.65,
+                  border: `1px solid ${purple}`,
+                  borderRadius: '8px',
+                  color: darkText,
+                  bgcolor: '#fff',
+                  font: 'inherit',
+                  fontSize: 12.5,
+                  fontWeight: 760,
+                  outline: 'none',
+                }}
+              />
+            ) : rowNotesVisible ? (
+              <Box
+                sx={{
+                  width: '100%',
+                  minHeight: 28,
+                  px: 0.7,
+                  display: 'flex',
+                  alignItems: 'center',
+                  borderRadius: '8px',
+                  bgcolor: isRowNoteHovered ? 'rgba(156, 40, 175, 0.075)' : 'transparent',
+                  transition: 'background-color 140ms ease',
+                }}
+              >
+                <Typography sx={{ color: rowNote ? 'rgba(23, 21, 26, 0.58)' : 'rgba(23, 21, 26, 0.28)', fontSize: 12.2, fontWeight: rowNote ? 720 : 640, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {rowNote || ''}
+                </Typography>
+              </Box>
+            ) : null}
+          </Box>
           {teachingUnits.map((unit) => {
             const noteKey = getStudentUnitCellNoteKey(student.id, unit.id);
             const savedNote = cellNotes[noteKey] || unitNotes[unit.id] || '';
@@ -2674,11 +2842,60 @@ function EvidenceMap({
                   borderBottom: isHovered ? `1px solid rgba(156, 40, 175, 0.22)` : '1px solid transparent',
                   borderLeft: '1px solid rgba(23, 21, 26, 0.055)',
                   textAlign: 'left',
+                  position: 'relative',
                   bgcolor: draggedStudentId === student.id ? 'rgba(156, 40, 175, 0.08)' : isHovered ? 'rgba(156, 40, 175, 0.045)' : '#fff',
-                  cursor: 'text',
+                  cursor: 'pointer',
                   transition: 'background-color 140ms ease, border-color 140ms ease',
+                  '&:hover .StudentUnitExpandButton, &:focus-within .StudentUnitExpandButton': {
+                    opacity: 1,
+                    transform: 'translateY(0) scale(1)',
+                    pointerEvents: 'auto',
+                    transitionDelay: '650ms',
+                  },
                 }}
               >
+                {!isEditingCell && (
+                  <IconButton
+                    className="StudentUnitExpandButton"
+                    aria-label={isExpanded ? `Hide expanded view for ${student.displayName}` : `Open expanded view for ${student.displayName}`}
+                    aria-expanded={isExpanded}
+                    size="small"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      toggleStudent(student.id);
+                      event.currentTarget.blur();
+                    }}
+                    sx={{
+                      position: 'absolute',
+                      top: 4,
+                      right: 4,
+                      zIndex: 1,
+                      width: 22,
+                      height: 22,
+                      opacity: 0,
+                      pointerEvents: 'none',
+                      transform: 'translateY(1px) scale(0.96)',
+                      transition: 'opacity 140ms ease, transform 140ms ease, background-color 140ms ease, color 140ms ease',
+                      transitionDelay: '0ms',
+                      color: purple,
+                      bgcolor: '#fff',
+                      border: '1px solid rgba(156, 40, 175, 0.18)',
+                      boxShadow: '0 4px 10px rgba(23, 21, 26, 0.08)',
+                      '&:hover': {
+                        bgcolor: purple,
+                        color: '#fff',
+                      },
+                      '&:focus-visible': {
+                        opacity: 1,
+                        pointerEvents: 'auto',
+                        outline: `2px solid ${purple}`,
+                        outlineOffset: 1,
+                      },
+                    }}
+                  >
+                    <OpenInFullIcon sx={{ fontSize: 12.5 }} />
+                  </IconButton>
+                )}
                 {isEditingCell ? (
                   <Box
                     component="input"
@@ -2729,7 +2946,7 @@ function EvidenceMap({
         </Box>
         {isExpanded && (
           <Box role="row" sx={{ display: 'contents' }}>
-            <Box role="cell" sx={{ gridColumn: `1 / span ${teachingUnits.length + 1}`, minWidth: 0 }}>
+            <Box role="cell" sx={{ gridColumn: `1 / span ${teachingUnits.length + 2}`, minWidth: 0 }}>
               <Box sx={{ p: { xs: 1, sm: 1.25 }, pb: 0, bgcolor: '#fbfafc', borderTop: '1px solid rgba(23, 21, 26, 0.07)' }}>
                 <ButtonGroup variant="outlined" size="small" aria-label="Expanded student view version">
                   {[
@@ -2805,7 +3022,7 @@ function EvidenceMap({
             }}
             aria-label={`${group.label}. Double click to edit focus.`}
             sx={{
-              gridColumn: `1 / span ${teachingUnits.length + 1}`,
+              gridColumn: `1 / span ${teachingUnits.length + 2}`,
               p: 0.85,
               borderTop: '1px solid rgba(23, 21, 26, 0.12)',
               bgcolor: isDragTarget ? 'rgba(156, 40, 175, 0.12)' : '#fff',
@@ -2865,7 +3082,7 @@ function EvidenceMap({
               }}
               aria-label="Unassigned students. Double click to create a focus."
               sx={{
-                gridColumn: `1 / span ${teachingUnits.length + 1}`,
+                gridColumn: `1 / span ${teachingUnits.length + 2}`,
                 p: 0.85,
                 borderTop: '1px solid rgba(23, 21, 26, 0.12)',
                 bgcolor: isDragTarget ? 'rgba(156, 40, 175, 0.12)' : '#fff',
@@ -2950,7 +3167,7 @@ function EvidenceMap({
           sx={{
             minWidth: { xs: 760, lg: 0 },
             display: 'grid',
-            gridTemplateColumns: `minmax(280px, 1fr) repeat(${teachingUnits.length}, 100px)`,
+            gridTemplateColumns: `minmax(210px, 1fr) minmax(90px, 0.55fr) repeat(${teachingUnits.length}, 100px)`,
             border: '1px solid rgba(23, 21, 26, 0.12)',
             borderRadius: '14px',
             overflow: 'hidden',
@@ -2958,6 +3175,47 @@ function EvidenceMap({
           }}
         >
           <Box role="columnheader" sx={{ p: 1, bgcolor: '#fff', borderBottom: '1px solid rgba(23, 21, 26, 0.12)' }} />
+          <Box
+            role="columnheader"
+            aria-label="Quick notes"
+            sx={{
+              p: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.45,
+              justifyContent: 'flex-start',
+              bgcolor: '#fff',
+              borderBottom: '1px solid rgba(23, 21, 26, 0.12)',
+            }}
+          >
+            <IconButton
+              aria-label={rowNotesVisible ? 'Hide quick notes' : 'Show quick notes'}
+              aria-pressed={!rowNotesVisible}
+              size="small"
+              onClick={() => {
+                setRowNotesVisible((currentValue) => !currentValue);
+                cancelEditingRowNote();
+              }}
+              sx={{
+                width: 28,
+                height: 28,
+                color: rowNotesVisible ? 'rgba(156, 40, 175, 0.52)' : 'rgba(23, 21, 26, 0.3)',
+                bgcolor: 'transparent',
+                border: '1px solid transparent',
+                '&:hover, &:focus-visible': {
+                  bgcolor: rowNotesVisible ? 'rgba(156, 40, 175, 0.09)' : 'rgba(23, 21, 26, 0.07)',
+                  borderColor: rowNotesVisible ? 'rgba(156, 40, 175, 0.12)' : 'rgba(23, 21, 26, 0.08)',
+                },
+              }}
+            >
+              <NotesIcon sx={{ fontSize: 16, opacity: rowNotesVisible ? 1 : 0.48 }} />
+            </IconButton>
+            {!rowNotesVisible && (
+              <Typography sx={{ color: 'rgba(23, 21, 26, 0.3)', fontSize: 11.5, fontWeight: 760, lineHeight: 1 }}>
+                Hidden
+              </Typography>
+            )}
+          </Box>
           {teachingUnits.map((unit) => {
             const isEditingUnit = editingUnitId === unit.id;
 
@@ -2973,7 +3231,7 @@ function EvidenceMap({
                   color: darkText,
                   borderBottom: '1px solid rgba(23, 21, 26, 0.12)',
                   borderLeft: '1px solid rgba(23, 21, 26, 0.055)',
-                  cursor: 'text',
+                  cursor: 'pointer',
                   minWidth: 0,
                 }}
               >
@@ -3092,8 +3350,10 @@ function ClassPictureStudents({
   evidence,
   cellNotes,
   unitNotes,
+  rowNotes,
   onSaveCellNote,
   onSaveUnitNote,
+  onSaveRowNote,
   workingGroups,
   groupDefinitions,
   onCreateGroup,
@@ -3113,8 +3373,10 @@ function ClassPictureStudents({
         evidence={evidence}
         cellNotes={cellNotes}
         unitNotes={unitNotes}
+        rowNotes={rowNotes}
         onSaveCellNote={onSaveCellNote}
         onSaveUnitNote={onSaveUnitNote}
+        onSaveRowNote={onSaveRowNote}
         workingGroups={workingGroups}
         groupDefinitions={groupDefinitions}
         onCreateGroup={onCreateGroup}
@@ -3135,6 +3397,7 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
   const [localEvidencePayload, setLocalEvidencePayload] = useState(() => readMaths7ALocalEvidence());
   const [cellNotes, setCellNotes] = useState(() => readMaths7ACellNotes());
   const [unitNotes, setUnitNotes] = useState(() => readMaths7AUnitNotes());
+  const [rowNotes, setRowNotes] = useState(() => readMaths7ARowNotes());
   const [activeLessonIndex, setActiveLessonIndex] = useState(() => readMaths7ALessonIndex());
   const [lessonAnnouncement, setLessonAnnouncement] = useState('');
   const [studentPictureOpen, setStudentPictureOpen] = useState(false);
@@ -3236,6 +3499,9 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       if (event.key === maths7AUnitNotesStorageKey) {
         setUnitNotes(readMaths7AUnitNotes());
       }
+      if (event.key === maths7ARowNotesStorageKey) {
+        setRowNotes(readMaths7ARowNotes());
+      }
     }
 
     window.addEventListener('storage', handleStorageChange);
@@ -3249,6 +3515,7 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
     setLocalEvidencePayload(resetMaths7ALocalEvidence().payload);
     setCellNotes(resetMaths7ACellNotes());
     setUnitNotes(resetMaths7AUnitNotes());
+    setRowNotes(resetMaths7ARowNotes());
     setActiveLessonIndex(resetMaths7ALessonIndex());
     setLessonAnnouncement('');
     resetGroups();
@@ -3305,6 +3572,21 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       }
 
       return writeMaths7AUnitNotes(nextNotes);
+    });
+  }
+
+  function saveRowNote(studentId, value) {
+    setRowNotes((currentNotes) => {
+      const nextNotes = { ...currentNotes };
+      const note = normalizeRowNoteValue(value);
+
+      if (note) {
+        nextNotes[studentId] = note;
+      } else {
+        delete nextNotes[studentId];
+      }
+
+      return writeMaths7ARowNotes(nextNotes);
     });
   }
 
@@ -3371,8 +3653,10 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       evidence={visibleEvidence}
       cellNotes={cellNotes}
       unitNotes={unitNotes}
+      rowNotes={rowNotes}
       onSaveCellNote={saveCellNote}
       onSaveUnitNote={saveUnitNote}
+      onSaveRowNote={saveRowNote}
       workingGroups={workingGroups}
       groupDefinitions={classGroupDefinitions}
       onCreateGroup={createGroup}
