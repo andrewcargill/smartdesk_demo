@@ -884,9 +884,11 @@ function UnitEvidenceBarsTile({ summaries }) {
   );
 }
 
-function LearningObservationHistoryPanel({ observations }) {
+function LearningObservationHistoryPanel({ observations, activeObservation }) {
   const sortedObservations = sortEvidenceByDate(observations || [], 'desc');
   const choiceById = new Map(maths7ALearningObservationChoices.map((choice) => [choice.id, choice]));
+  const activeArea = maths7ALearningObservationAreas.find((area) => area.id === activeObservation?.areaId);
+  const activeChoice = choiceById.get(activeObservation?.choiceId);
   const latestByAreaId = maths7ALearningObservationAreas.reduce((itemsByArea, area) => {
     itemsByArea[area.id] = sortedObservations.find((observation) => observation.areaId === area.id) || null;
     return itemsByArea;
@@ -930,6 +932,37 @@ function LearningObservationHistoryPanel({ observations }) {
           );
         })}
       </Box>
+      <Box
+        sx={{
+          mt: 1,
+          minHeight: 112,
+          p: 1.25,
+          borderRadius: '12px',
+          border: '1px solid rgba(23, 21, 26, 0.07)',
+          bgcolor: activeObservation ? 'rgba(156, 40, 175, 0.035)' : '#fff',
+          transition: 'background-color 140ms ease',
+        }}
+      >
+        {activeObservation ? (
+          <Stack spacing={0.8}>
+            <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 880, lineHeight: 1.25 }}>
+              {formatDemoDate(activeObservation.date)} · {activeArea?.label || activeObservation.areaId} · {activeChoice?.label || activeObservation.choiceId}
+            </Typography>
+            <Box>
+              <Typography sx={{ color: 'rgba(23, 21, 26, 0.42)', fontSize: 11.8, fontWeight: 840, lineHeight: 1.2 }}>
+                Teacher comment
+              </Typography>
+              <Typography sx={{ mt: 0.35, pl: 0.9, color: 'text.secondary', fontSize: 13.4, lineHeight: 1.48, borderLeft: '3px solid rgba(156, 40, 175, 0.24)' }}>
+                {activeObservation.note || 'No comment added.'}
+              </Typography>
+            </Box>
+          </Stack>
+        ) : (
+          <Typography sx={{ color: 'rgba(23, 21, 26, 0.34)', fontSize: 13.2, lineHeight: 1.45 }}>
+            Hover over a graph point to see the date and comment.
+          </Typography>
+        )}
+      </Box>
     </Paper>
   );
 }
@@ -944,7 +977,7 @@ function getLearningObservationChoiceValue(choiceId) {
   return 0;
 }
 
-function LearningObservationTimelineGraph({ observations }) {
+function LearningObservationTimelineGraph({ observations, activeObservationId, onActiveObservationChange }) {
   const sortedObservations = sortEvidenceByDate(observations || [], 'asc');
   const timestamps = sortedObservations.map((observation) => new Date(`${observation.date}T12:00:00`).getTime());
   const minTime = Math.min(...timestamps);
@@ -984,7 +1017,7 @@ function LearningObservationTimelineGraph({ observations }) {
                   height: { xs: 92, sm: 108 },
                   display: 'block',
                   overflow: 'visible',
-                  '& circle': { transition: 'r 140ms ease, fill 140ms ease' },
+                  '& circle': { outline: 'none', transition: 'r 140ms ease, fill 140ms ease' },
                   '& circle:hover': { r: 4.4, fill: purple },
                 }}
               >
@@ -996,19 +1029,27 @@ function LearningObservationTimelineGraph({ observations }) {
                 <line x1="16" y1="36" x2="213" y2="36" stroke="rgba(23, 21, 26, 0.1)" strokeWidth="1" />
                 <line x1="16" y1="50" x2="213" y2="50" stroke="rgba(23, 21, 26, 0.05)" strokeWidth="1" />
                 {points.length > 1 && <polyline points={linePoints} fill="none" stroke="rgba(156, 40, 175, 0.34)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />}
-                {points.map((point) => (
-                  <circle
-                    key={point.id}
-                    cx={point.x}
-                    cy={point.y}
-                    r="2.8"
-                    fill={point.choiceId === 'plus' ? purple : point.choiceId === 'minus' ? 'rgba(23, 21, 26, 0.34)' : darkText}
-                    stroke="#fff"
-                    strokeWidth="1"
-                  >
-                    <title>{`${formatDemoDate(point.date)} · ${area.label} · ${point.choice?.label || point.choiceId}${point.note ? ` · ${point.note}` : ''}`}</title>
-                  </circle>
-                ))}
+                {points.map((point) => {
+                  const isActive = activeObservationId === point.id;
+
+                  return (
+                    <circle
+                      key={point.id}
+                      cx={point.x}
+                      cy={point.y}
+                      r={isActive ? '3.9' : '2.8'}
+                      fill={purple}
+                      stroke={isActive ? 'rgba(156, 40, 175, 0.28)' : '#fff'}
+                      strokeWidth={isActive ? '2.4' : '1'}
+                      tabIndex={0}
+                      onMouseEnter={() => onActiveObservationChange?.({ ...point, areaLabel: area.label })}
+                      onFocus={() => onActiveObservationChange?.({ ...point, areaLabel: area.label })}
+                      onMouseDown={(event) => event.preventDefault()}
+                    >
+                      <title>{`${formatDemoDate(point.date)} · ${area.label} · ${point.choice?.label || point.choiceId}${point.note ? ` · ${point.note}` : ''}`}</title>
+                    </circle>
+                  );
+                })}
                 {!points.length && (
                   <>
                     <line x1="24" y1="36" x2="86" y2="36" stroke="rgba(23, 21, 26, 0.16)" strokeWidth="2" strokeLinecap="round" />
@@ -1056,6 +1097,7 @@ function StudentGlobalInsightPanel({ student, evidence, rowNote, learningObserva
   const previousResult = readHistoricalResult(student);
   const latestEvidenceDate = getLatestEvidenceDate(studentEvidence);
   const subjectLabel = student.subjectId === 'mathematics' ? 'Mathematics' : student.subjectId;
+  const [activeLearningObservation, setActiveLearningObservation] = useState(null);
 
   return (
     <Box sx={{ p: { xs: 1, sm: 1.25 }, bgcolor: '#fbfafc', borderTop: '1px solid rgba(23, 21, 26, 0.07)' }}>
@@ -1072,9 +1114,16 @@ function StudentGlobalInsightPanel({ student, evidence, rowNote, learningObserva
 
           {showLearningObservationGraph ? (
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 2.15fr) minmax(220px, 0.85fr)' }, gap: 1.1, alignItems: 'stretch' }}>
-              <LearningObservationTimelineGraph observations={learningObservations} />
+              <LearningObservationTimelineGraph
+                observations={learningObservations}
+                activeObservationId={activeLearningObservation?.id || ''}
+                onActiveObservationChange={setActiveLearningObservation}
+              />
               <Stack spacing={1.1}>
-                <LearningObservationHistoryPanel observations={learningObservations} />
+                <LearningObservationHistoryPanel
+                  observations={learningObservations}
+                  activeObservation={activeLearningObservation}
+                />
                 <Paper elevation={0} sx={{ p: 0.95, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
                   <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 880 }}>Known anchors</Typography>
                   <Stack spacing={0.42} sx={{ mt: 0.65 }}>
