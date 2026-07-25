@@ -280,13 +280,13 @@ export default function QuickCaptureV2({
       sx={{
         p: { xs: 0.75, sm: 0.85 },
         borderRadius: '10px',
-        border: `2px solid ${purple}`,
+        border: '1px solid transparent',
         bgcolor: '#fff',
       }}
     >
-      <Stack spacing={5.75}>
+      <Stack spacing={0.55}>
         <Typography sx={{ color: darkText, fontSize: { xs: 17.5, sm: 19.5 }, lineHeight: 1.15, fontWeight: 880 }}>
-          Learn observations
+          Learning observations
         </Typography>
         <Box sx={{ display: 'grid', gap: 0.45 }}>
           {learnObservationItems.map((item) => (
@@ -763,6 +763,10 @@ export default function QuickCaptureV2({
               )}
             </Box>
 
+            <Typography sx={{ color: darkText, fontSize: { xs: 17.5, sm: 19.5 }, lineHeight: 1.15, fontWeight: 880 }}>
+              Unit Observations
+            </Typography>
+
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'repeat(2, minmax(0, 1fr))' }, gap: { xs: 0.6, sm: 0.7 } }}>
               {activeCapturePoints.map((capturePoint) => (
                 <Paper
@@ -898,9 +902,9 @@ export default function QuickCaptureV2({
                 </Paper>
               ))}
             </Box>
+            {learnObservationsPanel}
         </Stack>
         </Panel>
-        {learnObservationsPanel}
         {capturedObservationsPanel}
       </Stack>
     </Box>
