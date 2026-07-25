@@ -48,6 +48,17 @@ import {
   readMaths7ALocalEvidence,
   resetMaths7ALocalEvidence,
 } from '../data/maths7AEvidenceStorage.js';
+import {
+  maths7ALearningObservationAreas,
+  maths7ALearningObservationChoices,
+  maths7ALearningObservations,
+} from '../data/maths7ALearningObservations.js';
+import {
+  getMergedMaths7ALearningObservations,
+  MATHS_7A_LEARNING_OBSERVATIONS_STORAGE_KEY,
+  readMaths7ALocalLearningObservations,
+  resetMaths7ALocalLearningObservations,
+} from '../data/maths7ALearningObservationStorage.js';
 import { maths7APlanningBlocks, maths7APlanningPeriods } from '../data/maths7APlanning.js';
 import { maths7AStudents } from '../data/Maths7AStudents.js';
 import { classGroupDefinitions } from '../data/classGroupDefinitions.js';
@@ -873,6 +884,73 @@ function UnitEvidenceBarsTile({ summaries }) {
   );
 }
 
+function LearningObservationHistoryPanel({ observations }) {
+  const sortedObservations = sortEvidenceByDate(observations || [], 'desc');
+  const choiceById = new Map(maths7ALearningObservationChoices.map((choice) => [choice.id, choice]));
+  const latestByAreaId = maths7ALearningObservationAreas.reduce((itemsByArea, area) => {
+    itemsByArea[area.id] = sortedObservations.find((observation) => observation.areaId === area.id) || null;
+    return itemsByArea;
+  }, {});
+
+  return (
+    <Paper elevation={0} sx={{ p: 1.15, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+      <Typography sx={{ color: darkText, fontSize: 13.6, fontWeight: 880 }}>Learning observations</Typography>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, minmax(0, 1fr))' }, gap: 0.7, mt: 0.9 }}>
+        {maths7ALearningObservationAreas.map((area) => {
+          const latestObservation = latestByAreaId[area.id];
+          const choice = choiceById.get(latestObservation?.choiceId);
+
+          return (
+            <Box key={area.id} sx={{ p: 0.85, borderRadius: '12px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+              <Stack direction="row" spacing={0.75} alignItems="center" justifyContent="space-between">
+                <Typography sx={{ color: darkText, fontSize: 12.6, fontWeight: 850 }}>{area.label}</Typography>
+                <Box
+                  title={latestObservation ? `${area.label} · ${choice?.label || latestObservation.choiceId} · ${formatDemoDate(latestObservation.date)}` : `${area.label} · no observation`}
+                  sx={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '50%',
+                    border: latestObservation ? `1px solid ${purple}` : '1px solid rgba(23, 21, 26, 0.14)',
+                    bgcolor: latestObservation ? purple : '#fff',
+                    color: latestObservation ? '#fff' : 'rgba(23, 21, 26, 0.36)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 13,
+                    fontWeight: 880,
+                  }}
+                >
+                  {choice?.label || ''}
+                </Box>
+              </Stack>
+              <Typography sx={{ mt: 0.45, color: 'text.secondary', fontSize: 11.8, fontWeight: 650 }}>
+                {latestObservation ? formatDemoDate(latestObservation.date) : 'No entry yet'}
+              </Typography>
+            </Box>
+          );
+        })}
+      </Box>
+      <Stack spacing={0.55} sx={{ mt: 0.9 }}>
+        {sortedObservations.slice(0, 5).map((observation) => {
+          const area = maths7ALearningObservationAreas.find((item) => item.id === observation.areaId);
+          const choice = choiceById.get(observation.choiceId);
+
+          return (
+            <Typography key={observation.id} sx={{ color: 'text.secondary', fontSize: 12.5, lineHeight: 1.42 }}>
+              {formatDemoDate(observation.date)} · <Box component="span" sx={{ color: darkText, fontWeight: 780 }}>{area?.label || observation.areaId}</Box>{choice?.label ? ` · ${choice.label}` : ''}{observation.note ? ` · ${observation.note}` : ''}
+            </Typography>
+          );
+        })}
+        {!sortedObservations.length && (
+          <Typography sx={{ color: 'text.secondary', fontSize: 12.5, lineHeight: 1.42 }}>
+            No learning observations recorded yet.
+          </Typography>
+        )}
+      </Stack>
+    </Paper>
+  );
+}
+
 function getStudentCountLabel(count) {
   return `${count} ${count === 1 ? 'student' : 'students'}`;
 }
@@ -898,7 +976,7 @@ function getUngroupedStudentsForType(students, groups, typeId) {
   return (students || []).filter((student) => !groupedStudentIds.has(student.id));
 }
 
-function StudentGlobalInsightPanel({ student, evidence, rowNote }) {
+function StudentGlobalInsightPanel({ student, evidence, rowNote, learningObservations = [] }) {
   const studentEvidence = getEvidenceForStudent(evidence, student.id);
   const assessments = studentEvidence.filter((item) => item.type === 'assessment');
   const observations = studentEvidence.filter((item) => item.type !== 'assessment');
@@ -952,6 +1030,10 @@ function StudentGlobalInsightPanel({ student, evidence, rowNote }) {
               </Stack>
             </Paper>
 
+            <LearningObservationHistoryPanel observations={learningObservations} />
+          </Box>
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 1.1 }}>
             <Paper elevation={0} sx={{ p: 1.15, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
               <Typography sx={{ color: darkText, fontSize: 13.6, fontWeight: 880 }}>Saved evidence and linked records</Typography>
               <Stack spacing={0.65} sx={{ mt: 0.8 }}>
@@ -988,6 +1070,7 @@ function EvidenceMap({
   students,
   teachingUnits,
   evidence,
+  learningObservations = [],
   cellNotes = {},
   unitNotes = {},
   rowNotes = {},
@@ -1236,6 +1319,10 @@ function EvidenceMap({
     const expandedUnitSummary = expandedUnitId
       ? summariesByUnitId.get(expandedUnitId) || (expandedUnit ? buildTeachingUnitEvidenceSummary(expandedUnit, [], null) : null)
       : null;
+    const studentLearningObservations = sortEvidenceByDate(
+      learningObservations.filter((observation) => observation.studentId === student.id),
+      'desc',
+    );
 
     return (
       <Box key={`${groupId || 'flat'}-${student.id}`} role="rowgroup" sx={{ display: 'contents' }}>
@@ -1510,7 +1597,12 @@ function EvidenceMap({
                   summary={expandedUnitSummary}
                 />
               ) : (
-                <StudentGlobalInsightPanel student={student} evidence={evidence} rowNote={rowNote} />
+                <StudentGlobalInsightPanel
+                  student={student}
+                  evidence={evidence}
+                  rowNote={rowNote}
+                  learningObservations={studentLearningObservations}
+                />
               )}
             </Box>
           </Box>
@@ -1909,6 +2001,7 @@ function ClassPictureStudents({
   studentSummaries,
   teachingUnits,
   evidence,
+  learningObservations,
   cellNotes,
   unitNotes,
   rowNotes,
@@ -1930,6 +2023,7 @@ function ClassPictureStudents({
         students={studentSummaries.map((summary) => summary.student)}
         teachingUnits={teachingUnits}
         evidence={evidence}
+        learningObservations={learningObservations}
         cellNotes={cellNotes}
         unitNotes={unitNotes}
         rowNotes={rowNotes}
@@ -1954,6 +2048,7 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
   const [nowCaptureVersion, setNowCaptureVersion] = useState('original');
   const [selectedStudentId, setSelectedStudentId] = useState(defaultNowStudentId);
   const [localEvidencePayload, setLocalEvidencePayload] = useState(() => readMaths7ALocalEvidence());
+  const [localLearningObservationPayload, setLocalLearningObservationPayload] = useState(() => readMaths7ALocalLearningObservations());
   const [cellNotes, setCellNotes] = useState(() => readMaths7ACellNotes());
   const [unitNotes, setUnitNotes] = useState(() => readMaths7AUnitNotes());
   const [rowNotes, setRowNotes] = useState(() => readMaths7ARowNotes());
@@ -2001,6 +2096,14 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
   const canAdvanceLesson = activeLessonIndex < demoLessons.length - 1;
   const allEvidence = useMemo(() => getMergedMathsEvidence(maths7AEvidence, localEvidencePayload), [localEvidencePayload]);
   const visibleEvidence = useMemo(() => allEvidence.filter((item) => item.date <= activeLesson.date), [activeLesson.date, allEvidence]);
+  const allLearningObservations = useMemo(
+    () => getMergedMaths7ALearningObservations(maths7ALearningObservations, localLearningObservationPayload),
+    [localLearningObservationPayload],
+  );
+  const visibleLearningObservations = useMemo(
+    () => allLearningObservations.filter((observation) => observation.date <= activeLesson.date),
+    [activeLesson.date, allLearningObservations],
+  );
   const selectedStudent = maths7AStudents.find((student) => student.id === selectedStudentId) || maths7AStudents[0];
   const selectedEvidence = getEvidenceForStudent(visibleEvidence, selectedStudent.id);
   const linkedTasks = findLinkedTasks(annaTasks, selectedStudent);
@@ -2049,6 +2152,9 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       if (event.key === MATHS_7A_EVIDENCE_STORAGE_KEY) {
         setLocalEvidencePayload(readMaths7ALocalEvidence());
       }
+      if (event.key === MATHS_7A_LEARNING_OBSERVATIONS_STORAGE_KEY) {
+        setLocalLearningObservationPayload(readMaths7ALocalLearningObservations());
+      }
       if (event.key === MATHS_7A_LESSON_INDEX_STORAGE_KEY) {
         setActiveLessonIndex(readMaths7ALessonIndex());
       }
@@ -2072,6 +2178,7 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       window.localStorage.removeItem(planningStorageKey);
     }
     setLocalEvidencePayload(resetMaths7ALocalEvidence().payload);
+    setLocalLearningObservationPayload(resetMaths7ALocalLearningObservations().payload);
     setCellNotes(resetMaths7ACellNotes());
     setUnitNotes(resetMaths7AUnitNotes());
     setRowNotes(resetMaths7ARowNotes());
@@ -2227,10 +2334,13 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
             students={maths7AStudents}
             selectedStudentId={selectedStudentId}
             localEvidencePayload={localEvidencePayload}
+            learningObservations={maths7ALearningObservations}
+            localLearningObservationPayload={localLearningObservationPayload}
             activeLesson={activeLesson}
             captureFocuses={nowCaptureFocuses}
             onRestartLessonSequence={restartLessonSequence}
             onLocalEvidencePayloadChange={setLocalEvidencePayload}
+            onLocalLearningObservationPayloadChange={setLocalLearningObservationPayload}
             onStudentChange={setSelectedStudentId}
           />
         ) : (
@@ -2238,10 +2348,13 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
             students={maths7AStudents}
             selectedStudentId={selectedStudentId}
             localEvidencePayload={localEvidencePayload}
+            learningObservations={maths7ALearningObservations}
+            localLearningObservationPayload={localLearningObservationPayload}
             activeLesson={activeLesson}
             captureFocuses={nowCaptureFocuses}
             onRestartLessonSequence={restartLessonSequence}
             onLocalEvidencePayloadChange={setLocalEvidencePayload}
+            onLocalLearningObservationPayloadChange={setLocalLearningObservationPayload}
             onStudentChange={setSelectedStudentId}
           />
         )}
@@ -2282,6 +2395,7 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       studentSummaries={studentSummaries}
       teachingUnits={evidenceMapTeachingUnits}
       evidence={visibleEvidence}
+      learningObservations={visibleLearningObservations}
       cellNotes={cellNotes}
       unitNotes={unitNotes}
       rowNotes={rowNotes}

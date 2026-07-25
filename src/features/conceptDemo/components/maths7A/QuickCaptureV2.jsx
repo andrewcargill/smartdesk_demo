@@ -21,24 +21,23 @@ import {
   mathsCaptureLevels,
 } from '../../data/mathsCaptureConfig.js';
 import {
+  maths7ALearningObservationAreas as learnObservationItems,
+  maths7ALearningObservationChoices as learnObservationChoices,
+} from '../../data/maths7ALearningObservations.js';
+import {
   addMaths7ALocalObservation,
   removeMaths7ALocalObservation,
   updateMaths7ALocalObservation,
 } from '../../data/maths7AEvidenceStorage.js';
+import {
+  addMaths7ALocalLearningObservation,
+  getMergedMaths7ALearningObservations,
+  updateMaths7ALocalLearningObservation,
+} from '../../data/maths7ALearningObservationStorage.js';
 
 const purple = '#9c28af';
 const selectedPurple = '#b45ac2';
 const darkText = '#17151a';
-const learnObservationItems = [
-  { id: 'focus', label: 'Focus' },
-  { id: 'participation', label: 'Participation' },
-  { id: 'independence', label: 'Independence' },
-];
-const learnObservationChoices = [
-  { id: 'minus', label: '−' },
-  { id: 'neutral', label: '○' },
-  { id: 'plus', label: '+' },
-];
 
 function formatDemoLessonDate(date) {
   if (!date) {
@@ -75,10 +74,13 @@ export default function QuickCaptureV2({
   students,
   selectedStudentId,
   localEvidencePayload,
+  learningObservations = [],
+  localLearningObservationPayload,
   activeLesson,
   captureFocuses,
   onRestartLessonSequence,
   onLocalEvidencePayloadChange,
+  onLocalLearningObservationPayloadChange,
   onStudentChange,
 }) {
   const selectedStudent = students.find((student) => student.id === selectedStudentId) || students[0];
@@ -112,6 +114,28 @@ export default function QuickCaptureV2({
     () => visibleLocalObservations.filter((capture) => capture.studentId === selectedStudent.id),
     [selectedStudent.id, visibleLocalObservations],
   );
+  const visibleLearningObservations = useMemo(
+    () => getMergedMaths7ALearningObservations(learningObservations, localLearningObservationPayload)
+      .filter((observation) => observation.date <= activeLesson.date),
+    [activeLesson.date, learningObservations, localLearningObservationPayload],
+  );
+  const selectedStudentLearningObservations = useMemo(
+    () => visibleLearningObservations.filter((observation) => observation.studentId === selectedStudent.id),
+    [selectedStudent.id, visibleLearningObservations],
+  );
+  const currentLearningObservationByAreaId = useMemo(() => learnObservationItems.reduce((observationsByArea, area) => {
+    const matchingObservations = selectedStudentLearningObservations
+      .filter((observation) => observation.areaId === area.id && observation.date === activeLesson.date)
+      .sort((first, second) => (
+        (second.updatedAt || second.createdAt || second.date).localeCompare(first.updatedAt || first.createdAt || first.date)
+      ));
+
+    if (matchingObservations[0]) {
+      observationsByArea[area.id] = matchingObservations[0];
+    }
+
+    return observationsByArea;
+  }, {}), [activeLesson.date, selectedStudentLearningObservations]);
   const selectedCaptureSections = useMemo(() => captureFocuses
     .reduce((dateSections, unit) => {
       unit.topics.forEach((topic) => {
@@ -201,6 +225,24 @@ export default function QuickCaptureV2({
     });
   }, [visibleLearnObservationNoteFields]);
 
+  useEffect(() => {
+    setLearnObservationSelections(learnObservationItems.reduce((selections, item) => {
+      const observation = currentLearningObservationByAreaId[item.id];
+      if (observation?.choiceId) {
+        selections[item.id] = observation.choiceId;
+      }
+      return selections;
+    }, {}));
+    setLearnObservationNotes(learnObservationItems.reduce((notes, item) => {
+      const observation = currentLearningObservationByAreaId[item.id];
+      if (observation?.note) {
+        notes[item.id] = observation.note;
+      }
+      return notes;
+    }, {}));
+    setVisibleLearnObservationNoteFields({});
+  }, [currentLearningObservationByAreaId]);
+
   function captureLevel(capturePoint, level, mode = 'update') {
     const latestLocalObservation = selectedStudentCaptures
       .filter((capture) => (
@@ -272,10 +314,38 @@ export default function QuickCaptureV2({
   }
 
   function chooseLearnObservation(itemId, choiceId) {
+    const latestLocalObservation = (localLearningObservationPayload?.observations || [])
+      .filter((observation) => (
+        observation.studentId === selectedStudent.id
+        && observation.date === activeLesson.date
+        && observation.areaId === itemId
+      ))
+      .sort((first, second) => (
+        (second.updatedAt || second.createdAt || second.date).localeCompare(first.updatedAt || first.createdAt || first.date)
+      ))[0] || null;
+    const note = learnObservationNotes[itemId] || currentLearningObservationByAreaId[itemId]?.note || '';
+    const outcome = latestLocalObservation
+      ? updateMaths7ALocalLearningObservation(localLearningObservationPayload, latestLocalObservation.id, { choiceId, note })
+      : addMaths7ALocalLearningObservation(localLearningObservationPayload, {
+        studentId: selectedStudent.id,
+        date: activeLesson.date,
+        areaId: itemId,
+        choiceId,
+        note,
+      });
+
+    onLocalLearningObservationPayloadChange?.(outcome.payload);
     setLearnObservationSelections((currentSelections) => ({
       ...currentSelections,
       [itemId]: choiceId,
     }));
+
+    if (!outcome.persisted) {
+      setConfirmation('Learning observation updated for this session but could not be saved locally.');
+      return;
+    }
+
+    setConfirmation(`Learning observation updated for ${selectedStudent.displayName}.`);
   }
 
   function updateLearnObservationNote(itemId, value) {
@@ -286,6 +356,32 @@ export default function QuickCaptureV2({
   }
 
   function hideLearnObservationNoteField(itemId) {
+    const note = learnObservationNotes[itemId] || '';
+    const currentObservation = currentLearningObservationByAreaId[itemId];
+    const latestLocalObservation = (localLearningObservationPayload?.observations || [])
+      .filter((observation) => (
+        observation.studentId === selectedStudent.id
+        && observation.date === activeLesson.date
+        && observation.areaId === itemId
+      ))
+      .sort((first, second) => (
+        (second.updatedAt || second.createdAt || second.date).localeCompare(first.updatedAt || first.createdAt || first.date)
+      ))[0] || null;
+
+    if (note || currentObservation?.choiceId) {
+      const outcome = latestLocalObservation
+        ? updateMaths7ALocalLearningObservation(localLearningObservationPayload, latestLocalObservation.id, { note })
+        : addMaths7ALocalLearningObservation(localLearningObservationPayload, {
+          studentId: selectedStudent.id,
+          date: activeLesson.date,
+          areaId: itemId,
+          choiceId: currentObservation?.choiceId || learnObservationSelections[itemId] || '',
+          note,
+        });
+
+      onLocalLearningObservationPayloadChange?.(outcome.payload);
+    }
+
     setVisibleLearnObservationNoteFields((currentFields) => ({
       ...currentFields,
       [itemId]: false,

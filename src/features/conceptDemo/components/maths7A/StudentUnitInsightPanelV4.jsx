@@ -373,7 +373,7 @@ function ObservationLevelChartGraphic({ observations, levels, activeRecordId, on
         display: 'block',
         overflow: 'visible',
         '& circle': { transition: 'r 140ms ease, fill 140ms ease' },
-        '& circle:hover': { r: 3.8, fill: purple },
+        '& circle:hover': { r: 2.7, fill: purple },
       }}
     >
       {levels.map((level) => {
@@ -414,10 +414,10 @@ function ObservationLevelChartGraphic({ observations, levels, activeRecordId, on
             <circle
               cx={point.x}
               cy={point.y}
-              r={isActive ? '4.2' : '3'}
+              r={isActive ? '2.1' : '1.8'}
               fill={purple}
               stroke={isActive ? 'rgba(156, 40, 175, 0.22)' : '#fff'}
-              strokeWidth={isActive ? '4' : '1.2'}
+              strokeWidth={isActive ? '1.6' : '0.9'}
             >
               <title>{`${formatDemoDate(point.item.date)} · ${point.item.levelLabel}${point.item.note ? ` · ${point.item.note}` : ''}`}</title>
             </circle>
@@ -514,15 +514,15 @@ export default function StudentUnitInsightPanelV4({ student, summary }) {
   }, [activeObservationFocus?.focusId]);
   return (
     <Box sx={{ p: { xs: 1, sm: 1.25 }, bgcolor: '#fbfafc', borderTop: '1px solid rgba(23, 21, 26, 0.07)' }}>
-      <Paper elevation={0} id={`student-unit-insight-v4-${student.id}-${summary.unit.id}`} sx={{ p: { xs: 1.25, sm: 1.55 }, borderRadius: '18px', border: `4px solid ${purple}`, bgcolor: '#fff' }}>
+      <Paper elevation={0} id={`student-unit-insight-v4-${student.id}-${summary.unit.id}`} sx={{ p: { xs: 1.25, sm: 1.55 }, borderRadius: '18px', border: `6px solid ${purple}`, bgcolor: '#fff' }}>
         <Stack spacing={1.35}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }}>
             <Box>
               <Typography component="h2" sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>
                 {summary.unit.label || summary.unit.title}
               </Typography>
-              <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 12.8 }}>
-                {summary.items.length} evidence item{summary.items.length === 1 ? '' : 's'} in this unit · Latest evidence: {summary.latestDate ? formatDemoDate(summary.latestDate) : 'None'}
+              <Typography aria-hidden="true" sx={{ mt: 0.2, fontSize: 12.8, lineHeight: 1.43, visibility: 'hidden' }}>
+                &nbsp;
               </Typography>
             </Box>
           </Stack>
