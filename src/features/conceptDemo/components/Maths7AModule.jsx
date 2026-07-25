@@ -2165,50 +2165,63 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
         {lessonAnnouncement}
       </Box>
       <Stack spacing={1.2}>
-        <ButtonGroup
-          variant="outlined"
-          size="small"
-          aria-label="Now capture version"
+        <Stack
           sx={{
-            alignSelf: 'flex-end',
-            '& .MuiButtonGroup-grouped': {
-              borderColor: 'rgba(23, 21, 26, 0.14)',
-              color: darkText,
-              fontSize: 12.4,
-              fontWeight: 780,
-              textTransform: 'none',
-              '&:hover': { borderColor: purple, bgcolor: '#fff' },
-              '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
-            },
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) auto',
+            alignItems: 'center',
+            width: '100%',
+            gap: 1,
           }}
         >
-          <Button
-            type="button"
-            aria-pressed={nowCaptureVersion === 'original'}
-            onClick={() => setNowCaptureVersion('original')}
+          <Typography sx={{ color: darkText, fontSize: { xs: 20, sm: 23 }, lineHeight: 1.15, fontWeight: 880 }}>
+            Lesson capture
+          </Typography>
+          <ButtonGroup
+            variant="outlined"
+            size="small"
+            aria-label="Now capture version"
             sx={{
-              bgcolor: nowCaptureVersion === 'original' ? purple : '#fff',
-              color: nowCaptureVersion === 'original' ? '#fff !important' : darkText,
-              borderColor: nowCaptureVersion === 'original' ? `${purple} !important` : undefined,
-              '&:hover': { bgcolor: nowCaptureVersion === 'original' ? purple : '#fff' },
+              justifySelf: 'end',
+              '& .MuiButtonGroup-grouped': {
+                borderColor: 'rgba(23, 21, 26, 0.14)',
+                color: darkText,
+                fontSize: 12.4,
+                fontWeight: 780,
+                textTransform: 'none',
+                '&:hover': { borderColor: purple, bgcolor: '#fff' },
+                '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+              },
             }}
           >
-            Original
-          </Button>
-          <Button
-            type="button"
-            aria-pressed={nowCaptureVersion === 'v2'}
-            onClick={() => setNowCaptureVersion('v2')}
-            sx={{
-              bgcolor: nowCaptureVersion === 'v2' ? purple : '#fff',
-              color: nowCaptureVersion === 'v2' ? '#fff !important' : darkText,
-              borderColor: nowCaptureVersion === 'v2' ? `${purple} !important` : undefined,
-              '&:hover': { bgcolor: nowCaptureVersion === 'v2' ? purple : '#fff' },
-            }}
-          >
-            V2
-          </Button>
-        </ButtonGroup>
+            <Button
+              type="button"
+              aria-pressed={nowCaptureVersion === 'original'}
+              onClick={() => setNowCaptureVersion('original')}
+              sx={{
+                bgcolor: nowCaptureVersion === 'original' ? purple : '#fff',
+                color: nowCaptureVersion === 'original' ? '#fff !important' : darkText,
+                borderColor: nowCaptureVersion === 'original' ? `${purple} !important` : undefined,
+                '&:hover': { bgcolor: nowCaptureVersion === 'original' ? purple : '#fff' },
+              }}
+            >
+              Original
+            </Button>
+            <Button
+              type="button"
+              aria-pressed={nowCaptureVersion === 'v2'}
+              onClick={() => setNowCaptureVersion('v2')}
+              sx={{
+                bgcolor: nowCaptureVersion === 'v2' ? purple : '#fff',
+                color: nowCaptureVersion === 'v2' ? '#fff !important' : darkText,
+                borderColor: nowCaptureVersion === 'v2' ? `${purple} !important` : undefined,
+                '&:hover': { bgcolor: nowCaptureVersion === 'v2' ? purple : '#fff' },
+              }}
+            >
+              V2
+            </Button>
+          </ButtonGroup>
+        </Stack>
         {nowCaptureVersion === 'v2' ? (
           <QuickCaptureV2
             students={maths7AStudents}
