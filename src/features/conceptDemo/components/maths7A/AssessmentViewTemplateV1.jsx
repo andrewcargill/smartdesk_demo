@@ -16,7 +16,8 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import WorkspacesIcon from '@mui/icons-material/Workspaces';
 import { maths7AEvidence } from '../../data/Maths7AEvidence.js';
 import { maths7AStudents } from '../../data/Maths7AStudents.js';
-import { normalizeMathsEvidenceItem } from '../../data/mathsCurriculum.js';
+import { readMaths7AAssessmentResults, upsertMaths7AAssessmentResult } from '../../data/maths7AAssessmentResultStorage.js';
+import { mathsTeachingUnits, normalizeMathsEvidenceItem } from '../../data/mathsCurriculum.js';
 import AssessmentResultsDialog from './AssessmentResultsDialog.jsx';
 
 const purple = '#9c28af';
@@ -122,6 +123,27 @@ function buildRecentAssessmentRecords() {
     .map((record) => ({ ...record, resultCount: record.studentIds.size }))
     .sort((first, second) => second.date.localeCompare(first.date))
     .slice(0, 3);
+}
+
+function buildStoredAssessmentContinueItem(record) {
+  const studentResults = Array.isArray(record.studentResults) ? record.studentResults : [];
+  const absentCount = studentResults.filter((result) => result.absent).length;
+  const enteredCount = studentResults.filter((result) => result.rawResult || result.absent).length;
+  const warningCount = studentResults.filter((result) => result.warning).length;
+
+  return {
+    id: record.id,
+    title: record.title,
+    reason: record.teachingUnitTitle || 'Stored demo test',
+    detail: `${enteredCount}/${maths7AStudents.length} students recorded`,
+    action: 'Continue',
+    stats: [
+      { id: 'entered', icon: 'complete', value: `${enteredCount}/${maths7AStudents.length}`, label: 'recorded' },
+      { id: 'absent', icon: 'absent', value: String(absentCount), label: 'absent' },
+      { id: 'warning', icon: 'review', value: String(warningCount), label: 'warnings' },
+    ],
+    localRecord: record,
+  };
 }
 
 function SectionTitle({ title, detail }) {
@@ -288,23 +310,137 @@ export default function AssessmentViewTemplateV1() {
   const [resultMode, setResultMode] = useState('number');
   const [maxScore, setMaxScore] = useState('100');
   const [passScore, setPassScore] = useState('50');
+  const [draftAssessmentTitle, setDraftAssessmentTitle] = useState('');
+  const [draftTeachingUnitId, setDraftTeachingUnitId] = useState('');
   const [draftResults, setDraftResults] = useState({});
   const [draftAbsentStudents, setDraftAbsentStudents] = useState({});
-  const selectedOngoing = ongoingAssessments.find((item) => item.id === selectedOngoingId);
+  const [savedAssessmentNotice, setSavedAssessmentNotice] = useState(null);
+  const [storedAssessments, setStoredAssessments] = useState(() => readMaths7AAssessmentResults().assessments);
+  const [editingStoredAssessmentId, setEditingStoredAssessmentId] = useState('');
+  const storedContinueItems = useMemo(() => storedAssessments.map(buildStoredAssessmentContinueItem), [storedAssessments]);
+  const continueAssessments = useMemo(() => [...storedContinueItems, ...ongoingAssessments], [storedContinueItems]);
+  const selectedOngoing = continueAssessments.find((item) => item.id === selectedOngoingId);
   const selectedStart = startOptions.find((item) => item.id === selectedStartId);
   const resultsAssessment = ongoingAssessments[0];
+  const isStartResultsEntry = selectedStartId === 'enter-results';
+  const isResultsEntry = isStartResultsEntry || Boolean(editingStoredAssessmentId);
+  const selectedTeachingUnit = mathsTeachingUnits.find((unit) => unit.id === draftTeachingUnitId);
 
   function closeReveal() {
     setActiveRoute('continue');
     setSelectedOngoingId('');
     setSelectedStartId('');
+    setEditingStoredAssessmentId('');
   }
 
   function handleOngoingAssessmentClick(item) {
+    if (item.localRecord) {
+      handleStoredAssessmentClick(item.localRecord);
+      return;
+    }
+
     setSelectedOngoingId(item.id);
+    setSelectedStartId('');
+    setEditingStoredAssessmentId('');
     if (item.id === resultsAssessment.id) {
       setResultsDialogOpen(true);
     }
+  }
+
+  function handleStartOptionClick(option) {
+    setSelectedStartId(option.id);
+    setSelectedOngoingId('');
+    setEditingStoredAssessmentId('');
+    if (option.id === 'enter-results') {
+      setDraftAssessmentTitle('');
+      setDraftTeachingUnitId('');
+      setSavedAssessmentNotice(null);
+      setResultsDialogOpen(true);
+    }
+  }
+
+  function handleStoredAssessmentClick(record) {
+    setActiveRoute('continue');
+    setSelectedOngoingId(record.id);
+    setSelectedStartId('enter-results');
+    setEditingStoredAssessmentId(record.id);
+    setSavedAssessmentNotice(null);
+    setDraftAssessmentTitle(record.title || '');
+    setDraftTeachingUnitId(record.teachingUnitId || '');
+    setResultMode(record.resultMode || 'number');
+    setMaxScore(record.maxScore === null || record.maxScore === undefined ? '100' : String(record.maxScore));
+    setPassScore(record.passScore === null || record.passScore === undefined ? '50' : String(record.passScore));
+    setDraftResults((record.studentResults || []).reduce((results, result) => ({
+      ...results,
+      [result.studentId]: result.rawResult || '',
+    }), {}));
+    setDraftAbsentStudents((record.studentResults || []).reduce((absentStudents, result) => ({
+      ...absentStudents,
+      [result.studentId]: Boolean(result.absent),
+    }), {}));
+    setResultsDialogOpen(true);
+  }
+
+  function handleSaveAssessmentResults() {
+    if (!isResultsEntry) {
+      setResultsDialogOpen(false);
+      return;
+    }
+
+    const numericMaxScore = Number(maxScore);
+    const numericPassScore = Number(passScore);
+    const hasValidMaxScore = Number.isFinite(numericMaxScore) && numericMaxScore > 0;
+    const hasValidPassScore = Number.isFinite(numericPassScore);
+
+    const existingRecord = storedAssessments.find((record) => record.id === editingStoredAssessmentId);
+    const saveResult = upsertMaths7AAssessmentResult({
+      id: editingStoredAssessmentId || undefined,
+      assessmentId: existingRecord?.assessmentId || selectedStart?.id || 'enter-results',
+      date: existingRecord?.date,
+      createdAt: existingRecord?.createdAt,
+      teachingUnitId: selectedTeachingUnit?.id || '',
+      teachingUnitTitle: selectedTeachingUnit?.title || '',
+      title: draftAssessmentTitle,
+      resultMode,
+      maxScore: hasValidMaxScore ? numericMaxScore : null,
+      passScore: hasValidPassScore ? numericPassScore : null,
+      studentResults: maths7AStudents.map((student) => {
+        const rawResult = draftResults[student.id] || '';
+        const absent = Boolean(draftAbsentStudents[student.id]);
+        const numericResult = Number(rawResult);
+        const hasNumericResult = resultMode === 'number' && rawResult !== '' && Number.isFinite(numericResult);
+        const percentage = !absent && hasNumericResult && hasValidMaxScore
+          ? Math.round((numericResult / numericMaxScore) * 100)
+          : null;
+        const warning = !absent && (
+          (hasNumericResult && hasValidPassScore && numericResult < numericPassScore)
+          || (resultMode === 'letter' && rawResult.toUpperCase() === 'F')
+        );
+
+        return {
+          studentId: student.id,
+          rawResult,
+          percentage,
+          absent,
+          warning,
+        };
+      }),
+    });
+
+    setResultsDialogOpen(false);
+    if (saveResult.record) {
+      setStoredAssessments(saveResult.payload.assessments);
+      setSavedAssessmentNotice({
+        title: saveResult.record.title,
+        teachingUnitTitle: saveResult.record.teachingUnitTitle,
+        persisted: saveResult.persisted,
+      });
+    }
+    setDraftAssessmentTitle('');
+    setDraftTeachingUnitId('');
+    setDraftResults({});
+    setDraftAbsentStudents({});
+    setEditingStoredAssessmentId('');
   }
 
   return (
@@ -390,6 +526,34 @@ export default function AssessmentViewTemplateV1() {
         </Tabs>
       </Box>
 
+      {savedAssessmentNotice && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.8,
+            px: 1,
+            py: 0.85,
+            borderRadius: '12px',
+            border: '1px solid rgba(156, 40, 175, 0.22)',
+            bgcolor: 'rgba(156, 40, 175, 0.045)',
+            color: darkText,
+          }}
+        >
+          <CheckCircleOutlineIcon sx={{ color: purple, fontSize: 18, flexShrink: 0 }} />
+          <Box sx={{ minWidth: 0 }}>
+            <Typography sx={{ color: darkText, fontSize: 12.8, fontWeight: 860, lineHeight: 1.25 }}>
+              Demo test stored
+            </Typography>
+            <Typography sx={{ color: 'text.secondary', fontSize: 11.8, lineHeight: 1.35 }}>
+              {savedAssessmentNotice.title}
+              {savedAssessmentNotice.teachingUnitTitle ? ` · ${savedAssessmentNotice.teachingUnitTitle}` : ''}
+              {!savedAssessmentNotice.persisted ? ' · session only' : ''}
+            </Typography>
+          </Box>
+        </Box>
+      )}
+
       <ButtonBase
         onClick={() => setActiveRoute('continue')}
         sx={{
@@ -402,7 +566,7 @@ export default function AssessmentViewTemplateV1() {
         }}
       >
         <Typography sx={{ fontSize: 12.5, fontWeight: 720 }}>
-          3 ongoing assessments
+          {continueAssessments.length} ongoing assessments
         </Typography>
       </ButtonBase>
 
@@ -436,7 +600,7 @@ export default function AssessmentViewTemplateV1() {
                     gap: 0.9,
                   }}
                 >
-                  {ongoingAssessments.map((item) => (
+                  {continueAssessments.map((item) => (
                     <OngoingItem
                       key={item.id}
                       item={item}
@@ -460,7 +624,7 @@ export default function AssessmentViewTemplateV1() {
                   {startOptions.map((option) => (
                     <ButtonBase
                       key={option.id}
-                      onClick={() => setSelectedStartId(option.id)}
+                      onClick={() => handleStartOptionClick(option)}
                       sx={{
                         display: 'block',
                         width: '100%',
@@ -554,18 +718,24 @@ export default function AssessmentViewTemplateV1() {
           </Stack>
         </Paper>
       <AssessmentResultsDialog
-        assessment={resultsAssessment}
+        assessment={editingStoredAssessmentId ? { title: 'Edit test results' } : selectedStartId === 'enter-results' ? selectedStart : resultsAssessment}
         open={resultsDialogOpen}
         resultMode={resultMode}
         maxScore={maxScore}
         passScore={passScore}
+        testTitle={isResultsEntry ? draftAssessmentTitle : undefined}
+        selectedTeachingUnitId={isResultsEntry ? draftTeachingUnitId : undefined}
+        teachingUnits={isResultsEntry ? mathsTeachingUnits : undefined}
         results={draftResults}
         absentStudents={draftAbsentStudents}
         onClose={() => setResultsDialogOpen(false)}
         onResultModeChange={setResultMode}
         onMaxScoreChange={setMaxScore}
         onPassScoreChange={setPassScore}
-        onSave={() => setResultsDialogOpen(false)}
+        onTestTitleChange={isResultsEntry ? setDraftAssessmentTitle : undefined}
+        onTeachingUnitChange={isResultsEntry ? setDraftTeachingUnitId : undefined}
+        onSave={handleSaveAssessmentResults}
+        requireTestTitle={isResultsEntry}
         onAbsentChange={(studentId, checked) => {
           setDraftAbsentStudents((previous) => ({
             ...previous,

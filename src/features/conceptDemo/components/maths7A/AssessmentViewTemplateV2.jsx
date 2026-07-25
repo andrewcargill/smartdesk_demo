@@ -307,6 +307,13 @@ export default function AssessmentViewTemplateV2() {
     }
   }
 
+  function handleStartOptionClick(option) {
+    setSelectedStartId(option.id);
+    if (option.id === 'enter-results') {
+      setResultsDialogOpen(true);
+    }
+  }
+
   return (
     <Stack spacing={1.45}>
       <Box
@@ -460,7 +467,7 @@ export default function AssessmentViewTemplateV2() {
                   {startOptions.map((option) => (
                     <ButtonBase
                       key={option.id}
-                      onClick={() => setSelectedStartId(option.id)}
+                      onClick={() => handleStartOptionClick(option)}
                       sx={{
                         display: 'block',
                         width: '100%',
@@ -554,7 +561,7 @@ export default function AssessmentViewTemplateV2() {
           </Stack>
         </Paper>
       <AssessmentResultsDialog
-        assessment={resultsAssessment}
+        assessment={selectedStartId === 'enter-results' ? selectedStart : resultsAssessment}
         open={resultsDialogOpen}
         resultMode={resultMode}
         maxScore={maxScore}

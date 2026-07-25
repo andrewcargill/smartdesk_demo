@@ -1,4 +1,4 @@
-import { Box, Button, ButtonGroup, Checkbox, Dialog, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, ButtonGroup, Checkbox, Dialog, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import AbcIcon from '@mui/icons-material/Abc';
 import LooksOneIcon from '@mui/icons-material/LooksOne';
 import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
@@ -27,20 +27,31 @@ export default function AssessmentResultsDialog({
   resultMode,
   maxScore,
   passScore,
+  testTitle,
+  selectedTeachingUnitId,
+  teachingUnits = [],
   results,
   absentStudents,
   onClose,
   onResultModeChange,
   onMaxScoreChange,
   onPassScoreChange,
+  onTestTitleChange,
+  onTeachingUnitChange,
   onSave,
   onAbsentChange,
   onResultChange,
+  requireTestTitle = false,
 }) {
   const maxScoreNumber = Number(maxScore);
   const passScoreNumber = Number(passScore);
   const hasValidMaxScore = Number.isFinite(maxScoreNumber) && maxScoreNumber > 0;
   const hasValidPassScore = Number.isFinite(passScoreNumber);
+  const showsTestTitle = typeof onTestTitleChange === 'function';
+  const showsTeachingUnitSelect = typeof onTeachingUnitChange === 'function' && teachingUnits.length > 0;
+  const hasRequiredTitle = !requireTestTitle || !showsTestTitle || Boolean(testTitle?.trim());
+  const hasRequiredTeachingUnit = !requireTestTitle || !showsTeachingUnitSelect || Boolean(selectedTeachingUnitId);
+  const resultEntryDisabled = !hasRequiredTitle || !hasRequiredTeachingUnit;
 
   function handleResultChange(studentId, value) {
     if (resultMode !== 'number') {
@@ -188,6 +199,68 @@ export default function AssessmentResultsDialog({
             </Stack>
           </Stack>
 
+          {(showsTestTitle || showsTeachingUnitSelect) && (
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1fr) minmax(220px, 0.62fr)' }, gap: 0.8 }}>
+              {showsTestTitle && (
+                <TextField
+                  value={testTitle}
+                  onChange={(event) => onTestTitleChange(event.target.value)}
+                  size="small"
+                  placeholder="Test title"
+                  inputProps={{ 'aria-label': 'Test title' }}
+                  helperText={resultEntryDisabled ? 'Add a test title and teaching unit before entering results.' : ' '}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: 36,
+                      borderRadius: '10px',
+                      bgcolor: '#fff',
+                      fontSize: 13,
+                      '& fieldset': { borderColor: 'rgba(23, 21, 26, 0.12)' },
+                      '&:hover fieldset': { borderColor: 'rgba(156, 40, 175, 0.28)' },
+                      '&.Mui-focused fieldset': { borderColor: 'rgba(156, 40, 175, 0.38)' },
+                    },
+                    '& .MuiFormHelperText-root': {
+                      mx: 0,
+                      color: 'text.secondary',
+                      fontSize: 11.3,
+                    },
+                  }}
+                />
+              )}
+              {showsTeachingUnitSelect && (
+                <TextField
+                  select
+                  value={selectedTeachingUnitId || ''}
+                  onChange={(event) => onTeachingUnitChange(event.target.value)}
+                  size="small"
+                  inputProps={{ 'aria-label': 'Teaching unit' }}
+                  helperText=" "
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: 36,
+                      borderRadius: '10px',
+                      bgcolor: '#fff',
+                      fontSize: 13,
+                      '& fieldset': { borderColor: 'rgba(23, 21, 26, 0.12)' },
+                      '&:hover fieldset': { borderColor: 'rgba(156, 40, 175, 0.28)' },
+                      '&.Mui-focused fieldset': { borderColor: 'rgba(156, 40, 175, 0.38)' },
+                    },
+                    '& .MuiFormHelperText-root': { mx: 0, fontSize: 11.3 },
+                  }}
+                >
+                  <MenuItem value="">
+                    Teaching unit
+                  </MenuItem>
+                  {teachingUnits.map((unit) => (
+                    <MenuItem key={unit.id} value={unit.id}>
+                      {unit.title}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+            </Box>
+          )}
+
           <Box
             role="table"
             aria-label={`${assessment?.title || 'Assessment'} student results`}
@@ -253,6 +326,7 @@ export default function AssessmentResultsDialog({
                     <TextField
                       value={resultValue}
                       onChange={(event) => handleResultChange(student.id, event.target.value)}
+                      disabled={resultEntryDisabled}
                       size="small"
                       placeholder={resultMode === 'number' ? 'Score' : 'A'}
                       inputMode={resultMode === 'number' ? 'decimal' : 'text'}
@@ -293,6 +367,7 @@ export default function AssessmentResultsDialog({
                   <Checkbox
                     checked={Boolean(absentStudents[student.id])}
                     onChange={(event) => onAbsentChange(student.id, event.target.checked)}
+                    disabled={resultEntryDisabled}
                     inputProps={{ 'aria-label': `${student.displayName} absent` }}
                     sx={{
                       justifySelf: 'center',
@@ -310,6 +385,7 @@ export default function AssessmentResultsDialog({
               type="button"
               variant="contained"
               onClick={onSave}
+              disabled={resultEntryDisabled}
               sx={{
                 borderRadius: '10px',
                 bgcolor: purple,
@@ -319,6 +395,10 @@ export default function AssessmentResultsDialog({
                 fontWeight: 820,
                 px: 1.8,
                 '&:hover': { bgcolor: '#7f1d90', boxShadow: 'none' },
+                '&.Mui-disabled': {
+                  bgcolor: 'rgba(23, 21, 26, 0.12)',
+                  color: 'rgba(23, 21, 26, 0.38)',
+                },
               }}
             >
               Save
