@@ -893,17 +893,20 @@ function LearningObservationHistoryPanel({ observations }) {
   }, {});
 
   return (
-    <Paper elevation={0} sx={{ p: 1.15, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+    <Paper elevation={0} sx={{ p: 1.15, height: 310, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
       <Typography sx={{ color: darkText, fontSize: 13.6, fontWeight: 880 }}>Learning observations</Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, minmax(0, 1fr))' }, gap: 0.7, mt: 0.9 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'repeat(3, minmax(0, 1fr))' }, gap: 0.8, mt: 0.9 }}>
         {maths7ALearningObservationAreas.map((area) => {
           const latestObservation = latestByAreaId[area.id];
           const choice = choiceById.get(latestObservation?.choiceId);
 
           return (
-            <Box key={area.id} sx={{ p: 0.85, borderRadius: '12px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
-              <Stack direction="row" spacing={0.75} alignItems="center" justifyContent="space-between">
-                <Typography sx={{ color: darkText, fontSize: 12.6, fontWeight: 850 }}>{area.label}</Typography>
+            <Box key={area.id} sx={{ p: 1, minHeight: 68, borderRadius: '12px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+              <Typography sx={{ color: darkText, fontSize: 12.6, fontWeight: 850 }}>{area.label}</Typography>
+              <Stack direction="row" spacing={0.75} alignItems="center" justifyContent="space-between" sx={{ mt: 0.45 }}>
+                <Typography sx={{ color: 'text.secondary', fontSize: 11.8, fontWeight: 650 }}>
+                  {latestObservation ? formatDemoDate(latestObservation.date) : 'No entry yet'}
+                </Typography>
                 <Box
                   title={latestObservation ? `${area.label} · ${choice?.label || latestObservation.choiceId} · ${formatDemoDate(latestObservation.date)}` : `${area.label} · no observation`}
                   sx={{
@@ -923,34 +926,106 @@ function LearningObservationHistoryPanel({ observations }) {
                   {choice?.label || ''}
                 </Box>
               </Stack>
-              <Typography sx={{ mt: 0.45, color: 'text.secondary', fontSize: 11.8, fontWeight: 650 }}>
-                {latestObservation ? formatDemoDate(latestObservation.date) : 'No entry yet'}
-              </Typography>
             </Box>
           );
         })}
       </Box>
-      <Stack spacing={0.55} sx={{ mt: 0.9 }}>
-        {sortedObservations.slice(0, 5).map((observation) => {
-          const area = maths7ALearningObservationAreas.find((item) => item.id === observation.areaId);
-          const choice = choiceById.get(observation.choiceId);
-
-          return (
-            <Typography key={observation.id} sx={{ color: 'text.secondary', fontSize: 12.5, lineHeight: 1.42 }}>
-              {formatDemoDate(observation.date)} · <Box component="span" sx={{ color: darkText, fontWeight: 780 }}>{area?.label || observation.areaId}</Box>{choice?.label ? ` · ${choice.label}` : ''}{observation.note ? ` · ${observation.note}` : ''}
-            </Typography>
-          );
-        })}
-        {!sortedObservations.length && (
-          <Typography sx={{ color: 'text.secondary', fontSize: 12.5, lineHeight: 1.42 }}>
-            No learning observations recorded yet.
-          </Typography>
-        )}
-      </Stack>
     </Paper>
   );
 }
 
+function getLearningObservationChoiceValue(choiceId) {
+  if (choiceId === 'plus') {
+    return 1;
+  }
+  if (choiceId === 'minus') {
+    return -1;
+  }
+  return 0;
+}
+
+function LearningObservationTimelineGraph({ observations }) {
+  const sortedObservations = sortEvidenceByDate(observations || [], 'asc');
+  const timestamps = sortedObservations.map((observation) => new Date(`${observation.date}T12:00:00`).getTime());
+  const minTime = Math.min(...timestamps);
+  const maxTime = Math.max(...timestamps);
+  const hasRange = Number.isFinite(minTime) && Number.isFinite(maxTime) && minTime !== maxTime;
+  const choiceById = new Map(maths7ALearningObservationChoices.map((choice) => [choice.id, choice]));
+
+  return (
+    <Paper elevation={0} sx={{ p: 1.15, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff', minHeight: '100%' }}>
+      <Stack spacing={0.8}>
+        <Typography sx={{ color: darkText, fontSize: 13.6, fontWeight: 880 }}>Learning observation pattern</Typography>
+        <Stack spacing={0.65}>
+          {maths7ALearningObservationAreas.map((area) => {
+            const areaObservations = sortedObservations.filter((observation) => observation.areaId === area.id);
+            const points = areaObservations.map((observation) => {
+              const timestamp = new Date(`${observation.date}T12:00:00`).getTime();
+              const choiceValue = getLearningObservationChoiceValue(observation.choiceId);
+
+              return {
+                ...observation,
+                x: hasRange ? 16 + ((timestamp - minTime) / (maxTime - minTime)) * 197 : 114,
+                y: 36 - choiceValue * 14,
+                choice: choiceById.get(observation.choiceId),
+              };
+            });
+            const linePoints = points.map((point) => `${point.x},${point.y}`).join(' ');
+
+            return (
+              <Box
+                key={area.id}
+                component="svg"
+                role="img"
+                aria-label={`${area.label} learning observations plotted over time`}
+                viewBox="0 0 220 58"
+                sx={{
+                  width: '100%',
+                  height: { xs: 92, sm: 108 },
+                  display: 'block',
+                  overflow: 'visible',
+                  '& circle': { transition: 'r 140ms ease, fill 140ms ease' },
+                  '& circle:hover': { r: 4.4, fill: purple },
+                }}
+              >
+                <text x="1" y="7" fill="rgba(23, 21, 26, 0.68)" fontSize="5.4" fontWeight="800">{area.label}</text>
+                <text x="6" y="23.8" fill="rgba(23, 21, 26, 0.48)" fontSize="5.2" fontWeight="800" textAnchor="middle">+</text>
+                <text x="6" y="37.8" fill="rgba(23, 21, 26, 0.48)" fontSize="5.2" fontWeight="800" textAnchor="middle">0</text>
+                <text x="6" y="51.8" fill="rgba(23, 21, 26, 0.48)" fontSize="5.2" fontWeight="800" textAnchor="middle">-</text>
+                <line x1="16" y1="22" x2="213" y2="22" stroke="rgba(23, 21, 26, 0.05)" strokeWidth="1" />
+                <line x1="16" y1="36" x2="213" y2="36" stroke="rgba(23, 21, 26, 0.1)" strokeWidth="1" />
+                <line x1="16" y1="50" x2="213" y2="50" stroke="rgba(23, 21, 26, 0.05)" strokeWidth="1" />
+                {points.length > 1 && <polyline points={linePoints} fill="none" stroke="rgba(156, 40, 175, 0.34)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />}
+                {points.map((point) => (
+                  <circle
+                    key={point.id}
+                    cx={point.x}
+                    cy={point.y}
+                    r="2.8"
+                    fill={point.choiceId === 'plus' ? purple : point.choiceId === 'minus' ? 'rgba(23, 21, 26, 0.34)' : darkText}
+                    stroke="#fff"
+                    strokeWidth="1"
+                  >
+                    <title>{`${formatDemoDate(point.date)} · ${area.label} · ${point.choice?.label || point.choiceId}${point.note ? ` · ${point.note}` : ''}`}</title>
+                  </circle>
+                ))}
+                {!points.length && (
+                  <>
+                    <line x1="24" y1="36" x2="86" y2="36" stroke="rgba(23, 21, 26, 0.16)" strokeWidth="2" strokeLinecap="round" />
+                    <circle cx="55" cy="36" r="3" fill="rgba(23, 21, 26, 0.18)" />
+                  </>
+                )}
+              </Box>
+            );
+          })}
+        </Stack>
+        <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
+          {sortedObservations.length ? `${formatDemoDate(sortedObservations[0].date)} to ${formatDemoDate(sortedObservations[sortedObservations.length - 1].date)}` : 'No learning observations yet'}
+        </Typography>
+      </Stack>
+    </Paper>
+  );
+}
 function getStudentCountLabel(count) {
   return `${count} ${count === 1 ? 'student' : 'students'}`;
 }
@@ -976,19 +1051,10 @@ function getUngroupedStudentsForType(students, groups, typeId) {
   return (students || []).filter((student) => !groupedStudentIds.has(student.id));
 }
 
-function StudentGlobalInsightPanel({ student, evidence, rowNote, learningObservations = [] }) {
+function StudentGlobalInsightPanel({ student, evidence, rowNote, learningObservations = [], showLearningObservationGraph = false }) {
   const studentEvidence = getEvidenceForStudent(evidence, student.id);
-  const assessments = studentEvidence.filter((item) => item.type === 'assessment');
-  const observations = studentEvidence.filter((item) => item.type !== 'assessment');
-  const unitSummaries = mathsTeachingUnits.map((unit) => buildTeachingUnitEvidenceSummary(unit, studentEvidence, null));
   const previousResult = readHistoricalResult(student);
   const latestEvidenceDate = getLatestEvidenceDate(studentEvidence);
-  const linkedTasks = annaTasks.filter((task) => (
-    task.studentId === student.id
-    || (task.linkedContexts || []).some((context) => context.studentId === student.id)
-  ));
-  const latestEvidenceItems = sortEvidenceByDate(studentEvidence, 'desc').slice(0, 3);
-  const hasSavedContext = Boolean(rowNote || linkedTasks.length || latestEvidenceItems.length);
   const subjectLabel = student.subjectId === 'mathematics' ? 'Mathematics' : student.subjectId;
 
   return (
@@ -1002,64 +1068,48 @@ function StudentGlobalInsightPanel({ student, evidence, rowNote, learningObserva
                 Latest evidence: {latestEvidenceDate ? formatDemoDate(latestEvidenceDate) : 'None'}
               </Typography>
             </Box>
-            <Typography sx={{ color: 'text.secondary', fontSize: 12.5, fontWeight: 760 }}>
-              {studentEvidence.length} evidence item{studentEvidence.length === 1 ? '' : 's'} · {assessments.length} assessment{assessments.length === 1 ? '' : 's'} · {observations.length} observation{observations.length === 1 ? '' : 's'}
-            </Typography>
           </Stack>
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', lg: 'minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(190px, 0.7fr) minmax(220px, 0.95fr)' }, gap: 1 }}>
-            <EvidenceTimelineTile title="Student evidence over time" items={studentEvidence} />
-            <AssessmentResultTile assessments={assessments} />
-            <EvidenceTypeTile observations={observations.length} assessments={assessments.length} />
-            <UnitEvidenceBarsTile summaries={unitSummaries} />
-          </Box>
-
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(190px, 0.55fr) minmax(0, 1.45fr)' }, gap: 1.1 }}>
-            <Paper elevation={0} sx={{ p: 1.15, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
-              <Typography sx={{ color: darkText, fontSize: 13.6, fontWeight: 880 }}>Known anchors</Typography>
-              <Stack spacing={0.55} sx={{ mt: 0.8 }}>
-                <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
-                  Year 6 maths result · <Box component="span" sx={{ color: darkText, fontWeight: 820 }}>{previousResult?.grade || 'Not shown'}</Box>
-                </Typography>
-                <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
-                  Current class · <Box component="span" sx={{ color: darkText, fontWeight: 820 }}>{subjectLabel} {String(student.classId || '').toUpperCase()}</Box>
-                </Typography>
-                <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
-                  Quick note · <Box component="span" sx={{ color: rowNote ? darkText : 'text.secondary', fontWeight: rowNote ? 820 : 650 }}>{rowNote || 'None added'}</Box>
-                </Typography>
+          {showLearningObservationGraph ? (
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 2.15fr) minmax(220px, 0.85fr)' }, gap: 1.1, alignItems: 'stretch' }}>
+              <LearningObservationTimelineGraph observations={learningObservations} />
+              <Stack spacing={1.1}>
+                <LearningObservationHistoryPanel observations={learningObservations} />
+                <Paper elevation={0} sx={{ p: 0.95, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+                  <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 880 }}>Known anchors</Typography>
+                  <Stack spacing={0.42} sx={{ mt: 0.65 }}>
+                    <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
+                      Year 6 maths · <Box component="span" sx={{ color: darkText, fontWeight: 800 }}>{previousResult?.grade || 'Not shown'}</Box>
+                    </Typography>
+                    <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
+                      Class · <Box component="span" sx={{ color: darkText, fontWeight: 800 }}>{subjectLabel} {String(student.classId || '').toUpperCase()}</Box>
+                    </Typography>
+                    <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
+                      Quick note · <Box component="span" sx={{ color: rowNote ? darkText : 'text.secondary', fontWeight: rowNote ? 800 : 650 }}>{rowNote || 'None added'}</Box>
+                    </Typography>
+                  </Stack>
+                </Paper>
               </Stack>
-            </Paper>
-
-            <LearningObservationHistoryPanel observations={learningObservations} />
-          </Box>
-
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 1.1 }}>
-            <Paper elevation={0} sx={{ p: 1.15, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
-              <Typography sx={{ color: darkText, fontSize: 13.6, fontWeight: 880 }}>Saved evidence and linked records</Typography>
-              <Stack spacing={0.65} sx={{ mt: 0.8 }}>
-                {rowNote && (
-                  <Typography sx={{ color: 'text.secondary', fontSize: 12.7, lineHeight: 1.45 }}>
-                    Quick note · <Box component="span" sx={{ color: darkText, fontWeight: 760 }}>{rowNote}</Box>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(190px, 0.55fr) minmax(0, 1.45fr)' }, gap: 1.1 }}>
+              <Paper elevation={0} sx={{ p: 1.15, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+                <Typography sx={{ color: darkText, fontSize: 13.6, fontWeight: 880 }}>Known anchors</Typography>
+                <Stack spacing={0.55} sx={{ mt: 0.8 }}>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
+                    Year 6 maths result · <Box component="span" sx={{ color: darkText, fontWeight: 820 }}>{previousResult?.grade || 'Not shown'}</Box>
                   </Typography>
-                )}
-                {linkedTasks.map((task) => (
-                  <Typography key={task.id} sx={{ color: 'text.secondary', fontSize: 12.7, lineHeight: 1.45 }}>
-                    Linked task · <Box component="span" sx={{ color: darkText, fontWeight: 760 }}>{task.title}</Box>{task.date ? ` · ${formatDemoDate(task.date)}` : ''}
+                  <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
+                    Current class · <Box component="span" sx={{ color: darkText, fontWeight: 820 }}>{subjectLabel} {String(student.classId || '').toUpperCase()}</Box>
                   </Typography>
-                ))}
-                {latestEvidenceItems.map((item) => (
-                  <Typography key={item.id} sx={{ color: 'text.secondary', fontSize: 12.7, lineHeight: 1.45 }}>
-                    {formatDemoDate(item.date)} · <Box component="span" sx={{ color: darkText, fontWeight: 760 }}>{item.assessmentTitle || item.observationText || item.label}</Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
+                    Quick note · <Box component="span" sx={{ color: rowNote ? darkText : 'text.secondary', fontWeight: rowNote ? 820 : 650 }}>{rowNote || 'None added'}</Box>
                   </Typography>
-                ))}
-                {!hasSavedContext && (
-                  <Typography sx={{ color: 'text.secondary', fontSize: 12.7, lineHeight: 1.45 }}>
-                    No saved notes, linked tasks, or evidence records yet.
-                  </Typography>
-                )}
-              </Stack>
-            </Paper>
-          </Box>
+                </Stack>
+              </Paper>
+              <LearningObservationHistoryPanel observations={learningObservations} />
+            </Box>
+          )}
         </Stack>
       </Paper>
     </Box>
@@ -1602,6 +1652,7 @@ function EvidenceMap({
                   evidence={evidence}
                   rowNote={rowNote}
                   learningObservations={studentLearningObservations}
+                  showLearningObservationGraph={unitInsightVersion === 'v5'}
                 />
               )}
             </Box>
