@@ -1092,7 +1092,7 @@ function getUngroupedStudentsForType(students, groups, typeId) {
   return (students || []).filter((student) => !groupedStudentIds.has(student.id));
 }
 
-function StudentGlobalInsightPanel({ student, evidence, rowNote, learningObservations = [], showLearningObservationGraph = false }) {
+function StudentGlobalInsightPanel({ student, evidence, rowNote, learningObservations = [] }) {
   const studentEvidence = getEvidenceForStudent(evidence, student.id);
   const previousResult = readHistoricalResult(student);
   const latestEvidenceDate = getLatestEvidenceDate(studentEvidence);
@@ -1112,53 +1112,33 @@ function StudentGlobalInsightPanel({ student, evidence, rowNote, learningObserva
             </Box>
           </Stack>
 
-          {showLearningObservationGraph ? (
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 2.15fr) minmax(220px, 0.85fr)' }, gap: 1.1, alignItems: 'stretch' }}>
-              <LearningObservationTimelineGraph
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 2.15fr) minmax(220px, 0.85fr)' }, gap: 1.1, alignItems: 'stretch' }}>
+            <LearningObservationTimelineGraph
+              observations={learningObservations}
+              activeObservationId={activeLearningObservation?.id || ''}
+              onActiveObservationChange={setActiveLearningObservation}
+            />
+            <Stack spacing={1.1}>
+              <LearningObservationHistoryPanel
                 observations={learningObservations}
-                activeObservationId={activeLearningObservation?.id || ''}
-                onActiveObservationChange={setActiveLearningObservation}
+                activeObservation={activeLearningObservation}
               />
-              <Stack spacing={1.1}>
-                <LearningObservationHistoryPanel
-                  observations={learningObservations}
-                  activeObservation={activeLearningObservation}
-                />
-                <Paper elevation={0} sx={{ p: 0.95, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
-                  <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 880 }}>Known anchors</Typography>
-                  <Stack spacing={0.42} sx={{ mt: 0.65 }}>
-                    <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
-                      Year 6 maths · <Box component="span" sx={{ color: darkText, fontWeight: 800 }}>{previousResult?.grade || 'Not shown'}</Box>
-                    </Typography>
-                    <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
-                      Class · <Box component="span" sx={{ color: darkText, fontWeight: 800 }}>{subjectLabel} {String(student.classId || '').toUpperCase()}</Box>
-                    </Typography>
-                    <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
-                      Quick note · <Box component="span" sx={{ color: rowNote ? darkText : 'text.secondary', fontWeight: rowNote ? 800 : 650 }}>{rowNote || 'None added'}</Box>
-                    </Typography>
-                  </Stack>
-                </Paper>
-              </Stack>
-            </Box>
-          ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(190px, 0.55fr) minmax(0, 1.45fr)' }, gap: 1.1 }}>
-              <Paper elevation={0} sx={{ p: 1.15, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
-                <Typography sx={{ color: darkText, fontSize: 13.6, fontWeight: 880 }}>Known anchors</Typography>
-                <Stack spacing={0.55} sx={{ mt: 0.8 }}>
-                  <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
-                    Year 6 maths result · <Box component="span" sx={{ color: darkText, fontWeight: 820 }}>{previousResult?.grade || 'Not shown'}</Box>
+              <Paper elevation={0} sx={{ p: 0.95, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+                <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 880 }}>Known anchors</Typography>
+                <Stack spacing={0.42} sx={{ mt: 0.65 }}>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
+                    Year 6 maths · <Box component="span" sx={{ color: darkText, fontWeight: 800 }}>{previousResult?.grade || 'Not shown'}</Box>
                   </Typography>
-                  <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
-                    Current class · <Box component="span" sx={{ color: darkText, fontWeight: 820 }}>{subjectLabel} {String(student.classId || '').toUpperCase()}</Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
+                    Class · <Box component="span" sx={{ color: darkText, fontWeight: 800 }}>{subjectLabel} {String(student.classId || '').toUpperCase()}</Box>
                   </Typography>
-                  <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
-                    Quick note · <Box component="span" sx={{ color: rowNote ? darkText : 'text.secondary', fontWeight: rowNote ? 820 : 650 }}>{rowNote || 'None added'}</Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
+                    Quick note · <Box component="span" sx={{ color: rowNote ? darkText : 'text.secondary', fontWeight: rowNote ? 800 : 650 }}>{rowNote || 'None added'}</Box>
                   </Typography>
                 </Stack>
               </Paper>
-              <LearningObservationHistoryPanel observations={learningObservations} />
-            </Box>
-          )}
+            </Stack>
+          </Box>
         </Stack>
       </Paper>
     </Box>
@@ -1482,7 +1462,7 @@ function EvidenceMap({
               }}
             >
               <KeyboardArrowDownIcon sx={{ color: 'text.secondary', fontSize: 18, transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
-              <Typography sx={{ color: darkText, fontSize: isExpanded && unitInsightVersion === 'v5' ? 18 : 13, fontWeight: isExpanded && unitInsightVersion === 'v5' ? 920 : 820, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', transition: 'font-size 140ms ease, font-weight 140ms ease' }}>{student.displayName}</Typography>
+              <Typography sx={{ color: darkText, fontSize: isExpanded ? 18 : 13, fontWeight: isExpanded ? 920 : 820, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', transition: 'font-size 140ms ease, font-weight 140ms ease' }}>{student.displayName}</Typography>
             </ButtonBase>
           </Box>
           <Box
@@ -1701,7 +1681,6 @@ function EvidenceMap({
                   evidence={evidence}
                   rowNote={rowNote}
                   learningObservations={studentLearningObservations}
-                  showLearningObservationGraph={unitInsightVersion === 'v5'}
                 />
               )}
             </Box>
