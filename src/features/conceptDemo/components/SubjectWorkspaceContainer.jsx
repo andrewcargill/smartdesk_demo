@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import AutoStoriesRoundedIcon from '@mui/icons-material/AutoStoriesRounded';
+import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import RateReviewRoundedIcon from '@mui/icons-material/RateReviewRounded';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -41,6 +42,13 @@ const modes = [
     ariaLabel: 'Now mode: recording quick observations',
     tooltipTitle: 'Now',
     tooltipDetail: 'Record quick observations and notes.',
+  },
+  {
+    id: 'assessment',
+    icon: <FactCheckRoundedIcon fontSize="small" />,
+    ariaLabel: 'Assessment mode: viewing assessment information',
+    tooltipTitle: 'Assessment',
+    tooltipDetail: 'View assessment information.',
   },
 ];
 

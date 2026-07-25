@@ -487,7 +487,7 @@ function SelectedObservationFocusDetails({ focus, validLevelObservations, active
   );
 }
 
-export default function StudentUnitInsightPanelV4({ student, summary }) {
+export default function StudentUnitInsightPanelV2({ student, summary }) {
   const assessments = getSortedAssessments(summary);
   const assessmentStats = getAssessmentStats(assessments);
   const observationFocusModel = useMemo(() => normaliseObservationFocuses({
@@ -514,7 +514,7 @@ export default function StudentUnitInsightPanelV4({ student, summary }) {
   }, [activeObservationFocus?.focusId]);
   return (
     <Box sx={{ p: { xs: 1, sm: 1.25 }, bgcolor: '#fbfafc', borderTop: '1px solid rgba(23, 21, 26, 0.07)' }}>
-      <Paper elevation={0} id={`student-unit-insight-v4-${student.id}-${summary.unit.id}`} sx={{ p: { xs: 1.25, sm: 1.55 }, borderRadius: '18px', border: `6px solid ${purple}`, bgcolor: '#fff' }}>
+      <Paper elevation={0} id={`student-unit-insight-v2-${student.id}-${summary.unit.id}`} sx={{ p: { xs: 1.25, sm: 1.55 }, borderRadius: '18px', border: `6px solid ${purple}`, bgcolor: '#fff' }}>
         <Stack spacing={1.35}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }}>
             <Box>
