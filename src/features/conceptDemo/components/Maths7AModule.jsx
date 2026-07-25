@@ -2,9 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import NotesIcon from '@mui/icons-material/Notes';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import Tooltip from '@mui/material/Tooltip';
@@ -104,6 +106,8 @@ import SubjectWorkspaceContainer from './SubjectWorkspaceContainer.jsx';
 const purple = '#9c28af';
 const palePurple = '#fbf5fd';
 const darkText = '#17151a';
+const absentOrange = '#b85c00';
+const assessmentRed = '#b71c1c';
 const planningStorageKey = 'smartdesk_demo_maths7a_plan';
 const maths7ACellNotesStorageKey = 'smartdesk_demo_maths7a_cell_notes';
 const maths7AUnitNotesStorageKey = 'smartdesk_demo_maths7a_unit_notes';
@@ -916,10 +920,103 @@ function getUngroupedStudentsForType(students, groups, typeId) {
   return (students || []).filter((student) => !groupedStudentIds.has(student.id));
 }
 
+function buildAssessmentAlertByStudentId(assessmentResultsPayload) {
+  const alertByStudentId = new Map();
+
+  (assessmentResultsPayload?.assessments || []).forEach((assessment) => {
+    (assessment.studentResults || []).forEach((result) => {
+      if (!result?.studentId || (!result.absent && !result.warning)) {
+        return;
+      }
+
+      const currentAlert = alertByStudentId.get(result.studentId) || {
+        absentCount: 0,
+        warningCount: 0,
+        titles: new Set(),
+      };
+
+      if (result.absent) currentAlert.absentCount += 1;
+      if (result.warning) currentAlert.warningCount += 1;
+      currentAlert.titles.add(assessment.title);
+      alertByStudentId.set(result.studentId, currentAlert);
+    });
+  });
+
+  return alertByStudentId;
+}
+
+function getAssessmentAlertLabel(alert) {
+  if (!alert) {
+    return '';
+  }
+
+  const parts = [];
+  if (alert.warningCount) parts.push(`${alert.warningCount} not passed`);
+  if (alert.absentCount) parts.push(`${alert.absentCount} absent`);
+  const titles = [...alert.titles].filter(Boolean).slice(0, 2).join(', ');
+
+  return `Assessment alert: ${parts.join(', ')}${titles ? ` · ${titles}` : ''}`;
+}
+
+function getStudentUnitAssessmentKey(studentId, teachingUnitId) {
+  return `${studentId}:${teachingUnitId}`;
+}
+
+function buildAssessmentIssueByStudentUnitKey(assessmentResultsPayload) {
+  const issueByStudentUnitKey = new Map();
+
+  (assessmentResultsPayload?.assessments || []).forEach((assessment) => {
+    if (!assessment.teachingUnitId) {
+      return;
+    }
+
+    (assessment.studentResults || []).forEach((result) => {
+      if (!result?.studentId) {
+        return;
+      }
+
+      const isIncomplete = Boolean(result.absent) || !String(result.rawResult || '').trim();
+      const isNotPassed = Boolean(result.warning);
+
+      if (!isIncomplete && !isNotPassed) {
+        return;
+      }
+
+      const key = getStudentUnitAssessmentKey(result.studentId, assessment.teachingUnitId);
+      const currentIssue = issueByStudentUnitKey.get(key) || {
+        incompleteCount: 0,
+        notPassedCount: 0,
+        titles: new Set(),
+      };
+
+      if (isIncomplete) currentIssue.incompleteCount += 1;
+      if (isNotPassed) currentIssue.notPassedCount += 1;
+      currentIssue.titles.add(assessment.title);
+      issueByStudentUnitKey.set(key, currentIssue);
+    });
+  });
+
+  return issueByStudentUnitKey;
+}
+
+function getStudentUnitAssessmentIssueLabel(issue) {
+  if (!issue) {
+    return '';
+  }
+
+  const parts = [];
+  if (issue.incompleteCount) parts.push(`${issue.incompleteCount} incomplete`);
+  if (issue.notPassedCount) parts.push(`${issue.notPassedCount} not passed`);
+  const titles = [...issue.titles].filter(Boolean).slice(0, 2).join(', ');
+
+  return `Assessment issue: ${parts.join(', ')}${titles ? ` · ${titles}` : ''}`;
+}
+
 function EvidenceMap({
   students,
   teachingUnits,
   evidence,
+  assessmentResultsPayload,
   learningObservations = [],
   cellNotes = {},
   unitNotes = {},
@@ -966,6 +1063,14 @@ function EvidenceMap({
   const notGroupedStudents = useMemo(
     () => (groupedViewActive ? getUngroupedStudentsForType(students, workingGroups, activeGroupingSetId) : []),
     [activeGroupingSetId, groupedViewActive, students, workingGroups],
+  );
+  const assessmentAlertByStudentId = useMemo(
+    () => buildAssessmentAlertByStudentId(assessmentResultsPayload),
+    [assessmentResultsPayload],
+  );
+  const assessmentIssueByStudentUnitKey = useMemo(
+    () => buildAssessmentIssueByStudentUnitKey(assessmentResultsPayload),
+    [assessmentResultsPayload],
   );
   const studentUnitEvidenceModel = useMemo(() => {
     const summariesByStudentId = new Map();
@@ -1164,6 +1269,9 @@ function EvidenceMap({
     const isRowNoteHovered = hoveredRowNoteStudentId === student.id;
     const rowNote = rowNotes[student.id] || '';
     const isEditingRowNote = editingRowNoteStudentId === student.id;
+    const assessmentAlert = assessmentAlertByStudentId.get(student.id);
+    const assessmentAlertLabel = getAssessmentAlertLabel(assessmentAlert);
+    const assessmentAlertColor = assessmentAlert?.absentCount ? absentOrange : purple;
     const summariesByUnitId = studentUnitEvidenceModel.summariesByStudentId.get(student.id) || new Map();
     const expandedUnit = expandedUnitId ? teachingUnits.find((unit) => unit.id === expandedUnitId) : null;
     const expandedUnitSummary = expandedUnitId
@@ -1234,6 +1342,31 @@ function EvidenceMap({
             >
               <KeyboardArrowDownIcon sx={{ color: 'text.secondary', fontSize: 18, transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
               <Typography sx={{ color: darkText, fontSize: isExpanded ? 18 : 13, fontWeight: isExpanded ? 920 : 820, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', transition: 'font-size 140ms ease, font-weight 140ms ease' }}>{student.displayName}</Typography>
+              {assessmentAlert && (
+                <Tooltip title={assessmentAlertLabel} arrow>
+                  {assessmentAlert.absentCount ? (
+                    <PersonOffOutlinedIcon
+                      aria-label={assessmentAlertLabel}
+                      sx={{
+                        color: assessmentAlertColor,
+                        fontSize: isExpanded ? 18 : 15,
+                        flexShrink: 0,
+                        opacity: 0.88,
+                      }}
+                    />
+                  ) : (
+                    <ErrorOutlineIcon
+                      aria-label={assessmentAlertLabel}
+                      sx={{
+                        color: assessmentAlertColor,
+                        fontSize: isExpanded ? 18 : 15,
+                        flexShrink: 0,
+                        opacity: 0.88,
+                      }}
+                    />
+                  )}
+                </Tooltip>
+              )}
             </ButtonBase>
           </Box>
           <Box
@@ -1311,16 +1444,21 @@ function EvidenceMap({
             const noteKey = getStudentUnitCellNoteKey(student.id, unit.id);
             const savedNote = cellNotes[noteKey] || unitNotes[unit.id] || '';
             const isEditingCell = editingCellKey === noteKey;
+            const assessmentIssue = assessmentIssueByStudentUnitKey.get(getStudentUnitAssessmentKey(student.id, unit.id));
+            const assessmentIssueLabel = getStudentUnitAssessmentIssueLabel(assessmentIssue);
             const summary = summariesByUnitId.get(unit.id) || buildTeachingUnitEvidenceSummary(unit, [], null);
             const repeatedCount = getRepeatedSequenceGroups(summary).length;
             const visualDetail = summary.items.length
               ? `${summary.lessonCount} lesson${summary.lessonCount === 1 ? '' : 's'} with evidence, ${summary.assessments.length} assessment${summary.assessments.length === 1 ? '' : 's'}, ${summary.observedCapturePointCount} of ${summary.capturePoints.length} observation focuses seen${repeatedCount ? `, ${repeatedCount} repeated observation focus${repeatedCount === 1 ? '' : 'es'}` : ''}${summary.judgement?.levelId ? ', Anna judgement added' : ''}`
               : 'No evidence recorded';
-            const cellDetail = savedNote ? `Manual note ${savedNote}` : visualDetail;
+            const cellDetail = savedNote
+              ? `Manual note ${savedNote}${assessmentIssue ? `. ${assessmentIssueLabel}` : ''}`
+              : `${visualDetail}${assessmentIssue ? `. ${assessmentIssueLabel}` : ''}`;
             return (
               <Box
                 key={`${student.id}-${unit.id}`}
                 role="cell"
+                title={assessmentIssueLabel || undefined}
                 aria-label={`${student.displayName}, ${unit.title || unit.label}: ${cellDetail}`}
                 onClick={() => startEditingCell(student.id, unit.id)}
                 sx={{
@@ -1330,9 +1468,11 @@ function EvidenceMap({
                   borderLeft: '1px solid rgba(23, 21, 26, 0.055)',
                   textAlign: 'left',
                   position: 'relative',
+                  outline: assessmentIssue ? `1.5px dashed ${assessmentRed}` : 'none',
+                  outlineOffset: assessmentIssue ? '-4px' : 0,
                   bgcolor: draggedStudentId === student.id ? 'rgba(156, 40, 175, 0.08)' : isHovered ? 'rgba(156, 40, 175, 0.045)' : '#fff',
                   cursor: 'pointer',
-                  transition: 'background-color 140ms ease, border-color 140ms ease',
+                  transition: 'background-color 140ms ease, border-color 140ms ease, outline-color 140ms ease',
                   '&:hover .StudentUnitExpandButton, &:focus-within .StudentUnitExpandButton': {
                     opacity: 1,
                     transform: 'translateY(0) scale(1)',
@@ -1860,6 +2000,7 @@ function ClassPictureStudents({
   studentSummaries,
   teachingUnits,
   evidence,
+  assessmentResultsPayload,
   learningObservations,
   cellNotes,
   unitNotes,
@@ -1882,6 +2023,7 @@ function ClassPictureStudents({
         students={studentSummaries.map((summary) => summary.student)}
         teachingUnits={teachingUnits}
         evidence={evidence}
+        assessmentResultsPayload={assessmentResultsPayload}
         learningObservations={learningObservations}
         cellNotes={cellNotes}
         unitNotes={unitNotes}
@@ -2274,6 +2416,7 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       studentSummaries={studentSummaries}
       teachingUnits={evidenceMapTeachingUnits}
       evidence={visibleEvidence}
+      assessmentResultsPayload={localAssessmentResultsPayload}
       learningObservations={visibleLearningObservations}
       cellNotes={cellNotes}
       unitNotes={unitNotes}

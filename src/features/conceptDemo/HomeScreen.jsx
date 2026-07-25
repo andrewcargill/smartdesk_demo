@@ -528,7 +528,7 @@ function HomeScreenContent() {
     <DemoShell onOpenMaths7A={openMaths7A}>
       <Box
         aria-hidden={mathsWorkspaceOpen}
-        {...(mathsWorkspaceOpen ? { inert: '' } : {})}
+        inert={mathsWorkspaceOpen}
         sx={{
           transform: mathsWorkspaceOpen ? { xs: 'none', md: 'translateX(-36px)' } : 'translateX(0)',
           opacity: mathsWorkspaceOpen ? 0.84 : 1,

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Box, Button, ButtonBase, Paper, Stack, Tab, Tabs, Typography } from '@mui/material';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -16,7 +16,12 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import WorkspacesIcon from '@mui/icons-material/Workspaces';
 import { maths7AEvidence } from '../../data/Maths7AEvidence.js';
 import { maths7AStudents } from '../../data/Maths7AStudents.js';
-import { readMaths7AAssessmentResults, upsertMaths7AAssessmentResult } from '../../data/maths7AAssessmentResultStorage.js';
+import {
+  MATHS_7A_ASSESSMENT_RESULTS_STORAGE_EVENT,
+  MATHS_7A_ASSESSMENT_RESULTS_STORAGE_KEY,
+  readMaths7AAssessmentResults,
+  upsertMaths7AAssessmentResult,
+} from '../../data/maths7AAssessmentResultStorage.js';
 import { mathsTeachingUnits, normalizeMathsEvidenceItem } from '../../data/mathsCurriculum.js';
 import AssessmentResultsDialog from './AssessmentResultsDialog.jsx';
 
@@ -325,6 +330,26 @@ export default function AssessmentViewTemplateV1() {
   const isStartResultsEntry = selectedStartId === 'enter-results';
   const isResultsEntry = isStartResultsEntry || Boolean(editingStoredAssessmentId);
   const selectedTeachingUnit = mathsTeachingUnits.find((unit) => unit.id === draftTeachingUnitId);
+
+  useEffect(() => {
+    function refreshStoredAssessments() {
+      setStoredAssessments(readMaths7AAssessmentResults().assessments);
+    }
+
+    function handleStorageChange(event) {
+      if (event.key === MATHS_7A_ASSESSMENT_RESULTS_STORAGE_KEY) {
+        refreshStoredAssessments();
+      }
+    }
+
+    window.addEventListener(MATHS_7A_ASSESSMENT_RESULTS_STORAGE_EVENT, refreshStoredAssessments);
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener(MATHS_7A_ASSESSMENT_RESULTS_STORAGE_EVENT, refreshStoredAssessments);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   function closeReveal() {
     setActiveRoute('continue');
