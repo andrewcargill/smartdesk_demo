@@ -24,9 +24,6 @@ export default function AssessmentView() {
           <Typography component="h1" sx={{ color: darkText, fontSize: { xs: 20, sm: 23 }, lineHeight: 1.15, fontWeight: 880 }}>
             Assessment
           </Typography>
-          <Typography sx={{ mt: 0.35, color: 'text.secondary', fontSize: 13.2, lineHeight: 1.45, maxWidth: 680 }}>
-            A calm space for building and reviewing Mathematics 7A assessment information.
-          </Typography>
         </Box>
         <ButtonGroup
           variant="outlined"
