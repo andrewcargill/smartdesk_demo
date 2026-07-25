@@ -57,6 +57,13 @@ import {
   readMaths7ALocalLearningObservations,
   resetMaths7ALocalLearningObservations,
 } from '../data/maths7ALearningObservationStorage.js';
+import {
+  getMaths7AAssessmentResultsAsEvidence,
+  MATHS_7A_ASSESSMENT_RESULTS_STORAGE_EVENT,
+  MATHS_7A_ASSESSMENT_RESULTS_STORAGE_KEY,
+  readMaths7AAssessmentResults,
+  resetMaths7AAssessmentResults,
+} from '../data/maths7AAssessmentResultStorage.js';
 import { maths7APlanningBlocks, maths7APlanningPeriods } from '../data/maths7APlanning.js';
 import { maths7AStudents } from '../data/Maths7AStudents.js';
 import { classGroupDefinitions } from '../data/classGroupDefinitions.js';
@@ -1900,6 +1907,7 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
   const [nowCaptureVersion, setNowCaptureVersion] = useState('original');
   const [selectedStudentId, setSelectedStudentId] = useState(defaultNowStudentId);
   const [localEvidencePayload, setLocalEvidencePayload] = useState(() => readMaths7ALocalEvidence());
+  const [localAssessmentResultsPayload, setLocalAssessmentResultsPayload] = useState(() => readMaths7AAssessmentResults());
   const [localLearningObservationPayload, setLocalLearningObservationPayload] = useState(() => readMaths7ALocalLearningObservations());
   const [cellNotes, setCellNotes] = useState(() => readMaths7ACellNotes());
   const [unitNotes, setUnitNotes] = useState(() => readMaths7AUnitNotes());
@@ -1946,7 +1954,14 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
   const demoLessons = useMemo(() => buildMaths7ADemoLessonSequence(), []);
   const activeLesson = demoLessons[activeLessonIndex] || demoLessons[0];
   const canAdvanceLesson = activeLessonIndex < demoLessons.length - 1;
-  const allEvidence = useMemo(() => getMergedMathsEvidence(maths7AEvidence, localEvidencePayload), [localEvidencePayload]);
+  const assessmentResultEvidence = useMemo(
+    () => getMaths7AAssessmentResultsAsEvidence(localAssessmentResultsPayload, { visibleDate: activeLesson.date }),
+    [activeLesson.date, localAssessmentResultsPayload],
+  );
+  const allEvidence = useMemo(
+    () => getMergedMathsEvidence([...maths7AEvidence, ...assessmentResultEvidence], localEvidencePayload),
+    [assessmentResultEvidence, localEvidencePayload],
+  );
   const visibleEvidence = useMemo(() => allEvidence.filter((item) => item.date <= activeLesson.date), [activeLesson.date, allEvidence]);
   const allLearningObservations = useMemo(
     () => getMergedMaths7ALearningObservations(maths7ALearningObservations, localLearningObservationPayload),
@@ -2007,6 +2022,9 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       if (event.key === MATHS_7A_LEARNING_OBSERVATIONS_STORAGE_KEY) {
         setLocalLearningObservationPayload(readMaths7ALocalLearningObservations());
       }
+      if (event.key === MATHS_7A_ASSESSMENT_RESULTS_STORAGE_KEY) {
+        setLocalAssessmentResultsPayload(readMaths7AAssessmentResults());
+      }
       if (event.key === MATHS_7A_LESSON_INDEX_STORAGE_KEY) {
         setActiveLessonIndex(readMaths7ALessonIndex());
       }
@@ -2021,8 +2039,16 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       }
     }
 
+    function handleAssessmentResultsChange() {
+      setLocalAssessmentResultsPayload(readMaths7AAssessmentResults());
+    }
+
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener(MATHS_7A_ASSESSMENT_RESULTS_STORAGE_EVENT, handleAssessmentResultsChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener(MATHS_7A_ASSESSMENT_RESULTS_STORAGE_EVENT, handleAssessmentResultsChange);
+    };
   }, []);
 
   function resetDemo() {
@@ -2030,6 +2056,7 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       window.localStorage.removeItem(planningStorageKey);
     }
     setLocalEvidencePayload(resetMaths7ALocalEvidence().payload);
+    setLocalAssessmentResultsPayload(resetMaths7AAssessmentResults());
     setLocalLearningObservationPayload(resetMaths7ALocalLearningObservations().payload);
     setCellNotes(resetMaths7ACellNotes());
     setUnitNotes(resetMaths7AUnitNotes());

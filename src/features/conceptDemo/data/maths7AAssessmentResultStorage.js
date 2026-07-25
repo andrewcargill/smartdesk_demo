@@ -1,4 +1,7 @@
+import { getTeachingUnitById } from './mathsCurriculum.js';
+
 export const MATHS_7A_ASSESSMENT_RESULTS_STORAGE_KEY = 'smartdesk_demo_maths7a_assessment_results';
+export const MATHS_7A_ASSESSMENT_RESULTS_STORAGE_EVENT = 'smartdesk-demo-maths7a-assessment-results-change';
 
 const storageVersion = 1;
 
@@ -16,6 +19,12 @@ function canUseLocalStorage() {
 function warnStorageIssue(message, error) {
   if (typeof console !== 'undefined') {
     console.warn(`[Maths 7A assessment result storage] ${message}`, error || '');
+  }
+}
+
+function notifyAssessmentResultsChanged() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(MATHS_7A_ASSESSMENT_RESULTS_STORAGE_EVENT));
   }
 }
 
@@ -139,11 +148,52 @@ export function writeMaths7AAssessmentResults(payload) {
 
   try {
     window.localStorage.setItem(MATHS_7A_ASSESSMENT_RESULTS_STORAGE_KEY, JSON.stringify(safePayload));
+    notifyAssessmentResultsChanged();
     return { payload: safePayload, persisted: true };
   } catch (error) {
     warnStorageIssue('Could not write local assessment results. Keeping the change for this session only.', error);
     return { payload: safePayload, persisted: false };
   }
+}
+
+export function resetMaths7AAssessmentResults() {
+  if (canUseLocalStorage()) {
+    try {
+      window.localStorage.removeItem(MATHS_7A_ASSESSMENT_RESULTS_STORAGE_KEY);
+      notifyAssessmentResultsChanged();
+    } catch (error) {
+      warnStorageIssue('Could not clear local assessment results.', error);
+    }
+  }
+
+  return emptyPayload();
+}
+
+export function getMaths7AAssessmentResultsAsEvidence(payload, { visibleDate } = {}) {
+  const safePayload = normaliseMaths7AAssessmentResultsPayload(payload);
+
+  return safePayload.assessments.flatMap((assessment) => {
+    const effectiveDate = visibleDate && assessment.date > visibleDate ? visibleDate : assessment.date;
+    const teachingUnit = getTeachingUnitById(assessment.teachingUnitId);
+    const evidenceTopicId = teachingUnit?.evidenceTopicIds?.[0] || '';
+
+    return assessment.studentResults
+      .filter((result) => !result.absent && Number.isFinite(Number(result.percentage)))
+      .map((result) => ({
+        id: `${assessment.id}:${result.studentId}`,
+        type: 'assessment',
+        studentId: result.studentId,
+        date: effectiveDate,
+        teachingUnitId: assessment.teachingUnitId,
+        evidenceTopicId,
+        assessmentTitle: assessment.title,
+        label: assessment.title,
+        percentage: Number(result.percentage),
+        value: Number(result.percentage),
+        valueType: 'percentage',
+        source: assessment.source || 'assessment-results-dialog',
+      }));
+  });
 }
 
 export function addMaths7AAssessmentResult(recordInput) {
