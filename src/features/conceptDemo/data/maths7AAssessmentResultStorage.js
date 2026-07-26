@@ -185,6 +185,7 @@ export function getMaths7AAssessmentResultsAsEvidence(payload, { visibleDate } =
       .filter((result) => result.absent || Number.isFinite(Number(result.percentage)))
       .map((result) => ({
         id: `${assessment.id}:${result.studentId}`,
+        assessmentResultId: assessment.id,
         type: 'assessment',
         studentId: result.studentId,
         date: effectiveDate,

@@ -92,6 +92,7 @@ import {
 import { getGroupsForStudent } from '../utils/classGroupUtils.js';
 import { GroupDialog } from './classPicture/ClassWorkingGroups.jsx';
 import AssessmentView from './maths7A/AssessmentView.jsx';
+import AssessmentResultsEntryModal from './maths7A/AssessmentResultsEntryModal.jsx';
 import QuickCapture from './maths7A/QuickCapture.jsx';
 import QuickCaptureV2 from './maths7A/QuickCaptureV2.jsx';
 import StudentUnitEvidenceCell from './maths7A/StudentUnitEvidenceCell.jsx';
@@ -1024,6 +1025,7 @@ function EvidenceMap({
   onSaveCellNote,
   onSaveUnitNote,
   onSaveRowNote,
+  onEditAssessmentResult,
   workingGroups,
   groupDefinitions,
   onCreateGroup,
@@ -1579,12 +1581,14 @@ function EvidenceMap({
                   key={`${student.id}-${expandedUnitId}-v2`}
                   student={student}
                   summary={expandedUnitSummary}
+                  onEditAssessment={onEditAssessmentResult}
                 />
               ) : expandedUnitId && expandedUnitSummary ? (
                 <StudentUnitInsightPanelV1
                   key={`${student.id}-${expandedUnitId}-v1`}
                   student={student}
                   summary={expandedUnitSummary}
+                  onEditAssessment={onEditAssessmentResult}
                 />
               ) : unitInsightVersion === 'v2' ? (
                 <StudentGlobalInsightPanelV2
@@ -2008,6 +2012,7 @@ function ClassPictureStudents({
   onSaveCellNote,
   onSaveUnitNote,
   onSaveRowNote,
+  onEditAssessmentResult,
   workingGroups,
   groupDefinitions,
   onCreateGroup,
@@ -2031,6 +2036,7 @@ function ClassPictureStudents({
         onSaveCellNote={onSaveCellNote}
         onSaveUnitNote={onSaveUnitNote}
         onSaveRowNote={onSaveRowNote}
+        onEditAssessmentResult={onEditAssessmentResult}
         workingGroups={workingGroups}
         groupDefinitions={groupDefinitions}
         onCreateGroup={onCreateGroup}
@@ -2051,6 +2057,10 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
   const [localEvidencePayload, setLocalEvidencePayload] = useState(() => readMaths7ALocalEvidence());
   const [localAssessmentResultsPayload, setLocalAssessmentResultsPayload] = useState(() => readMaths7AAssessmentResults());
   const [localLearningObservationPayload, setLocalLearningObservationPayload] = useState(() => readMaths7ALocalLearningObservations());
+  const [assessmentResultsEditModal, setAssessmentResultsEditModal] = useState({
+    open: false,
+    storedAssessment: null,
+  });
   const [cellNotes, setCellNotes] = useState(() => readMaths7ACellNotes());
   const [unitNotes, setUnitNotes] = useState(() => readMaths7AUnitNotes());
   const [rowNotes, setRowNotes] = useState(() => readMaths7ARowNotes());
@@ -2224,6 +2234,32 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
   function restartLessonSequence() {
     setActiveLessonIndex(resetMaths7ALessonIndex());
     setLessonAnnouncement('Lesson sequence restarted.');
+  }
+
+  function openAssessmentResultEdit(assessmentEvidence) {
+    const assessmentResultId = assessmentEvidence?.assessmentResultId
+      || (typeof assessmentEvidence?.id === 'string' ? assessmentEvidence.id.split(':')[0] : '');
+    const storedAssessment = localAssessmentResultsPayload.assessments.find((assessment) => assessment.id === assessmentResultId);
+
+    if (!storedAssessment) {
+      return;
+    }
+
+    setAssessmentResultsEditModal({
+      open: true,
+      storedAssessment,
+    });
+  }
+
+  function closeAssessmentResultEdit() {
+    setAssessmentResultsEditModal((previous) => ({
+      ...previous,
+      open: false,
+    }));
+  }
+
+  function handleAssessmentResultEditSaved(saveResult) {
+    setLocalAssessmentResultsPayload(saveResult.payload);
   }
 
   function openStudentProfile(studentId) {
@@ -2424,6 +2460,7 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
       onSaveCellNote={saveCellNote}
       onSaveUnitNote={saveUnitNote}
       onSaveRowNote={saveRowNote}
+      onEditAssessmentResult={openAssessmentResultEdit}
       workingGroups={workingGroups}
       groupDefinitions={classGroupDefinitions}
       onCreateGroup={createGroup}
@@ -2485,6 +2522,14 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
         groupDefinitions={classGroupDefinitions}
         dataSections={profileDataSections}
         onClose={() => setStudentProfileOpen(false)}
+      />
+      <AssessmentResultsEntryModal
+        open={assessmentResultsEditModal.open}
+        assessment={{ id: 'enter-results', title: 'Edit test results' }}
+        storedAssessment={assessmentResultsEditModal.storedAssessment}
+        isResultsEntry
+        onClose={closeAssessmentResultEdit}
+        onSaved={handleAssessmentResultEditSaved}
       />
     </SubjectWorkspaceContainer>
   );

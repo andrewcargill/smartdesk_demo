@@ -184,9 +184,10 @@ function normaliseObservationFocuses({ configuredFocuses = [], observations = []
   };
 }
 
-function AssessmentPie({ assessment, size = 86 }) {
+function AssessmentPie({ assessment, size = 86, onEditAssessment }) {
   const passPercentage = getAssessmentPassPercentage(assessment);
   const passRadians = passPercentage !== null ? (passPercentage / 100) * Math.PI * 2 : null;
+  const canEditAssessment = typeof onEditAssessment === 'function' && Boolean(assessment.assessmentResultId);
   const passMarker = passRadians !== null
     ? (() => {
       const radial = {
@@ -231,6 +232,7 @@ function AssessmentPie({ assessment, size = 86 }) {
   return (
     <Box
       title={`${getAssessmentTitle(assessment)} · ${assessment.absent ? 'Absent' : `${assessment.percentage}%`}${passPercentage !== null ? ` · pass ${Math.round(passPercentage)}%` : ''} · ${formatDemoDate(assessment.date)}`}
+      onClick={canEditAssessment ? () => onEditAssessment(assessment) : undefined}
       sx={{
         width: size,
         height: size,
@@ -240,6 +242,7 @@ function AssessmentPie({ assessment, size = 86 }) {
         placeItems: 'center',
         position: 'relative',
         overflow: 'hidden',
+        cursor: canEditAssessment ? 'pointer' : 'default',
         color: purple,
         background: `conic-gradient(${purple} 0 ${assessment.percentage}%, rgba(156, 40, 175, 0.12) ${assessment.percentage}% 100%)`,
         boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.28)',
@@ -579,7 +582,7 @@ function SelectedObservationFocusDetails({ focus, validLevelObservations, active
   );
 }
 
-export default function StudentUnitInsightPanelV2({ student, summary }) {
+export default function StudentUnitInsightPanelV1({ student, summary, onEditAssessment }) {
   const assessments = getSortedAssessments(summary);
   const assessmentStats = getAssessmentStats(assessments);
   const observationFocusModel = useMemo(() => normaliseObservationFocuses({
@@ -629,7 +632,7 @@ export default function StudentUnitInsightPanelV2({ student, summary }) {
                 <Stack direction="row" spacing={1.4} flexWrap="wrap" useFlexGap alignItems="flex-start">
                   {assessments.length ? assessments.map((assessment) => (
                     <Stack key={assessment.id || assessment.date} spacing={0.65} sx={{ width: 126 }}>
-                      <AssessmentPie assessment={assessment} />
+                      <AssessmentPie assessment={assessment} onEditAssessment={onEditAssessment} />
                       <Stack direction="row" spacing={0.35} alignItems="center">
                         {isAssessmentNotPassed(assessment) && (
                           <ErrorOutlineIcon sx={{ color: '#d32f2f', fontSize: 14, flexShrink: 0 }} />
