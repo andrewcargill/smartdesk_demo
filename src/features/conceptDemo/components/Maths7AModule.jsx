@@ -930,33 +930,37 @@ function buildAssessmentAlertByStudentId(assessmentResultsPayload) {
         return;
       }
 
-      const currentAlert = alertByStudentId.get(result.studentId) || {
-        absentCount: 0,
-        warningCount: 0,
-        titles: new Set(),
-      };
+      const currentAlerts = alertByStudentId.get(result.studentId) || [];
+      const testName = assessment.title || 'Assessment';
+      const testDate = assessment.date ? formatDemoDate(assessment.date) : 'No date';
 
-      if (result.absent) currentAlert.absentCount += 1;
-      if (result.warning) currentAlert.warningCount += 1;
-      currentAlert.titles.add(assessment.title);
-      alertByStudentId.set(result.studentId, currentAlert);
+      if (result.warning) {
+        currentAlerts.push({
+          id: `${assessment.id}:${result.studentId}:not-passed`,
+          type: 'not-passed',
+          label: `Not passed - ${testName} - ${testDate}`,
+        });
+      }
+      if (result.absent) {
+        currentAlerts.push({
+          id: `${assessment.id}:${result.studentId}:absent`,
+          type: 'absent',
+          label: `Absent - ${testName} - ${testDate}`,
+        });
+      }
+      alertByStudentId.set(result.studentId, currentAlerts);
     });
   });
 
   return alertByStudentId;
 }
 
-function getAssessmentAlertLabel(alert) {
-  if (!alert) {
+function getAssessmentAlertsLabel(alerts) {
+  if (!alerts?.length) {
     return '';
   }
 
-  const parts = [];
-  if (alert.warningCount) parts.push(`${alert.warningCount} not passed`);
-  if (alert.absentCount) parts.push(`${alert.absentCount} absent`);
-  const titles = [...alert.titles].filter(Boolean).slice(0, 2).join(', ');
-
-  return `Assessment alert: ${parts.join(', ')}${titles ? ` · ${titles}` : ''}`;
+  return alerts.map((alert) => alert.label).join('. ');
 }
 
 function getStudentUnitAssessmentKey(studentId, teachingUnitId) {
@@ -1271,9 +1275,8 @@ function EvidenceMap({
     const isRowNoteHovered = hoveredRowNoteStudentId === student.id;
     const rowNote = rowNotes[student.id] || '';
     const isEditingRowNote = editingRowNoteStudentId === student.id;
-    const assessmentAlert = assessmentAlertByStudentId.get(student.id);
-    const assessmentAlertLabel = getAssessmentAlertLabel(assessmentAlert);
-    const assessmentAlertColor = assessmentAlert?.absentCount ? absentOrange : purple;
+    const assessmentAlerts = assessmentAlertByStudentId.get(student.id) || [];
+    const assessmentAlertsLabel = getAssessmentAlertsLabel(assessmentAlerts);
     const summariesByUnitId = studentUnitEvidenceModel.summariesByStudentId.get(student.id) || new Map();
     const expandedUnit = expandedUnitId ? teachingUnits.find((unit) => unit.id === expandedUnitId) : null;
     const expandedUnitSummary = expandedUnitId
@@ -1348,11 +1351,13 @@ function EvidenceMap({
           </Box>
           <Box
             role="cell"
-            aria-label={assessmentAlertLabel || `${student.displayName} assessment status`}
+            aria-label={assessmentAlertsLabel || `${student.displayName} assessment status`}
             sx={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'flex-start',
+              gap: 0.35,
+              flexWrap: 'wrap',
               p: 0.45,
               minWidth: 0,
               borderTop: isHovered ? `1px solid rgba(156, 40, 175, 0.34)` : '1px solid rgba(23, 21, 26, 0.08)',
@@ -1361,13 +1366,13 @@ function EvidenceMap({
               transition: 'background-color 140ms ease, border-color 140ms ease',
             }}
           >
-            {assessmentAlert && (
-              <Tooltip title={assessmentAlertLabel} arrow>
-                {assessmentAlert.absentCount ? (
+            {assessmentAlerts.map((alert) => (
+              <Tooltip key={alert.id} title={alert.label} arrow>
+                {alert.type === 'absent' ? (
                   <PersonOffOutlinedIcon
-                    aria-label={assessmentAlertLabel}
+                    aria-label={alert.label}
                     sx={{
-                      color: assessmentAlertColor,
+                      color: absentOrange,
                       fontSize: isExpanded ? 18 : 15,
                       flexShrink: 0,
                       opacity: 0.88,
@@ -1375,9 +1380,9 @@ function EvidenceMap({
                   />
                 ) : (
                   <ErrorOutlineIcon
-                    aria-label={assessmentAlertLabel}
+                    aria-label={alert.label}
                     sx={{
-                      color: assessmentAlertColor,
+                      color: purple,
                       fontSize: isExpanded ? 18 : 15,
                       flexShrink: 0,
                       opacity: 0.88,
@@ -1385,7 +1390,7 @@ function EvidenceMap({
                   />
                 )}
               </Tooltip>
-            )}
+            ))}
           </Box>
           <Box
             role="cell"
