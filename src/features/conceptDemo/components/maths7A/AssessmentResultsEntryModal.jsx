@@ -8,6 +8,7 @@ export default function AssessmentResultsEntryModal({
   open,
   assessment,
   storedAssessment,
+  demoDate,
   isResultsEntry = false,
   onClose,
   onSaved,
@@ -67,7 +68,7 @@ export default function AssessmentResultsEntryModal({
     const saveResult = upsertMaths7AAssessmentResult({
       id: storedAssessment?.id || undefined,
       assessmentId: storedAssessment?.assessmentId || assessment?.id || 'enter-results',
-      date: storedAssessment?.date,
+      date: storedAssessment?.date || demoDate,
       createdAt: storedAssessment?.createdAt,
       teachingUnitId: selectedTeachingUnit?.id || '',
       teachingUnitTitle: selectedTeachingUnit?.title || '',

@@ -6,7 +6,7 @@ import AssessmentViewTemplateV2 from './AssessmentViewTemplateV2.jsx';
 const purple = '#9c28af';
 const darkText = '#17151a';
 
-export default function AssessmentView() {
+export default function AssessmentView({ demoDate }) {
   const [assessmentViewVersion, setAssessmentViewVersion] = useState('v1');
 
   return (
@@ -76,7 +76,7 @@ export default function AssessmentView() {
           minHeight: { xs: 320, sm: 420 },
         }}
       >
-        {assessmentViewVersion === 'v2' ? <AssessmentViewTemplateV2 /> : <AssessmentViewTemplateV1 />}
+        {assessmentViewVersion === 'v2' ? <AssessmentViewTemplateV2 /> : <AssessmentViewTemplateV1 demoDate={demoDate} />}
       </Paper>
     </Stack>
   );

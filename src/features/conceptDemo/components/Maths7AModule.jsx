@@ -933,19 +933,26 @@ function buildAssessmentAlertByStudentId(assessmentResultsPayload) {
       const currentAlerts = alertByStudentId.get(result.studentId) || [];
       const testName = assessment.title || 'Assessment';
       const testDate = assessment.date ? formatDemoDate(assessment.date) : 'No date';
+      const unitKey = assessment.teachingUnitId ? getStudentUnitAssessmentKey(result.studentId, assessment.teachingUnitId) : '';
 
       if (result.warning) {
         currentAlerts.push({
           id: `${assessment.id}:${result.studentId}:not-passed`,
           type: 'not-passed',
-          label: `Not passed - ${testName} - ${testDate}`,
+          unitKey,
+          studentId: result.studentId,
+          teachingUnitId: assessment.teachingUnitId || '',
+          label: `${testDate} - Not passed - ${testName}`,
         });
       }
       if (result.absent) {
         currentAlerts.push({
           id: `${assessment.id}:${result.studentId}:absent`,
           type: 'absent',
-          label: `Absent - ${testName} - ${testDate}`,
+          unitKey,
+          studentId: result.studentId,
+          teachingUnitId: assessment.teachingUnitId || '',
+          label: `${testDate} - Absent - ${testName}`,
         });
       }
       alertByStudentId.set(result.studentId, currentAlerts);
@@ -1060,6 +1067,7 @@ function EvidenceMap({
   const [unitInsightVersion, setUnitInsightVersion] = useState('v1');
   const [hoveredStudentId, setHoveredStudentId] = useState('');
   const [hoveredRowNoteStudentId, setHoveredRowNoteStudentId] = useState('');
+  const [hoveredAssessmentAlertUnitKey, setHoveredAssessmentAlertUnitKey] = useState('');
   const activeGroupingSet = groupDefinitions.find((definition) => definition.id === activeGroupingSetId) || null;
   const activeGroups = useMemo(
     () => sortGroupsForDisplay((workingGroups || []).filter((group) => group.status !== 'archived' && group.typeId === activeGroupingSetId)),
@@ -1113,6 +1121,15 @@ function EvidenceMap({
       setExpandedStudentId(studentId);
       setExpandedUnitId(unitId);
     }
+  }
+
+  function openAssessmentAlertUnit(alert) {
+    if (!alert?.studentId || !alert?.teachingUnitId) {
+      return;
+    }
+
+    setExpandedStudentId(alert.studentId);
+    setExpandedUnitId(alert.teachingUnitId);
   }
 
   function saveTeacherWorkingJudgement(judgement) {
@@ -1368,27 +1385,51 @@ function EvidenceMap({
           >
             {assessmentAlerts.map((alert) => (
               <Tooltip key={alert.id} title={alert.label} arrow>
-                {alert.type === 'absent' ? (
-                  <PersonOffOutlinedIcon
-                    aria-label={alert.label}
-                    sx={{
-                      color: absentOrange,
-                      fontSize: isExpanded ? 18 : 15,
-                      flexShrink: 0,
-                      opacity: 0.88,
-                    }}
-                  />
-                ) : (
-                  <ErrorOutlineIcon
-                    aria-label={alert.label}
-                    sx={{
-                      color: purple,
-                      fontSize: isExpanded ? 18 : 15,
-                      flexShrink: 0,
-                      opacity: 0.88,
-                    }}
-                  />
-                )}
+                <Box
+                  component="span"
+                  role={alert.teachingUnitId ? 'button' : undefined}
+                  tabIndex={alert.teachingUnitId ? 0 : undefined}
+                  onMouseEnter={() => setHoveredAssessmentAlertUnitKey(alert.unitKey || '')}
+                  onMouseLeave={() => setHoveredAssessmentAlertUnitKey('')}
+                  onFocus={() => setHoveredAssessmentAlertUnitKey(alert.unitKey || '')}
+                  onBlur={() => setHoveredAssessmentAlertUnitKey('')}
+                  onClick={() => openAssessmentAlertUnit(alert)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      openAssessmentAlertUnit(alert);
+                    }
+                  }}
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    borderRadius: '5px',
+                    cursor: alert.teachingUnitId ? 'pointer' : 'default',
+                    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                  }}
+                >
+                  {alert.type === 'absent' ? (
+                    <PersonOffOutlinedIcon
+                      aria-label={alert.label}
+                      sx={{
+                        color: absentOrange,
+                        fontSize: isExpanded ? 18 : 15,
+                        flexShrink: 0,
+                        opacity: 0.88,
+                      }}
+                    />
+                  ) : (
+                    <ErrorOutlineIcon
+                      aria-label={alert.label}
+                      sx={{
+                        color: purple,
+                        fontSize: isExpanded ? 18 : 15,
+                        flexShrink: 0,
+                        opacity: 0.88,
+                      }}
+                    />
+                  )}
+                </Box>
               </Tooltip>
             ))}
           </Box>
@@ -1467,7 +1508,9 @@ function EvidenceMap({
             const noteKey = getStudentUnitCellNoteKey(student.id, unit.id);
             const savedNote = cellNotes[noteKey] || unitNotes[unit.id] || '';
             const isEditingCell = editingCellKey === noteKey;
-            const assessmentIssue = assessmentIssueByStudentUnitKey.get(getStudentUnitAssessmentKey(student.id, unit.id));
+            const assessmentIssueKey = getStudentUnitAssessmentKey(student.id, unit.id);
+            const assessmentIssue = assessmentIssueByStudentUnitKey.get(assessmentIssueKey);
+            const isAssessmentIssueHovered = hoveredAssessmentAlertUnitKey === assessmentIssueKey;
             const assessmentIssueLabel = getStudentUnitAssessmentIssueLabel(assessmentIssue);
             const summary = summariesByUnitId.get(unit.id) || buildTeachingUnitEvidenceSummary(unit, [], null);
             const repeatedCount = getRepeatedSequenceGroups(summary).length;
@@ -1491,8 +1534,8 @@ function EvidenceMap({
                   borderLeft: '1px solid rgba(23, 21, 26, 0.055)',
                   textAlign: 'left',
                   position: 'relative',
-                  outline: assessmentIssue ? `1.5px dashed ${assessmentRed}` : 'none',
-                  outlineOffset: assessmentIssue ? '-4px' : 0,
+                  outline: isAssessmentIssueHovered ? `1.5px dashed ${assessmentRed}` : 'none',
+                  outlineOffset: isAssessmentIssueHovered ? '-4px' : 0,
                   bgcolor: draggedStudentId === student.id ? 'rgba(156, 40, 175, 0.08)' : isHovered ? 'rgba(156, 40, 175, 0.045)' : '#fff',
                   cursor: 'pointer',
                   transition: 'background-color 140ms ease, border-color 140ms ease, outline-color 140ms ease',
@@ -2496,7 +2539,7 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
   );
 
   const assessmentMode = (
-    <AssessmentView />
+    <AssessmentView demoDate={activeLesson.date} />
   );
 
   return (
@@ -2550,6 +2593,7 @@ export default function Maths7AModule({ onBackToWeek, onClose }) {
         open={assessmentResultsEditModal.open}
         assessment={{ id: 'enter-results', title: 'Edit test results' }}
         storedAssessment={assessmentResultsEditModal.storedAssessment}
+        demoDate={activeLesson.date}
         isResultsEntry
         onClose={closeAssessmentResultEdit}
         onSaved={handleAssessmentResultEditSaved}

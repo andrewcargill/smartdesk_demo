@@ -304,7 +304,7 @@ function PreviewResource({ item }) {
   );
 }
 
-export default function AssessmentViewTemplateV1() {
+export default function AssessmentViewTemplateV1({ demoDate }) {
   const recentRecords = useMemo(buildRecentAssessmentRecords, []);
   const [activeRoute, setActiveRoute] = useState('continue');
   const [selectedOngoingId, setSelectedOngoingId] = useState('');
@@ -688,6 +688,7 @@ export default function AssessmentViewTemplateV1() {
       <AssessmentResultsEntryModal
         assessment={resultsModalState.assessment}
         storedAssessment={resultsModalState.storedAssessment}
+        demoDate={demoDate}
         open={resultsModalState.open}
         isResultsEntry={resultsModalState.isResultsEntry}
         onClose={closeResultsModal}
