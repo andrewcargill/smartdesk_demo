@@ -1,6 +1,7 @@
 export { class8AProfile, class8AStudents } from '../classes/class8AStudents.js';
 export {
   englishCurriculumAreas,
+  englishObservationLevels,
   englishSkills,
   englishTeachingUnits,
   getEnglishTeachingUnitById,

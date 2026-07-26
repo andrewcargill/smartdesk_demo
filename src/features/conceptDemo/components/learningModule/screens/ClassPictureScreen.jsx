@@ -4,6 +4,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import NotesIcon from '@mui/icons-material/Notes';
 import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
 import { Box, ButtonBase, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material';
+import StudentUnitInsightPanel from '../StudentUnitInsightPanel.jsx';
 
 const purple = '#9c28af';
 const darkText = '#17151a';
@@ -77,6 +78,7 @@ function buildStudentUnitSummary(evidenceItems, studentId, teachingUnitId) {
   const assessments = getAssessmentResultsForStudent(evidenceItems, studentId, teachingUnitId);
 
   return {
+    unit: null,
     observations,
     assessments,
     items: [...observations, ...assessments],
@@ -436,6 +438,8 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
     .sort((first, second) => (first.order || 0) - (second.order || 0));
   const evidenceItems = moduleConfig?.evidence?.items || [];
   const learningObservations = moduleConfig?.evidence?.learningObservations || [];
+  const skills = moduleConfig?.curriculum?.skills || [];
+  const levels = moduleConfig?.curriculum?.observationLevels || [];
   const subjectTitle = moduleConfig?.subjectTitle || moduleConfig?.subjectId || 'Subject';
   const rowNotesStorageKey = `${moduleConfig?.id || 'learning-module'}-row-notes`;
   const cellNotesStorageKey = `${moduleConfig?.id || 'learning-module'}-cell-notes`;
@@ -460,7 +464,10 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
     students.forEach((student) => {
       const unitSummaries = new Map();
       teachingUnits.forEach((unit) => {
-        unitSummaries.set(unit.id, buildStudentUnitSummary(evidenceItems, student.id, unit.id));
+        unitSummaries.set(unit.id, {
+          ...buildStudentUnitSummary(evidenceItems, student.id, unit.id),
+          unit,
+        });
       });
       summaries.set(student.id, unitSummaries);
     });
@@ -700,6 +707,13 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
             const rowNote = rowNotes[student.id] || '';
             const isEditingRowNote = editingRowNoteStudentId === student.id;
             const unitSummaries = summariesByStudentId.get(student.id) || new Map();
+            const expandedUnit = expandedUnitId ? teachingUnits.find((unit) => unit.id === expandedUnitId) : null;
+            const expandedUnitSummary = expandedUnitId
+              ? unitSummaries.get(expandedUnitId) || {
+                ...buildStudentUnitSummary([], student.id, expandedUnitId),
+                unit: expandedUnit,
+              }
+              : null;
             const studentLearningObservations = sortByDate(
               learningObservations.filter((observation) => observation.studentId === student.id),
               'desc',
@@ -1001,13 +1015,29 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
                 {isExpanded && (
                   <Box role="row" sx={{ display: 'contents' }}>
                     <Box role="cell" sx={{ gridColumn: `1 / span ${teachingUnits.length + 3}`, minWidth: 0 }}>
-                      <StudentGlobalInsightPanel
-                        student={student}
-                        evidenceItems={evidenceItems}
-                        rowNote={rowNote}
-                        learningObservations={studentLearningObservations}
-                        subjectTitle={subjectTitle}
-                      />
+                      {expandedUnitId && expandedUnitSummary ? (
+                        <StudentUnitInsightPanel
+                          student={student}
+                          unit={expandedUnit}
+                          summary={expandedUnitSummary}
+                          configuredFocuses={(expandedUnit?.skillIds || [])
+                            .map((skillId) => skills.find((skill) => skill.id === skillId))
+                            .filter(Boolean)}
+                          levels={levels}
+                          onClose={() => {
+                            setExpandedStudentId('');
+                            setExpandedUnitId('');
+                          }}
+                        />
+                      ) : (
+                        <StudentGlobalInsightPanel
+                          student={student}
+                          evidenceItems={evidenceItems}
+                          rowNote={rowNote}
+                          learningObservations={studentLearningObservations}
+                          subjectTitle={subjectTitle}
+                        />
+                      )}
                     </Box>
                   </Box>
                 )}

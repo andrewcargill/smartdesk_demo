@@ -36,6 +36,13 @@ export const englishSkills = [
   { id: 'response-to-text', title: 'Response to text', label: 'Response to text', order: 8 },
 ];
 
+export const englishObservationLevels = [
+  { id: 'emerging', label: 'Emerging', order: 1 },
+  { id: 'developing', label: 'Developing', order: 2 },
+  { id: 'secure', label: 'Secure', order: 3 },
+  { id: 'advanced', label: 'Advanced', order: 4 },
+];
+
 export const englishTeachingUnits = [
   {
     id: 'speaking',

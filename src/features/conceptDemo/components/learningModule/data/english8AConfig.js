@@ -5,6 +5,7 @@ import {
   english8ALearningObservations,
   english8ALessonSequence,
   englishCurriculumAreas,
+  englishObservationLevels,
   englishSkills,
   englishTeachingUnits,
   getEnglish8ACurrentLesson,
@@ -30,6 +31,7 @@ export const english8AConfig = {
   curriculum: {
     areas: englishCurriculumAreas,
     skills: englishSkills,
+    observationLevels: englishObservationLevels,
     teachingUnits: englishTeachingUnits,
   },
   lessons: {
