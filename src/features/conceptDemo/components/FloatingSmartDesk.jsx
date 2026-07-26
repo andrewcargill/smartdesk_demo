@@ -1,0 +1,639 @@
+import { useEffect, useRef, useState } from 'react';
+import AdsClickIcon from '@mui/icons-material/AdsClick';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import CloseIcon from '@mui/icons-material/Close';
+import MicIcon from '@mui/icons-material/Mic';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import SendIcon from '@mui/icons-material/Send';
+import {
+  Box,
+  Button,
+  ButtonBase,
+  CircularProgress,
+  IconButton,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { smartDeskDemoResponses } from '../data/smartDeskDemoResponses.js';
+import { getContextWelcome } from '../utils/smartDeskContextUtils.js';
+
+const purple = '#9c28af';
+const darkPurple = '#842194';
+const palePurple = '#fbf5fd';
+const darkText = '#18151a';
+const border = 'rgba(24, 21, 26, 0.1)';
+const expandedWidth = 260;
+const collapsedWidth = expandedWidth;
+const homePosition = { x: 1317, y: 22 };
+
+function getDefaultPosition() {
+  return homePosition;
+}
+
+function clampPosition(position, expanded) {
+  if (typeof window === 'undefined') {
+    return position;
+  }
+
+  const width = expanded ? expandedWidth : collapsedWidth;
+  const height = expanded ? Math.min(300, window.innerHeight - 24) : 56;
+
+  return {
+    x: Math.min(Math.max(12, position.x), Math.max(12, window.innerWidth - width - 12)),
+    y: Math.min(Math.max(12, position.y), Math.max(12, window.innerHeight - height - 12)),
+  };
+}
+
+function formatContextValue(value) {
+  if (value == null || value === '') {
+    return null;
+  }
+
+  if (typeof value === 'object') {
+    return value.title || value.label || value.name || null;
+  }
+
+  return String(value);
+}
+
+function makeAssistantMessage(response, id = `assistant-${Date.now()}`) {
+  return {
+    id,
+    role: 'assistant',
+    text: response.text,
+    followUpText: response.followUpText,
+    actions: response.actions || [],
+  };
+}
+
+function matchPrompt(input, prompts) {
+  const value = input.toLowerCase();
+
+  if (value.includes('maths') || value.includes('mathematics')) {
+    return prompts.find((prompt) => prompt.id === 'prepare-maths-7a');
+  }
+
+  if (value.includes('today')) {
+    return prompts.find((prompt) => prompt.id === 'today-overview');
+  }
+
+  if (value.includes('follow-up') || value.includes('follow up') || value.includes('followups')) {
+    return prompts.find((prompt) => prompt.id === 'show-follow-ups');
+  }
+
+  if (value.includes('week')) {
+    return prompts.find((prompt) => prompt.id === 'week-overview');
+  }
+
+  return null;
+}
+
+function FloatingMessage({ message }) {
+  const user = message.role === 'user';
+
+  return (
+    <Box sx={{ display: 'flex', justifyContent: user ? 'flex-end' : 'flex-start' }}>
+      <Box
+        sx={{
+          minWidth: 0,
+          maxWidth: '92%',
+          borderRadius: user ? '15px 15px 5px 15px' : '15px 15px 15px 5px',
+          bgcolor: user ? palePurple : '#fff',
+          border: user ? '1px solid rgba(156, 40, 175, 0.13)' : `1px solid ${border}`,
+          px: 1.15,
+          py: 0.9,
+          boxShadow: user ? 'none' : '0 7px 18px rgba(24, 21, 26, 0.04)',
+          overflowWrap: 'anywhere',
+        }}
+      >
+        <Typography sx={{ color: darkText, fontSize: 12.1, lineHeight: 1.42 }}>
+          {message.text}
+        </Typography>
+        {message.followUpText && (
+          <Typography sx={{ mt: 0.55, color: 'text.secondary', fontSize: 11.8, lineHeight: 1.38 }}>
+            {message.followUpText}
+          </Typography>
+        )}
+      </Box>
+    </Box>
+  );
+}
+
+function FloatingVoiceState() {
+  return (
+    <Box
+      aria-live="polite"
+      sx={{
+        borderRadius: '14px',
+        border: '1px solid rgba(156, 40, 175, 0.16)',
+        bgcolor: palePurple,
+        px: 1,
+        py: 0.8,
+      }}
+    >
+      <Stack direction="row" spacing={0.85} alignItems="center">
+        <MicIcon sx={{ color: purple, fontSize: 16 }} />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+          {[0, 1, 2].map((index) => (
+            <Box
+              key={index}
+              sx={{
+                width: 4,
+                height: 12 + index * 3,
+                borderRadius: 999,
+                bgcolor: purple,
+                opacity: 0.35 + index * 0.18,
+                animation: 'floatingSmartDeskWave 900ms ease-in-out infinite',
+                animationDelay: `${index * 120}ms`,
+                '@keyframes floatingSmartDeskWave': {
+                  '0%, 100%': { transform: 'scaleY(0.62)' },
+                  '50%': { transform: 'scaleY(1)' },
+                },
+              }}
+            />
+          ))}
+        </Box>
+        <Typography sx={{ color: darkText, fontSize: 11.7, fontWeight: 750 }}>
+          Listening...
+        </Typography>
+      </Stack>
+    </Box>
+  );
+}
+
+export default function FloatingSmartDesk({ context }) {
+  const responseSet = smartDeskDemoResponses.home;
+  const prompts = responseSet.suggestedPrompts;
+  const [expanded, setExpanded] = useState(false);
+  const [position, setPosition] = useState(() => getDefaultPosition());
+  const [returningHome, setReturningHome] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [thinking, setThinking] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [suggestionsVisible, setSuggestionsVisible] = useState(true);
+  const dragRef = useRef(null);
+  const timersRef = useRef([]);
+  const endRef = useRef(null);
+
+  const welcomeMessage = {
+    ...responseSet.welcome,
+    text: getContextWelcome(context, responseSet.welcome.text),
+  };
+
+  function clearTimers() {
+    timersRef.current.forEach((timer) => window.clearTimeout(timer));
+    timersRef.current = [];
+  }
+
+  function resetConversation() {
+    clearTimers();
+    setMessages([welcomeMessage]);
+    setInput('');
+    setThinking(false);
+    setListening(false);
+    setSuggestionsVisible(true);
+  }
+
+  function queueTimer(callback, delay) {
+    const timer = window.setTimeout(callback, delay);
+    timersRef.current.push(timer);
+  }
+
+  function addResponseForPrompt(prompt) {
+    setMessages((current) => [...current, makeAssistantMessage(prompt.response, `assistant-${prompt.id}-${Date.now()}`)]);
+    setThinking(false);
+  }
+
+  function submitPrompt(prompt) {
+    setSuggestionsVisible(false);
+    setMessages((current) => [...current, { id: `user-${prompt.id}-${Date.now()}`, role: 'user', text: prompt.userText }]);
+    setThinking(true);
+    queueTimer(() => addResponseForPrompt(prompt), 720);
+  }
+
+  function submitText() {
+    const text = input.trim();
+
+    if (!text) {
+      return;
+    }
+
+    const matchedPrompt = matchPrompt(text, prompts);
+    setInput('');
+    setSuggestionsVisible(false);
+    setMessages((current) => [...current, { id: `user-text-${Date.now()}`, role: 'user', text }]);
+    setThinking(true);
+    queueTimer(() => {
+      if (matchedPrompt) {
+        addResponseForPrompt(matchedPrompt);
+        return;
+      }
+
+      setMessages((current) => [...current, makeAssistantMessage(responseSet.fallback, `fallback-${Date.now()}`)]);
+      setThinking(false);
+    }, 680);
+  }
+
+  function startVoiceDemo() {
+    clearTimers();
+    setSuggestionsVisible(false);
+    setListening(true);
+    setThinking(false);
+
+    queueTimer(() => {
+      const voicePrompt = prompts.find((prompt) => prompt.id === responseSet.voiceDemo.responsePromptId);
+      setListening(false);
+      setMessages((current) => [
+        ...current,
+        { id: `voice-transcript-${Date.now()}`, role: 'user', text: responseSet.voiceDemo.transcript },
+      ]);
+      setThinking(true);
+      queueTimer(() => voicePrompt && addResponseForPrompt(voicePrompt), 820);
+    }, 1600);
+  }
+
+  function startDrag(event) {
+    setReturningHome(false);
+    const point = event.touches?.[0] || event;
+    dragRef.current = {
+      startX: point.clientX,
+      startY: point.clientY,
+      originX: position.x,
+      originY: position.y,
+      moved: false,
+    };
+  }
+
+  function logPosition(label, currentPosition, homePosition = getDefaultPosition()) {
+    if (typeof console === 'undefined') {
+      return;
+    }
+
+    console.log(`[FloatingSmartDesk] ${label}`, {
+      current: {
+        x: Math.round(currentPosition.x),
+        y: Math.round(currentPosition.y),
+      },
+      home: {
+        x: Math.round(homePosition.x),
+        y: Math.round(homePosition.y),
+      },
+    });
+  }
+
+  function returnHome() {
+    const homePosition = clampPosition(getDefaultPosition(), false);
+    logPosition('return home', position, homePosition);
+    setReturningHome(true);
+    setExpanded(false);
+    resetConversation();
+    setPosition(homePosition);
+  }
+
+  useEffect(() => {
+    resetConversation();
+
+    return clearTimers;
+  }, [welcomeMessage.text]);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
+  }, [messages, thinking, listening, suggestionsVisible]);
+
+  useEffect(() => {
+    function handleMove(event) {
+      if (!dragRef.current) {
+        return;
+      }
+
+      const point = event.touches?.[0] || event;
+      const deltaX = point.clientX - dragRef.current.startX;
+      const deltaY = point.clientY - dragRef.current.startY;
+
+      if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+        dragRef.current.moved = true;
+      }
+      dragRef.current.lastDeltaX = deltaX;
+      dragRef.current.lastDeltaY = deltaY;
+
+      setPosition(clampPosition({
+        x: dragRef.current.originX + deltaX,
+        y: dragRef.current.originY + deltaY,
+      }, expanded));
+    }
+
+    function handleEnd() {
+      if (dragRef.current?.moved) {
+        const currentPosition = clampPosition({
+          x: dragRef.current.originX + (dragRef.current.lastDeltaX || 0),
+          y: dragRef.current.originY + (dragRef.current.lastDeltaY || 0),
+        }, expanded);
+        logPosition('drag end', currentPosition);
+      }
+
+      dragRef.current = null;
+    }
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, { passive: true });
+    window.addEventListener('touchend', handleEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+    };
+  }, [expanded]);
+
+  useEffect(() => {
+    function handleResize() {
+      setPosition((currentPosition) => clampPosition(currentPosition, expanded));
+    }
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [expanded]);
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        position: 'fixed',
+        left: position.x,
+        top: position.y,
+        zIndex: 1700,
+        width: expanded ? expandedWidth : collapsedWidth,
+        maxWidth: expanded ? `min(${expandedWidth}px, calc(100vw - 24px))` : collapsedWidth,
+        borderRadius: expanded ? '16px' : '14px',
+        overflow: 'hidden',
+        bgcolor: expanded ? '#fff' : purple,
+        color: expanded ? darkText : '#fff',
+        border: expanded ? `1px solid ${border}` : 0,
+        boxShadow: expanded
+          ? '0 22px 64px rgba(24, 21, 26, 0.16)'
+          : '0 16px 34px rgba(156, 40, 175, 0.2)',
+        transition: [
+          returningHome
+            ? 'left 1800ms cubic-bezier(0.22, 1, 0.36, 1), top 1800ms cubic-bezier(0.22, 1, 0.36, 1)'
+            : null,
+          'border-radius 260ms ease',
+          'background-color 260ms ease',
+          'box-shadow 260ms ease',
+          'border-color 260ms ease',
+        ].filter(Boolean).join(', '),
+      }}
+      onTransitionEnd={(event) => {
+        if (event.propertyName === 'left' || event.propertyName === 'top') {
+          setReturningHome(false);
+        }
+      }}
+    >
+      <ButtonBase
+        onMouseDown={startDrag}
+        onTouchStart={startDrag}
+        onClick={() => {
+          if (dragRef.current?.moved) {
+            return;
+          }
+
+          setExpanded(true);
+        }}
+        sx={{
+          width: '100%',
+          justifyContent: 'stretch',
+          cursor: expanded ? 'grab' : 'pointer',
+          bgcolor: expanded ? purple : 'transparent',
+          color: '#fff',
+          '&:hover': {
+            bgcolor: expanded ? darkPurple : darkPurple,
+          },
+        }}
+      >
+        <Box
+          sx={{
+            width: '100%',
+            minHeight: 46,
+            display: 'grid',
+            gridTemplateColumns: '18px minmax(0, 1fr) 24px 26px 26px',
+            alignItems: 'center',
+            columnGap: 1,
+            px: 1.3,
+            py: 0.8,
+            boxSizing: 'border-box',
+          }}
+        >
+          <AutoAwesomeIcon sx={{ fontSize: 18 }} />
+          <Typography
+            sx={{
+              minWidth: 0,
+              textAlign: 'left',
+              fontSize: 12.5,
+              fontWeight: 850,
+              lineHeight: 1,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Ask SmartDesk
+          </Typography>
+          <IconButton
+            aria-label="SmartDesk next action"
+            size="small"
+            onMouseDown={(event) => event.stopPropagation()}
+            onTouchStart={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+            sx={{
+              width: 24,
+              height: 24,
+              minWidth: 24,
+              alignSelf: 'center',
+              justifySelf: 'center',
+              color: '#fff',
+              p: 0,
+              '&:hover': {
+                bgcolor: 'rgba(255, 255, 255, 0.14)',
+              },
+            }}
+          >
+            <AdsClickIcon sx={{ fontSize: 17 }} />
+          </IconButton>
+          <IconButton
+            aria-label="Use SmartDesk microphone"
+            size="small"
+            onMouseDown={(event) => event.stopPropagation()}
+            onTouchStart={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+              setExpanded(true);
+              startVoiceDemo();
+            }}
+            sx={{
+              width: 26,
+              height: 26,
+              minWidth: 26,
+              alignSelf: 'center',
+              justifySelf: 'center',
+              color: '#fff',
+              bgcolor: 'rgba(255, 255, 255, 0.13)',
+              p: 0,
+              '&:hover': {
+                bgcolor: 'rgba(255, 255, 255, 0.2)',
+              },
+            }}
+          >
+            <MicIcon sx={{ fontSize: 18, opacity: expanded ? 0.75 : 0.9 }} />
+          </IconButton>
+          <IconButton
+            aria-label={expanded ? 'Minimize floating SmartDesk' : 'Expand floating SmartDesk'}
+            size="small"
+            onMouseDown={(event) => event.stopPropagation()}
+            onTouchStart={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (expanded) {
+                returnHome();
+                return;
+              }
+
+              setReturningHome(false);
+              setExpanded(true);
+            }}
+            sx={{
+              width: 26,
+              height: 26,
+              minWidth: 26,
+              alignSelf: 'center',
+              justifySelf: 'center',
+              color: '#fff',
+              p: 0,
+              '&:hover': {
+                bgcolor: 'rgba(255, 255, 255, 0.14)',
+              },
+            }}
+          >
+            {expanded ? <CloseIcon sx={{ fontSize: 17 }} /> : <OpenInFullIcon sx={{ fontSize: 16 }} />}
+          </IconButton>
+        </Box>
+      </ButtonBase>
+
+      <Box
+        sx={{
+          width: '100%',
+          minWidth: 0,
+          maxHeight: expanded ? 380 : 0,
+          opacity: expanded ? 1 : 0,
+          overflow: 'hidden',
+          boxSizing: 'border-box',
+          transition: 'max-height 340ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease',
+        }}
+      >
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateRows: 'minmax(0, 1fr) auto',
+            height: 334,
+            minHeight: 0,
+          }}
+        >
+          <Stack
+            spacing={0.85}
+            sx={{
+              minWidth: 0,
+              minHeight: 0,
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              px: 1.15,
+              py: 1.15,
+              bgcolor: 'rgba(251, 245, 253, 0.32)',
+            }}
+          >
+            {messages.map((message) => (
+              <FloatingMessage key={message.id} message={message} />
+            ))}
+
+            {suggestionsVisible && (
+              <Stack spacing={0.55}>
+                {prompts.slice(0, 3).map((prompt) => (
+                  <Button
+                    key={prompt.id}
+                    size="small"
+                    variant="outlined"
+                    onClick={() => submitPrompt(prompt)}
+                    sx={{
+                      justifyContent: 'flex-start',
+                      textAlign: 'left',
+                      borderRadius: '12px',
+                      px: 1,
+                      py: 0.65,
+                      color: darkText,
+                      borderColor: 'rgba(24, 21, 26, 0.11)',
+                      bgcolor: '#fff',
+                      maxWidth: '100%',
+                      whiteSpace: 'normal',
+                      fontSize: 11.4,
+                      lineHeight: 1.25,
+                      '&:hover': { bgcolor: palePurple, borderColor: 'rgba(156, 40, 175, 0.24)' },
+                    }}
+                  >
+                    {prompt.label}
+                  </Button>
+                ))}
+              </Stack>
+            )}
+
+            {listening && <FloatingVoiceState />}
+
+            {thinking && (
+              <Stack direction="row" spacing={0.75} alignItems="center" aria-live="polite" sx={{ color: 'text.secondary', px: 0.4 }}>
+                <CircularProgress size={13} sx={{ color: purple }} />
+                <Typography sx={{ fontSize: 11.5 }}>Looking...</Typography>
+              </Stack>
+            )}
+            <Box ref={endRef} />
+          </Stack>
+
+          <Box sx={{ borderTop: `1px solid ${border}`, px: 0.85, py: 0.8, bgcolor: '#fff' }}>
+            <Stack direction="row" spacing={0.6} alignItems="flex-end" sx={{ minWidth: 0 }}>
+              <TextField
+                label="Ask"
+                placeholder={`Ask about ${formatContextValue(context?.screen) || 'this'}...`}
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={(keyboardEvent) => {
+                  if (keyboardEvent.key === 'Enter' && !keyboardEvent.shiftKey) {
+                    keyboardEvent.preventDefault();
+                    submitText();
+                  }
+                }}
+                fullWidth
+                size="small"
+                sx={{
+                  minWidth: 0,
+                  '& .MuiInputBase-input': {
+                    fontSize: 12,
+                    py: 0.85,
+                  },
+                  '& .MuiInputLabel-root': {
+                    fontSize: 12,
+                  },
+                }}
+              />
+              <IconButton
+                aria-label="Send message"
+                disabled={!input.trim()}
+                onClick={submitText}
+                sx={{ color: purple, width: 34, height: 34, mb: 0.1 }}
+              >
+                <SendIcon sx={{ fontSize: 17 }} />
+              </IconButton>
+            </Stack>
+          </Box>
+        </Box>
+      </Box>
+    </Paper>
+  );
+}

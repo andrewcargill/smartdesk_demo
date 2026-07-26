@@ -4,6 +4,7 @@ import {
   Button,
   Paper,
   Stack,
+  Switch,
   Typography,
 } from '@mui/material';
 import { ConceptDemoDrawerProvider, useConceptDemoDrawers } from './ConceptDemoDrawerContext.jsx';
@@ -428,6 +429,18 @@ function HomeScreenContent() {
 
     return homeContext;
   }, [activeWorkspace]);
+  const smartDeskDataStreams = useMemo(() => ({
+    schedule: annaSchedule,
+    subjects: subjectModules,
+    nextTeachingEvent,
+    maths7A: {
+      currentPlanningTitle: maths7ACurrentPlanningTitle,
+      lesson: maths7ALesson,
+      workspaceOpen: activeWorkspace?.type === 'class'
+        && activeWorkspace.subjectId === 'mathematics'
+        && activeWorkspace.classId === '7a',
+    },
+  }), [activeWorkspace, maths7ACurrentPlanningTitle, maths7ALesson, nextTeachingEvent, subjectModules]);
   const {
     weekOpen,
     openWeek,
@@ -455,6 +468,7 @@ function HomeScreenContent() {
   const [notebookOpen, setNotebookOpen] = useState(false);
   const [mentorOpen, setMentorOpen] = useState(false);
   const [smartDeskInfoOpen, setSmartDeskInfoOpen] = useState(false);
+  const [smartDeskSurface, setSmartDeskSurface] = useState('floating');
   const mathsWorkspaceOpen = activeWorkspace?.type === 'class'
     && activeWorkspace.subjectId === 'mathematics'
     && activeWorkspace.classId === '7a';
@@ -529,8 +543,22 @@ function HomeScreenContent() {
     }
   }
 
+  function handleSmartDeskSurfaceChange(event) {
+    const nextSurface = event.target.checked ? 'floating' : 'drawer';
+    setSmartDeskSurface(nextSurface);
+
+    if (nextSurface === 'floating') {
+      closeSmartDesk();
+    }
+  }
+
   return (
-    <DemoShell onOpenMaths7A={openMaths7A}>
+    <DemoShell
+      onOpenMaths7A={openMaths7A}
+      smartDeskContext={smartDeskContext}
+      smartDeskDataStreams={smartDeskDataStreams}
+      smartDeskSurface={smartDeskSurface}
+    >
       <Box
         aria-hidden={mathsWorkspaceOpen}
         {...(mathsWorkspaceOpen ? { inert: '' } : {})}
@@ -625,6 +653,28 @@ function HomeScreenContent() {
             >
               What is SmartDesk?
             </Button>
+            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ pl: { sm: 0.5 } }}>
+              <Typography sx={{ color: smartDeskSurface === 'drawer' ? darkText : 'text.secondary', fontSize: 12.5, fontWeight: 750 }}>
+                Drawer
+              </Typography>
+              <Switch
+                size="small"
+                checked={smartDeskSurface === 'floating'}
+                onChange={handleSmartDeskSurfaceChange}
+                inputProps={{ 'aria-label': 'Toggle SmartDesk surface' }}
+                sx={{
+                  '& .MuiSwitch-switchBase.Mui-checked': {
+                    color: purple,
+                  },
+                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                    bgcolor: purple,
+                  },
+                }}
+              />
+              <Typography sx={{ color: smartDeskSurface === 'floating' ? darkText : 'text.secondary', fontSize: 12.5, fontWeight: 750 }}>
+                Floating
+              </Typography>
+            </Stack>
           </InsightPanel>
         </Box>
         </Box>
@@ -701,14 +751,16 @@ function HomeScreenContent() {
           </Paper>
         </Box>
       )}
-      <SmartDeskDrawer
-        open={smartDeskOpen}
-        onOpen={() => openSmartDesk('text')}
-        onClose={closeSmartDesk}
-        initialMode={smartDeskMode}
-        context={smartDeskContext}
-        onAction={handleSmartDeskAction}
-      />
+      {smartDeskSurface === 'drawer' && (
+        <SmartDeskDrawer
+          open={smartDeskOpen}
+          onOpen={() => openSmartDesk('text')}
+          onClose={closeSmartDesk}
+          initialMode={smartDeskMode}
+          context={smartDeskContext}
+          onAction={handleSmartDeskAction}
+        />
+      )}
     </DemoShell>
   );
 }
