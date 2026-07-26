@@ -921,42 +921,40 @@ function getUngroupedStudentsForType(students, groups, typeId) {
   return (students || []).filter((student) => !groupedStudentIds.has(student.id));
 }
 
-function buildAssessmentAlertByStudentId(assessmentResultsPayload) {
+function buildAssessmentAlertByStudentId(evidenceItems) {
   const alertByStudentId = new Map();
 
-  (assessmentResultsPayload?.assessments || []).forEach((assessment) => {
-    (assessment.studentResults || []).forEach((result) => {
-      if (!result?.studentId || (!result.absent && !result.warning)) {
-        return;
-      }
+  (evidenceItems || []).forEach((assessment) => {
+    if (assessment?.type !== 'assessment' || !assessment.studentId || (!assessment.absent && !assessment.warning)) {
+      return;
+    }
 
-      const currentAlerts = alertByStudentId.get(result.studentId) || [];
-      const testName = assessment.title || 'Assessment';
-      const testDate = assessment.date ? formatDemoDate(assessment.date) : 'No date';
-      const unitKey = assessment.teachingUnitId ? getStudentUnitAssessmentKey(result.studentId, assessment.teachingUnitId) : '';
+    const currentAlerts = alertByStudentId.get(assessment.studentId) || [];
+    const testName = assessment.assessmentTitle || assessment.label || 'Assessment';
+    const testDate = assessment.date ? formatDemoDate(assessment.date) : 'No date';
+    const unitKey = assessment.teachingUnitId ? getStudentUnitAssessmentKey(assessment.studentId, assessment.teachingUnitId) : '';
 
-      if (result.warning) {
-        currentAlerts.push({
-          id: `${assessment.id}:${result.studentId}:not-passed`,
-          type: 'not-passed',
-          unitKey,
-          studentId: result.studentId,
-          teachingUnitId: assessment.teachingUnitId || '',
-          label: `${testDate} - Not passed - ${testName}`,
-        });
-      }
-      if (result.absent) {
-        currentAlerts.push({
-          id: `${assessment.id}:${result.studentId}:absent`,
-          type: 'absent',
-          unitKey,
-          studentId: result.studentId,
-          teachingUnitId: assessment.teachingUnitId || '',
-          label: `${testDate} - Absent - ${testName}`,
-        });
-      }
-      alertByStudentId.set(result.studentId, currentAlerts);
-    });
+    if (assessment.warning) {
+      currentAlerts.push({
+        id: `${assessment.id}:not-passed`,
+        type: 'not-passed',
+        unitKey,
+        studentId: assessment.studentId,
+        teachingUnitId: assessment.teachingUnitId || '',
+        label: `${testDate} - Not passed - ${testName}`,
+      });
+    }
+    if (assessment.absent) {
+      currentAlerts.push({
+        id: `${assessment.id}:absent`,
+        type: 'absent',
+        unitKey,
+        studentId: assessment.studentId,
+        teachingUnitId: assessment.teachingUnitId || '',
+        label: `${testDate} - Absent - ${testName}`,
+      });
+    }
+    alertByStudentId.set(assessment.studentId, currentAlerts);
   });
 
   return alertByStudentId;
@@ -1079,8 +1077,8 @@ function EvidenceMap({
     [activeGroupingSetId, groupedViewActive, students, workingGroups],
   );
   const assessmentAlertByStudentId = useMemo(
-    () => buildAssessmentAlertByStudentId(assessmentResultsPayload),
-    [assessmentResultsPayload],
+    () => buildAssessmentAlertByStudentId(evidence),
+    [evidence],
   );
   const assessmentIssueByStudentUnitKey = useMemo(
     () => buildAssessmentIssueByStudentUnitKey(assessmentResultsPayload),
