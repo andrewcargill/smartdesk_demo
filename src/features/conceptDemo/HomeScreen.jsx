@@ -20,6 +20,7 @@ import { getTeachingUnitForPlanningBlock, normalizeMathsPlanningBlock } from './
 import { getSmartDeskHomeContext } from './utils/smartDeskContextUtils.js';
 import { getSubjectModules, getTeachingEvents } from './utils/annaSubjectUtils.js';
 import { getCurrentWeekContext } from './utils/weekDataUtils.js';
+import smartDeskImage from './media/smartdesk-image.png';
 
 const purple = '#9c28af';
 const palePurple = '#fbf5fd';
@@ -369,11 +370,13 @@ function ConnectorLine({ line }) {
   );
 }
 
-function InsightPanel({ subjectCount, nextTeachingEvent, onOpenWeek }) {
+function InsightPanel({ subjectCount, nextTeachingEvent, onOpenWeek, children }) {
   return (
     <Paper
       elevation={0}
       sx={{
+        position: 'relative',
+        zIndex: 5,
         mt: { xs: 5, md: 2 },
         mx: 'auto',
         maxWidth: 860,
@@ -399,6 +402,7 @@ function InsightPanel({ subjectCount, nextTeachingEvent, onOpenWeek }) {
           <Button variant="text" sx={{ color: purple }}>
             Ask SmartDesk
           </Button>
+          {children}
         </Stack>
       </Stack>
     </Paper>
@@ -450,6 +454,7 @@ function HomeScreenContent() {
   const [selectedModule, setSelectedModule] = useState(modules[0]?.id || 'mentor');
   const [notebookOpen, setNotebookOpen] = useState(false);
   const [mentorOpen, setMentorOpen] = useState(false);
+  const [smartDeskInfoOpen, setSmartDeskInfoOpen] = useState(false);
   const mathsWorkspaceOpen = activeWorkspace?.type === 'class'
     && activeWorkspace.subjectId === 'mathematics'
     && activeWorkspace.classId === '7a';
@@ -528,7 +533,7 @@ function HomeScreenContent() {
     <DemoShell onOpenMaths7A={openMaths7A}>
       <Box
         aria-hidden={mathsWorkspaceOpen}
-        inert={mathsWorkspaceOpen}
+        {...(mathsWorkspaceOpen ? { inert: '' } : {})}
         sx={{
           transform: mathsWorkspaceOpen ? { xs: 'none', md: 'translateX(-36px)' } : 'translateX(0)',
           opacity: mathsWorkspaceOpen ? 0.84 : 1,
@@ -612,7 +617,15 @@ function HomeScreenContent() {
             subjectCount={subjectModules.length}
             nextTeachingEvent={nextTeachingEvent}
             onOpenWeek={openWeek}
-          />
+          >
+            <Button
+              variant="text"
+              onClick={() => setSmartDeskInfoOpen(true)}
+              sx={{ color: purple }}
+            >
+              What is SmartDesk?
+            </Button>
+          </InsightPanel>
         </Box>
         </Box>
       </Box>
@@ -630,6 +643,64 @@ function HomeScreenContent() {
       <MyWeekModal open={weekOpen} onClose={closeWeek} onOpenClass={openMaths7A} />
       <NotebookModal open={notebookOpen} onClose={() => setNotebookOpen(false)} />
       <MentorModal open={mentorOpen} onClose={() => setMentorOpen(false)} />
+      {smartDeskInfoOpen && (
+        <Box
+          role="presentation"
+          onClick={() => setSmartDeskInfoOpen(false)}
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1600,
+            display: 'grid',
+            placeItems: 'center',
+            bgcolor: 'rgba(23, 21, 26, 0.34)',
+            px: 2,
+          }}
+        >
+          <Paper
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="smartdesk-info-title"
+            elevation={0}
+            onClick={(event) => event.stopPropagation()}
+            sx={{
+              width: 'min(1180px, 100%)',
+              maxHeight: 'calc(100vh - 48px)',
+              overflowY: 'auto',
+              borderRadius: '18px',
+              border: '1px solid rgba(23, 21, 26, 0.12)',
+              boxShadow: '0 24px 70px rgba(23, 21, 26, 0.18)',
+              p: { xs: 2, sm: 2.5 },
+              bgcolor: '#fff',
+            }}
+          >
+            <Typography id="smartdesk-info-title" variant="h2" sx={{ color: darkText, fontSize: 24, fontWeight: 750 }}>
+              What is SmartDesk?
+            </Typography>
+               <Typography sx={{ mt: 1.25, color: 'text.secondary', lineHeight: 1.7 }}>
+              Your smart diary and personal assistant. 
+            </Typography>
+            <Box
+              component="img"
+              src={smartDeskImage}
+              alt="SmartDesk concept overview"
+              sx={{
+                display: 'block',
+                width: '100%',
+                mt: 2,
+                borderRadius: '12px',
+                border: '1px solid rgba(23, 21, 26, 0.1)',
+              }}
+            />
+         
+            <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2.5 }}>
+              <Button variant="text" onClick={() => setSmartDeskInfoOpen(false)} sx={{ color: purple }}>
+                Close
+              </Button>
+            </Stack>
+          </Paper>
+        </Box>
+      )}
       <SmartDeskDrawer
         open={smartDeskOpen}
         onOpen={() => openSmartDesk('text')}
