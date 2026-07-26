@@ -5,6 +5,8 @@ import {
   Paper,
   Stack,
   Switch,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from '@mui/material';
 import { ConceptDemoDrawerProvider, useConceptDemoDrawers } from './ConceptDemoDrawerContext.jsx';
@@ -22,11 +24,20 @@ import { getTeachingUnitForPlanningBlock, normalizeMathsPlanningBlock } from './
 import { getSmartDeskHomeContext } from './utils/smartDeskContextUtils.js';
 import { getSubjectModules, getTeachingEvents } from './utils/annaSubjectUtils.js';
 import { getCurrentWeekContext } from './utils/weekDataUtils.js';
+import bg1Image from './media/bg-1.jpg';
+import bg2Image from './media/bg-2.jpg';
+import bg3Image from './media/bg-3.jpg';
 import smartDeskImage from './media/smartdesk-image.png';
 
 const purple = '#9c28af';
 const palePurple = '#fbf5fd';
 const darkText = '#17151a';
+const homeBackgrounds = {
+  none: null,
+  bg1: bg1Image,
+  bg2: bg2Image,
+  bg3: bg3Image,
+};
 const maths7APlanningStorageKey = 'smartdesk_demo_subject_planning_mathematics_7a';
 const legacyMaths7APlanningStorageKey = 'smartdesk_demo_maths7a_plan';
 
@@ -372,7 +383,7 @@ function ConnectorLine({ line }) {
   );
 }
 
-function InsightPanel({ subjectCount, nextTeachingEvent, onOpenWeek, children }) {
+function InsightPanel({ subjectCount, nextTeachingEvent, controls, onOpenWeek, children }) {
   return (
     <Paper
       elevation={0}
@@ -406,6 +417,7 @@ function InsightPanel({ subjectCount, nextTeachingEvent, onOpenWeek, children })
           </Button>
           {children}
         </Stack>
+        {controls}
       </Stack>
     </Paper>
   );
@@ -471,6 +483,8 @@ function HomeScreenContent() {
   const [smartDeskInfoOpen, setSmartDeskInfoOpen] = useState(false);
   const [smartDeskStoreOpen, setSmartDeskStoreOpen] = useState(false);
   const [smartDeskSurface, setSmartDeskSurface] = useState('floating');
+  const [homeBackground, setHomeBackground] = useState('none');
+  const selectedHomeBackground = homeBackgrounds[homeBackground];
   const mathsWorkspaceOpen = activeWorkspace?.type === 'class'
     && activeWorkspace.subjectId === 'mathematics'
     && activeWorkspace.classId === '7a';
@@ -584,7 +598,13 @@ function HomeScreenContent() {
             minHeight: '100vh',
             width: '100%',
             overflowX: 'hidden',
-            bgcolor: '#fff',
+            bgcolor: selectedHomeBackground ? 'rgba(255, 255, 255, 0.86)' : '#fff',
+            backgroundImage: selectedHomeBackground
+              ? `linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.68)), url(${selectedHomeBackground})`
+              : 'none',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundAttachment: 'fixed',
             color: darkText,
             px: { xs: 2, sm: 3, md: 5 },
             py: { xs: 3, md: 4 },
@@ -647,6 +667,47 @@ function HomeScreenContent() {
             subjectCount={subjectModules.length}
             nextTeachingEvent={nextTeachingEvent}
             onOpenWeek={openWeek}
+            controls={(
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
+                <Typography sx={{ color: 'text.secondary', fontSize: 12.5, fontWeight: 750 }}>
+                  Home background
+                </Typography>
+                <ToggleButtonGroup
+                  exclusive
+                  size="small"
+                  value={homeBackground}
+                  onChange={(event, nextBackground) => {
+                    if (nextBackground) {
+                      setHomeBackground(nextBackground);
+                    }
+                  }}
+                  aria-label="Choose home background image"
+                  sx={{
+                    '& .MuiToggleButton-root': {
+                      color: darkText,
+                      borderColor: 'rgba(23, 21, 26, 0.12)',
+                      px: 1.25,
+                      py: 0.45,
+                      fontSize: 12,
+                      fontWeight: 750,
+                      textTransform: 'none',
+                    },
+                    '& .Mui-selected': {
+                      color: purple,
+                      bgcolor: palePurple,
+                    },
+                    '& .Mui-selected:hover': {
+                      bgcolor: palePurple,
+                    },
+                  }}
+                >
+                  <ToggleButton value="none" aria-label="No home background image">None</ToggleButton>
+                  <ToggleButton value="bg1" aria-label="Use background image 1">BG 1</ToggleButton>
+                  <ToggleButton value="bg2" aria-label="Use background image 2">BG 2</ToggleButton>
+                  <ToggleButton value="bg3" aria-label="Use background image 3">BG 3</ToggleButton>
+                </ToggleButtonGroup>
+              </Stack>
+            )}
           >
             <Button
               variant="text"
