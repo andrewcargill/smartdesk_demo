@@ -27,6 +27,7 @@ const border = 'rgba(24, 21, 26, 0.1)';
 const expandedWidth = 260;
 const collapsedWidth = expandedWidth;
 const homePosition = { x: 1317, y: 22 };
+const purpleCrosshairCursor = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='25' viewBox='0 0 25 25'%3E%3Cpath d='M12.5 2v21M2 12.5h21' stroke='%239c28af' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='12.5' cy='12.5' r='3.2' fill='none' stroke='%239c28af' stroke-width='1.5'/%3E%3C/svg%3E") 12 12, crosshair`;
 
 function getDefaultPosition() {
   return homePosition;
@@ -56,6 +57,46 @@ function formatContextValue(value) {
   }
 
   return String(value);
+}
+
+function getPointerPoint(event) {
+  const point = event.changedTouches?.[0] || event.touches?.[0] || event;
+
+  return {
+    x: point.clientX,
+    y: point.clientY,
+  };
+}
+
+function describeCapturedElement(element) {
+  if (!element) {
+    return {
+      text: 'I could not capture anything at that point.',
+      followUpText: 'Try the cursor again and release over a visible item.',
+    };
+  }
+
+  const smartDeskElement = element.closest?.('[data-smartdesk-id], [data-smartdesk-type], [data-smartdesk-label]') || element;
+  const tagName = smartDeskElement.tagName?.toLowerCase() || 'element';
+  const role = smartDeskElement.getAttribute?.('role');
+  const dataType = smartDeskElement.dataset?.smartdeskType;
+  const dataId = smartDeskElement.dataset?.smartdeskId;
+  const dataLabel = smartDeskElement.dataset?.smartdeskLabel;
+  const ariaLabel = smartDeskElement.getAttribute?.('aria-label');
+  const title = smartDeskElement.getAttribute?.('title');
+  const textContent = smartDeskElement.textContent?.replace(/\s+/g, ' ').trim();
+  const label = dataLabel || ariaLabel || title || textContent || smartDeskElement.id || tagName;
+  const type = dataType || role || tagName;
+  const details = [
+    dataId ? `id: ${dataId}` : null,
+    tagName ? `tag: ${tagName}` : null,
+    role ? `role: ${role}` : null,
+  ].filter(Boolean).join(' · ');
+
+  return {
+    text: `Captured: ${type} - ${label.slice(0, 90)}`,
+    followUpText: details || 'No structured identifier yet.',
+  };
 }
 
 function makeAssistantMessage(response, id = `assistant-${Date.now()}`) {
@@ -173,7 +214,9 @@ export default function FloatingSmartDesk({ context }) {
   const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);
   const [listening, setListening] = useState(false);
+  const [selectingContext, setSelectingContext] = useState(false);
   const [suggestionsVisible, setSuggestionsVisible] = useState(true);
+  const rootRef = useRef(null);
   const dragRef = useRef(null);
   const timersRef = useRef([]);
   const endRef = useRef(null);
@@ -194,6 +237,7 @@ export default function FloatingSmartDesk({ context }) {
     setInput('');
     setThinking(false);
     setListening(false);
+    setSelectingContext(false);
     setSuggestionsVisible(true);
   }
 
@@ -255,6 +299,32 @@ export default function FloatingSmartDesk({ context }) {
     }, 1600);
   }
 
+  function startContextSelection() {
+    clearTimers();
+    setExpanded(true);
+    setThinking(false);
+    setListening(false);
+    setSelectingContext(true);
+    setSuggestionsVisible(false);
+  }
+
+  function finishContextSelection(event) {
+    const point = getPointerPoint(event);
+    const capturedElement = document.elementFromPoint(point.x, point.y);
+    const capture = describeCapturedElement(capturedElement);
+
+    setSelectingContext(false);
+    setMessages((current) => [
+      ...current,
+      {
+        id: `capture-${Date.now()}`,
+        role: 'assistant',
+        text: capture.text,
+        followUpText: capture.followUpText,
+      },
+    ]);
+  }
+
   function startDrag(event) {
     setReturningHome(false);
     const point = event.touches?.[0] || event;
@@ -302,6 +372,28 @@ export default function FloatingSmartDesk({ context }) {
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
   }, [messages, thinking, listening, suggestionsVisible]);
+
+  useEffect(() => {
+    if (!selectingContext || typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const previousCursor = document.body.style.cursor;
+    document.body.style.cursor = purpleCrosshairCursor;
+
+    function handleRelease(event) {
+      finishContextSelection(event);
+    }
+
+    window.addEventListener('mouseup', handleRelease, { once: true });
+    window.addEventListener('touchend', handleRelease, { once: true });
+
+    return () => {
+      document.body.style.cursor = previousCursor;
+      window.removeEventListener('mouseup', handleRelease);
+      window.removeEventListener('touchend', handleRelease);
+    };
+  }, [selectingContext]);
 
   useEffect(() => {
     function handleMove(event) {
@@ -361,6 +453,7 @@ export default function FloatingSmartDesk({ context }) {
 
   return (
     <Paper
+      ref={rootRef}
       elevation={0}
       sx={{
         position: 'fixed',
@@ -386,6 +479,7 @@ export default function FloatingSmartDesk({ context }) {
           'box-shadow 260ms ease',
           'border-color 260ms ease',
         ].filter(Boolean).join(', '),
+        pointerEvents: selectingContext ? 'none' : 'auto',
       }}
       onTransitionEnd={(event) => {
         if (event.propertyName === 'left' || event.propertyName === 'top') {
@@ -441,10 +535,16 @@ export default function FloatingSmartDesk({ context }) {
             Ask SmartDesk
           </Typography>
           <IconButton
-            aria-label="SmartDesk next action"
+            aria-label="Select context for SmartDesk"
             size="small"
-            onMouseDown={(event) => event.stopPropagation()}
-            onTouchStart={(event) => event.stopPropagation()}
+            onMouseDown={(event) => {
+              event.stopPropagation();
+              startContextSelection();
+            }}
+            onTouchStart={(event) => {
+              event.stopPropagation();
+              startContextSelection();
+            }}
             onClick={(event) => event.stopPropagation()}
             sx={{
               width: 24,
@@ -453,6 +553,7 @@ export default function FloatingSmartDesk({ context }) {
               alignSelf: 'center',
               justifySelf: 'center',
               color: '#fff',
+              bgcolor: selectingContext ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
               p: 0,
               '&:hover': {
                 bgcolor: 'rgba(255, 255, 255, 0.14)',
@@ -586,6 +687,23 @@ export default function FloatingSmartDesk({ context }) {
             )}
 
             {listening && <FloatingVoiceState />}
+
+            {selectingContext && (
+              <Box
+                aria-live="polite"
+                sx={{
+                  borderRadius: '14px',
+                  border: '1px solid rgba(156, 40, 175, 0.16)',
+                  bgcolor: palePurple,
+                  px: 1,
+                  py: 0.8,
+                }}
+              >
+                <Typography sx={{ color: darkText, fontSize: 11.7, fontWeight: 750 }}>
+                  Release over something to capture it.
+                </Typography>
+              </Box>
+            )}
 
             {thinking && (
               <Stack direction="row" spacing={0.75} alignItems="center" aria-live="polite" sx={{ color: 'text.secondary', px: 0.4 }}>
