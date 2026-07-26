@@ -83,3 +83,22 @@ export function upsertLearningModuleAssessmentResult(moduleId, assessmentInput) 
     record,
   };
 }
+
+export function normalizeLearningModuleAssessmentAsEvidence(record) {
+  return {
+    ...record,
+    type: 'assessment',
+    max: record.maxScore ?? record.max ?? null,
+    pass: record.passScore ?? record.pass ?? null,
+    results: (record.results || record.studentResults || []).map((result) => ({
+      studentId: result.studentId,
+      score: result.score ?? result.actualValue ?? null,
+      rawResult: result.rawResult || '',
+      actualValue: result.actualValue ?? result.score ?? null,
+      percentage: result.percentage,
+      passed: result.absent ? false : !(result.warning || result.passed === false),
+      absent: Boolean(result.absent),
+      warning: Boolean(result.warning || result.passed === false),
+    })),
+  };
+}

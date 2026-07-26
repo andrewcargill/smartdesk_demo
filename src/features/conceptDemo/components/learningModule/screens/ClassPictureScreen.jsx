@@ -1,10 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import NotesIcon from '@mui/icons-material/Notes';
 import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
 import { Box, ButtonBase, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material';
 import StudentUnitInsightPanel from '../StudentUnitInsightPanel.jsx';
+import {
+  LEARNING_MODULE_ASSESSMENT_RESULTS_STORAGE_EVENT,
+  getLearningModuleAssessmentResultsStorageKey,
+  normalizeLearningModuleAssessmentAsEvidence,
+  readLearningModuleAssessmentResults,
+} from '../utils/assessmentResultsStorage.js';
 
 const purple = '#9c28af';
 const darkText = '#17151a';
@@ -436,7 +442,12 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
   const students = moduleConfig?.classData?.students || [];
   const teachingUnits = [...(moduleConfig?.curriculum?.teachingUnits || [])]
     .sort((first, second) => (first.order || 0) - (second.order || 0));
-  const evidenceItems = moduleConfig?.evidence?.items || [];
+  const moduleId = moduleConfig?.id || 'learning-module';
+  const [storedAssessments, setStoredAssessments] = useState(() => readLearningModuleAssessmentResults(moduleId).assessments);
+  const evidenceItems = useMemo(() => [
+    ...storedAssessments.map(normalizeLearningModuleAssessmentAsEvidence),
+    ...(moduleConfig?.evidence?.items || []),
+  ], [moduleConfig, storedAssessments]);
   const learningObservations = moduleConfig?.evidence?.learningObservations || [];
   const skills = moduleConfig?.curriculum?.skills || [];
   const levels = moduleConfig?.curriculum?.observationLevels || [];
@@ -458,6 +469,32 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
   const [draftCellNote, setDraftCellNote] = useState('');
   const [editingUnitId, setEditingUnitId] = useState('');
   const [draftUnitNote, setDraftUnitNote] = useState('');
+
+  useEffect(() => {
+    function refreshStoredAssessments() {
+      setStoredAssessments(readLearningModuleAssessmentResults(moduleId).assessments);
+    }
+
+    function handleStorageChange(event) {
+      if (event.key === getLearningModuleAssessmentResultsStorageKey(moduleId)) {
+        refreshStoredAssessments();
+      }
+    }
+
+    function handleCustomStorageChange(event) {
+      if (!event.detail?.moduleId || event.detail.moduleId === moduleId) {
+        refreshStoredAssessments();
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener(LEARNING_MODULE_ASSESSMENT_RESULTS_STORAGE_EVENT, handleCustomStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener(LEARNING_MODULE_ASSESSMENT_RESULTS_STORAGE_EVENT, handleCustomStorageChange);
+    };
+  }, [moduleId]);
 
   const summariesByStudentId = useMemo(() => {
     const summaries = new Map();

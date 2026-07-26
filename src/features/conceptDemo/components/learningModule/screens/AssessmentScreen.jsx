@@ -15,6 +15,7 @@ import AssessmentResultsEntryModal from '../AssessmentResultsEntryModal.jsx';
 import {
   LEARNING_MODULE_ASSESSMENT_RESULTS_STORAGE_EVENT,
   getLearningModuleAssessmentResultsStorageKey,
+  normalizeLearningModuleAssessmentAsEvidence,
   readLearningModuleAssessmentResults,
 } from '../utils/assessmentResultsStorage.js';
 
@@ -60,14 +61,6 @@ function formatDemoDate(date) {
 
 function getAssessmentItems(evidenceItems) {
   return (evidenceItems || []).filter((item) => item?.type === 'assessment');
-}
-
-function normalizeStoredAssessmentAsEvidence(record) {
-  return {
-    ...record,
-    type: 'assessment',
-    results: record.results || record.studentResults || [],
-  };
 }
 
 function buildAssessmentCard(assessment, students, teachingUnits) {
@@ -262,7 +255,7 @@ export default function AssessmentScreen({ moduleConfig }) {
   const demoDate = moduleConfig?.lessons?.current?.date || new Date().toISOString().slice(0, 10);
   const [storedAssessments, setStoredAssessments] = useState(() => readLearningModuleAssessmentResults(moduleId).assessments);
   const assessments = useMemo(() => [
-    ...storedAssessments.map(normalizeStoredAssessmentAsEvidence),
+    ...storedAssessments.map(normalizeLearningModuleAssessmentAsEvidence),
     ...getAssessmentItems(moduleConfig?.evidence?.items),
   ], [moduleConfig, storedAssessments]);
   const continueAssessments = useMemo(
