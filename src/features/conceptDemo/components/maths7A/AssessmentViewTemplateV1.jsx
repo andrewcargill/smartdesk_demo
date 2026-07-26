@@ -20,10 +20,9 @@ import {
   MATHS_7A_ASSESSMENT_RESULTS_STORAGE_EVENT,
   MATHS_7A_ASSESSMENT_RESULTS_STORAGE_KEY,
   readMaths7AAssessmentResults,
-  upsertMaths7AAssessmentResult,
 } from '../../data/maths7AAssessmentResultStorage.js';
-import { mathsTeachingUnits, normalizeMathsEvidenceItem } from '../../data/mathsCurriculum.js';
-import AssessmentResultsDialog from './AssessmentResultsDialog.jsx';
+import { normalizeMathsEvidenceItem } from '../../data/mathsCurriculum.js';
+import AssessmentResultsEntryModal from './AssessmentResultsEntryModal.jsx';
 
 const purple = '#9c28af';
 const darkText = '#17151a';
@@ -311,25 +310,19 @@ export default function AssessmentViewTemplateV1() {
   const [selectedOngoingId, setSelectedOngoingId] = useState('');
   const [selectedStartId, setSelectedStartId] = useState('');
   const [selectedFindId, setSelectedFindId] = useState('my-cloud');
-  const [resultsDialogOpen, setResultsDialogOpen] = useState(false);
-  const [resultMode, setResultMode] = useState('number');
-  const [maxScore, setMaxScore] = useState('100');
-  const [passScore, setPassScore] = useState('50');
-  const [draftAssessmentTitle, setDraftAssessmentTitle] = useState('');
-  const [draftTeachingUnitId, setDraftTeachingUnitId] = useState('');
-  const [draftResults, setDraftResults] = useState({});
-  const [draftAbsentStudents, setDraftAbsentStudents] = useState({});
+  const [resultsModalState, setResultsModalState] = useState({
+    open: false,
+    assessment: null,
+    storedAssessment: null,
+    isResultsEntry: false,
+  });
   const [savedAssessmentNotice, setSavedAssessmentNotice] = useState(null);
   const [storedAssessments, setStoredAssessments] = useState(() => readMaths7AAssessmentResults().assessments);
-  const [editingStoredAssessmentId, setEditingStoredAssessmentId] = useState('');
   const storedContinueItems = useMemo(() => storedAssessments.map(buildStoredAssessmentContinueItem), [storedAssessments]);
   const continueAssessments = useMemo(() => [...storedContinueItems, ...ongoingAssessments], [storedContinueItems]);
   const selectedOngoing = continueAssessments.find((item) => item.id === selectedOngoingId);
   const selectedStart = startOptions.find((item) => item.id === selectedStartId);
   const resultsAssessment = ongoingAssessments[0];
-  const isStartResultsEntry = selectedStartId === 'enter-results';
-  const isResultsEntry = isStartResultsEntry || Boolean(editingStoredAssessmentId);
-  const selectedTeachingUnit = mathsTeachingUnits.find((unit) => unit.id === draftTeachingUnitId);
 
   useEffect(() => {
     function refreshStoredAssessments() {
@@ -355,7 +348,6 @@ export default function AssessmentViewTemplateV1() {
     setActiveRoute('continue');
     setSelectedOngoingId('');
     setSelectedStartId('');
-    setEditingStoredAssessmentId('');
   }
 
   function handleOngoingAssessmentClick(item) {
@@ -366,21 +358,27 @@ export default function AssessmentViewTemplateV1() {
 
     setSelectedOngoingId(item.id);
     setSelectedStartId('');
-    setEditingStoredAssessmentId('');
     if (item.id === resultsAssessment.id) {
-      setResultsDialogOpen(true);
+      setResultsModalState({
+        open: true,
+        assessment: resultsAssessment,
+        storedAssessment: null,
+        isResultsEntry: false,
+      });
     }
   }
 
   function handleStartOptionClick(option) {
     setSelectedStartId(option.id);
     setSelectedOngoingId('');
-    setEditingStoredAssessmentId('');
     if (option.id === 'enter-results') {
-      setDraftAssessmentTitle('');
-      setDraftTeachingUnitId('');
       setSavedAssessmentNotice(null);
-      setResultsDialogOpen(true);
+      setResultsModalState({
+        open: true,
+        assessment: option,
+        storedAssessment: null,
+        isResultsEntry: true,
+      });
     }
   }
 
@@ -388,87 +386,29 @@ export default function AssessmentViewTemplateV1() {
     setActiveRoute('continue');
     setSelectedOngoingId(record.id);
     setSelectedStartId('enter-results');
-    setEditingStoredAssessmentId(record.id);
     setSavedAssessmentNotice(null);
-    setDraftAssessmentTitle(record.title || '');
-    setDraftTeachingUnitId(record.teachingUnitId || '');
-    setResultMode(record.resultMode || 'number');
-    setMaxScore(record.maxScore === null || record.maxScore === undefined ? '100' : String(record.maxScore));
-    setPassScore(record.passScore === null || record.passScore === undefined ? '50' : String(record.passScore));
-    setDraftResults((record.studentResults || []).reduce((results, result) => ({
-      ...results,
-      [result.studentId]: result.rawResult || '',
-    }), {}));
-    setDraftAbsentStudents((record.studentResults || []).reduce((absentStudents, result) => ({
-      ...absentStudents,
-      [result.studentId]: Boolean(result.absent),
-    }), {}));
-    setResultsDialogOpen(true);
+    setResultsModalState({
+      open: true,
+      assessment: { id: 'enter-results', title: 'Enter results' },
+      storedAssessment: record,
+      isResultsEntry: true,
+    });
   }
 
-  function handleSaveAssessmentResults() {
-    if (!isResultsEntry) {
-      setResultsDialogOpen(false);
-      return;
-    }
+  function closeResultsModal() {
+    setResultsModalState((previous) => ({
+      ...previous,
+      open: false,
+    }));
+  }
 
-    const numericMaxScore = Number(maxScore);
-    const numericPassScore = Number(passScore);
-    const hasValidMaxScore = Number.isFinite(numericMaxScore) && numericMaxScore > 0;
-    const hasValidPassScore = Number.isFinite(numericPassScore);
-
-    const existingRecord = storedAssessments.find((record) => record.id === editingStoredAssessmentId);
-    const saveResult = upsertMaths7AAssessmentResult({
-      id: editingStoredAssessmentId || undefined,
-      assessmentId: existingRecord?.assessmentId || selectedStart?.id || 'enter-results',
-      date: existingRecord?.date,
-      createdAt: existingRecord?.createdAt,
-      teachingUnitId: selectedTeachingUnit?.id || '',
-      teachingUnitTitle: selectedTeachingUnit?.title || '',
-      title: draftAssessmentTitle,
-      resultMode,
-      maxScore: hasValidMaxScore ? numericMaxScore : null,
-      passScore: hasValidPassScore ? numericPassScore : null,
-      studentResults: maths7AStudents
-        .map((student) => {
-          const rawResult = draftResults[student.id] || '';
-          const absent = Boolean(draftAbsentStudents[student.id]);
-          const numericResult = Number(rawResult);
-          const hasNumericResult = resultMode === 'number' && rawResult !== '' && Number.isFinite(numericResult);
-          const percentage = !absent && hasNumericResult && hasValidMaxScore
-            ? Math.round((numericResult / numericMaxScore) * 100)
-            : null;
-          const warning = !absent && (
-            (hasNumericResult && hasValidPassScore && numericResult < numericPassScore)
-            || (resultMode === 'letter' && rawResult.toUpperCase() === 'F')
-          );
-
-          return {
-            studentId: student.id,
-            rawResult,
-            actualValue: hasNumericResult ? numericResult : null,
-            percentage,
-            absent,
-            warning,
-          };
-        })
-        .filter((result) => result.absent || result.rawResult),
+  function handleAssessmentResultsSaved(saveResult) {
+    setStoredAssessments(saveResult.payload.assessments);
+    setSavedAssessmentNotice({
+      title: saveResult.record.title,
+      teachingUnitTitle: saveResult.record.teachingUnitTitle,
+      persisted: saveResult.persisted,
     });
-
-    setResultsDialogOpen(false);
-    if (saveResult.record) {
-      setStoredAssessments(saveResult.payload.assessments);
-      setSavedAssessmentNotice({
-        title: saveResult.record.title,
-        teachingUnitTitle: saveResult.record.teachingUnitTitle,
-        persisted: saveResult.persisted,
-      });
-    }
-    setDraftAssessmentTitle('');
-    setDraftTeachingUnitId('');
-    setDraftResults({});
-    setDraftAbsentStudents({});
-    setEditingStoredAssessmentId('');
   }
 
   return (
@@ -745,37 +685,13 @@ export default function AssessmentViewTemplateV1() {
             )}
           </Stack>
         </Paper>
-      <AssessmentResultsDialog
-        assessment={editingStoredAssessmentId ? { title: 'Edit test results' } : selectedStartId === 'enter-results' ? selectedStart : resultsAssessment}
-        open={resultsDialogOpen}
-        resultMode={resultMode}
-        maxScore={maxScore}
-        passScore={passScore}
-        testTitle={isResultsEntry ? draftAssessmentTitle : undefined}
-        selectedTeachingUnitId={isResultsEntry ? draftTeachingUnitId : undefined}
-        teachingUnits={isResultsEntry ? mathsTeachingUnits : undefined}
-        results={draftResults}
-        absentStudents={draftAbsentStudents}
-        onClose={() => setResultsDialogOpen(false)}
-        onResultModeChange={setResultMode}
-        onMaxScoreChange={setMaxScore}
-        onPassScoreChange={setPassScore}
-        onTestTitleChange={isResultsEntry ? setDraftAssessmentTitle : undefined}
-        onTeachingUnitChange={isResultsEntry ? setDraftTeachingUnitId : undefined}
-        onSave={handleSaveAssessmentResults}
-        requireTestTitle={isResultsEntry}
-        onAbsentChange={(studentId, checked) => {
-          setDraftAbsentStudents((previous) => ({
-            ...previous,
-            [studentId]: checked,
-          }));
-        }}
-        onResultChange={(studentId, value) => {
-          setDraftResults((previous) => ({
-            ...previous,
-            [studentId]: value,
-          }));
-        }}
+      <AssessmentResultsEntryModal
+        assessment={resultsModalState.assessment}
+        storedAssessment={resultsModalState.storedAssessment}
+        open={resultsModalState.open}
+        isResultsEntry={resultsModalState.isResultsEntry}
+        onClose={closeResultsModal}
+        onSaved={handleAssessmentResultsSaved}
       />
     </Stack>
   );
