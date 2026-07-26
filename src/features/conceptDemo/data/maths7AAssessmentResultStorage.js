@@ -53,10 +53,14 @@ function normaliseStudentResult(result) {
   const percentage = result.percentage === null || result.percentage === undefined || result.percentage === ''
     ? null
     : Number(result.percentage);
+  const actualValue = result.actualValue === null || result.actualValue === undefined || result.actualValue === ''
+    ? null
+    : Number(result.actualValue);
 
   return {
     studentId: result.studentId,
     rawResult: typeof result.rawResult === 'string' ? result.rawResult : '',
+    actualValue: Number.isFinite(actualValue) ? actualValue : null,
     percentage: Number.isFinite(percentage) ? percentage : null,
     absent: Boolean(result.absent),
     warning: Boolean(result.warning),
@@ -191,6 +195,9 @@ export function getMaths7AAssessmentResultsAsEvidence(payload, { visibleDate } =
         percentage: result.absent ? 0 : Number(result.percentage),
         value: result.absent ? 0 : Number(result.percentage),
         valueType: 'percentage',
+        actualValue: result.actualValue,
+        maxScore: assessment.maxScore,
+        passScore: assessment.passScore,
         absent: Boolean(result.absent),
         warning: Boolean(result.warning),
         source: assessment.source || 'assessment-results-dialog',

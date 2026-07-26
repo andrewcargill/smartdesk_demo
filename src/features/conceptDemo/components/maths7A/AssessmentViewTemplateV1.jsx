@@ -446,6 +446,7 @@ export default function AssessmentViewTemplateV1() {
           return {
             studentId: student.id,
             rawResult,
+            actualValue: hasNumericResult ? numericResult : null,
             percentage,
             absent,
             warning,
