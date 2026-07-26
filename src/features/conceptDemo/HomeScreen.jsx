@@ -564,7 +564,7 @@ function HomeScreenContent() {
               Monday · 3 lessons · 1 follow-up
             </Typography>
             <Typography sx={{ color: 'text.secondary', fontSize: 15.5 }}>
-              V2 - Nothing pressing. {formatTeachingEvent(nextTeachingEvent)}.
+              V3 - Nothing pressing. {formatTeachingEvent(nextTeachingEvent)}.
             </Typography>
           </Stack>
 
