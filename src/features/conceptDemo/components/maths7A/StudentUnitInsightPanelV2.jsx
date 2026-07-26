@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Box, ButtonBase, Paper, Stack, Typography } from '@mui/material';
+import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
 import {
   mathsCaptureLevels,
 } from '../../data/mathsCaptureConfig.js';
 
 const purple = '#9c28af';
 const darkText = '#17151a';
+const absentOrange = '#b85c00';
 
 function formatDemoDate(date) {
   if (!date) {
@@ -167,26 +169,37 @@ function normaliseObservationFocuses({ configuredFocuses = [], observations = []
 function AssessmentPie({ assessment, size = 86 }) {
   return (
     <Box
-      title={`${getAssessmentTitle(assessment)} · ${assessment.percentage}% · ${formatDemoDate(assessment.date)}`}
+      title={`${getAssessmentTitle(assessment)} · ${assessment.absent ? 'Absent' : `${assessment.percentage}%`} · ${formatDemoDate(assessment.date)}`}
       sx={{
         width: size,
         height: size,
         borderRadius: '50%',
         flexShrink: 0,
-        background: `conic-gradient(${purple} 0 ${assessment.percentage}%, rgba(156, 40, 175, 0.12) ${assessment.percentage}% 100%)`,
-        boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.28)',
+        display: 'grid',
+        placeItems: 'center',
+        color: '#fff',
+        background: assessment.absent
+          ? absentOrange
+          : `conic-gradient(${purple} 0 ${assessment.percentage}%, rgba(156, 40, 175, 0.12) ${assessment.percentage}% 100%)`,
+        boxShadow: assessment.absent ? 'none' : 'inset 0 0 0 1px rgba(156, 40, 175, 0.28)',
         transition: 'transform 140ms ease, box-shadow 140ms ease',
         '&:hover': {
           transform: 'scale(1.04)',
-          boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.45), 0 10px 24px rgba(156, 40, 175, 0.13)',
+          boxShadow: assessment.absent
+            ? '0 10px 24px rgba(184, 92, 0, 0.16)'
+            : 'inset 0 0 0 1px rgba(156, 40, 175, 0.45), 0 10px 24px rgba(156, 40, 175, 0.13)',
         },
       }}
-    />
+    >
+      {assessment.absent && <PersonOffOutlinedIcon sx={{ fontSize: Math.round(size * 0.38) }} />}
+    </Box>
   );
 }
 
 function getAssessmentStats(assessments) {
-  if (!assessments.length) {
+  const scoredAssessments = assessments.filter((item) => !item.absent);
+
+  if (!scoredAssessments.length) {
     return {
       highest: null,
       latest: null,
@@ -195,10 +208,10 @@ function getAssessmentStats(assessments) {
     };
   }
 
-  const highest = assessments.reduce((best, item) => (item.percentage > best.percentage ? item : best), assessments[0]);
-  const latest = assessments[assessments.length - 1];
-  const average = Math.round(assessments.reduce((total, item) => total + item.percentage, 0) / assessments.length);
-  const movement = assessments.length > 1 ? latest.percentage - assessments[0].percentage : null;
+  const highest = scoredAssessments.reduce((best, item) => (item.percentage > best.percentage ? item : best), scoredAssessments[0]);
+  const latest = scoredAssessments[scoredAssessments.length - 1];
+  const average = Math.round(scoredAssessments.reduce((total, item) => total + item.percentage, 0) / scoredAssessments.length);
+  const movement = scoredAssessments.length > 1 ? latest.percentage - scoredAssessments[0].percentage : null;
 
   return {
     highest,
@@ -542,7 +555,7 @@ export default function StudentUnitInsightPanelV2({ student, summary }) {
                         {getAssessmentTitle(assessment)}
                       </Typography>
                       <Typography sx={{ color: 'text.secondary', fontSize: 11.7 }}>
-                        {assessment.percentage}% · {formatDemoDate(assessment.date)}
+                        {assessment.absent ? 'Absent' : `${assessment.percentage}%`} · {formatDemoDate(assessment.date)}
                       </Typography>
                     </Stack>
                   )) : (

@@ -178,7 +178,7 @@ export function getMaths7AAssessmentResultsAsEvidence(payload, { visibleDate } =
     const evidenceTopicId = teachingUnit?.evidenceTopicIds?.[0] || '';
 
     return assessment.studentResults
-      .filter((result) => !result.absent && Number.isFinite(Number(result.percentage)))
+      .filter((result) => result.absent || Number.isFinite(Number(result.percentage)))
       .map((result) => ({
         id: `${assessment.id}:${result.studentId}`,
         type: 'assessment',
@@ -188,9 +188,11 @@ export function getMaths7AAssessmentResultsAsEvidence(payload, { visibleDate } =
         evidenceTopicId,
         assessmentTitle: assessment.title,
         label: assessment.title,
-        percentage: Number(result.percentage),
-        value: Number(result.percentage),
+        percentage: result.absent ? 0 : Number(result.percentage),
+        value: result.absent ? 0 : Number(result.percentage),
         valueType: 'percentage',
+        absent: Boolean(result.absent),
+        warning: Boolean(result.warning),
         source: assessment.source || 'assessment-results-dialog',
       }));
   });

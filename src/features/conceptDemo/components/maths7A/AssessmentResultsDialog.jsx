@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Box, Button, ButtonGroup, Checkbox, Dialog, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import AbcIcon from '@mui/icons-material/Abc';
 import LooksOneIcon from '@mui/icons-material/LooksOne';
@@ -19,6 +20,46 @@ function sanitizeNumberInput(value) {
 
 function sanitizeTextInput(value) {
   return value.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 12);
+}
+
+function getDraftSaveSummary({ resultMode, results, absentStudents, maxScoreNumber, passScoreNumber, hasValidMaxScore, hasValidPassScore }) {
+  return maths7AStudents.reduce((summary, student) => {
+    const rawResult = results[student.id] || '';
+    const absent = Boolean(absentStudents[student.id]);
+    const numericResult = Number(rawResult);
+    const hasNumericResult = resultMode === 'number' && rawResult !== '' && Number.isFinite(numericResult);
+    const hasLetterResult = resultMode === 'letter' && rawResult !== '';
+    const included = absent || hasNumericResult || hasLetterResult;
+
+    if (!included) {
+      return {
+        ...summary,
+        notIncludedCount: summary.notIncludedCount + 1,
+      };
+    }
+
+    const warning = !absent && (
+      (hasNumericResult && hasValidPassScore && numericResult < passScoreNumber)
+      || (resultMode === 'letter' && rawResult.toUpperCase() === 'F')
+    );
+    const percentage = !absent && hasNumericResult && hasValidMaxScore
+      ? Math.round((numericResult / maxScoreNumber) * 100)
+      : null;
+
+    return {
+      includedCount: summary.includedCount + 1,
+      absentCount: summary.absentCount + (absent ? 1 : 0),
+      warningCount: summary.warningCount + (warning ? 1 : 0),
+      notIncludedCount: summary.notIncludedCount,
+      percentageCount: summary.percentageCount + (percentage !== null ? 1 : 0),
+    };
+  }, {
+    includedCount: 0,
+    absentCount: 0,
+    warningCount: 0,
+    notIncludedCount: 0,
+    percentageCount: 0,
+  });
 }
 
 export default function AssessmentResultsDialog({
@@ -43,6 +84,7 @@ export default function AssessmentResultsDialog({
   onResultChange,
   requireTestTitle = false,
 }) {
+  const [confirmingSave, setConfirmingSave] = useState(false);
   const maxScoreNumber = Number(maxScore);
   const passScoreNumber = Number(passScore);
   const hasValidMaxScore = Number.isFinite(maxScoreNumber) && maxScoreNumber > 0;
@@ -52,8 +94,24 @@ export default function AssessmentResultsDialog({
   const hasRequiredTitle = !requireTestTitle || !showsTestTitle || Boolean(testTitle?.trim());
   const hasRequiredTeachingUnit = !requireTestTitle || !showsTeachingUnitSelect || Boolean(selectedTeachingUnitId);
   const resultEntryDisabled = !hasRequiredTitle || !hasRequiredTeachingUnit;
+  const saveSummary = useMemo(() => getDraftSaveSummary({
+    resultMode,
+    results,
+    absentStudents,
+    maxScoreNumber,
+    passScoreNumber,
+    hasValidMaxScore,
+    hasValidPassScore,
+  }), [absentStudents, hasValidMaxScore, hasValidPassScore, maxScoreNumber, passScoreNumber, resultMode, results]);
+
+  useEffect(() => {
+    if (!open) {
+      setConfirmingSave(false);
+    }
+  }, [open]);
 
   function handleResultChange(studentId, value) {
+    setConfirmingSave(false);
     if (resultMode !== 'number') {
       onResultChange(studentId, sanitizeTextInput(value));
       return;
@@ -74,6 +132,11 @@ export default function AssessmentResultsDialog({
     }
 
     onResultChange(studentId, nextValue);
+  }
+
+  function handleConfirmSave() {
+    setConfirmingSave(false);
+    onSave();
   }
 
   return (
@@ -204,7 +267,10 @@ export default function AssessmentResultsDialog({
               {showsTestTitle && (
                 <TextField
                   value={testTitle}
-                  onChange={(event) => onTestTitleChange(event.target.value)}
+                  onChange={(event) => {
+                    setConfirmingSave(false);
+                    onTestTitleChange(event.target.value);
+                  }}
                   size="small"
                   placeholder="Test title"
                   inputProps={{ 'aria-label': 'Test title' }}
@@ -231,7 +297,10 @@ export default function AssessmentResultsDialog({
                 <TextField
                   select
                   value={selectedTeachingUnitId || ''}
-                  onChange={(event) => onTeachingUnitChange(event.target.value)}
+                  onChange={(event) => {
+                    setConfirmingSave(false);
+                    onTeachingUnitChange(event.target.value);
+                  }}
                   size="small"
                   inputProps={{ 'aria-label': 'Teaching unit' }}
                   helperText=" "
@@ -366,7 +435,10 @@ export default function AssessmentResultsDialog({
                   </Stack>
                   <Checkbox
                     checked={Boolean(absentStudents[student.id])}
-                    onChange={(event) => onAbsentChange(student.id, event.target.checked)}
+                    onChange={(event) => {
+                      setConfirmingSave(false);
+                      onAbsentChange(student.id, event.target.checked);
+                    }}
                     disabled={resultEntryDisabled}
                     inputProps={{ 'aria-label': `${student.displayName} absent` }}
                     sx={{
@@ -380,30 +452,90 @@ export default function AssessmentResultsDialog({
               );
             })}
           </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button
-              type="button"
-              variant="contained"
-              onClick={onSave}
-              disabled={resultEntryDisabled}
+          {confirmingSave ? (
+            <Box
               sx={{
-                borderRadius: '10px',
-                bgcolor: purple,
-                boxShadow: 'none',
-                textTransform: 'none',
-                fontSize: 12.8,
-                fontWeight: 820,
-                px: 1.8,
-                '&:hover': { bgcolor: '#7f1d90', boxShadow: 'none' },
-                '&.Mui-disabled': {
-                  bgcolor: 'rgba(23, 21, 26, 0.12)',
-                  color: 'rgba(23, 21, 26, 0.38)',
-                },
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1fr) auto' },
+                gap: 1,
+                alignItems: 'center',
+                p: 1,
+                borderRadius: '12px',
+                border: '1px solid rgba(156, 40, 175, 0.2)',
+                bgcolor: 'rgba(156, 40, 175, 0.04)',
               }}
             >
-              Save
-            </Button>
-          </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ color: darkText, fontSize: 12.9, fontWeight: 880 }}>
+                  Save this test?
+                </Typography>
+                <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 11.9, lineHeight: 1.4 }}>
+                  {saveSummary.includedCount} student{saveSummary.includedCount === 1 ? '' : 's'} included · {saveSummary.absentCount} absent · {saveSummary.warningCount} warning{saveSummary.warningCount === 1 ? '' : 's'} · {saveSummary.notIncludedCount} not included
+                </Typography>
+              </Box>
+              <Stack direction="row" spacing={0.75} justifyContent="flex-end">
+                <Button
+                  type="button"
+                  variant="outlined"
+                  onClick={() => setConfirmingSave(false)}
+                  sx={{
+                    borderRadius: '10px',
+                    borderColor: 'rgba(23, 21, 26, 0.14)',
+                    color: darkText,
+                    textTransform: 'none',
+                    fontSize: 12.8,
+                    fontWeight: 820,
+                    px: 1.35,
+                    '&:hover': { borderColor: 'rgba(156, 40, 175, 0.28)', bgcolor: '#fff' },
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  variant="contained"
+                  onClick={handleConfirmSave}
+                  sx={{
+                    borderRadius: '10px',
+                    bgcolor: purple,
+                    boxShadow: 'none',
+                    textTransform: 'none',
+                    fontSize: 12.8,
+                    fontWeight: 820,
+                    px: 1.8,
+                    '&:hover': { bgcolor: '#7f1d90', boxShadow: 'none' },
+                  }}
+                >
+                  Save
+                </Button>
+              </Stack>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                type="button"
+                variant="contained"
+                onClick={() => setConfirmingSave(true)}
+                disabled={resultEntryDisabled}
+                sx={{
+                  borderRadius: '10px',
+                  bgcolor: purple,
+                  boxShadow: 'none',
+                  textTransform: 'none',
+                  fontSize: 12.8,
+                  fontWeight: 820,
+                  px: 1.8,
+                  '&:hover': { bgcolor: '#7f1d90', boxShadow: 'none' },
+                  '&.Mui-disabled': {
+                    bgcolor: 'rgba(23, 21, 26, 0.12)',
+                    color: 'rgba(23, 21, 26, 0.38)',
+                  },
+                }}
+              >
+                Save
+              </Button>
+            </Box>
+          )}
         </Stack>
       </Box>
     </Dialog>

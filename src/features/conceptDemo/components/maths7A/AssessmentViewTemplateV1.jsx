@@ -429,27 +429,29 @@ export default function AssessmentViewTemplateV1() {
       resultMode,
       maxScore: hasValidMaxScore ? numericMaxScore : null,
       passScore: hasValidPassScore ? numericPassScore : null,
-      studentResults: maths7AStudents.map((student) => {
-        const rawResult = draftResults[student.id] || '';
-        const absent = Boolean(draftAbsentStudents[student.id]);
-        const numericResult = Number(rawResult);
-        const hasNumericResult = resultMode === 'number' && rawResult !== '' && Number.isFinite(numericResult);
-        const percentage = !absent && hasNumericResult && hasValidMaxScore
-          ? Math.round((numericResult / numericMaxScore) * 100)
-          : null;
-        const warning = !absent && (
-          (hasNumericResult && hasValidPassScore && numericResult < numericPassScore)
-          || (resultMode === 'letter' && rawResult.toUpperCase() === 'F')
-        );
+      studentResults: maths7AStudents
+        .map((student) => {
+          const rawResult = draftResults[student.id] || '';
+          const absent = Boolean(draftAbsentStudents[student.id]);
+          const numericResult = Number(rawResult);
+          const hasNumericResult = resultMode === 'number' && rawResult !== '' && Number.isFinite(numericResult);
+          const percentage = !absent && hasNumericResult && hasValidMaxScore
+            ? Math.round((numericResult / numericMaxScore) * 100)
+            : null;
+          const warning = !absent && (
+            (hasNumericResult && hasValidPassScore && numericResult < numericPassScore)
+            || (resultMode === 'letter' && rawResult.toUpperCase() === 'F')
+          );
 
-        return {
-          studentId: student.id,
-          rawResult,
-          percentage,
-          absent,
-          warning,
-        };
-      }),
+          return {
+            studentId: student.id,
+            rawResult,
+            percentage,
+            absent,
+            warning,
+          };
+        })
+        .filter((result) => result.absent || result.rawResult),
     });
 
     setResultsDialogOpen(false);
