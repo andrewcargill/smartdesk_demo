@@ -5,7 +5,6 @@ import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import NotesIcon from '@mui/icons-material/Notes';
-import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
@@ -1510,6 +1509,7 @@ function EvidenceMap({
             const assessmentIssue = assessmentIssueByStudentUnitKey.get(assessmentIssueKey);
             const isAssessmentIssueHovered = hoveredAssessmentAlertUnitKey === assessmentIssueKey;
             const assessmentIssueLabel = getStudentUnitAssessmentIssueLabel(assessmentIssue);
+            const isActiveUnitCell = isExpanded && expandedUnitId === unit.id;
             const summary = summariesByUnitId.get(unit.id) || buildTeachingUnitEvidenceSummary(unit, [], null);
             const repeatedCount = getRepeatedSequenceGroups(summary).length;
             const visualDetail = summary.items.length
@@ -1524,7 +1524,9 @@ function EvidenceMap({
                 role="cell"
                 title={assessmentIssueLabel || undefined}
                 aria-label={`${student.displayName}, ${unit.title || unit.label}: ${cellDetail}`}
-                onClick={() => startEditingCell(student.id, unit.id)}
+                onClick={() => {
+                  toggleStudent(student.id, unit.id);
+                }}
                 sx={{
                   p: 1,
                   borderTop: isHovered ? `1px solid rgba(156, 40, 175, 0.34)` : '1px solid rgba(23, 21, 26, 0.08)',
@@ -1534,10 +1536,21 @@ function EvidenceMap({
                   position: 'relative',
                   outline: isAssessmentIssueHovered ? `1.5px dashed ${assessmentRed}` : 'none',
                   outlineOffset: isAssessmentIssueHovered ? '-4px' : 0,
-                  bgcolor: draggedStudentId === student.id ? 'rgba(156, 40, 175, 0.08)' : isHovered ? 'rgba(156, 40, 175, 0.045)' : '#fff',
+                  bgcolor: draggedStudentId === student.id
+                    ? 'rgba(156, 40, 175, 0.08)'
+                    : isActiveUnitCell
+                      ? 'rgba(156, 40, 175, 0.095)'
+                      : isHovered
+                        ? 'rgba(156, 40, 175, 0.045)'
+                        : '#fff',
+                  boxShadow: isActiveUnitCell ? 'inset 0 0 0 1px rgba(156, 40, 175, 0.22)' : 'none',
                   cursor: 'pointer',
-                  transition: 'background-color 140ms ease, border-color 140ms ease, outline-color 140ms ease',
-                  '&:hover .StudentUnitExpandButton, &:focus-within .StudentUnitExpandButton': {
+                  transition: 'background-color 140ms ease, border-color 140ms ease, outline-color 140ms ease, box-shadow 140ms ease',
+                  '&:hover, &:focus-within': {
+                    bgcolor: 'rgba(156, 40, 175, 0.085)',
+                    boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.16)',
+                  },
+                  '&:hover .StudentUnitNoteButton, &:focus-within .StudentUnitNoteButton': {
                     opacity: 1,
                     transform: 'translateY(0) scale(1)',
                     pointerEvents: 'auto',
@@ -1547,13 +1560,12 @@ function EvidenceMap({
               >
                 {!isEditingCell && (
                   <IconButton
-                    className="StudentUnitExpandButton"
-                    aria-label={isExpanded && expandedUnitId === unit.id ? `Hide ${unit.title || unit.label} view for ${student.displayName}` : `Open ${unit.title || unit.label} view for ${student.displayName}`}
-                    aria-expanded={isExpanded && expandedUnitId === unit.id}
+                    className="StudentUnitNoteButton"
+                    aria-label={`Add note for ${student.displayName}, ${unit.title || unit.label}`}
                     size="small"
                     onClick={(event) => {
                       event.stopPropagation();
-                      toggleStudent(student.id, unit.id);
+                      startEditingCell(student.id, unit.id);
                       event.currentTarget.blur();
                     }}
                     sx={{
@@ -1584,7 +1596,7 @@ function EvidenceMap({
                       },
                     }}
                   >
-                    <OpenInFullIcon sx={{ fontSize: 12.5 }} />
+                    <NotesIcon sx={{ fontSize: 12.5 }} />
                   </IconButton>
                 )}
                 {isEditingCell ? (
@@ -1652,6 +1664,10 @@ function EvidenceMap({
                   summary={expandedUnitSummary}
                   assessmentResultsPayload={assessmentResultsPayload}
                   onEditAssessment={onEditAssessmentResult}
+                  onClose={() => {
+                    setExpandedStudentId(null);
+                    setExpandedUnitId('');
+                  }}
                 />
               ) : unitInsightVersion === 'v2' ? (
                 <StudentGlobalInsightPanelV2

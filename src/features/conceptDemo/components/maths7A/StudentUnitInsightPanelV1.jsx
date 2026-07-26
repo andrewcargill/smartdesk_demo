@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Box, ButtonBase, Paper, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, ButtonBase, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
 import {
@@ -629,7 +630,7 @@ function SelectedObservationFocusDetails({ focus, validLevelObservations, active
   );
 }
 
-export default function StudentUnitInsightPanelV1({ student, summary, assessmentResultsPayload, onEditAssessment }) {
+export default function StudentUnitInsightPanelV1({ student, summary, assessmentResultsPayload, onEditAssessment, onClose }) {
   const assessments = getSortedAssessments(summary);
   const assessmentStats = getAssessmentStats(assessments);
   const observationFocusModel = useMemo(() => normaliseObservationFocuses({
@@ -658,8 +659,8 @@ export default function StudentUnitInsightPanelV1({ student, summary, assessment
     <Box sx={{ p: { xs: 1, sm: 1.25 }, bgcolor: '#fbfafc', borderTop: '1px solid rgba(23, 21, 26, 0.07)' }}>
       <Paper elevation={0} id={`student-unit-insight-v2-${student.id}-${summary.unit.id}`} sx={{ p: { xs: 1.25, sm: 1.55 }, borderRadius: '18px', border: `6px solid ${purple}`, bgcolor: '#fff' }}>
         <Stack spacing={1.35}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }}>
-            <Box>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', alignItems: 'start', gap: 0.8 }}>
+            <Box sx={{ minWidth: 0 }}>
               <Typography component="h2" sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>
                 {summary.unit.label || summary.unit.title}
               </Typography>
@@ -667,7 +668,23 @@ export default function StudentUnitInsightPanelV1({ student, summary, assessment
                 &nbsp;
               </Typography>
             </Box>
-          </Stack>
+            <IconButton
+              type="button"
+              aria-label={`Close ${summary.unit.label || summary.unit.title} view`}
+              onClick={onClose}
+              size="small"
+              sx={{
+                justifySelf: 'end',
+                color: 'rgba(23, 21, 26, 0.54)',
+                bgcolor: '#fff',
+                border: '1px solid rgba(23, 21, 26, 0.1)',
+                '&:hover': { color: purple, borderColor: 'rgba(156, 40, 175, 0.28)', bgcolor: 'rgba(156, 40, 175, 0.045)' },
+                '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+              }}
+            >
+              <CloseIcon sx={{ fontSize: 17 }} />
+            </IconButton>
+          </Box>
 
           <Paper elevation={0} sx={{ p: 1.35, borderRadius: '14px', border: `1px solid ${purple}`, bgcolor: '#fff' }}>
             <Stack spacing={1.2}>
