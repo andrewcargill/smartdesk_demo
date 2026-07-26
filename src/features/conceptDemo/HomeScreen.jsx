@@ -15,6 +15,7 @@ import Maths7AModule from './components/Maths7AModule.jsx';
 import MyWeekModal from './components/MyWeekModal.jsx';
 import NotebookModal from './components/NotebookModal.jsx';
 import SmartDeskDrawer from './components/SmartDeskDrawer.jsx';
+import SmartDeskStore from './components/SmartDeskStore.jsx';
 import { annaSchedule } from './data/annaSchedule.js';
 import { maths7APlanningBlocks } from './data/maths7APlanning.js';
 import { getTeachingUnitForPlanningBlock, normalizeMathsPlanningBlock } from './data/mathsCurriculum.js';
@@ -468,6 +469,7 @@ function HomeScreenContent() {
   const [notebookOpen, setNotebookOpen] = useState(false);
   const [mentorOpen, setMentorOpen] = useState(false);
   const [smartDeskInfoOpen, setSmartDeskInfoOpen] = useState(false);
+  const [smartDeskStoreOpen, setSmartDeskStoreOpen] = useState(false);
   const [smartDeskSurface, setSmartDeskSurface] = useState('floating');
   const mathsWorkspaceOpen = activeWorkspace?.type === 'class'
     && activeWorkspace.subjectId === 'mathematics'
@@ -653,6 +655,13 @@ function HomeScreenContent() {
             >
               What is SmartDesk?
             </Button>
+            <Button
+              variant="text"
+              onClick={() => setSmartDeskStoreOpen(true)}
+              sx={{ color: purple }}
+            >
+              Open SmartDeskStore
+            </Button>
             <Stack direction="row" spacing={0.75} alignItems="center" sx={{ pl: { sm: 0.5 } }}>
               <Typography sx={{ color: smartDeskSurface === 'drawer' ? darkText : 'text.secondary', fontSize: 12.5, fontWeight: 750 }}>
                 Drawer
@@ -693,6 +702,41 @@ function HomeScreenContent() {
       <MyWeekModal open={weekOpen} onClose={closeWeek} onOpenClass={openMaths7A} />
       <NotebookModal open={notebookOpen} onClose={() => setNotebookOpen(false)} />
       <MentorModal open={mentorOpen} onClose={() => setMentorOpen(false)} />
+      {smartDeskStoreOpen && (
+        <Box
+          role="presentation"
+          onClick={() => setSmartDeskStoreOpen(false)}
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1600,
+            display: 'grid',
+            placeItems: 'center',
+            bgcolor: 'rgba(23, 21, 26, 0.34)',
+            px: 2,
+          }}
+        >
+          <Paper
+            role="dialog"
+            aria-modal="true"
+            aria-label="SmartDeskStore"
+            elevation={0}
+            onClick={(event) => event.stopPropagation()}
+            sx={{
+              width: '96vw',
+              height: '92vh',
+              overflow: 'hidden',
+              borderRadius: '18px',
+              border: '1px solid rgba(23, 21, 26, 0.12)',
+              boxShadow: '0 24px 70px rgba(23, 21, 26, 0.18)',
+              p: 0,
+              bgcolor: '#fff',
+            }}
+          >
+            <SmartDeskStore />
+          </Paper>
+        </Box>
+      )}
       {smartDeskInfoOpen && (
         <Box
           role="presentation"
