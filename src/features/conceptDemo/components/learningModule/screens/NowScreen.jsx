@@ -1,14 +1,56 @@
-import { Paper, Typography } from '@mui/material';
+import { useState } from 'react';
+import { Box, Stack, Typography } from '@mui/material';
+import LearningModuleQuickCapture from '../LearningModuleQuickCapture.jsx';
+import {
+  readLearningModuleEvidence,
+  readLearningModuleLearningObservations,
+} from '../utils/learningModuleEvidenceStorage.js';
 
-export default function NowScreen({ screenConfig }) {
+const darkText = '#17151a';
+
+export default function NowScreen({ moduleConfig }) {
+  const moduleId = moduleConfig?.id || 'learning-module';
+  const students = moduleConfig?.classData?.students || [];
+  const teachingUnits = [...(moduleConfig?.curriculum?.teachingUnits || [])]
+    .sort((first, second) => (first.order || 0) - (second.order || 0));
+  const skills = moduleConfig?.curriculum?.skills || [];
+  const levels = moduleConfig?.curriculum?.observationLevels || [];
+  const activeLesson = moduleConfig?.lessons?.current || moduleConfig?.lessons?.sequence?.[0] || null;
+  const [selectedStudentId, setSelectedStudentId] = useState(students[0]?.id || '');
+  const [localEvidencePayload, setLocalEvidencePayload] = useState(() => readLearningModuleEvidence(moduleId));
+  const [localLearningObservationPayload, setLocalLearningObservationPayload] = useState(() => (
+    readLearningModuleLearningObservations(moduleId)
+  ));
+
+  function restartLessonSequence() {
+    setSelectedStudentId(students[0]?.id || '');
+  }
+
   return (
-    <Paper elevation={0} sx={{ border: '1px solid rgba(23, 21, 26, 0.1)', borderRadius: '14px', p: 2 }}>
-      <Typography sx={{ color: '#17151a', fontSize: 16, fontWeight: 800 }}>
-        {screenConfig?.title || 'Now'}
-      </Typography>
-      <Typography sx={{ mt: 0.75, color: 'text.secondary', fontSize: 13.5 }}>
-        {screenConfig?.description || 'Placeholder for reusable lesson capture.'}
-      </Typography>
-    </Paper>
+    <Box sx={{ minWidth: 0 }}>
+      <Stack spacing={1.35}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1.5}>
+          <Typography sx={{ color: darkText, fontSize: { xs: 18, sm: 20 }, fontWeight: 880, lineHeight: 1.15 }}>
+            Lesson capture
+          </Typography>
+        </Stack>
+        <LearningModuleQuickCapture
+          moduleId={moduleId}
+          students={students}
+          teachingUnits={teachingUnits}
+          skills={skills}
+          levels={levels}
+          selectedStudentId={selectedStudentId}
+          localEvidencePayload={localEvidencePayload}
+          learningObservations={moduleConfig?.evidence?.learningObservations || []}
+          localLearningObservationPayload={localLearningObservationPayload}
+          activeLesson={activeLesson}
+          onRestartLessonSequence={restartLessonSequence}
+          onLocalEvidencePayloadChange={setLocalEvidencePayload}
+          onLocalLearningObservationPayloadChange={setLocalLearningObservationPayload}
+          onStudentChange={setSelectedStudentId}
+        />
+      </Stack>
+    </Box>
   );
 }

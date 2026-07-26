@@ -11,6 +11,15 @@ import {
   normalizeLearningModuleAssessmentAsEvidence,
   readLearningModuleAssessmentResults,
 } from '../utils/assessmentResultsStorage.js';
+import {
+  LEARNING_MODULE_EVIDENCE_STORAGE_EVENT,
+  LEARNING_MODULE_LEARNING_OBSERVATIONS_STORAGE_EVENT,
+  getLearningModuleEvidenceStorageKey,
+  getLearningModuleLearningObservationsStorageKey,
+  groupLearningObservationRecords,
+  readLearningModuleEvidence,
+  readLearningModuleLearningObservations,
+} from '../utils/learningModuleEvidenceStorage.js';
 
 const purple = '#9c28af';
 const darkText = '#17151a';
@@ -444,11 +453,17 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
     .sort((first, second) => (first.order || 0) - (second.order || 0));
   const moduleId = moduleConfig?.id || 'learning-module';
   const [storedAssessments, setStoredAssessments] = useState(() => readLearningModuleAssessmentResults(moduleId).assessments);
+  const [localEvidencePayload, setLocalEvidencePayload] = useState(() => readLearningModuleEvidence(moduleId));
+  const [localLearningObservationPayload, setLocalLearningObservationPayload] = useState(() => readLearningModuleLearningObservations(moduleId));
   const evidenceItems = useMemo(() => [
     ...storedAssessments.map(normalizeLearningModuleAssessmentAsEvidence),
+    ...(localEvidencePayload.observations || []),
     ...(moduleConfig?.evidence?.items || []),
-  ], [moduleConfig, storedAssessments]);
-  const learningObservations = moduleConfig?.evidence?.learningObservations || [];
+  ], [localEvidencePayload, moduleConfig, storedAssessments]);
+  const learningObservations = useMemo(() => [
+    ...(moduleConfig?.evidence?.learningObservations || []),
+    ...groupLearningObservationRecords(localLearningObservationPayload.observations || []),
+  ], [localLearningObservationPayload, moduleConfig]);
   const skills = moduleConfig?.curriculum?.skills || [];
   const levels = moduleConfig?.curriculum?.observationLevels || [];
   const subjectTitle = moduleConfig?.subjectTitle || moduleConfig?.subjectId || 'Subject';
@@ -475,9 +490,23 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
       setStoredAssessments(readLearningModuleAssessmentResults(moduleId).assessments);
     }
 
+    function refreshStoredEvidence() {
+      setLocalEvidencePayload(readLearningModuleEvidence(moduleId));
+    }
+
+    function refreshStoredLearningObservations() {
+      setLocalLearningObservationPayload(readLearningModuleLearningObservations(moduleId));
+    }
+
     function handleStorageChange(event) {
       if (event.key === getLearningModuleAssessmentResultsStorageKey(moduleId)) {
         refreshStoredAssessments();
+      }
+      if (event.key === getLearningModuleEvidenceStorageKey(moduleId)) {
+        refreshStoredEvidence();
+      }
+      if (event.key === getLearningModuleLearningObservationsStorageKey(moduleId)) {
+        refreshStoredLearningObservations();
       }
     }
 
@@ -487,12 +516,28 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
       }
     }
 
+    function handleCustomEvidenceChange(event) {
+      if (!event.detail?.moduleId || event.detail.moduleId === moduleId) {
+        refreshStoredEvidence();
+      }
+    }
+
+    function handleCustomLearningObservationsChange(event) {
+      if (!event.detail?.moduleId || event.detail.moduleId === moduleId) {
+        refreshStoredLearningObservations();
+      }
+    }
+
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener(LEARNING_MODULE_ASSESSMENT_RESULTS_STORAGE_EVENT, handleCustomStorageChange);
+    window.addEventListener(LEARNING_MODULE_EVIDENCE_STORAGE_EVENT, handleCustomEvidenceChange);
+    window.addEventListener(LEARNING_MODULE_LEARNING_OBSERVATIONS_STORAGE_EVENT, handleCustomLearningObservationsChange);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener(LEARNING_MODULE_ASSESSMENT_RESULTS_STORAGE_EVENT, handleCustomStorageChange);
+      window.removeEventListener(LEARNING_MODULE_EVIDENCE_STORAGE_EVENT, handleCustomEvidenceChange);
+      window.removeEventListener(LEARNING_MODULE_LEARNING_OBSERVATIONS_STORAGE_EVENT, handleCustomLearningObservationsChange);
     };
   }, [moduleId]);
 
