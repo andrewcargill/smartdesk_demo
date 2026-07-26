@@ -149,6 +149,14 @@ function FloatingMessage({ message }) {
           overflowWrap: 'anywhere',
         }}
       >
+        {message.type === 'capture' && (
+          <Stack direction="row" spacing={0.6} alignItems="center" sx={{ mb: 0.55 }}>
+            <AdsClickIcon sx={{ color: purple, fontSize: 14 }} />
+            <Typography sx={{ color: purple, fontSize: 10.8, fontWeight: 850, lineHeight: 1 }}>
+              Captured context
+            </Typography>
+          </Stack>
+        )}
         <Typography sx={{ color: darkText, fontSize: 12.1, lineHeight: 1.42 }}>
           {message.text}
         </Typography>
@@ -319,6 +327,7 @@ export default function FloatingSmartDesk({ context }) {
       {
         id: `capture-${Date.now()}`,
         role: 'assistant',
+        type: 'capture',
         text: capture.text,
         followUpText: capture.followUpText,
       },
@@ -379,6 +388,15 @@ export default function FloatingSmartDesk({ context }) {
     }
 
     const previousCursor = document.body.style.cursor;
+    const styleElement = document.createElement('style');
+    styleElement.textContent = `
+      .smartdesk-selecting-context,
+      .smartdesk-selecting-context * {
+        cursor: ${purpleCrosshairCursor} !important;
+      }
+    `;
+    document.head.appendChild(styleElement);
+    document.body.classList.add('smartdesk-selecting-context');
     document.body.style.cursor = purpleCrosshairCursor;
 
     function handleRelease(event) {
@@ -389,7 +407,9 @@ export default function FloatingSmartDesk({ context }) {
     window.addEventListener('touchend', handleRelease, { once: true });
 
     return () => {
+      document.body.classList.remove('smartdesk-selecting-context');
       document.body.style.cursor = previousCursor;
+      styleElement.remove();
       window.removeEventListener('mouseup', handleRelease);
       window.removeEventListener('touchend', handleRelease);
     };
