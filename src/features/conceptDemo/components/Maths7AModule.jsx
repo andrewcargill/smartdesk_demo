@@ -1344,32 +1344,48 @@ function EvidenceMap({
             >
               <KeyboardArrowDownIcon sx={{ color: 'text.secondary', fontSize: 18, transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
               <Typography sx={{ color: darkText, fontSize: isExpanded ? 18 : 13, fontWeight: isExpanded ? 920 : 820, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', transition: 'font-size 140ms ease, font-weight 140ms ease' }}>{student.displayName}</Typography>
-              {assessmentAlert && (
-                <Tooltip title={assessmentAlertLabel} arrow>
-                  {assessmentAlert.absentCount ? (
-                    <PersonOffOutlinedIcon
-                      aria-label={assessmentAlertLabel}
-                      sx={{
-                        color: assessmentAlertColor,
-                        fontSize: isExpanded ? 18 : 15,
-                        flexShrink: 0,
-                        opacity: 0.88,
-                      }}
-                    />
-                  ) : (
-                    <ErrorOutlineIcon
-                      aria-label={assessmentAlertLabel}
-                      sx={{
-                        color: assessmentAlertColor,
-                        fontSize: isExpanded ? 18 : 15,
-                        flexShrink: 0,
-                        opacity: 0.88,
-                      }}
-                    />
-                  )}
-                </Tooltip>
-              )}
             </ButtonBase>
+          </Box>
+          <Box
+            role="cell"
+            aria-label={assessmentAlertLabel || `${student.displayName} assessment status`}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              p: 0.45,
+              minWidth: 0,
+              borderTop: isHovered ? `1px solid rgba(156, 40, 175, 0.34)` : '1px solid rgba(23, 21, 26, 0.08)',
+              borderBottom: isHovered ? `1px solid rgba(156, 40, 175, 0.22)` : '1px solid transparent',
+              bgcolor: draggedStudentId === student.id ? 'rgba(156, 40, 175, 0.08)' : isHovered ? 'rgba(156, 40, 175, 0.045)' : '#fff',
+              transition: 'background-color 140ms ease, border-color 140ms ease',
+            }}
+          >
+            {assessmentAlert && (
+              <Tooltip title={assessmentAlertLabel} arrow>
+                {assessmentAlert.absentCount ? (
+                  <PersonOffOutlinedIcon
+                    aria-label={assessmentAlertLabel}
+                    sx={{
+                      color: assessmentAlertColor,
+                      fontSize: isExpanded ? 18 : 15,
+                      flexShrink: 0,
+                      opacity: 0.88,
+                    }}
+                  />
+                ) : (
+                  <ErrorOutlineIcon
+                    aria-label={assessmentAlertLabel}
+                    sx={{
+                      color: assessmentAlertColor,
+                      fontSize: isExpanded ? 18 : 15,
+                      flexShrink: 0,
+                      opacity: 0.88,
+                    }}
+                  />
+                )}
+              </Tooltip>
+            )}
           </Box>
           <Box
             role="cell"
@@ -1575,7 +1591,7 @@ function EvidenceMap({
         </Box>
         {isExpanded && (
           <Box role="row" sx={{ display: 'contents' }}>
-            <Box role="cell" sx={{ gridColumn: `1 / span ${teachingUnits.length + 2}`, minWidth: 0 }}>
+            <Box role="cell" sx={{ gridColumn: `1 / span ${teachingUnits.length + 3}`, minWidth: 0 }}>
               {expandedUnitId && expandedUnitSummary && unitInsightVersion === 'v2' ? (
                 <StudentUnitInsightPanelV2
                   key={`${student.id}-${expandedUnitId}-v2`}
@@ -1636,7 +1652,7 @@ function EvidenceMap({
             }}
             aria-label={`${group.label}. Double click to edit focus.`}
             sx={{
-              gridColumn: `1 / span ${teachingUnits.length + 2}`,
+              gridColumn: `1 / span ${teachingUnits.length + 3}`,
               p: 0.85,
               borderTop: '1px solid rgba(23, 21, 26, 0.12)',
               bgcolor: isDragTarget ? 'rgba(156, 40, 175, 0.12)' : '#fff',
@@ -1696,7 +1712,7 @@ function EvidenceMap({
               }}
               aria-label="Unassigned students. Double click to create a focus."
               sx={{
-                gridColumn: `1 / span ${teachingUnits.length + 2}`,
+                gridColumn: `1 / span ${teachingUnits.length + 3}`,
                 p: 0.85,
                 borderTop: '1px solid rgba(23, 21, 26, 0.12)',
                 bgcolor: isDragTarget ? 'rgba(156, 40, 175, 0.12)' : '#fff',
@@ -1825,7 +1841,7 @@ function EvidenceMap({
           sx={{
             minWidth: { xs: 760, lg: 0 },
             display: 'grid',
-            gridTemplateColumns: `minmax(210px, 1fr) minmax(90px, 0.55fr) repeat(${teachingUnits.length}, 100px)`,
+            gridTemplateColumns: `minmax(105px, max-content) 164px minmax(90px, 1fr) repeat(${teachingUnits.length}, 100px)`,
             border: '1px solid rgba(23, 21, 26, 0.12)',
             borderRadius: '14px',
             overflow: 'hidden',
@@ -1833,6 +1849,7 @@ function EvidenceMap({
           }}
         >
           <Box role="columnheader" sx={{ p: 1, bgcolor: '#fff', borderBottom: '1px solid rgba(23, 21, 26, 0.12)' }} />
+          <Box role="columnheader" aria-label="Assessment alerts" sx={{ p: 1, bgcolor: '#fff', borderBottom: '1px solid rgba(23, 21, 26, 0.12)' }} />
           <Box
             role="columnheader"
             aria-label="Quick notes"
