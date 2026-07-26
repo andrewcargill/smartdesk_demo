@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Box, ButtonBase, Paper, Stack, Typography } from '@mui/material';
+import { Box, ButtonBase, Paper, Stack, Tooltip, Typography } from '@mui/material';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
 import {
@@ -57,6 +57,51 @@ function isAssessmentNotPassed(assessment) {
     Boolean(assessment.warning)
     || (passPercentage !== null && Number(assessment.percentage) < passPercentage)
   );
+}
+
+function formatAssessmentHoverValue(value, fallback = '-') {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) {
+    return fallback;
+  }
+
+  return Number.isInteger(numberValue) ? String(numberValue) : String(numberValue);
+}
+
+function getStoredAssessmentResultContext(assessment, assessmentResultsPayload) {
+  const assessmentResultId = assessment.assessmentResultId
+    || (typeof assessment.id === 'string' ? assessment.id.split(':')[0] : '');
+  const storedAssessment = (assessmentResultsPayload?.assessments || []).find((item) => item.id === assessmentResultId);
+  const studentResult = storedAssessment?.studentResults?.find((result) => result.studentId === assessment.studentId);
+
+  if (!storedAssessment || !studentResult) {
+    return null;
+  }
+
+  return {
+    absent: Boolean(studentResult.absent),
+    warning: Boolean(studentResult.warning),
+    score: studentResult.actualValue ?? studentResult.rawResult,
+    passScore: storedAssessment.passScore,
+    maxScore: storedAssessment.maxScore,
+  };
+}
+
+function getAssessmentPieHoverText(assessment, assessmentResultsPayload) {
+  const storedContext = getStoredAssessmentResultContext(assessment, assessmentResultsPayload);
+
+  if (assessment.absent || storedContext?.absent) {
+    return 'Student marked as absent in assessment';
+  }
+
+  const score = assessment.actualValue ?? assessment.rawResult ?? storedContext?.score ?? assessment.percentage;
+  const passScore = assessment.passScore ?? storedContext?.passScore;
+  const maxScore = assessment.maxScore ?? storedContext?.maxScore;
+  const text = `Score: ${formatAssessmentHoverValue(score)} · Pass: ${formatAssessmentHoverValue(passScore)} · Max: ${formatAssessmentHoverValue(maxScore)}`;
+  const notPassed = isAssessmentNotPassed(assessment) || Boolean(storedContext?.warning);
+
+  return notPassed ? `Not passed - ${text}` : text;
 }
 
 function getObservationTimestamp(item) {
@@ -184,10 +229,11 @@ function normaliseObservationFocuses({ configuredFocuses = [], observations = []
   };
 }
 
-function AssessmentPie({ assessment, size = 86, onEditAssessment }) {
+function AssessmentPie({ assessment, size = 86, assessmentResultsPayload, onEditAssessment }) {
   const passPercentage = getAssessmentPassPercentage(assessment);
   const passRadians = passPercentage !== null ? (passPercentage / 100) * Math.PI * 2 : null;
   const canEditAssessment = typeof onEditAssessment === 'function' && Boolean(assessment.assessmentResultId);
+  const hoverText = getAssessmentPieHoverText(assessment, assessmentResultsPayload);
   const passMarker = passRadians !== null
     ? (() => {
       const radial = {
@@ -230,51 +276,52 @@ function AssessmentPie({ assessment, size = 86, onEditAssessment }) {
     : null;
 
   return (
-    <Box
-      title={`${getAssessmentTitle(assessment)} · ${assessment.absent ? 'Absent' : `${assessment.percentage}%`}${passPercentage !== null ? ` · pass ${Math.round(passPercentage)}%` : ''} · ${formatDemoDate(assessment.date)}`}
-      onClick={canEditAssessment ? () => onEditAssessment(assessment) : undefined}
-      sx={{
-        width: size,
-        height: size,
-        borderRadius: '50%',
-        flexShrink: 0,
-        display: 'grid',
-        placeItems: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-        cursor: canEditAssessment ? 'pointer' : 'default',
-        color: purple,
-        background: `conic-gradient(${purple} 0 ${assessment.percentage}%, rgba(156, 40, 175, 0.12) ${assessment.percentage}% 100%)`,
-        boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.28)',
-        transition: 'transform 140ms ease, box-shadow 140ms ease',
-        '&:hover': {
-          transform: 'scale(1.04)',
-          boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.45), 0 10px 24px rgba(156, 40, 175, 0.13)',
-        },
-      }}
-    >
-      {passMarker && (
-        <Box
-          component="svg"
-          aria-hidden="true"
-          viewBox="0 0 100 100"
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            zIndex: 1,
-            pointerEvents: 'none',
-          }}
-        >
-          <polygon points={passMarker.points} fill="#fff" />
-          <line x1={passMarker.tip.x} y1={passMarker.tip.y} x2={passMarker.leftBase.x} y2={passMarker.leftBase.y} stroke="rgba(156, 40, 175, 0.28)" strokeWidth="1.4" strokeLinecap="round" />
-          <line x1={passMarker.tip.x} y1={passMarker.tip.y} x2={passMarker.rightBase.x} y2={passMarker.rightBase.y} stroke="rgba(156, 40, 175, 0.28)" strokeWidth="1.4" strokeLinecap="round" />
-          <line x1={passMarker.leftBase.x} y1={passMarker.leftBase.y} x2={passMarker.rightBase.x} y2={passMarker.rightBase.y} stroke="#fff" strokeWidth="2.2" strokeLinecap="round" />
-        </Box>
-      )}
-      {assessment.absent && <PersonOffOutlinedIcon sx={{ position: 'relative', zIndex: 2, fontSize: Math.round(size * 0.38) }} />}
-    </Box>
+    <Tooltip title={hoverText} arrow>
+      <Box
+        onClick={canEditAssessment ? () => onEditAssessment(assessment) : undefined}
+        sx={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          flexShrink: 0,
+          display: 'grid',
+          placeItems: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+          cursor: canEditAssessment ? 'pointer' : 'default',
+          color: purple,
+          background: `conic-gradient(${purple} 0 ${assessment.percentage}%, rgba(156, 40, 175, 0.12) ${assessment.percentage}% 100%)`,
+          boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.28)',
+          transition: 'transform 140ms ease, box-shadow 140ms ease',
+          '&:hover': {
+            transform: 'scale(1.04)',
+            boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.45), 0 10px 24px rgba(156, 40, 175, 0.13)',
+          },
+        }}
+      >
+        {passMarker && (
+          <Box
+            component="svg"
+            aria-hidden="true"
+            viewBox="0 0 100 100"
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              zIndex: 1,
+              pointerEvents: 'none',
+            }}
+          >
+            <polygon points={passMarker.points} fill="#fff" />
+            <line x1={passMarker.tip.x} y1={passMarker.tip.y} x2={passMarker.leftBase.x} y2={passMarker.leftBase.y} stroke="rgba(156, 40, 175, 0.28)" strokeWidth="1.4" strokeLinecap="round" />
+            <line x1={passMarker.tip.x} y1={passMarker.tip.y} x2={passMarker.rightBase.x} y2={passMarker.rightBase.y} stroke="rgba(156, 40, 175, 0.28)" strokeWidth="1.4" strokeLinecap="round" />
+            <line x1={passMarker.leftBase.x} y1={passMarker.leftBase.y} x2={passMarker.rightBase.x} y2={passMarker.rightBase.y} stroke="#fff" strokeWidth="2.2" strokeLinecap="round" />
+          </Box>
+        )}
+        {assessment.absent && <PersonOffOutlinedIcon sx={{ position: 'relative', zIndex: 2, fontSize: Math.round(size * 0.38) }} />}
+      </Box>
+    </Tooltip>
   );
 }
 
@@ -582,7 +629,7 @@ function SelectedObservationFocusDetails({ focus, validLevelObservations, active
   );
 }
 
-export default function StudentUnitInsightPanelV1({ student, summary, onEditAssessment }) {
+export default function StudentUnitInsightPanelV1({ student, summary, assessmentResultsPayload, onEditAssessment }) {
   const assessments = getSortedAssessments(summary);
   const assessmentStats = getAssessmentStats(assessments);
   const observationFocusModel = useMemo(() => normaliseObservationFocuses({
@@ -632,15 +679,17 @@ export default function StudentUnitInsightPanelV1({ student, summary, onEditAsse
                 <Stack direction="row" spacing={1.4} flexWrap="wrap" useFlexGap alignItems="flex-start">
                   {assessments.length ? assessments.map((assessment) => (
                     <Stack key={assessment.id || assessment.date} spacing={0.65} sx={{ width: 126 }}>
-                      <AssessmentPie assessment={assessment} onEditAssessment={onEditAssessment} />
-                      <Stack direction="row" spacing={0.35} alignItems="center">
-                        {isAssessmentNotPassed(assessment) && (
-                          <ErrorOutlineIcon sx={{ color: '#d32f2f', fontSize: 14, flexShrink: 0 }} />
-                        )}
-                        <Typography title={getAssessmentTitle(assessment)} sx={{ color: darkText, fontSize: 12.4, fontWeight: 850, lineHeight: 1.2, minWidth: 0 }}>
-                          {getAssessmentTitle(assessment)}
-                        </Typography>
-                      </Stack>
+                      <AssessmentPie assessment={assessment} assessmentResultsPayload={assessmentResultsPayload} onEditAssessment={onEditAssessment} />
+                      <Tooltip title={getAssessmentPieHoverText(assessment, assessmentResultsPayload)} arrow>
+                        <Stack direction="row" spacing={0.35} alignItems="center">
+                          {isAssessmentNotPassed(assessment) && (
+                            <ErrorOutlineIcon sx={{ color: '#d32f2f', fontSize: 14, flexShrink: 0 }} />
+                          )}
+                          <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 850, lineHeight: 1.2, minWidth: 0 }}>
+                            {getAssessmentTitle(assessment)}
+                          </Typography>
+                        </Stack>
+                      </Tooltip>
                       <Typography sx={{ color: 'text.secondary', fontSize: 11.7 }}>
                         {assessment.absent ? 'Absent' : `${assessment.percentage}%`} · {formatDemoDate(assessment.date)}
                       </Typography>

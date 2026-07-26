@@ -196,6 +196,7 @@ export function getMaths7AAssessmentResultsAsEvidence(payload, { visibleDate } =
         percentage: result.absent ? 0 : Number(result.percentage),
         value: result.absent ? 0 : Number(result.percentage),
         valueType: 'percentage',
+        rawResult: result.rawResult,
         actualValue: result.actualValue,
         maxScore: assessment.maxScore,
         passScore: assessment.passScore,

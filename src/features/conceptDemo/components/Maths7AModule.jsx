@@ -1588,6 +1588,7 @@ function EvidenceMap({
                   key={`${student.id}-${expandedUnitId}-v1`}
                   student={student}
                   summary={expandedUnitSummary}
+                  assessmentResultsPayload={assessmentResultsPayload}
                   onEditAssessment={onEditAssessmentResult}
                 />
               ) : unitInsightVersion === 'v2' ? (
