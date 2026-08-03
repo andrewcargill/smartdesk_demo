@@ -1,5 +1,5 @@
 import { Paper, Typography } from '@mui/material';
-import SubjectPlanningBoard from '../../planning/SubjectPlanningBoard.jsx';
+import SubjectPlanningBoard from '../planning/SubjectPlanningBoard.jsx';
 import { usePlanningCurriculumNotes } from '../../../hooks/usePlanningCurriculumNotes.js';
 import { useSubjectPlanning } from '../../../hooks/useSubjectPlanning.js';
 import { useConceptDemoLanguage } from '../../../ConceptDemoLanguageContext.jsx';
