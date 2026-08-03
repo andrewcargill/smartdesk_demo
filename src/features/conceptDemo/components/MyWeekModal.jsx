@@ -925,6 +925,7 @@ export default function MyWeekModal({ open, onClose, onOpenClass, schedule = ann
     <Dialog
       open={open}
       onClose={onClose}
+      disableEnforceFocus
       TransitionComponent={Grow}
       transitionDuration={{ enter: 320, exit: 240 }}
       maxWidth={false}

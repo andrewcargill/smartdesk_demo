@@ -145,8 +145,8 @@ export const smartDeskDemoResponses = {
 
     fallback: {
       text: {
-        en: 'For this demo, try asking about Maths 7A, today, your follow-ups, or the week.',
-        sv: 'I den h\u00e4r demon kan du fr\u00e5ga om Matematik 7A, idag, dina uppf\u00f6ljningar eller veckan.',
+        en: 'For this demo, try asking about 8A, today, or the week.',
+        sv: 'I den h\u00e4r demon kan du fr\u00e5ga om 8A, idag eller veckan.',
       },
     },
   },

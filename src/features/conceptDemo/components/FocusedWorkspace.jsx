@@ -112,7 +112,7 @@ export default function FocusedWorkspace({
           exit: exitEasing,
         },
       }}
-      ModalProps={{ keepMounted: true }}
+      ModalProps={{ keepMounted: true, disableEnforceFocus: true }}
       BackdropProps={{
         sx: {
           bgcolor: 'rgba(23, 21, 26, 0.22)',

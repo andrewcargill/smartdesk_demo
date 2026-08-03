@@ -5,10 +5,10 @@ import CloseIcon from '@mui/icons-material/Close';
 import MicIcon from '@mui/icons-material/Mic';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import SendIcon from '@mui/icons-material/Send';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import {
   Box,
   Button,
-  ButtonBase,
   CircularProgress,
   IconButton,
   Paper,
@@ -23,6 +23,8 @@ import { resolveLocalizedValue } from '../i18n/conceptDemoTranslations.js';
 const purple = '#9c28af';
 const darkPurple = '#842194';
 const palePurple = '#fbf5fd';
+const warningAmber = '#9a5b00';
+const warningPale = '#fff8e8';
 const darkText = '#18151a';
 const border = 'rgba(24, 21, 26, 0.1)';
 const expandedWidth = 260;
@@ -120,7 +122,42 @@ function getPointerPoint(event) {
   };
 }
 
+function getHotspotCapture(element, t) {
+  const hotspotElement = element?.closest?.('[data-smartdesk-hotspot]');
+  const hotspotId = hotspotElement?.dataset?.smartdeskHotspot;
+  const subjectTitle = hotspotElement?.dataset?.smartdeskSubjectTitle || hotspotElement?.dataset?.smartdeskSubjectId || 'this subject';
+
+  if (hotspotId === 'mathematics-bubble') {
+    return {
+      text: 'You have 4 maths classes. You have a test coming up for 8A that is not prepared.',
+      followUpText: '',
+    };
+  }
+
+  if (hotspotId === 'elias-student-row') {
+    if (hotspotElement?.dataset?.smartdeskSubjectId === 'physical-education') {
+      return {
+        text: t('floatingSmartDesk.eliasTargetPhysicalEducationText', { subjectTitle }),
+        followUpText: t('floatingSmartDesk.eliasTargetPhysicalEducationFollowUp'),
+      };
+    }
+
+    return {
+      text: t('floatingSmartDesk.eliasTargetSubjectText', { subjectTitle }),
+      followUpText: t('floatingSmartDesk.eliasTargetSubjectFollowUp'),
+    };
+  }
+
+  return null;
+}
+
 function describeCapturedElement(element, t) {
+  const hotspotCapture = getHotspotCapture(element, t);
+
+  if (hotspotCapture) {
+    return hotspotCapture;
+  }
+
   if (!element) {
     return {
       text: t('floatingSmartDesk.noCaptureText'),
@@ -128,7 +165,7 @@ function describeCapturedElement(element, t) {
     };
   }
 
-  const smartDeskElement = element.closest?.('[data-smartdesk-id], [data-smartdesk-type], [data-smartdesk-label]') || element;
+  const smartDeskElement = element.closest?.('[data-smartdesk-hotspot], [data-smartdesk-id], [data-smartdesk-type], [data-smartdesk-label]') || element;
   const tagName = smartDeskElement.tagName?.toLowerCase() || 'element';
   const role = smartDeskElement.getAttribute?.('role');
   const dataType = smartDeskElement.dataset?.smartdeskType;
@@ -155,10 +192,19 @@ function makeAssistantMessage(response, id = `assistant-${Date.now()}`) {
   return {
     id,
     role: 'assistant',
+    type: response.type,
     text: response.text,
     followUpText: response.followUpText,
     actions: response.actions || [],
   };
+}
+
+function containsDirectStudentName(input) {
+  return /\beli(?:as|sa)\b/i.test(input);
+}
+
+function redactDirectStudentNames(input) {
+  return input.replace(/\beli(?:as|sa)\b/gi, '[student name]');
 }
 
 function matchPrompt(input, prompts) {
@@ -191,6 +237,7 @@ function matchPrompt(input, prompts) {
 
 function FloatingMessage({ message, t }) {
   const user = message.role === 'user';
+  const warning = message.type === 'student-name-warning';
 
   return (
     <Box sx={{ display: 'flex', justifyContent: user ? 'flex-end' : 'flex-start' }}>
@@ -199,8 +246,10 @@ function FloatingMessage({ message, t }) {
           minWidth: 0,
           maxWidth: '92%',
           borderRadius: user ? '15px 15px 5px 15px' : '15px 15px 15px 5px',
-          bgcolor: user ? palePurple : '#fff',
-          border: user ? '1px solid rgba(156, 40, 175, 0.13)' : `1px solid ${border}`,
+          bgcolor: warning ? warningPale : user ? palePurple : '#fff',
+          border: warning
+            ? '1px solid rgba(154, 91, 0, 0.18)'
+            : user ? '1px solid rgba(156, 40, 175, 0.13)' : `1px solid ${border}`,
           px: 1.15,
           py: 0.9,
           boxShadow: user ? 'none' : '0 7px 18px rgba(24, 21, 26, 0.04)',
@@ -212,6 +261,14 @@ function FloatingMessage({ message, t }) {
             <AdsClickIcon sx={{ color: purple, fontSize: 14 }} />
             <Typography sx={{ color: purple, fontSize: 10.8, fontWeight: 850, lineHeight: 1 }}>
               {t('floatingSmartDesk.capturedContext')}
+            </Typography>
+          </Stack>
+        )}
+        {warning && (
+          <Stack direction="row" spacing={0.6} alignItems="center" sx={{ mb: 0.55 }}>
+            <WarningAmberIcon sx={{ color: warningAmber, fontSize: 14 }} />
+            <Typography sx={{ color: warningAmber, fontSize: 10.8, fontWeight: 850, lineHeight: 1 }}>
+              {t('floatingSmartDesk.studentNameWarningTitle')}
             </Typography>
           </Stack>
         )}
@@ -292,6 +349,7 @@ export default function FloatingSmartDesk({ context }) {
   const [suggestionsVisible, setSuggestionsVisible] = useState(true);
   const rootRef = useRef(null);
   const dragRef = useRef(null);
+  const suppressHeaderClickRef = useRef(false);
   const timersRef = useRef([]);
   const endRef = useRef(null);
 
@@ -332,16 +390,36 @@ export default function FloatingSmartDesk({ context }) {
     queueTimer(() => addResponseForPrompt(prompt), 720);
   }
 
-  function submitText() {
-    const text = input.trim();
+  function submitText(value = input) {
+    const text = value.trim();
 
     if (!text) {
       return;
     }
 
+    const includesStudentName = containsDirectStudentName(text);
     const matchedPrompt = matchPrompt(text, prompts);
     setInput('');
     setSuggestionsVisible(false);
+
+    if (includesStudentName) {
+      setThinking(false);
+      setMessages((current) => [
+        ...current,
+        {
+          id: `user-text-${Date.now()}`,
+          role: 'user',
+          text: redactDirectStudentNames(text),
+        },
+        makeAssistantMessage({
+          type: 'student-name-warning',
+          text: t('floatingSmartDesk.studentNameWarningText'),
+          followUpText: t('floatingSmartDesk.studentNameWarningFollowUp'),
+        }, `student-name-warning-${Date.now()}`),
+      ]);
+      return;
+    }
+
     setMessages((current) => [...current, { id: `user-text-${Date.now()}`, role: 'user', text }]);
     setThinking(true);
     queueTimer(() => {
@@ -420,6 +498,11 @@ export default function FloatingSmartDesk({ context }) {
   }
 
   function startDrag(event) {
+    if (event.button !== undefined && event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault?.();
     setReturningHome(false);
     const point = event.touches?.[0] || event;
     dragRef.current = {
@@ -429,6 +512,12 @@ export default function FloatingSmartDesk({ context }) {
       originY: position.y,
       moved: false,
     };
+  }
+
+  function cancelDragInteraction(event) {
+    dragRef.current = null;
+    suppressHeaderClickRef.current = false;
+    event.stopPropagation?.();
   }
 
   function logPosition(label, currentPosition, homePosition = getDefaultPosition()) {
@@ -529,6 +618,10 @@ export default function FloatingSmartDesk({ context }) {
           y: dragRef.current.originY + (dragRef.current.lastDeltaY || 0),
         }, expanded);
         logPosition('drag end', currentPosition);
+        suppressHeaderClickRef.current = true;
+        window.setTimeout(() => {
+          suppressHeaderClickRef.current = false;
+        }, 0);
       }
 
       dragRef.current = null;
@@ -592,24 +685,39 @@ export default function FloatingSmartDesk({ context }) {
         }
       }}
     >
-      <ButtonBase
+      <Box
+        role="button"
+        tabIndex={0}
         onMouseDown={startDrag}
         onTouchStart={startDrag}
         onClick={() => {
-          if (dragRef.current?.moved) {
+          if (suppressHeaderClickRef.current) {
+            suppressHeaderClickRef.current = false;
             return;
           }
 
           setExpanded(true);
         }}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            setExpanded(true);
+          }
+        }}
         sx={{
           width: '100%',
-          justifyContent: 'stretch',
+          display: 'block',
           cursor: expanded ? 'grab' : 'pointer',
           bgcolor: expanded ? purple : 'transparent',
           color: '#fff',
+          userSelect: 'none',
+          touchAction: 'none',
           '&:hover': {
             bgcolor: expanded ? darkPurple : darkPurple,
+          },
+          '&:focus-visible': {
+            outline: `2px solid ${purple}`,
+            outlineOffset: 2,
           },
         }}
       >
@@ -724,9 +832,12 @@ export default function FloatingSmartDesk({ context }) {
             {expanded ? <CloseIcon sx={{ fontSize: 17 }} /> : <OpenInFullIcon sx={{ fontSize: 16 }} />}
           </IconButton>
         </Box>
-      </ButtonBase>
+      </Box>
 
       <Box
+        onMouseDownCapture={cancelDragInteraction}
+        onTouchStartCapture={cancelDragInteraction}
+        onClickCapture={(event) => event.stopPropagation()}
         sx={{
           width: '100%',
           minWidth: 0,
@@ -819,17 +930,32 @@ export default function FloatingSmartDesk({ context }) {
             <Box ref={endRef} />
           </Stack>
 
-          <Box sx={{ borderTop: `1px solid ${border}`, px: 0.85, py: 0.8, bgcolor: '#fff' }}>
+          <Box
+            onMouseDownCapture={cancelDragInteraction}
+            onTouchStartCapture={cancelDragInteraction}
+            onClickCapture={(event) => event.stopPropagation()}
+            onMouseDown={(event) => event.stopPropagation()}
+            onTouchStart={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+            sx={{ borderTop: `1px solid ${border}`, px: 0.85, py: 0.8, bgcolor: '#fff' }}
+          >
             <Stack direction="row" spacing={0.6} alignItems="flex-end" sx={{ minWidth: 0 }}>
               <TextField
                 label={t('floatingSmartDesk.ask')}
                 placeholder={t('floatingSmartDesk.askPlaceholder', { context: getLocalizedContextLabel(context, t) })}
                 value={input}
+                onMouseDownCapture={cancelDragInteraction}
+                onTouchStartCapture={cancelDragInteraction}
+                onClickCapture={(event) => event.stopPropagation()}
+                onMouseDown={(event) => event.stopPropagation()}
+                onTouchStart={(event) => event.stopPropagation()}
+                onClick={(event) => event.stopPropagation()}
                 onChange={(event) => setInput(event.target.value)}
                 onKeyDown={(keyboardEvent) => {
+                  keyboardEvent.stopPropagation();
                   if (keyboardEvent.key === 'Enter' && !keyboardEvent.shiftKey) {
                     keyboardEvent.preventDefault();
-                    submitText();
+                    submitText(keyboardEvent.currentTarget.value);
                   }
                 }}
                 fullWidth
@@ -848,7 +974,12 @@ export default function FloatingSmartDesk({ context }) {
               <IconButton
                 aria-label={t('floatingSmartDesk.sendMessage')}
                 disabled={!input.trim()}
-                onClick={submitText}
+                onMouseDown={(event) => event.stopPropagation()}
+                onTouchStart={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  submitText();
+                }}
                 sx={{ color: purple, width: 34, height: 34, mb: 0.1 }}
               >
                 <SendIcon sx={{ fontSize: 17 }} />

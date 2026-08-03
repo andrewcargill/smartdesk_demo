@@ -363,6 +363,8 @@ function ModuleCircle({ module, selected, onSelect, onOpenSubjectClass, onOpenNo
         component="button"
         type="button"
         className="module-circle-surface"
+        data-smartdesk-hotspot={module.id === 'mathematics' ? 'mathematics-bubble' : undefined}
+        data-smartdesk-subject-id={module.id === 'mathematics' ? module.id : undefined}
         onClick={handleModuleClick}
         aria-pressed={selected}
         sx={{

@@ -1324,6 +1324,11 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
                       </ButtonBase>
                     )}
                     <ButtonBase
+                      data-smartdesk-hotspot={student.id === 'elias-nilsson' ? 'elias-student-row' : undefined}
+                      data-smartdesk-student-id={student.id === 'elias-nilsson' ? student.id : undefined}
+                      data-smartdesk-student-name={student.id === 'elias-nilsson' ? student.displayName : undefined}
+                      data-smartdesk-subject-id={student.id === 'elias-nilsson' ? moduleConfig?.subjectId : undefined}
+                      data-smartdesk-subject-title={student.id === 'elias-nilsson' ? subjectTitle : undefined}
                       onClick={() => toggleStudent(student.id, '')}
                       aria-expanded={isExpanded}
                       aria-controls={`student-insight-${student.id}`}
