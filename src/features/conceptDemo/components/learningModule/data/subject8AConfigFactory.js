@@ -15,25 +15,26 @@ const navigation = {
 const subjectBlueprints = {
   english: {
     areas: [
-      ['reading', 'Reading', 'L\u00e4sa'],
-      ['writing', 'Writing', 'Skriva'],
-      ['speaking', 'Speaking', 'Tala'],
-      ['listening', 'Listening', 'Lyssna'],
+      ['listening-reception', 'Listening', 'Lyssna'],
+      ['reading-reception', 'Reading', 'L\u00e4sa'],
+      ['speaking-production-interaction', 'Speaking', 'Tala'],
+      ['writing-production-interaction', 'Writing', 'Skriva'],
     ],
     skills: [
-      ['understanding-detail', 'Understanding detail', 'F\u00f6rst\u00e5 detaljer'],
-      ['understanding-purpose', 'Understanding purpose', 'F\u00f6rst\u00e5 syfte'],
-      ['response-to-text', 'Response to text', 'Textrespons'],
-      ['structure', 'Structure', 'Struktur'],
-      ['vocabulary', 'Vocabulary', 'Ordf\u00f6rr\u00e5d'],
-      ['accuracy', 'Accuracy', 'Korrekthet'],
-      ['interaction', 'Interaction', 'Interaktion'],
-      ['presentation', 'Presentation', 'Presentation'],
+      ['spoken-language-main-content-details', 'Understand main content and clear details in spoken English', 'F\u00f6rst\u00e5 huvudsakligt inneh\u00e5ll och tydliga detaljer i talad engelska'],
+      ['text-main-content-details', 'Understand main content and clear details in texts', 'F\u00f6rst\u00e5 huvudsakligt inneh\u00e5ll och tydliga detaljer i texter'],
+      ['source-selection-use', 'Select, evaluate and use spoken and written sources', 'V\u00e4lja, v\u00e4rdera och anv\u00e4nda muntliga och skriftliga k\u00e4llor'],
+      ['oral-presentation-coherence', 'Oral presentation: clarity and coherence', 'Muntlig framst\u00e4llning: tydlighet och sammanhang'],
+      ['written-presentation-coherence', 'Written presentation: clarity and coherence', 'Skriftlig framst\u00e4llning: tydlighet och sammanhang'],
+      ['interaction-purpose-audience-situation', 'Interaction adapted to purpose, audience and situation', 'Interaktion anpassad till syfte, mottagare och situation'],
+      ['communication-strategies', 'Strategies that support and improve communication', 'Strategier som underl\u00e4ttar och f\u00f6rb\u00e4ttrar kommunikationen'],
+      ['english-speaking-contexts', 'Discuss contexts and areas where English is used', 'Diskutera sammanhang och omr\u00e5den d\u00e4r engelska anv\u00e4nds'],
     ],
     unitTitles: [
-      ['Reading inference', 'L\u00e4sinferens'],
-      ['Argument writing', 'Argumenterande skrivande'],
-      ['Speaking discussion', 'Muntlig diskussion'],
+      ['Listening', 'Lyssna'],
+      ['Reading', 'L\u00e4sa'],
+      ['Speaking', 'Tala'],
+      ['Writing', 'Skriva'],
     ],
   },
   mathematics: {
@@ -156,20 +157,116 @@ const subjectBlueprints = {
 const fallbackBlueprint = subjectBlueprints.science;
 
 const studentProfiles = {
-  'elias-nilsson': { pattern: 'improving', previousGrade: 'C', assessmentScores: [8, 12, 15], learningPattern: ['-', '0', '0', '+', '+'] },
-  'freya-wilson': { pattern: 'high', previousGrade: 'B', assessmentScores: [17, 18, 19], learningPattern: ['+', '+', '+', '+', '+'] },
-  'omar-hassan': { pattern: 'struggling', previousGrade: 'C', assessmentScores: [6, 7, 9], learningPattern: ['-', '-', '0', '-', '0'] },
-  'alice-bergstrom': { pattern: 'secure', previousGrade: 'B', assessmentScores: [14, 15, 16], learningPattern: ['0', '+', '+', '+', '+'] },
-  'noor-ahmed': { pattern: 'fragile', previousGrade: 'D', assessmentScores: [4, 8, 10], learningPattern: ['-', '-', '0', '0', '+'] },
-  'william-dahl': { pattern: 'steady', previousGrade: 'C', assessmentScores: [11, 12, 13], learningPattern: ['0', '0', '0', '+', '0'] },
-  'isabella-rossi': { pattern: 'high', previousGrade: 'A', assessmentScores: [18, 19, 20], learningPattern: ['+', '+', '+', '+', '+'] },
-  'benjamin-larsson': { pattern: 'inconsistent', previousGrade: 'C', assessmentScores: [10, 8, 13], learningPattern: ['0', '-', '0', '+', '0'] },
-  'sofia-eriksson': { pattern: 'secure', previousGrade: 'B', assessmentScores: [15, 16, 17], learningPattern: ['+', '+', '0', '+', '+'] },
-  'lucas-martin': { pattern: 'struggling', previousGrade: 'D', assessmentScores: [5, 6, 8], learningPattern: ['-', '-', '-', '0', '0'] },
+  'elias-nilsson': { pattern: 'improving', previousGrade: 'C', assessmentScores: [12, 8, 11, 13, 15] },
+  'freya-wilson': { pattern: 'high', previousGrade: 'B', assessmentScores: [16, 17, 18, 18, 19] },
+  'omar-hassan': { pattern: 'struggling', previousGrade: 'C', assessmentScores: [8, 10, 11, 12, 12] },
+  'alice-bergstrom': { pattern: 'secure', previousGrade: 'B', assessmentScores: [13, 14, 15, 16, 16] },
+  'noor-ahmed': { pattern: 'fragile', previousGrade: 'D', assessmentScores: [9, 10, 12, 12, 13] },
+  'william-dahl': { pattern: 'steady', previousGrade: 'C', assessmentScores: [10, 11, 12, 12, 13] },
+  'isabella-rossi': { pattern: 'high', previousGrade: 'A', assessmentScores: [18, 18, 19, 20, 20] },
+  'benjamin-larsson': { pattern: 'inconsistent', previousGrade: 'C', assessmentScores: [11, 12, 13, 10, 14] },
+  'sofia-eriksson': { pattern: 'secure', previousGrade: 'B', assessmentScores: [14, 15, 16, 16, 17] },
+  'lucas-martin': { pattern: 'struggling', previousGrade: 'D', assessmentScores: [7, 9, 10, 11, 12] },
 };
 
 const evidenceDates = ['2026-01-22', '2026-02-12', '2026-03-12', '2026-04-16', '2026-05-14'];
-const assessmentDates = ['2026-02-27', '2026-04-10', '2026-05-16'];
+const assessmentDates = ['2026-01-30', '2026-02-27', '2026-03-27', '2026-04-24', '2026-05-16'];
+const absentAssessments = {
+  'freya-wilson': [2],
+  'william-dahl': [3],
+  'benjamin-larsson': [1],
+};
+const learningObservationWindows = {
+  high: [
+    { date: '2026-02-12', participation: '+', note: 'confident peer discussion' },
+    { date: '2026-05-14', independence: '+', note: 'ready for extension' },
+  ],
+  secure: [
+    { date: '2026-01-22', focus: '0', note: 'settling into routines' },
+    { date: '2026-03-12', participation: '+', note: 'steady contribution' },
+    { date: '2026-05-14', independence: '+', note: 'works with little prompting' },
+  ],
+  steady: [
+    { date: '2026-01-22', focus: '0', note: 'needs occasional reminder' },
+    { date: '2026-04-16', independence: '0', note: 'uses models appropriately' },
+  ],
+  improving: [
+    { date: '2026-01-22', focus: '-', note: 'hard to begin without scaffolding' },
+    { date: '2026-02-12', independence: '-', note: 'waited for adult check-in' },
+    { date: '2026-03-12', focus: '0', participation: '0', note: 'starting to act on feedback' },
+    { date: '2026-04-16', independence: '0', note: 'attempted next step before asking' },
+    { date: '2026-05-14', focus: '+', note: 'clear improvement in lesson stamina' },
+  ],
+  fragile: [
+    { date: '2026-01-15', focus: '-', note: 'initial concern logged' },
+    { date: '2026-01-22', independence: '-', note: 'needed start-up support' },
+    { date: '2026-02-05', participation: '0', note: 'responded in pair work' },
+    { date: '2026-02-12', focus: '-', independence: '-', note: 'pattern still unclear' },
+    { date: '2026-03-12', focus: '0', note: 'more settled after seating change' },
+    { date: '2026-04-16', independence: '0', note: 'can complete a defined step' },
+    { date: '2026-05-14', participation: '+', note: 'positive contribution today' },
+  ],
+  inconsistent: [
+    { date: '2026-01-22', participation: '+', note: 'strong start' },
+    { date: '2026-02-12', focus: '-', note: 'lost task thread' },
+    { date: '2026-03-12', independence: '0', note: 'recovered with checklist' },
+    { date: '2026-04-16', participation: '+', note: 'good paired work' },
+    { date: '2026-05-14', focus: '0', note: 'still uneven across lessons' },
+  ],
+  struggling: [
+    { date: '2026-01-15', focus: '-', independence: '-', note: 'intensive observation started' },
+    { date: '2026-01-22', focus: '-', note: 'needed frequent prompts' },
+    { date: '2026-02-05', participation: '-', independence: '-', note: 'avoided independent step' },
+    { date: '2026-02-12', focus: '-', participation: '0', note: 'brief paired contribution' },
+    { date: '2026-03-05', independence: '-', note: 'still waits for confirmation' },
+    { date: '2026-03-12', focus: '0', note: 'completed reduced target' },
+    { date: '2026-04-16', participation: '0', note: 'more willing to ask for help' },
+    { date: '2026-05-07', focus: '0', independence: '0', note: 'support plan showing small effect' },
+    { date: '2026-05-14', independence: '0', note: 'still needs structured next steps' },
+  ],
+};
+
+const physicalEducationEliasObservationDates = [
+  '2026-03-03',
+  '2026-03-05',
+  '2026-03-10',
+  '2026-03-12',
+  '2026-03-17',
+  '2026-03-19',
+  '2026-03-24',
+  '2026-03-26',
+  '2026-03-31',
+  '2026-04-02',
+  '2026-04-07',
+  '2026-04-09',
+  '2026-04-14',
+  '2026-04-16',
+  '2026-04-21',
+  '2026-04-23',
+  '2026-04-28',
+  '2026-04-30',
+];
+
+const physicalEducationEliasObservationPattern = [
+  { focus: '-', note: 'watching response after failed movement checkpoint' },
+  { independence: '-', note: 'waits for adult confirmation before starting activity' },
+  { participation: '0', note: 'joins warm-up but avoids main task' },
+  { focus: '0', note: 'focus improves with visual sequence' },
+  { participation: '+', note: 'works better with paired model' },
+  { independence: '0', note: 'starts first step independently' },
+  { focus: '+', note: 'sustained effort through practical circuit' },
+  { participation: '0', independence: '0', note: 'still checks before changing activity' },
+  { focus: '0', note: 'loses rhythm when task changes quickly' },
+  { participation: '+', note: 'takes part more fully in small-sided activity' },
+  { independence: '-', note: 'needs prompt to choose suitable intensity' },
+  { focus: '+', note: 'responds well to clear station routine' },
+  { independence: '0', note: 'uses feedback to adjust technique' },
+  { participation: '0', note: 'asks for help instead of withdrawing' },
+  { focus: '+', note: 'keeps attention across full lesson block' },
+  { independence: '+', note: 'prepares equipment and starts without prompt' },
+  { participation: '+', note: 'confident contribution in paired practice' },
+  { focus: '+', note: 'ready to return to normal observation rhythm' },
+];
 
 const levelProgressions = {
   high: ['secure', 'advanced', 'advanced', 'advanced', 'advanced'],
@@ -226,6 +323,79 @@ function getSubjectTitle(subjectId) {
 
 function getBlueprint(subjectId) {
   return subjectBlueprints[subjectId] || fallbackBlueprint;
+}
+
+function translateLearningObservationNote(note) {
+  const translations = {
+    'confident peer discussion': 's\u00e4ker diskussion med klasskamrat',
+    'ready for extension': 'redo f\u00f6r utmaning',
+    'settling into routines': 'kommer in i rutinerna',
+    'steady contribution': 'stabilt bidrag',
+    'works with little prompting': 'arbetar med lite st\u00f6d',
+    'needs occasional reminder': 'beh\u00f6ver enstaka p\u00e5minnelse',
+    'uses models appropriately': 'anv\u00e4nder modeller p\u00e5 ett l\u00e4mpligt s\u00e4tt',
+    'hard to begin without scaffolding': 'sv\u00e5rt att komma ig\u00e5ng utan st\u00f6ttning',
+    'waited for adult check-in': 'v\u00e4ntade p\u00e5 vuxen avst\u00e4mning',
+    'starting to act on feedback': 'b\u00f6rjar agera p\u00e5 feedback',
+    'attempted next step before asking': 'pr\u00f6vade n\u00e4sta steg innan hen fr\u00e5gade',
+    'clear improvement in lesson stamina': 'tydlig f\u00f6rb\u00e4ttring i lektionsuth\u00e5llighet',
+    'initial concern logged': 'initial oro noterad',
+    'needed start-up support': 'beh\u00f6vde startst\u00f6d',
+    'responded in pair work': 'svarade i pararbete',
+    'pattern still unclear': 'm\u00f6nstret \u00e4r fortfarande oklart',
+    'more settled after seating change': 'mer stabil efter placerings\u00e4ndring',
+    'can complete a defined step': 'kan genomf\u00f6ra ett avgr\u00e4nsat steg',
+    'positive contribution today': 'positivt bidrag idag',
+    'strong start': 'stark start',
+    'lost task thread': 'tappade uppgiftstr\u00e5den',
+    'recovered with checklist': '\u00e5terh\u00e4mtade arbetet med checklista',
+    'good paired work': 'bra pararbete',
+    'still uneven across lessons': 'fortfarande oj\u00e4mn mellan lektioner',
+    'intensive observation started': 'intensiv observation startad',
+    'needed frequent prompts': 'beh\u00f6vde t\u00e4ta p\u00e5minnelser',
+    'avoided independent step': 'undvek sj\u00e4lvst\u00e4ndigt steg',
+    'brief paired contribution': 'kort bidrag i pararbete',
+    'still waits for confirmation': 'v\u00e4ntar fortfarande p\u00e5 bekr\u00e4ftelse',
+    'completed reduced target': 'genomf\u00f6rde avgr\u00e4nsat m\u00e5l',
+    'more willing to ask for help': 'mer villig att be om hj\u00e4lp',
+    'support plan showing small effect': 'st\u00f6dplanen visar liten effekt',
+    'still needs structured next steps': 'beh\u00f6ver fortfarande strukturerade n\u00e4sta steg',
+    'watching response after failed movement checkpoint': 'f\u00f6ljer upp respons efter ej godk\u00e4nd r\u00f6relsekontroll',
+    'waits for adult confirmation before starting activity': 'v\u00e4ntar p\u00e5 vuxen bekr\u00e4ftelse innan aktivitet startas',
+    'joins warm-up but avoids main task': 'deltar i uppv\u00e4rmning men undviker huvuduppgiften',
+    'focus improves with visual sequence': 'fokus f\u00f6rb\u00e4ttras med visuell ordningsf\u00f6ljd',
+    'works better with paired model': 'arbetar b\u00e4ttre med parmodell',
+    'starts first step independently': 'startar f\u00f6rsta steget sj\u00e4lvst\u00e4ndigt',
+    'sustained effort through practical circuit': 'h\u00e5ller i anstr\u00e4ngningen genom praktisk cirkel',
+    'still checks before changing activity': 'st\u00e4mmer fortfarande av innan aktivitetsbyte',
+    'loses rhythm when task changes quickly': 'tappar rytm n\u00e4r uppgiften byter snabbt',
+    'takes part more fully in small-sided activity': 'deltar mer fullt i mindre spelaktivitet',
+    'needs prompt to choose suitable intensity': 'beh\u00f6ver p\u00e5minnelse f\u00f6r att v\u00e4lja l\u00e4mplig intensitet',
+    'responds well to clear station routine': 'svarar bra p\u00e5 tydlig stationsrutin',
+    'uses feedback to adjust technique': 'anv\u00e4nder feedback f\u00f6r att justera teknik',
+    'asks for help instead of withdrawing': 'ber om hj\u00e4lp i st\u00e4llet f\u00f6r att dra sig undan',
+    'keeps attention across full lesson block': 'h\u00e5ller uppm\u00e4rksamheten genom hela lektionspasset',
+    'prepares equipment and starts without prompt': 'f\u00f6rbereder utrustning och startar utan p\u00e5minnelse',
+    'confident contribution in paired practice': 's\u00e4kert bidrag i par\u00f6vning',
+    'ready to return to normal observation rhythm': 'redo att \u00e5terg\u00e5 till normal observationsrytm',
+  };
+
+  return translations[note] || note;
+}
+
+function buildPhysicalEducationEliasObservationWindows() {
+  return physicalEducationEliasObservationDates.map((date, index) => ({
+    date,
+    ...physicalEducationEliasObservationPattern[index % physicalEducationEliasObservationPattern.length],
+  }));
+}
+
+function getLearningObservationWindows(subjectId, student, profile) {
+  if (subjectId === 'physical-education' && student.id === 'elias-nilsson') {
+    return buildPhysicalEducationEliasObservationWindows();
+  }
+
+  return learningObservationWindows[profile.pattern] || learningObservationWindows.steady;
 }
 
 function buildCurriculum(subjectId) {
@@ -361,38 +531,37 @@ function buildEvidence(subjectId, curriculum) {
       pass: 10,
       results: students.map((student) => {
         const profile = studentProfiles[student.id] || studentProfiles['william-dahl'];
-        const score = profile.assessmentScores[assessmentIndex] || 12;
+        const absent = absentAssessments[student.id]?.includes(assessmentIndex) || false;
+        const score = absent ? null : (profile.assessmentScores[assessmentIndex] ?? 12);
+        const percentage = score === null ? null : Math.round((score / 20) * 100);
 
         return {
           studentId: student.id,
           score,
-          percentage: Math.round((score / 20) * 100),
-          passed: score >= 10,
-          absent: false,
-          warning: score < 10,
+          percentage,
+          passed: absent ? false : score >= 10,
+          absent,
+          warning: !absent && score < 10,
         };
       }),
     };
   });
-  const learningObservations = students.flatMap((student, studentIndex) => {
+  const learningObservations = students.flatMap((student) => {
     const profile = studentProfiles[student.id] || studentProfiles['william-dahl'];
+    const windows = getLearningObservationWindows(subjectId, student, profile);
 
-    return evidenceDates.map((date, observationIndex) => {
-      const choice = profile.learningPattern[observationIndex] || '0';
-
-      return {
-        id: `${subjectId}-8a-learning-${student.id}-${observationIndex + 1}`,
-        studentId: student.id,
-        date,
-        focus: choice,
-        participation: profile.pattern === 'high' || profile.pattern === 'secure' ? '+' : choice,
-        independence: profile.pattern === 'struggling' || profile.pattern === 'fragile' ? (observationIndex >= 3 ? '0' : '-') : choice,
-        comment: localized(
-          `${student.firstName}: ${profile.pattern.replace(/-/g, ' ')} learning pattern across the spring term.`,
-          `${student.firstName}: ${profile.pattern.replace(/-/g, ' ')} l\u00e4rm\u00f6nster under v\u00e5rterminen.`,
-        ),
-      };
-    });
+    return windows.map((window, observationIndex) => ({
+      id: `${subjectId}-8a-learning-${student.id}-${observationIndex + 1}`,
+      studentId: student.id,
+      date: window.date,
+      ...(window.focus ? { focus: window.focus } : {}),
+      ...(window.participation ? { participation: window.participation } : {}),
+      ...(window.independence ? { independence: window.independence } : {}),
+      comment: localized(
+        `${student.firstName}: ${window.note}.`,
+        `${student.firstName}: ${translateLearningObservationNote(window.note)}.`,
+      ),
+    }));
   });
 
   return {

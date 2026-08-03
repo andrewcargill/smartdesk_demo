@@ -6,6 +6,7 @@ import { Box, ButtonBase, IconButton, Paper, Stack, Tooltip, Typography } from '
 
 const purple = '#9c28af';
 const darkText = '#17151a';
+const absentOrange = '#b85c00';
 
 function fallbackT(key, values = {}) {
   const fallbacks = {
@@ -82,7 +83,7 @@ function getSortedAssessments(summary) {
       ...item,
       percentage: getAssessmentPercentage(item),
     }))
-    .filter((item) => item.percentage !== null)
+    .filter((item) => item.absent || item.percentage !== null)
     .sort((first, second) => (first.date || '').localeCompare(second.date || ''));
 }
 
@@ -244,6 +245,10 @@ function AssessmentPie({ assessment, size = 86, t = fallbackT }) {
   const passPercentage = getAssessmentPassPercentage(assessment);
   const passRadians = passPercentage !== null ? (passPercentage / 100) * Math.PI * 2 : null;
   const hoverText = getAssessmentPieHoverText(assessment, t);
+  const notPassed = isAssessmentNotPassed(assessment);
+  const percentage = assessment.absent || !Number.isFinite(Number(assessment.percentage))
+    ? 0
+    : Math.max(0, Math.min(100, Number(assessment.percentage)));
   const passMarker = passRadians !== null
     ? (() => {
       const radial = { x: Math.sin(passRadians), y: -Math.cos(passRadians) };
@@ -275,17 +280,27 @@ function AssessmentPie({ assessment, size = 86, t = fallbackT }) {
           placeItems: 'center',
           position: 'relative',
           overflow: 'hidden',
-          color: purple,
-          background: `conic-gradient(${purple} 0 ${assessment.percentage}%, rgba(156, 40, 175, 0.12) ${assessment.percentage}% 100%)`,
-          boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.28)',
+          color: assessment.absent ? absentOrange : notPassed ? '#d32f2f' : purple,
+          background: assessment.absent
+            ? 'rgba(184, 92, 0, 0.08)'
+            : `conic-gradient(${purple} 0 ${percentage}%, rgba(156, 40, 175, 0.12) ${percentage}% 100%)`,
+          boxShadow: assessment.absent
+            ? 'inset 0 0 0 1px rgba(184, 92, 0, 0.34)'
+            : notPassed
+              ? 'inset 0 0 0 2px rgba(211, 47, 47, 0.38)'
+              : 'inset 0 0 0 1px rgba(156, 40, 175, 0.28)',
           transition: 'transform 140ms ease, box-shadow 140ms ease',
           '&:hover': {
             transform: 'scale(1.04)',
-            boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.45), 0 10px 24px rgba(156, 40, 175, 0.13)',
+            boxShadow: assessment.absent
+              ? 'inset 0 0 0 1px rgba(184, 92, 0, 0.5), 0 10px 24px rgba(184, 92, 0, 0.12)'
+              : notPassed
+                ? 'inset 0 0 0 2px rgba(211, 47, 47, 0.5), 0 10px 24px rgba(211, 47, 47, 0.1)'
+                : 'inset 0 0 0 1px rgba(156, 40, 175, 0.45), 0 10px 24px rgba(156, 40, 175, 0.13)',
           },
         }}
       >
-        {passMarker && (
+        {passMarker && !assessment.absent && (
           <Box component="svg" aria-hidden="true" viewBox="0 0 100 100" sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'none' }}>
             <polygon points={passMarker.points} fill="#fff" />
             <line x1={passMarker.tip.x} y1={passMarker.tip.y} x2={passMarker.leftBase.x} y2={passMarker.leftBase.y} stroke="rgba(156, 40, 175, 0.28)" strokeWidth="1.4" strokeLinecap="round" />
@@ -294,6 +309,20 @@ function AssessmentPie({ assessment, size = 86, t = fallbackT }) {
           </Box>
         )}
         {assessment.absent && <PersonOffOutlinedIcon sx={{ position: 'relative', zIndex: 2, fontSize: Math.round(size * 0.38) }} />}
+        {!assessment.absent && notPassed && (
+          <ErrorOutlineIcon
+            sx={{
+              position: 'absolute',
+              right: Math.max(5, Math.round(size * 0.08)),
+              bottom: Math.max(5, Math.round(size * 0.08)),
+              zIndex: 2,
+              fontSize: Math.round(size * 0.28),
+              color: '#d32f2f',
+              bgcolor: '#fff',
+              borderRadius: '50%',
+            }}
+          />
+        )}
       </Box>
     </Tooltip>
   );
@@ -644,9 +673,6 @@ export default function StudentUnitInsightPanel({
                       <AssessmentPie assessment={assessment} t={t} />
                       <Tooltip title={getAssessmentPieHoverText(assessment, t)} arrow>
                         <Stack direction="row" spacing={0.35} alignItems="center">
-                          {isAssessmentNotPassed(assessment) && (
-                            <ErrorOutlineIcon sx={{ color: '#d32f2f', fontSize: 14, flexShrink: 0 }} />
-                          )}
                           <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 850, lineHeight: 1.2, minWidth: 0 }}>
                             {getAssessmentTitle(assessment, t)}
                           </Typography>

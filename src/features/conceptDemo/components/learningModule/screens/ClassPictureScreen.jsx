@@ -1185,6 +1185,8 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
               'desc',
             );
             const alerts = buildAssessmentAlerts(evidenceItems, student.id, language, t);
+            const learningObservationCount = studentLearningObservations.length;
+            const latestLearningObservationDate = studentLearningObservations[0]?.date || '';
 
             return (
               <Box key={student.id} role="rowgroup" sx={{ display: 'contents' }}>
@@ -1298,6 +1300,44 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
                         </Box>
                       </Tooltip>
                     ))}
+                    {!!learningObservationCount && (
+                      <Tooltip
+                        title={`${student.displayName}: ${learningObservationCount} ${t('learningModule.classPicture.learningObservations').toLowerCase()}${latestLearningObservationDate ? ` · ${formatDemoDate(latestLearningObservationDate, language, t)}` : ''}`}
+                        arrow
+                      >
+                        <Box
+                          component="span"
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => toggleStudent(student.id, '')}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              toggleStudent(student.id, '');
+                            }
+                          }}
+                          sx={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 0.25,
+                            minWidth: learningObservationCount >= 10 ? 34 : 28,
+                            height: isExpanded ? 22 : 19,
+                            px: 0.45,
+                            borderRadius: '999px',
+                            border: '1px solid rgba(23, 21, 26, 0.14)',
+                            bgcolor: 'rgba(23, 21, 26, 0.035)',
+                            color: 'rgba(23, 21, 26, 0.58)',
+                            cursor: 'pointer',
+                            '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                          }}
+                        >
+                          <NotesIcon sx={{ fontSize: isExpanded ? 13.5 : 12.5, flexShrink: 0 }} />
+                          <Typography component="span" sx={{ fontSize: isExpanded ? 12 : 10.8, fontWeight: 900, lineHeight: 1 }}>
+                            {learningObservationCount}
+                          </Typography>
+                        </Box>
+                      </Tooltip>
+                    )}
                   </Box>
 
                   <Box
