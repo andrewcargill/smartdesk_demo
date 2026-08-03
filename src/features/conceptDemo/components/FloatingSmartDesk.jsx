@@ -349,6 +349,9 @@ export default function FloatingSmartDesk({ context }) {
   const [suggestionsVisible, setSuggestionsVisible] = useState(true);
   const rootRef = useRef(null);
   const dragRef = useRef(null);
+  const contextSelectionRef = useRef(null);
+  const contextIconPointerStartedRef = useRef(false);
+  const suppressContextIconClickRef = useRef(false);
   const suppressHeaderClickRef = useRef(false);
   const timersRef = useRef([]);
   const endRef = useRef(null);
@@ -470,13 +473,22 @@ export default function FloatingSmartDesk({ context }) {
     }, 1600);
   }
 
-  function startContextSelection() {
+  function startContextSelection(event) {
     clearTimers();
     setExpanded(true);
     setThinking(false);
     setListening(false);
     setSelectingContext(true);
     setSuggestionsVisible(false);
+
+    const point = event ? getPointerPoint(event) : null;
+    contextSelectionRef.current = point
+      ? {
+        startX: point.x,
+        startY: point.y,
+        moved: false,
+      }
+      : null;
   }
 
   function finishContextSelection(event) {
@@ -484,6 +496,7 @@ export default function FloatingSmartDesk({ context }) {
     const capturedElement = document.elementFromPoint(point.x, point.y);
     const capture = describeCapturedElement(capturedElement, t);
 
+    contextSelectionRef.current = null;
     setSelectingContext(false);
     setMessages((current) => [
       ...current,
@@ -495,6 +508,11 @@ export default function FloatingSmartDesk({ context }) {
         followUpText: capture.followUpText,
       },
     ]);
+  }
+
+  function cancelContextSelection() {
+    contextSelectionRef.current = null;
+    setSelectingContext(false);
   }
 
   function startDrag(event) {
@@ -573,19 +591,65 @@ export default function FloatingSmartDesk({ context }) {
     document.body.classList.add('smartdesk-selecting-context');
     document.body.style.cursor = purpleCrosshairCursor;
 
+    function handleMove(event) {
+      if (!contextSelectionRef.current) {
+        return;
+      }
+
+      const point = getPointerPoint(event);
+      const deltaX = point.x - contextSelectionRef.current.startX;
+      const deltaY = point.y - contextSelectionRef.current.startY;
+
+      if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+        contextSelectionRef.current.moved = true;
+      }
+    }
+
     function handleRelease(event) {
+      if (!contextSelectionRef.current?.moved) {
+        return;
+      }
+
+      suppressContextIconClickRef.current = true;
+      finishContextSelection(event);
+      window.setTimeout(() => {
+        suppressContextIconClickRef.current = false;
+      }, 0);
+    }
+
+    function handleClick(event) {
+      if (suppressContextIconClickRef.current || rootRef.current?.contains(event.target)) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
       finishContextSelection(event);
     }
 
-    window.addEventListener('mouseup', handleRelease, { once: true });
-    window.addEventListener('touchend', handleRelease, { once: true });
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        cancelContextSelection();
+      }
+    }
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('touchmove', handleMove, { passive: true });
+    window.addEventListener('mouseup', handleRelease);
+    window.addEventListener('touchend', handleRelease);
+    window.addEventListener('click', handleClick, true);
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.body.classList.remove('smartdesk-selecting-context');
       document.body.style.cursor = previousCursor;
       styleElement.remove();
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('touchmove', handleMove);
       window.removeEventListener('mouseup', handleRelease);
       window.removeEventListener('touchend', handleRelease);
+      window.removeEventListener('click', handleClick, true);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [selectingContext]);
 
@@ -752,13 +816,35 @@ export default function FloatingSmartDesk({ context }) {
             size="small"
             onMouseDown={(event) => {
               event.stopPropagation();
-              startContextSelection();
+              contextIconPointerStartedRef.current = true;
+              startContextSelection(event);
             }}
             onTouchStart={(event) => {
               event.stopPropagation();
-              startContextSelection();
+              contextIconPointerStartedRef.current = true;
+              startContextSelection(event);
             }}
-            onClick={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+
+              if (suppressContextIconClickRef.current) {
+                suppressContextIconClickRef.current = false;
+                contextIconPointerStartedRef.current = false;
+                return;
+              }
+
+              if (contextIconPointerStartedRef.current) {
+                contextIconPointerStartedRef.current = false;
+                return;
+              }
+
+              if (selectingContext) {
+                cancelContextSelection();
+                return;
+              }
+
+              startContextSelection(event);
+            }}
             sx={{
               width: 24,
               height: 24,
