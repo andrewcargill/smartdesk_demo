@@ -2,9 +2,9 @@ import { annaSchedule } from '../data/annaSchedule.js';
 import { annaTasks } from '../data/annaTasks.js';
 import { getCurrentDayEvents, getNextTeachingLesson, toMinutes } from './todayScheduleUtils.js';
 
-export function getSmartDeskHomeContext() {
-  const currentDayEvents = getCurrentDayEvents(annaSchedule);
-  const currentContext = annaSchedule.currentContext;
+export function getSmartDeskHomeContext(schedule = annaSchedule) {
+  const currentDayEvents = getCurrentDayEvents(schedule);
+  const currentContext = schedule.currentContext;
   const nextTeachingEvent = getNextTeachingLesson(currentDayEvents, currentContext.currentTime);
   const lessonCount = currentDayEvents.filter((event) => event.type === 'lesson').length;
   const followUpCount = annaTasks.filter((task) => (

@@ -7,8 +7,7 @@ import { getCurrentDayEvents, getCurrentScheduleDay } from './utils/todaySchedul
 
 function isMaths7AEvent(event) {
   return event.type === 'lesson'
-    && event.className === '7A'
-    && event.subject === 'Mathematics';
+    && event.originalId === 'mon-maths-7a';
 }
 
 export default function DemoShell({
@@ -16,12 +15,13 @@ export default function DemoShell({
   onOpenMaths7A,
   smartDeskContext,
   smartDeskDataStreams,
+  schedule = annaSchedule,
   smartDeskSurface = 'floating',
 }) {
   const { todayOpen, openToday, closeToday } = useConceptDemoDrawers();
-  const { currentContext } = annaSchedule;
-  const currentDay = getCurrentScheduleDay(annaSchedule);
-  const currentDayEvents = getCurrentDayEvents(annaSchedule);
+  const { currentContext } = schedule;
+  const currentDay = getCurrentScheduleDay(schedule);
+  const currentDayEvents = getCurrentDayEvents(schedule);
 
   if (!currentDay && typeof console !== 'undefined') {
     console.warn('No current day found for the SmartDesk Today drawer.');

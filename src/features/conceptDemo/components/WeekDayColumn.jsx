@@ -98,7 +98,7 @@ function getDisplayTitle(event) {
   const compactTitle = compactTitles[event.title] || event.title;
 
   if (event.type === 'lesson' && event.className) {
-    return `${event.className} · ${compactTitles[event.subject] || compactTitle}`;
+    return `${event.className} · ${event.subjectCode || compactTitles[event.subject] || compactTitle}`;
   }
 
   if (event.type === 'mentor' && event.className) {
@@ -109,8 +109,8 @@ function getDisplayTitle(event) {
 }
 
 function getFullWeekItemTitle(event) {
-  if (event.type === 'lesson' && event.className && event.subject) {
-    return `${event.className} · ${event.subject}`;
+  if (event.type === 'lesson' && event.className && (event.subjectTitle || event.subject)) {
+    return `${event.className} · ${event.subjectTitle || event.subject}`;
   }
 
   if (event.type === 'mentor' && event.className) {
@@ -185,7 +185,7 @@ function getEventRelation(event) {
 }
 
 function canOpenClass(event) {
-  return event.type === 'lesson' && event.className === '7A' && event.subject === 'Mathematics';
+  return event.type === 'lesson' && event.originalId === 'mon-maths-7a';
 }
 
 function canManageTeacherDiaryItem(event) {

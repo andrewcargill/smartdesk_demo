@@ -668,13 +668,13 @@ function WeekPositionStrip({ days, currentDayId, selectedDayId, onSelectDay }) {
   );
 }
 
-export default function MyWeekModal({ open, onClose, onOpenClass }) {
+export default function MyWeekModal({ open, onClose, onOpenClass, schedule = annaSchedule }) {
   const theme = useTheme();
   const mobile = useMediaQuery(theme.breakpoints.down('sm'));
   const addButtonRef = useRef(null);
   const dialogReturnRef = useRef(null);
   const addModeResetTimerRef = useRef(null);
-  const currentWeekContext = getCurrentWeekContext(annaSchedule);
+  const currentWeekContext = getCurrentWeekContext(schedule);
   const [selectedDayId, setSelectedDayId] = useState(currentWeekContext.currentDayId);
   const [activeRelation, setActiveRelation] = useState(null);
   const [weekOffset, setWeekOffset] = useState(0);
@@ -698,11 +698,11 @@ export default function MyWeekModal({ open, onClose, onOpenClass }) {
   const diaryEvents = useMemo(() => getDiaryItemsByType(diaryItems, TEACHER_DIARY_ITEM_TYPES.diaryEvent), [diaryItems]);
   const reminders = useMemo(() => getDiaryItemsByType(diaryItems, TEACHER_DIARY_ITEM_TYPES.reminder), [diaryItems]);
   const visibleWeekStart = shiftIsoDate(currentWeekContext.weekStart, weekOffset * 7);
-  const weekContext = useMemo(() => getCurrentWeekContext(annaSchedule, {
+  const weekContext = useMemo(() => getCurrentWeekContext(schedule, {
     weekStart: visibleWeekStart,
     diaryEvents,
     reminders,
-  }), [diaryEvents, reminders, visibleWeekStart]);
+  }), [diaryEvents, reminders, schedule, visibleWeekStart]);
   const currentDay = getCurrentDay(currentWeekContext.days, currentWeekContext.currentDayId);
   const weekDays = weekContext.days;
 

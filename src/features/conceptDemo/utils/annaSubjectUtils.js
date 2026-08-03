@@ -1,4 +1,6 @@
 import { getCurrentWeekContext } from './weekDataUtils.js';
+import { getSubjectDefinition } from '../data/subjectCatalogue.js';
+import { defaultConceptDemoLanguage, resolveLocalizedValue } from '../i18n/conceptDemoTranslations.js';
 
 const subjectLabels = {
   mathematics: { title: 'Mathematics', shortTitle: 'Maths', code: 'Ma' },
@@ -36,6 +38,24 @@ export function normaliseSubjectId(event) {
 
 export function getSubjectDisplay(event) {
   const subjectId = normaliseSubjectId(event);
+  const subjectDefinition = getSubjectDefinition(subjectId);
+
+  if (event.subjectTitle || event.subjectShortTitle || event.subjectCode) {
+    return {
+      title: event.subjectTitle || event.subject || event.title,
+      shortTitle: event.subjectShortTitle || event.subjectTitle || event.subject || event.title,
+      code: event.subjectCode || event.subjectShortTitle || event.subjectTitle || event.subject || event.title,
+    };
+  }
+
+  if (subjectDefinition) {
+    return {
+      title: resolveLocalizedValue(subjectDefinition.title, defaultConceptDemoLanguage, subjectId),
+      shortTitle: resolveLocalizedValue(subjectDefinition.shortTitle, defaultConceptDemoLanguage, subjectId),
+      code: resolveLocalizedValue(subjectDefinition.code, defaultConceptDemoLanguage, subjectId),
+    };
+  }
+
   return subjectLabels[subjectId] || {
     title: event.subject || event.title,
     shortTitle: event.subject || event.title,
@@ -102,14 +122,30 @@ export function getSubjectModules(schedule) {
   return Object.entries(groupedEvents)
     .map(([id, events]) => ({
       id,
-      title: subjectLabels[id]?.title || events[0].subject || events[0].title,
-      shortTitle: subjectLabels[id]?.shortTitle || events[0].subject || events[0].title,
+      title: getSubjectDisplay(events[0]).title,
+      shortTitle: getSubjectDisplay(events[0]).shortTitle,
       type: 'subject',
       classes: getUniqueClasses(events),
       lessonCount: events.length,
       nextLesson: getNextSubjectLesson(events, schedule.currentContext),
     }))
     .sort((first, second) => {
+      const selectedSubjectOrder = schedule.selectedSubjectIds || [];
+      const firstSelectedOrder = selectedSubjectOrder.indexOf(first.id);
+      const secondSelectedOrder = selectedSubjectOrder.indexOf(second.id);
+
+      if (firstSelectedOrder !== -1 || secondSelectedOrder !== -1) {
+        if (firstSelectedOrder === -1) {
+          return 1;
+        }
+
+        if (secondSelectedOrder === -1) {
+          return -1;
+        }
+
+        return firstSelectedOrder - secondSelectedOrder;
+      }
+
       const firstOrder = subjectOrder.indexOf(first.id);
       const secondOrder = subjectOrder.indexOf(second.id);
 

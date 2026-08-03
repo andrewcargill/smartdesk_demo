@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { ConceptDemoDrawerProvider, useConceptDemoDrawers } from './ConceptDemoDrawerContext.jsx';
 import { ConceptDemoLanguageProvider, useConceptDemoLanguage } from './ConceptDemoLanguageContext.jsx';
-import { ConceptDemoSubjectProvider } from './ConceptDemoSubjectContext.jsx';
+import { ConceptDemoSubjectProvider, useConceptDemoSubjects } from './ConceptDemoSubjectContext.jsx';
 import DemoShell from './DemoShell.jsx';
 import English8AModule from './components/English8AModule.jsx';
 import FocusedWorkspace from './components/FocusedWorkspace.jsx';
@@ -22,7 +22,7 @@ import MyWeekModal from './components/MyWeekModal.jsx';
 import NotebookModal from './components/NotebookModal.jsx';
 import SmartDeskDrawer from './components/SmartDeskDrawer.jsx';
 import SmartDeskStore from './components/SmartDeskStore.jsx';
-import { annaSchedule } from './data/annaSchedule.js';
+import { buildDemoSchedule } from './data/demoScheduleBuilder.js';
 import { maths7APlanningBlocks } from './data/maths7APlanning.js';
 import { getTeachingUnitForPlanningBlock, normalizeMathsPlanningBlock } from './data/mathsCurriculum.js';
 import { getSmartDeskHomeContext } from './utils/smartDeskContextUtils.js';
@@ -208,9 +208,9 @@ function getNextTeachingEvent(schedule) {
     });
 }
 
-function getMaths7ALesson() {
-  return getCurrentWeekContext(annaSchedule).days
-    .find((day) => day.id === annaSchedule.currentContext.currentDayId)
+function getMaths7ALesson(schedule) {
+  return getCurrentWeekContext(schedule).days
+    .find((day) => day.id === schedule.currentContext.currentDayId)
     ?.events.find((event) => event.originalId === 'mon-maths-7a');
 }
 
@@ -545,15 +545,17 @@ function LanguageToggle() {
 }
 
 function HomeScreenContent() {
-  const { t } = useConceptDemoLanguage();
+  const { language, t } = useConceptDemoLanguage();
+  const { selectedSubjectIds } = useConceptDemoSubjects();
   const [activeWorkspace, setActiveWorkspace] = useState(null);
   const maths7ATriggerRef = useRef(null);
-  const subjectModules = useMemo(() => getSubjectModules(annaSchedule), []);
-  const nextTeachingEvent = useMemo(() => getNextTeachingEvent(annaSchedule), []);
-  const maths7ALesson = useMemo(() => getMaths7ALesson(), []);
+  const schedule = useMemo(() => buildDemoSchedule({ selectedSubjectIds, language }), [language, selectedSubjectIds]);
+  const subjectModules = useMemo(() => getSubjectModules(schedule), [schedule]);
+  const nextTeachingEvent = useMemo(() => getNextTeachingEvent(schedule), [schedule]);
+  const maths7ALesson = useMemo(() => getMaths7ALesson(schedule), [schedule]);
   const maths7ACurrentPlanningTitle = useMemo(() => getMaths7ACurrentPlanningTitle(), [activeWorkspace]);
   const smartDeskContext = useMemo(() => {
-    const homeContext = getSmartDeskHomeContext();
+    const homeContext = getSmartDeskHomeContext(schedule);
 
     if (activeWorkspace?.type === 'class' && activeWorkspace.classId === '7a') {
       return {
@@ -577,7 +579,7 @@ function HomeScreenContent() {
     }
 
     return homeContext;
-  }, [activeWorkspace]);
+  }, [activeWorkspace, schedule]);
   const subjectWorkspaceActive = activeWorkspace?.type === 'class'
     && (
       (activeWorkspace.subjectId === 'mathematics' && ['7a', '7c'].includes(activeWorkspace.classId))
@@ -587,7 +589,7 @@ function HomeScreenContent() {
     && activeWorkspace.subjectId === 'mathematics'
     && ['7a', '7c'].includes(activeWorkspace.classId);
   const smartDeskDataStreams = useMemo(() => ({
-    schedule: annaSchedule,
+    schedule,
     subjects: subjectModules,
     nextTeachingEvent,
     maths7A: {
@@ -595,7 +597,7 @@ function HomeScreenContent() {
       lesson: maths7ALesson,
       workspaceOpen: mathsWorkspaceActive,
     },
-  }), [maths7ACurrentPlanningTitle, maths7ALesson, mathsWorkspaceActive, nextTeachingEvent, subjectModules]);
+  }), [maths7ACurrentPlanningTitle, maths7ALesson, mathsWorkspaceActive, nextTeachingEvent, schedule, subjectModules]);
   const {
     weekOpen,
     openWeek,
@@ -735,6 +737,7 @@ function HomeScreenContent() {
   return (
     <DemoShell
       onOpenMaths7A={openMaths7A}
+      schedule={schedule}
       smartDeskContext={smartDeskContext}
       smartDeskDataStreams={smartDeskDataStreams}
       smartDeskSurface={smartDeskSurface}
@@ -943,7 +946,7 @@ function HomeScreenContent() {
           <Maths7AModule onBackToWeek={backToWeek} onClose={closeWorkspace} />
         )}
       </FocusedWorkspace>
-      <MyWeekModal open={weekOpen} onClose={closeWeek} onOpenClass={openMaths7A} />
+      <MyWeekModal open={weekOpen} onClose={closeWeek} onOpenClass={openMaths7A} schedule={schedule} />
       <NotebookModal open={notebookOpen} onClose={() => setNotebookOpen(false)} />
       <MentorModal open={mentorOpen} onClose={() => setMentorOpen(false)} />
       {smartDeskStoreOpen && (
