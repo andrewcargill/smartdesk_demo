@@ -7,12 +7,59 @@ import { Box, ButtonBase, IconButton, Paper, Stack, Tooltip, Typography } from '
 const purple = '#9c28af';
 const darkText = '#17151a';
 
-function formatDemoDate(date) {
+function fallbackT(key, values = {}) {
+  const fallbacks = {
+    'learningModule.classPicture.noSavedDate': 'No saved date',
+    'learningModule.classPicture.assessmentFallback': 'Assessment',
+    'learningModule.classPicture.studentAbsentAssessment': 'Student marked as absent in assessment',
+    'learningModule.classPicture.scorePassMax': 'Score: {{score}} · Pass: {{pass}} · Max: {{max}}',
+    'learningModule.classPicture.notPassed': 'Not passed',
+    'learningModule.classPicture.otherObservations': 'Other observations',
+    'learningModule.classPicture.noObservationFocuses': 'No observation focuses configured.',
+    'learningModule.classPicture.observationFocusTitle_one': '{{label}} · {{count}} observation',
+    'learningModule.classPicture.observationFocusTitle_other': '{{label}} · {{count}} observations',
+    'learningModule.classPicture.observationFocusNoObservation': '{{label}} · no observation yet',
+    'learningModule.classPicture.teacherRecordedLevelsOverTime': 'Teacher-recorded levels over time',
+    'learningModule.classPicture.noObservationFocusSelected': 'No observation focus selected.',
+    'learningModule.classPicture.noObservationsForFocus': 'No observations recorded for this focus in this unit.',
+    'learningModule.classPicture.noLevelsForFocus': 'No recorded levels for this focus in this unit.',
+    'learningModule.classPicture.oneRecordedPoint': 'One recorded point - no trend is shown.',
+    'learningModule.classPicture.otherObservationsRecordHint': 'Other observations are shown as records rather than a shared level timeline.',
+    'learningModule.classPicture.closeUnitView': 'Close {{unit}} view',
+    'learningModule.classPicture.assessments': 'Assessments',
+    'learningModule.classPicture.purplePercentage': 'Purple · percentage',
+    'learningModule.classPicture.absent': 'Absent',
+    'learningModule.classPicture.latest': 'Latest',
+    'learningModule.classPicture.highest': 'Highest',
+    'learningModule.classPicture.average': 'Average',
+    'learningModule.classPicture.change': 'Change',
+    'learningModule.classPicture.points': '{{count}} pts',
+    'learningModule.classPicture.observations': 'Observations',
+    'learningModule.classPicture.focusTrendOverTime': 'Focus trend over time',
+    'learningModule.classPicture.observationFocus': 'Observation focus',
+    'learningModule.classPicture.configuredFocusRepresented_one': '{{represented}}/{{total}} configured focus represented',
+    'learningModule.classPicture.configuredFocusRepresented_other': '{{represented}}/{{total}} configured focuses represented',
+    'learningModule.classPicture.otherObservationSummary_one': '{{count}} other observation',
+    'learningModule.classPicture.otherObservationSummary_other': '{{count}} other observations',
+  };
+  const template = fallbacks[key] || key;
+  return template.replace(/\{\{(\w+)\}\}/g, (match, name) => (values[name] == null ? match : String(values[name])));
+}
+
+function getLearningModuleLocale(language) {
+  return language === 'sv' ? 'sv-SE' : 'en-GB';
+}
+
+function getCountLabel(t, baseKey, count, values = {}) {
+  return t(`${baseKey}_${count === 1 ? 'one' : 'other'}`, { count, ...values });
+}
+
+function formatDemoDate(date, language = 'en', t = fallbackT) {
   if (!date) {
-    return 'No saved date';
+    return t('learningModule.classPicture.noSavedDate');
   }
 
-  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(new Date(`${date}T12:00:00`));
+  return new Intl.DateTimeFormat(getLearningModuleLocale(language), { day: 'numeric', month: 'short' }).format(new Date(`${date}T12:00:00`));
 }
 
 function getAssessmentPercentage(item) {
@@ -25,8 +72,8 @@ function getAssessmentPercentage(item) {
   return Number.isFinite(percentage) ? Math.max(0, Math.min(100, percentage)) : null;
 }
 
-function getAssessmentTitle(item) {
-  return item.title || item.assessmentTitle || item.label || 'Assessment';
+function getAssessmentTitle(item, t = fallbackT) {
+  return item.title || item.assessmentTitle || item.label || t('learningModule.classPicture.assessmentFallback');
 }
 
 function getSortedAssessments(summary) {
@@ -68,17 +115,21 @@ function formatAssessmentHoverValue(value, fallback = '-') {
   return Number.isInteger(numberValue) ? String(numberValue) : String(numberValue);
 }
 
-function getAssessmentPieHoverText(assessment) {
+function getAssessmentPieHoverText(assessment, t = fallbackT) {
   if (assessment.absent) {
-    return 'Student marked as absent in assessment';
+    return t('learningModule.classPicture.studentAbsentAssessment');
   }
 
   const score = assessment.actualValue ?? assessment.rawResult ?? assessment.score ?? assessment.percentage;
   const passScore = assessment.passScore ?? assessment.pass;
   const maxScore = assessment.maxScore ?? assessment.max;
-  const text = `Score: ${formatAssessmentHoverValue(score)} · Pass: ${formatAssessmentHoverValue(passScore)} · Max: ${formatAssessmentHoverValue(maxScore)}`;
+  const text = t('learningModule.classPicture.scorePassMax', {
+    score: formatAssessmentHoverValue(score),
+    pass: formatAssessmentHoverValue(passScore),
+    max: formatAssessmentHoverValue(maxScore),
+  });
 
-  return isAssessmentNotPassed(assessment) ? `Not passed - ${text}` : text;
+  return isAssessmentNotPassed(assessment) ? `${t('learningModule.classPicture.notPassed')} - ${text}` : text;
 }
 
 function getObservationTimestamp(item) {
@@ -110,7 +161,7 @@ function getLevelMap(levels) {
   return new Map((levels || []).map((level) => [level.id, level]));
 }
 
-function normaliseObservationFocuses({ configuredFocuses = [], observations = [], levels = [] }) {
+function normaliseObservationFocuses({ configuredFocuses = [], observations = [], levels = [], t = fallbackT }) {
   const levelById = getLevelMap(levels);
   const configuredFocusById = new Map();
 
@@ -130,7 +181,7 @@ function normaliseObservationFocuses({ configuredFocuses = [], observations = []
   const otherFocus = {
     focusId: 'other-observations',
     focusIds: [],
-    focusLabel: 'Other observations',
+    focusLabel: t('learningModule.classPicture.otherObservations'),
     observations: [],
     count: 0,
     isOther: true,
@@ -189,10 +240,10 @@ function normaliseObservationFocuses({ configuredFocuses = [], observations = []
   };
 }
 
-function AssessmentPie({ assessment, size = 86 }) {
+function AssessmentPie({ assessment, size = 86, t = fallbackT }) {
   const passPercentage = getAssessmentPassPercentage(assessment);
   const passRadians = passPercentage !== null ? (passPercentage / 100) * Math.PI * 2 : null;
-  const hoverText = getAssessmentPieHoverText(assessment);
+  const hoverText = getAssessmentPieHoverText(assessment, t);
   const passMarker = passRadians !== null
     ? (() => {
       const radial = { x: Math.sin(passRadians), y: -Math.cos(passRadians) };
@@ -263,11 +314,11 @@ function getAssessmentStats(assessments) {
   return { highest, latest, average, movement };
 }
 
-function ObservationFocusSelector({ options, activeId, onActiveIdChange }) {
+function ObservationFocusSelector({ options, activeId, onActiveIdChange, t = fallbackT }) {
   if (!options.length) {
     return (
       <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
-        No observation focuses configured.
+        {t('learningModule.classPicture.noObservationFocuses')}
       </Typography>
     );
   }
@@ -284,7 +335,9 @@ function ObservationFocusSelector({ options, activeId, onActiveIdChange }) {
             onMouseEnter={() => onActiveIdChange(option.focusId)}
             onFocus={() => onActiveIdChange(option.focusId)}
             onClick={() => onActiveIdChange(option.focusId)}
-            title={`${option.focusLabel}${hasObservation ? ` · ${option.count} observation${option.count === 1 ? '' : 's'}` : ' · no observation yet'}`}
+            title={hasObservation
+              ? getCountLabel(t, 'learningModule.classPicture.observationFocusTitle', option.count, { label: option.focusLabel })
+              : t('learningModule.classPicture.observationFocusNoObservation', { label: option.focusLabel })}
             sx={{
               width: '100%',
               p: 0.72,
@@ -332,7 +385,7 @@ function getObservationRecordKey(item, index = 0) {
   return item.recordKey || item.id || `${item.date || 'no-date'}-${item.levelId || 'no-level'}-${index}`;
 }
 
-function ObservationRecordsList({ observations, activeRecordId, onActiveRecordChange }) {
+function ObservationRecordsList({ observations, activeRecordId, onActiveRecordChange, language = 'en', t = fallbackT }) {
   return (
     <Stack spacing={0}>
       {observations.map((item, index) => {
@@ -371,7 +424,7 @@ function ObservationRecordsList({ observations, activeRecordId, onActiveRecordCh
             }}
           >
             <Typography sx={{ color: 'text.secondary', fontSize: 11.6, fontWeight: 760 }}>
-              {formatDemoDate(item.date)}
+              {formatDemoDate(item.date, language, t)}
             </Typography>
             <Typography sx={{ color: darkText, fontSize: 11.8, fontWeight: 820 }}>
               {item.levelLabel || ''}
@@ -386,7 +439,7 @@ function ObservationRecordsList({ observations, activeRecordId, onActiveRecordCh
   );
 }
 
-function ObservationLevelChartGraphic({ observations, levels, activeRecordId, onActiveRecordChange }) {
+function ObservationLevelChartGraphic({ observations, levels, activeRecordId, onActiveRecordChange, language = 'en', t = fallbackT }) {
   const graphLeft = 28;
   const graphRight = 98;
   const graphTop = 9;
@@ -410,7 +463,7 @@ function ObservationLevelChartGraphic({ observations, levels, activeRecordId, on
   const linePoints = points.map((point) => `${point.x},${point.y}`).join(' ');
 
   return (
-    <Box component="svg" role="img" aria-label="Teacher-recorded levels over time" viewBox="0 0 100 54" sx={{ width: '100%', height: { xs: 165, lg: 220 }, display: 'block', overflow: 'visible', '& circle': { transition: 'r 140ms ease, fill 140ms ease' }, '& circle:hover': { r: 2.7, fill: purple } }}>
+    <Box component="svg" role="img" aria-label={t('learningModule.classPicture.teacherRecordedLevelsOverTime')} viewBox="0 0 100 54" sx={{ width: '100%', height: { xs: 165, lg: 220 }, display: 'block', overflow: 'visible', '& circle': { transition: 'r 140ms ease, fill 140ms ease' }, '& circle:hover': { r: 2.7, fill: purple } }}>
       {levels.map((level) => {
         const levelPosition = (level.order - 1) / Math.max(levelCount - 1, 1);
         const y = graphBottom - levelPosition * (graphBottom - graphTop);
@@ -435,7 +488,7 @@ function ObservationLevelChartGraphic({ observations, levels, activeRecordId, on
             key={point.pointId}
             role="button"
             tabIndex={0}
-            aria-label={`${formatDemoDate(point.item.date)} ${point.item.levelLabel}${point.item.note ? ` ${point.item.note}` : ''}`}
+            aria-label={`${formatDemoDate(point.item.date, language, t)} ${point.item.levelLabel}${point.item.note ? ` ${point.item.note}` : ''}`}
             onMouseEnter={() => onActiveRecordChange(point.pointId)}
             onFocus={() => onActiveRecordChange(point.pointId)}
             onClick={() => onActiveRecordChange(point.pointId)}
@@ -447,7 +500,7 @@ function ObservationLevelChartGraphic({ observations, levels, activeRecordId, on
             }}
           >
             <circle cx={point.x} cy={point.y} r={isActive ? '2.1' : '1.8'} fill={purple} stroke={isActive ? 'rgba(156, 40, 175, 0.22)' : '#fff'} strokeWidth={isActive ? '1.6' : '0.9'}>
-              <title>{`${formatDemoDate(point.item.date)} · ${point.item.levelLabel}${point.item.note ? ` · ${point.item.note}` : ''}`}</title>
+              <title>{`${formatDemoDate(point.item.date, language, t)} · ${point.item.levelLabel}${point.item.note ? ` · ${point.item.note}` : ''}`}</title>
             </circle>
           </g>
         );
@@ -456,12 +509,12 @@ function ObservationLevelChartGraphic({ observations, levels, activeRecordId, on
   );
 }
 
-function SelectedObservationFocusDetails({ focus, validLevelObservations, activeRecordId, onActiveRecordChange }) {
+function SelectedObservationFocusDetails({ focus, validLevelObservations, activeRecordId, onActiveRecordChange, language = 'en', t = fallbackT }) {
   if (!focus) {
     return (
       <Paper elevation={0} sx={{ p: 1.1, borderRadius: '12px', border: '1px solid rgba(23, 21, 26, 0.07)', bgcolor: '#fff' }}>
         <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
-          No observation focus selected.
+          {t('learningModule.classPicture.noObservationFocusSelected')}
         </Typography>
       </Paper>
     );
@@ -471,35 +524,35 @@ function SelectedObservationFocusDetails({ focus, validLevelObservations, active
     <Paper elevation={0} sx={{ p: { xs: 1, sm: 1.15 }, borderRadius: '12px', border: '1px solid rgba(23, 21, 26, 0.07)', bgcolor: '#fff' }}>
       <Stack spacing={0.9}>
         <Typography sx={{ color: 'text.secondary', fontSize: 12.2 }}>
-          Teacher-recorded levels over time
+          {t('learningModule.classPicture.teacherRecordedLevelsOverTime')}
         </Typography>
 
         {focus.count === 0 ? (
           <Paper elevation={0} sx={{ p: 1.2, borderRadius: '11px', border: '1px dashed rgba(23, 21, 26, 0.14)', bgcolor: 'rgba(23, 21, 26, 0.015)' }}>
             <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>
-              No observations recorded for this focus in this unit.
+              {t('learningModule.classPicture.noObservationsForFocus')}
             </Typography>
           </Paper>
         ) : focus.isOther ? (
-          <ObservationRecordsList observations={focus.observations} activeRecordId={activeRecordId} onActiveRecordChange={onActiveRecordChange} />
+          <ObservationRecordsList observations={focus.observations} activeRecordId={activeRecordId} onActiveRecordChange={onActiveRecordChange} language={language} t={t} />
         ) : validLevelObservations.length ? (
-          <ObservationRecordsList observations={focus.observations} activeRecordId={activeRecordId} onActiveRecordChange={onActiveRecordChange} />
+          <ObservationRecordsList observations={focus.observations} activeRecordId={activeRecordId} onActiveRecordChange={onActiveRecordChange} language={language} t={t} />
         ) : (
           <Paper elevation={0} sx={{ p: 1.2, borderRadius: '11px', border: '1px dashed rgba(23, 21, 26, 0.14)', bgcolor: 'rgba(23, 21, 26, 0.015)' }}>
             <Typography sx={{ color: 'text.secondary', fontSize: 12.2 }}>
-              No recorded levels for this focus in this unit.
+              {t('learningModule.classPicture.noLevelsForFocus')}
             </Typography>
           </Paper>
         )}
 
         {validLevelObservations.length === 1 && (
           <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
-            One recorded point - no trend is shown.
+            {t('learningModule.classPicture.oneRecordedPoint')}
           </Typography>
         )}
         {focus.isOther && focus.count > 1 && (
           <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
-            Other observations are shown as records rather than a shared level timeline.
+            {t('learningModule.classPicture.otherObservationsRecordHint')}
           </Typography>
         )}
       </Stack>
@@ -514,6 +567,8 @@ export default function StudentUnitInsightPanel({
   configuredFocuses = [],
   levels = [],
   onClose,
+  language = 'en',
+  t = fallbackT,
 }) {
   const panelUnit = summary?.unit || unit || {};
   const assessments = getSortedAssessments(summary || {});
@@ -522,7 +577,8 @@ export default function StudentUnitInsightPanel({
     configuredFocuses,
     observations: summary?.observations || [],
     levels,
-  }), [configuredFocuses, levels, summary]);
+    t,
+  }), [configuredFocuses, levels, summary, t]);
   const observationFocusOptions = observationFocusModel.options;
   const firstObservedFocusId = observationFocusOptions.find((option) => option.count > 0)?.focusId || observationFocusOptions[0]?.focusId || '';
   const [activeObservationFocusId, setActiveObservationFocusId] = useState(firstObservedFocusId);
@@ -559,7 +615,7 @@ export default function StudentUnitInsightPanel({
             </Box>
             <IconButton
               type="button"
-              aria-label={`Close ${panelUnit.label || panelUnit.title} view`}
+              aria-label={t('learningModule.classPicture.closeUnitView', { unit: panelUnit.label || panelUnit.title })}
               onClick={onClose}
               size="small"
               sx={{
@@ -578,26 +634,26 @@ export default function StudentUnitInsightPanel({
           <Paper elevation={0} sx={{ p: 1.35, borderRadius: '14px', border: `1px solid ${purple}`, bgcolor: '#fff' }}>
             <Stack spacing={1.2}>
               <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="baseline">
-                <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 900 }}>Assessments</Typography>
-                <Typography sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 720 }}>Purple · percentage</Typography>
+                <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 900 }}>{t('learningModule.classPicture.assessments')}</Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 720 }}>{t('learningModule.classPicture.purplePercentage')}</Typography>
               </Stack>
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.35fr) minmax(260px, 0.65fr)' }, gap: 1.4, alignItems: 'start' }}>
                 <Stack direction="row" spacing={1.4} flexWrap="wrap" useFlexGap alignItems="flex-start">
                   {assessments.length ? assessments.map((assessment) => (
                     <Stack key={assessment.id || assessment.date} spacing={0.65} sx={{ width: 126 }}>
-                      <AssessmentPie assessment={assessment} />
-                      <Tooltip title={getAssessmentPieHoverText(assessment)} arrow>
+                      <AssessmentPie assessment={assessment} t={t} />
+                      <Tooltip title={getAssessmentPieHoverText(assessment, t)} arrow>
                         <Stack direction="row" spacing={0.35} alignItems="center">
                           {isAssessmentNotPassed(assessment) && (
                             <ErrorOutlineIcon sx={{ color: '#d32f2f', fontSize: 14, flexShrink: 0 }} />
                           )}
                           <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 850, lineHeight: 1.2, minWidth: 0 }}>
-                            {getAssessmentTitle(assessment)}
+                            {getAssessmentTitle(assessment, t)}
                           </Typography>
                         </Stack>
                       </Tooltip>
                       <Typography sx={{ color: 'text.secondary', fontSize: 11.7 }}>
-                        {assessment.absent ? 'Absent' : `${assessment.percentage}%`} · {formatDemoDate(assessment.date)}
+                        {assessment.absent ? t('learningModule.classPicture.absent') : `${assessment.percentage}%`} · {formatDemoDate(assessment.date, language, t)}
                       </Typography>
                     </Stack>
                   )) : (
@@ -617,10 +673,10 @@ export default function StudentUnitInsightPanel({
                   }}
                 >
                   {[
-                    assessmentStats.latest ? ['Latest', `${assessmentStats.latest.percentage}% · ${getAssessmentTitle(assessmentStats.latest)}`] : null,
-                    assessmentStats.highest ? ['Highest', `${assessmentStats.highest.percentage}% · ${getAssessmentTitle(assessmentStats.highest)}`] : null,
-                    assessmentStats.average !== null ? ['Average', `${assessmentStats.average}%`] : null,
-                    assessmentStats.movement !== null ? ['Change', `${assessmentStats.movement > 0 ? '+' : ''}${assessmentStats.movement} pts`] : null,
+                    assessmentStats.latest ? [t('learningModule.classPicture.latest'), `${assessmentStats.latest.percentage}% · ${getAssessmentTitle(assessmentStats.latest, t)}`] : null,
+                    assessmentStats.highest ? [t('learningModule.classPicture.highest'), `${assessmentStats.highest.percentage}% · ${getAssessmentTitle(assessmentStats.highest, t)}`] : null,
+                    assessmentStats.average !== null ? [t('learningModule.classPicture.average'), `${assessmentStats.average}%`] : null,
+                    assessmentStats.movement !== null ? [t('learningModule.classPicture.change'), t('learningModule.classPicture.points', { count: `${assessmentStats.movement > 0 ? '+' : ''}${assessmentStats.movement}` })] : null,
                   ].filter(Boolean).map(([label, value]) => (
                     <Box key={label} sx={{ minWidth: 0 }}>
                       <Typography sx={{ color: 'text.secondary', fontSize: 11.6, fontWeight: 740 }}>{label}</Typography>
@@ -635,23 +691,26 @@ export default function StudentUnitInsightPanel({
           <Paper elevation={0} sx={{ p: 1.35, borderRadius: '14px', border: `1px solid ${purple}`, bgcolor: '#fff' }}>
             <Stack spacing={1.2}>
               <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="baseline">
-                <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 900 }}>Observations</Typography>
-                <Typography sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 720 }}>Focus trend over time</Typography>
+                <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 900 }}>{t('learningModule.classPicture.observations')}</Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 720 }}>{t('learningModule.classPicture.focusTrendOverTime')}</Typography>
               </Stack>
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(260px, 300px) minmax(0, 1fr) minmax(0, 1fr)' }, gap: 1.4, alignItems: 'start' }}>
                 <Paper elevation={0} sx={{ p: 1, borderRadius: '12px', border: '1px solid rgba(23, 21, 26, 0.07)', bgcolor: '#fff' }}>
                   <Stack spacing={0.85}>
-                    <Typography sx={{ color: darkText, fontSize: 12.8, fontWeight: 880 }}>Observation focus</Typography>
-                    <ObservationFocusSelector options={observationFocusOptions} activeId={activeObservationFocus?.focusId || ''} onActiveIdChange={setActiveObservationFocusId} />
+                    <Typography sx={{ color: darkText, fontSize: 12.8, fontWeight: 880 }}>{t('learningModule.classPicture.observationFocus')}</Typography>
+                    <ObservationFocusSelector options={observationFocusOptions} activeId={activeObservationFocus?.focusId || ''} onActiveIdChange={setActiveObservationFocusId} t={t} />
                     <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
-                      {observationFocusModel.representedConfiguredFocusCount}/{observationFocusModel.configuredFocusCount} configured focus{observationFocusModel.configuredFocusCount === 1 ? '' : 'es'} represented
-                      {!!observationFocusModel.otherObservationCount && ` · ${observationFocusModel.otherObservationCount} other observation${observationFocusModel.otherObservationCount === 1 ? '' : 's'}`}
+                      {getCountLabel(t, 'learningModule.classPicture.configuredFocusRepresented', observationFocusModel.configuredFocusCount, {
+                        represented: observationFocusModel.representedConfiguredFocusCount,
+                        total: observationFocusModel.configuredFocusCount,
+                      })}
+                      {!!observationFocusModel.otherObservationCount && ` · ${getCountLabel(t, 'learningModule.classPicture.otherObservationSummary', observationFocusModel.otherObservationCount)}`}
                     </Typography>
                   </Stack>
                 </Paper>
-                <SelectedObservationFocusDetails focus={activeObservationFocus} validLevelObservations={validLevelObservations} activeRecordId={activeObservationRecordId} onActiveRecordChange={setActiveObservationRecordId} />
+                <SelectedObservationFocusDetails focus={activeObservationFocus} validLevelObservations={validLevelObservations} activeRecordId={activeObservationRecordId} onActiveRecordChange={setActiveObservationRecordId} language={language} t={t} />
                 {!!validLevelObservations.length && (
-                  <ObservationLevelChartGraphic observations={validLevelObservations} levels={levels} activeRecordId={activeObservationRecordId} onActiveRecordChange={setActiveObservationRecordId} />
+                  <ObservationLevelChartGraphic observations={validLevelObservations} levels={levels} activeRecordId={activeObservationRecordId} onActiveRecordChange={setActiveObservationRecordId} language={language} t={t} />
                 )}
               </Box>
             </Stack>

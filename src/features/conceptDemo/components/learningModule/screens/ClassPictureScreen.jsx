@@ -33,12 +33,20 @@ const learningObservationChoices = [
   { id: '+', label: '+' },
 ];
 
-function formatDemoDate(date) {
+function getLearningModuleLocale(language) {
+  return language === 'sv' ? 'sv-SE' : 'en-GB';
+}
+
+function formatDemoDate(date, language = 'en', t = null) {
   if (!date) {
-    return 'No saved date';
+    return t ? t('learningModule.classPicture.noSavedDate') : 'No saved date';
   }
 
-  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(new Date(`${date}T12:00:00`));
+  return new Intl.DateTimeFormat(getLearningModuleLocale(language), { day: 'numeric', month: 'short' }).format(new Date(`${date}T12:00:00`));
+}
+
+function getCountLabel(t, baseKey, count) {
+  return t(`${baseKey}_${count === 1 ? 'one' : 'other'}`, { count });
 }
 
 function sortByDate(items, direction = 'asc') {
@@ -95,19 +103,19 @@ function buildStudentUnitSummary(evidenceItems, studentId, teachingUnitId) {
   };
 }
 
-function buildAssessmentAlerts(evidenceItems, studentId) {
+function buildAssessmentAlerts(evidenceItems, studentId, language, t) {
   return getAssessmentResultsForStudent(evidenceItems, studentId)
     .filter((result) => result.absent || result.warning || result.passed === false)
     .map((result) => ({
       ...result,
       type: result.absent ? 'absent' : 'not-passed',
       label: result.absent
-        ? `${formatDemoDate(result.date)} · Absent · ${result.title}`
-        : `${formatDemoDate(result.date)} · Not passed · ${result.title}`,
+        ? t('learningModule.classPicture.assessmentAlertAbsent', { date: formatDemoDate(result.date, language, t), title: result.title })
+        : t('learningModule.classPicture.assessmentAlertNotPassed', { date: formatDemoDate(result.date, language, t), title: result.title }),
     }));
 }
 
-function EvidenceMarker({ summary }) {
+function EvidenceMarker({ summary, t }) {
   const assessments = (summary.assessments || [])
     .filter((assessment) => Number.isFinite(Number(assessment.percentage)))
     .sort((first, second) => (first.date || '').localeCompare(second.date || ''))
@@ -148,7 +156,7 @@ function EvidenceMarker({ summary }) {
         )}
       </Stack>
       <Box
-        title={`${observationCount} observation${observationCount === 1 ? '' : 's'}`}
+        title={getCountLabel(t, 'learningModule.classPicture.evidenceMarkerObservations', observationCount)}
         sx={{
           height: 5,
           borderRadius: 999,
@@ -189,7 +197,7 @@ function getLearningObservationAreas(t) {
   ];
 }
 
-function LearningObservationTimelineGraph({ observations, activeObservationId, onActiveObservationChange, learningObservationAreas }) {
+function LearningObservationTimelineGraph({ observations, activeObservationId, onActiveObservationChange, learningObservationAreas, language, t }) {
   const sortedObservations = sortByDate(observations || [], 'asc');
   const pointEvents = sortedObservations.flatMap((observation) => (
     learningObservationAreas
@@ -211,7 +219,7 @@ function LearningObservationTimelineGraph({ observations, activeObservationId, o
   return (
     <Paper elevation={0} sx={{ p: 1.15, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff', minHeight: '100%' }}>
       <Stack spacing={0.8}>
-        <Typography sx={{ color: darkText, fontSize: 13.6, fontWeight: 880 }}>Learning observation pattern</Typography>
+        <Typography sx={{ color: darkText, fontSize: 13.6, fontWeight: 880 }}>{t('learningModule.classPicture.learningObservationPattern')}</Typography>
         <Stack spacing={0.65}>
           {learningObservationAreas.map((area) => {
             const areaObservations = pointEvents.filter((observation) => observation.areaId === area.id);
@@ -232,7 +240,7 @@ function LearningObservationTimelineGraph({ observations, activeObservationId, o
                 key={area.id}
                 component="svg"
                 role="img"
-                aria-label={`${area.label} learning observations plotted over time`}
+                aria-label={t('learningModule.classPicture.learningObservationTimelineAria', { area: area.label })}
                 viewBox="0 0 220 58"
                 sx={{
                   width: '100%',
@@ -268,7 +276,7 @@ function LearningObservationTimelineGraph({ observations, activeObservationId, o
                       onFocus={() => onActiveObservationChange?.(point)}
                       onMouseDown={(event) => event.preventDefault()}
                     >
-                      <title>{`${formatDemoDate(point.date)} · ${area.label} · ${point.choiceId}${point.note ? ` · ${point.note}` : ''}`}</title>
+                      <title>{`${formatDemoDate(point.date, language, t)} · ${area.label} · ${point.choiceId}${point.note ? ` · ${point.note}` : ''}`}</title>
                     </circle>
                   );
                 })}
@@ -283,14 +291,19 @@ function LearningObservationTimelineGraph({ observations, activeObservationId, o
           })}
         </Stack>
         <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
-          {pointEvents.length ? `${formatDemoDate(pointEvents[0].date)} to ${formatDemoDate(pointEvents[pointEvents.length - 1].date)}` : 'No learning observations yet'}
+          {pointEvents.length
+            ? t('learningModule.classPicture.dateRange', {
+              start: formatDemoDate(pointEvents[0].date, language, t),
+              end: formatDemoDate(pointEvents[pointEvents.length - 1].date, language, t),
+            })
+            : t('learningModule.classPicture.noLearningObservationsYet')}
         </Typography>
       </Stack>
     </Paper>
   );
 }
 
-function LearningObservationHistoryPanel({ observations, activeObservation, learningObservationAreas }) {
+function LearningObservationHistoryPanel({ observations, activeObservation, learningObservationAreas, language, t }) {
   const sortedObservations = sortByDate(observations || [], 'desc');
   const latestByAreaId = learningObservationAreas.reduce((itemsByArea, area) => {
     itemsByArea[area.id] = sortedObservations.find((observation) => observation[area.id]) || null;
@@ -299,7 +312,7 @@ function LearningObservationHistoryPanel({ observations, activeObservation, lear
 
   return (
     <Paper elevation={0} sx={{ p: 1.15, height: 310, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
-      <Typography sx={{ color: darkText, fontSize: 13.6, fontWeight: 880 }}>Learning observations</Typography>
+      <Typography sx={{ color: darkText, fontSize: 13.6, fontWeight: 880 }}>{t('learningModule.classPicture.learningObservations')}</Typography>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'repeat(3, minmax(0, 1fr))' }, gap: 0.8, mt: 0.9 }}>
         {learningObservationAreas.map((area) => {
           const latestObservation = latestByAreaId[area.id];
@@ -310,10 +323,10 @@ function LearningObservationHistoryPanel({ observations, activeObservation, lear
               <Typography sx={{ color: darkText, fontSize: 12.6, fontWeight: 850 }}>{area.label}</Typography>
               <Stack direction="row" spacing={0.75} alignItems="center" justifyContent="space-between" sx={{ mt: 0.45 }}>
                 <Typography sx={{ color: 'text.secondary', fontSize: 11.8, fontWeight: 650 }}>
-                  {latestObservation ? formatDemoDate(latestObservation.date) : 'No entry yet'}
+                  {latestObservation ? formatDemoDate(latestObservation.date, language, t) : t('learningModule.classPicture.noEntryYet')}
                 </Typography>
                 <Box
-                  title={latestObservation ? `${area.label} · ${choice} · ${formatDemoDate(latestObservation.date)}` : `${area.label} · no observation`}
+                  title={latestObservation ? `${area.label} · ${choice} · ${formatDemoDate(latestObservation.date, language, t)}` : `${area.label} · ${t('learningModule.classPicture.noObservation')}`}
                   sx={{
                     width: 24,
                     height: 24,
@@ -349,20 +362,20 @@ function LearningObservationHistoryPanel({ observations, activeObservation, lear
         {activeObservation ? (
           <Stack spacing={0.8}>
             <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 880, lineHeight: 1.25 }}>
-              {formatDemoDate(activeObservation.date)} · {activeObservation.areaLabel} · {activeObservation.choiceId}
+              {formatDemoDate(activeObservation.date, language, t)} · {activeObservation.areaLabel} · {activeObservation.choiceId}
             </Typography>
             <Box>
               <Typography sx={{ color: 'rgba(23, 21, 26, 0.42)', fontSize: 11.8, fontWeight: 840, lineHeight: 1.2 }}>
-                Teacher comment
+                {t('learningModule.classPicture.teacherComment')}
               </Typography>
               <Typography sx={{ mt: 0.35, pl: 0.9, color: 'text.secondary', fontSize: 13.4, lineHeight: 1.48, borderLeft: '3px solid rgba(156, 40, 175, 0.24)' }}>
-                {activeObservation.note || 'No comment added.'}
+                {activeObservation.note || t('learningModule.classPicture.noCommentAdded')}
               </Typography>
             </Box>
           </Stack>
         ) : (
           <Typography sx={{ color: 'rgba(23, 21, 26, 0.34)', fontSize: 13.2, lineHeight: 1.45 }}>
-            Hover over a graph point to see the date and comment.
+            {t('learningModule.classPicture.hoverGraphPoint')}
           </Typography>
         )}
       </Box>
@@ -370,7 +383,7 @@ function LearningObservationHistoryPanel({ observations, activeObservation, lear
   );
 }
 
-function StudentGlobalInsightPanel({ student, evidenceItems, rowNote, learningObservations, subjectTitle, learningObservationAreas }) {
+function StudentGlobalInsightPanel({ student, evidenceItems, rowNote, learningObservations, subjectTitle, learningObservationAreas, language, t }) {
   const studentEvidence = getStudentEvidenceItems(evidenceItems, student.id);
   const previousResult = student.previousResults?.find((result) => result.subjectId === 'english') || student.previousResults?.[0] || null;
   const latestEvidenceDate = getLatestDate(studentEvidence);
@@ -382,9 +395,9 @@ function StudentGlobalInsightPanel({ student, evidenceItems, rowNote, learningOb
         <Stack spacing={1.25}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
             <Box>
-              <Typography component="h2" sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>Global student picture</Typography>
+              <Typography component="h2" sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>{t('learningModule.classPicture.globalStudentPicture')}</Typography>
               <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 12.8 }}>
-                Latest evidence: {latestEvidenceDate ? formatDemoDate(latestEvidenceDate) : 'None'}
+                {t('learningModule.classPicture.latestEvidence', { date: latestEvidenceDate ? formatDemoDate(latestEvidenceDate, language, t) : t('learningModule.classPicture.none') })}
               </Typography>
             </Box>
           </Stack>
@@ -395,24 +408,28 @@ function StudentGlobalInsightPanel({ student, evidenceItems, rowNote, learningOb
               activeObservationId={activeLearningObservation?.id || ''}
               onActiveObservationChange={setActiveLearningObservation}
               learningObservationAreas={learningObservationAreas}
+              language={language}
+              t={t}
             />
             <Stack spacing={1.1}>
               <LearningObservationHistoryPanel
                 observations={learningObservations}
                 activeObservation={activeLearningObservation}
                 learningObservationAreas={learningObservationAreas}
+                language={language}
+                t={t}
               />
               <Paper elevation={0} sx={{ p: 0.95, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
-                <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 880 }}>Known anchors</Typography>
+                <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 880 }}>{t('learningModule.classPicture.knownAnchors')}</Typography>
                 <Stack spacing={0.42} sx={{ mt: 0.65 }}>
                   <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
-                    Prior English · <Box component="span" sx={{ color: darkText, fontWeight: 800 }}>{previousResult?.grade || 'Not shown'}</Box>
+                    {t('learningModule.classPicture.priorSubject', { subject: subjectTitle })} · <Box component="span" sx={{ color: darkText, fontWeight: 800 }}>{previousResult?.grade || t('learningModule.classPicture.notShown')}</Box>
                   </Typography>
                   <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
-                    Class · <Box component="span" sx={{ color: darkText, fontWeight: 800 }}>{subjectTitle} {String(student.classId || '').toUpperCase()}</Box>
+                    {t('learningModule.classPicture.class')} · <Box component="span" sx={{ color: darkText, fontWeight: 800 }}>{subjectTitle} {String(student.classId || '').toUpperCase()}</Box>
                   </Typography>
                   <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
-                    Quick note · <Box component="span" sx={{ color: rowNote ? darkText : 'text.secondary', fontWeight: rowNote ? 800 : 650 }}>{rowNote || 'None added'}</Box>
+                    {t('learningModule.classPicture.quickNote')} · <Box component="span" sx={{ color: rowNote ? darkText : 'text.secondary', fontWeight: rowNote ? 800 : 650 }}>{rowNote || t('learningModule.classPicture.noneAdded')}</Box>
                   </Typography>
                 </Stack>
               </Paper>
@@ -453,7 +470,7 @@ function getStudentUnitCellNoteKey(studentId, unitId) {
 }
 
 export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
-  const { t } = useConceptDemoLanguage();
+  const { language, t } = useConceptDemoLanguage();
   const learningObservationAreas = useMemo(() => getLearningObservationAreas(t), [t]);
   const students = moduleConfig?.classData?.students || [];
   const teachingUnits = [...(moduleConfig?.curriculum?.teachingUnits || [])]
@@ -672,7 +689,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
       <Box sx={{ overflowX: { xs: 'auto', lg: 'visible' }, pb: 0.5 }}>
         <Box
           role="table"
-          aria-label={`${moduleConfig?.title || 'Learning module'} class picture`}
+          aria-label={t('learningModule.classPicture.classPictureAria', { title: moduleConfig?.title || t('learningModule.fallbackTitle') })}
           sx={{
             minWidth: { xs: 760, lg: 0 },
             display: 'grid',
@@ -684,10 +701,10 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
           }}
         >
           <Box role="columnheader" sx={{ p: 1, bgcolor: '#fff', borderBottom: '1px solid rgba(23, 21, 26, 0.12)' }} />
-          <Box role="columnheader" aria-label="Assessment alerts" sx={{ p: 1, bgcolor: '#fff', borderBottom: '1px solid rgba(23, 21, 26, 0.12)' }} />
+          <Box role="columnheader" aria-label={t('learningModule.classPicture.assessmentAlerts')} sx={{ p: 1, bgcolor: '#fff', borderBottom: '1px solid rgba(23, 21, 26, 0.12)' }} />
           <Box
             role="columnheader"
-            aria-label="Quick notes"
+            aria-label={t('learningModule.classPicture.quickNotes')}
             sx={{
               p: 1,
               display: 'flex',
@@ -699,7 +716,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
             }}
           >
             <IconButton
-              aria-label={rowNotesVisible ? 'Hide quick notes' : 'Show quick notes'}
+              aria-label={rowNotesVisible ? t('learningModule.classPicture.hideQuickNotes') : t('learningModule.classPicture.showQuickNotes')}
               aria-pressed={!rowNotesVisible}
               size="small"
               onClick={() => {
@@ -722,7 +739,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
             </IconButton>
             {!rowNotesVisible && (
               <Typography sx={{ color: 'rgba(23, 21, 26, 0.3)', fontSize: 11.5, fontWeight: 760, lineHeight: 1 }}>
-                Hidden
+                {t('learningModule.classPicture.hidden')}
               </Typography>
             )}
           </Box>
@@ -749,7 +766,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
                   <Box
                     component="input"
                     autoFocus
-                    aria-label={`One word note for ${unit.title || unit.label}`}
+                    aria-label={t('learningModule.classPicture.oneWordUnitNote', { unit: unit.title || unit.label })}
                     value={draftUnitNote}
                     maxLength={16}
                     onClick={(event) => event.stopPropagation()}
@@ -807,7 +824,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
               learningObservations.filter((observation) => observation.studentId === student.id),
               'desc',
             );
-            const alerts = buildAssessmentAlerts(evidenceItems, student.id);
+            const alerts = buildAssessmentAlerts(evidenceItems, student.id, language, t);
 
             return (
               <Box key={student.id} role="rowgroup" sx={{ display: 'contents' }}>
@@ -855,7 +872,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
 
                   <Box
                     role="cell"
-                    aria-label={`${student.displayName} assessment status`}
+                    aria-label={t('learningModule.classPicture.studentAssessmentStatus', { student: student.displayName })}
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
@@ -903,7 +920,11 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
 
                   <Box
                     role="cell"
-                    aria-label={rowNotesVisible ? `${student.displayName} quick note${rowNote ? `: ${rowNote}` : ''}` : `${student.displayName} quick note hidden`}
+                    aria-label={rowNotesVisible
+                      ? rowNote
+                        ? t('learningModule.classPicture.quickNoteWithValueForStudent', { student: student.displayName, note: rowNote })
+                        : t('learningModule.classPicture.quickNoteLabelForStudent', { student: student.displayName })
+                      : t('learningModule.classPicture.quickNoteHiddenForStudent', { student: student.displayName })}
                     onClick={rowNotesVisible ? () => startEditingRowNote(student.id) : undefined}
                     onMouseEnter={() => setHoveredRowNoteStudentId(student.id)}
                     onMouseLeave={() => setHoveredRowNoteStudentId('')}
@@ -923,7 +944,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
                         <Box
                           component="input"
                           autoFocus
-                          aria-label={`Quick note for ${student.displayName}`}
+                          aria-label={t('learningModule.classPicture.quickNoteForStudent', { student: student.displayName })}
                           value={draftRowNote}
                           maxLength={60}
                           onClick={(event) => event.stopPropagation()}
@@ -980,10 +1001,15 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
                     const isEditingCell = editingCellKey === noteKey;
                     const isActiveUnitCell = isExpanded && expandedUnitId === unit.id;
                     const cellDetail = savedNote
-                      ? `Manual note ${savedNote}`
+                      ? t('learningModule.classPicture.manualNote', { note: savedNote })
                       : summary.items.length
-                        ? `${summary.observations.length} observation${summary.observations.length === 1 ? '' : 's'}, ${summary.assessments.length} assessment${summary.assessments.length === 1 ? '' : 's'}`
-                        : 'No evidence recorded';
+                        ? t('learningModule.classPicture.evidenceSummary', {
+                          observations: summary.observations.length,
+                          observationLabel: getCountLabel(t, 'learningModule.classPicture.observation', summary.observations.length),
+                          assessments: summary.assessments.length,
+                          assessmentLabel: getCountLabel(t, 'learningModule.classPicture.assessment', summary.assessments.length),
+                        })
+                        : t('learningModule.classPicture.noEvidenceRecorded');
 
                     return (
                       <Box
@@ -1017,7 +1043,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
                         {!isEditingCell && (
                           <IconButton
                             className="LearningModuleUnitNoteButton"
-                            aria-label={`Add note for ${student.displayName}, ${unit.title || unit.label}`}
+                            aria-label={t('learningModule.classPicture.addNoteForStudentUnit', { student: student.displayName, unit: unit.title || unit.label })}
                             size="small"
                             onClick={(event) => {
                               event.stopPropagation();
@@ -1056,7 +1082,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
                           <Box
                             component="input"
                             autoFocus
-                            aria-label={`One word note for ${student.displayName}, ${unit.title || unit.label}`}
+                            aria-label={t('learningModule.classPicture.oneWordStudentUnitNote', { student: student.displayName, unit: unit.title || unit.label })}
                             value={draftCellNote}
                             maxLength={16}
                             onClick={(event) => event.stopPropagation()}
@@ -1094,7 +1120,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
                             </Typography>
                           </Box>
                         ) : (
-                          <EvidenceMarker summary={summary} />
+                          <EvidenceMarker summary={summary} t={t} />
                         )}
                       </Box>
                     );
@@ -1117,6 +1143,8 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
                             setExpandedStudentId('');
                             setExpandedUnitId('');
                           }}
+                          language={language}
+                          t={t}
                         />
                       ) : (
                         <StudentGlobalInsightPanel
@@ -1126,6 +1154,8 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
                           learningObservations={studentLearningObservations}
                           subjectTitle={subjectTitle}
                           learningObservationAreas={learningObservationAreas}
+                          language={language}
+                          t={t}
                         />
                       )}
                     </Box>
