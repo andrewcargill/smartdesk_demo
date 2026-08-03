@@ -105,6 +105,7 @@ export const conceptDemoTranslations = {
       fallbackClassName: 'Class',
       shell: {
         nextLesson: 'Next lesson',
+        finalLesson: 'Final demo lesson',
         resetDemo: 'Reset demo',
       },
       workspace: {
@@ -463,6 +464,7 @@ export const conceptDemoTranslations = {
       fallbackClassName: 'Klass',
       shell: {
         nextLesson: 'N\u00e4sta lektion',
+        finalLesson: 'Sista demolektionen',
         resetDemo: '\u00c5terst\u00e4ll demo',
       },
       workspace: {

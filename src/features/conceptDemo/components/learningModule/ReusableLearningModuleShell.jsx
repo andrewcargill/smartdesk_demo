@@ -5,6 +5,12 @@ import { useConceptDemoLanguage } from '../../ConceptDemoLanguageContext.jsx';
 import { resolveLocalizedValue } from '../../i18n/conceptDemoTranslations.js';
 import SubjectWorkspaceContainer from '../SubjectWorkspaceContainer.jsx';
 import {
+  readLearningModuleLessonIndex,
+  resetLearningModuleDemoStorage,
+  resetLearningModuleLessonIndex,
+  writeLearningModuleLessonIndex,
+} from './utils/learningModuleDemoState.js';
+import {
   defaultLearningModuleScreenId,
   getLearningModuleNavigationItems,
   getLearningModuleScreen,
@@ -96,11 +102,42 @@ function localizeScreens(screens, language) {
   }), {});
 }
 
-function createModuleViewModel(moduleData, language, t) {
+function getLearningModuleLocale(language) {
+  return language === 'sv' ? 'sv-SE' : 'en-GB';
+}
+
+function formatLessonDate(date, language) {
+  if (!date) {
+    return '';
+  }
+
+  return new Intl.DateTimeFormat(getLearningModuleLocale(language), {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'short',
+  }).format(new Date(`${date}T12:00:00`));
+}
+
+function createLessonContextLine(activeLesson, language, fallbackContextLine) {
+  if (!activeLesson?.date) {
+    return fallbackContextLine;
+  }
+
+  return [
+    formatLessonDate(activeLesson.date, language),
+    [activeLesson.startTime, activeLesson.endTime].filter(Boolean).join('-'),
+  ].filter(Boolean).join(' · ');
+}
+
+function createModuleViewModel(moduleData, language, t, { activeLessonIndex = 0, resetToken = 0 } = {}) {
   const navigationItems = getNavigationItems(moduleData, language, t);
   const defaultScreen = normalizeScreenId(moduleData?.navigation?.defaultScreen || navigationItems[0]?.id || defaultLearningModuleScreenId);
   const title = localizeValue(moduleData?.title, language, t('learningModule.fallbackTitle'));
   const subtitle = localizeValue(moduleData?.subtitle, language, t('learningModule.fallbackSubtitle'));
+  const lessons = localizeContent(moduleData?.lessons || {}, language);
+  const lessonSequence = Array.isArray(lessons.sequence) ? lessons.sequence : [];
+  const activeLesson = lessonSequence[activeLessonIndex] || lessons.current || lessonSequence[0] || null;
+  const fallbackContextLine = localizeValue(moduleData?.contextLine, language, '');
 
   return {
     id: moduleData?.id || 'learning-module',
@@ -111,10 +148,14 @@ function createModuleViewModel(moduleData, language, t) {
     className: localizeValue(moduleData?.className, language, moduleData?.classId || t('learningModule.fallbackClassName')),
     subjectTitle: localizeValue(moduleData?.subjectTitle, language, getSubjectTitle(moduleData?.subjectId, t)),
     headerSubtitle: localizeValue(moduleData?.headerSubtitle, language, subtitle),
-    contextLine: localizeValue(moduleData?.contextLine, language, ''),
+    contextLine: createLessonContextLine(activeLesson, language, fallbackContextLine),
     classData: localizeContent(moduleData?.classData || {}, language),
     curriculum: localizeContent(moduleData?.curriculum || {}, language),
-    lessons: localizeContent(moduleData?.lessons || {}, language),
+    lessons: {
+      ...lessons,
+      current: activeLesson,
+      activeIndex: activeLessonIndex,
+    },
     evidence: localizeContent(moduleData?.evidence || {}, language),
     planning: localizeContent(moduleData?.planning || {}, language),
     screens: localizeScreens(moduleData?.screens, language),
@@ -122,13 +163,21 @@ function createModuleViewModel(moduleData, language, t) {
       defaultScreen,
       items: navigationItems,
     },
+    demoResetToken: resetToken,
     source: moduleData || {},
   };
 }
 
 export default function ReusableLearningModuleShell({ moduleData, onBack }) {
   const { language, t } = useConceptDemoLanguage();
-  const moduleViewModel = useMemo(() => createModuleViewModel(moduleData, language, t), [language, moduleData, t]);
+  const moduleId = moduleData?.id || 'learning-module';
+  const lessonCount = moduleData?.lessons?.sequence?.length || 0;
+  const [activeLessonIndex, setActiveLessonIndex] = useState(() => readLearningModuleLessonIndex(moduleId, lessonCount));
+  const [resetToken, setResetToken] = useState(0);
+  const moduleViewModel = useMemo(
+    () => createModuleViewModel(moduleData, language, t, { activeLessonIndex, resetToken }),
+    [activeLessonIndex, language, moduleData, resetToken, t],
+  );
   const [activeScreen, setActiveScreen] = useState(moduleViewModel.navigation.defaultScreen);
   const activeScreenDefinition = getLearningModuleScreen(activeScreen);
   const ActiveScreen = activeScreenDefinition.component;
@@ -136,6 +185,25 @@ export default function ReusableLearningModuleShell({ moduleData, onBack }) {
     ...activeScreenDefinition,
     ...(moduleViewModel.screens[activeScreenDefinition.id] || {}),
   };
+  const canAdvanceLesson = activeLessonIndex < Math.max(0, lessonCount - 1);
+
+  function advanceLesson() {
+    if (!canAdvanceLesson) {
+      return;
+    }
+
+    setActiveLessonIndex((currentIndex) => writeLearningModuleLessonIndex(moduleId, currentIndex + 1, lessonCount));
+  }
+
+  function resetDemo() {
+    resetLearningModuleDemoStorage({
+      moduleId,
+      subjectId: moduleData?.subjectId || 'learning',
+      classId: moduleData?.classId || moduleId,
+    });
+    setActiveLessonIndex(resetLearningModuleLessonIndex(moduleId));
+    setResetToken((currentToken) => currentToken + 1);
+  }
 
   return (
     <SubjectWorkspaceContainer
@@ -148,15 +216,16 @@ export default function ReusableLearningModuleShell({ moduleData, onBack }) {
       menuItems={[
         {
           id: `${moduleViewModel.id}-next-lesson`,
-          label: t('learningModule.shell.nextLesson'),
+          label: canAdvanceLesson ? t('learningModule.shell.nextLesson') : t('learningModule.shell.finalLesson'),
           icon: <SkipNextIcon fontSize="small" />,
-          disabled: true,
+          disabled: !canAdvanceLesson,
+          onClick: advanceLesson,
         },
         {
           id: `${moduleViewModel.id}-reset-demo`,
           label: t('learningModule.shell.resetDemo'),
           icon: <RestartAltIcon fontSize="small" />,
-          disabled: true,
+          onClick: resetDemo,
         },
       ]}
     >

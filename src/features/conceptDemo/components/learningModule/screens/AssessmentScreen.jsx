@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
 import CloudOutlinedIcon from '@mui/icons-material/CloudOutlined';
@@ -257,7 +257,7 @@ export default function AssessmentScreen({ moduleConfig }) {
   const assessments = useMemo(() => [
     ...storedAssessments.map(normalizeLearningModuleAssessmentAsEvidence),
     ...getAssessmentItems(moduleConfig?.evidence?.items),
-  ], [moduleConfig, storedAssessments]);
+  ].filter((assessment) => !demoDate || !assessment.date || assessment.date <= demoDate), [demoDate, moduleConfig, storedAssessments]);
   const continueAssessments = useMemo(
     () => assessments.map((assessment) => buildAssessmentCard(assessment, students, teachingUnits)),
     [assessments, students, teachingUnits],
@@ -273,6 +273,7 @@ export default function AssessmentScreen({ moduleConfig }) {
     storedAssessment: null,
   });
   const [savedAssessmentNotice, setSavedAssessmentNotice] = useState(null);
+  const handledResetTokenRef = useRef(moduleConfig?.demoResetToken || 0);
   const selectedOngoing = continueAssessments.find((item) => item.id === selectedOngoingId);
   const selectedStart = startOptions.find((item) => item.id === selectedStartId);
 
@@ -301,6 +302,27 @@ export default function AssessmentScreen({ moduleConfig }) {
       window.removeEventListener(LEARNING_MODULE_ASSESSMENT_RESULTS_STORAGE_EVENT, handleCustomStorageChange);
     };
   }, [moduleId]);
+
+  useEffect(() => {
+    const resetToken = moduleConfig?.demoResetToken || 0;
+
+    if (!resetToken || handledResetTokenRef.current === resetToken) {
+      return;
+    }
+
+    handledResetTokenRef.current = resetToken;
+    setStoredAssessments(readLearningModuleAssessmentResults(moduleId).assessments);
+    setActiveRoute('continue');
+    setSelectedOngoingId('');
+    setSelectedStartId('');
+    setSelectedFindId('my-cloud');
+    setResultsModalState({
+      open: false,
+      assessment: null,
+      storedAssessment: null,
+    });
+    setSavedAssessmentNotice(null);
+  }, [moduleConfig?.demoResetToken, moduleId]);
 
   function closeReveal() {
     setActiveRoute('continue');

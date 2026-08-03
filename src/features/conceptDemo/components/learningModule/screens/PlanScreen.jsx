@@ -1,4 +1,5 @@
 import { Paper, Typography } from '@mui/material';
+import { useEffect, useRef } from 'react';
 import SubjectPlanningBoard from '../planning/SubjectPlanningBoard.jsx';
 import { usePlanningCurriculumNotes } from '../../../hooks/usePlanningCurriculumNotes.js';
 import { useSubjectPlanning } from '../../../hooks/useSubjectPlanning.js';
@@ -119,6 +120,19 @@ export default function PlanScreen({ moduleConfig, screenConfig }) {
     classId: moduleConfig?.classId || moduleConfig?.id || 'module',
     initialNotes: planningConfig.curriculumNotes || [],
   });
+  const handledResetTokenRef = useRef(moduleConfig?.demoResetToken || 0);
+
+  useEffect(() => {
+    const resetToken = moduleConfig?.demoResetToken || 0;
+
+    if (!resetToken || handledResetTokenRef.current === resetToken) {
+      return;
+    }
+
+    handledResetTokenRef.current = resetToken;
+    resetPlanning();
+    resetPlanningCurriculumNotes();
+  }, [moduleConfig?.demoResetToken, resetPlanning, resetPlanningCurriculumNotes]);
 
   if (!periods.length || !initialBlocks.length) {
     return (

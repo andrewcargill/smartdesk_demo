@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -503,6 +503,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
   const teachingUnits = [...(moduleConfig?.curriculum?.teachingUnits || [])]
     .sort((first, second) => (first.order || 0) - (second.order || 0));
   const moduleId = moduleConfig?.id || 'learning-module';
+  const activeLessonDate = moduleConfig?.lessons?.current?.date || '';
   const [storedAssessments, setStoredAssessments] = useState(() => readLearningModuleAssessmentResults(moduleId).assessments);
   const [localEvidencePayload, setLocalEvidencePayload] = useState(() => readLearningModuleEvidence(moduleId));
   const [localLearningObservationPayload, setLocalLearningObservationPayload] = useState(() => readLearningModuleLearningObservations(moduleId));
@@ -510,11 +511,11 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
     ...storedAssessments.map(normalizeLearningModuleAssessmentAsEvidence),
     ...(localEvidencePayload.observations || []),
     ...(moduleConfig?.evidence?.items || []),
-  ], [localEvidencePayload, moduleConfig, storedAssessments]);
+  ].filter((item) => !activeLessonDate || !item.date || item.date <= activeLessonDate), [activeLessonDate, localEvidencePayload, moduleConfig, storedAssessments]);
   const learningObservations = useMemo(() => [
     ...(moduleConfig?.evidence?.learningObservations || []),
     ...groupLearningObservationRecords(localLearningObservationPayload.observations || []),
-  ], [localLearningObservationPayload, moduleConfig]);
+  ].filter((observation) => !activeLessonDate || !observation.date || observation.date <= activeLessonDate), [activeLessonDate, localLearningObservationPayload, moduleConfig]);
   const skills = moduleConfig?.curriculum?.skills || [];
   const levels = moduleConfig?.curriculum?.observationLevels || [];
   const subjectTitle = moduleConfig?.subjectTitle || moduleConfig?.subjectId || 'Subject';
@@ -556,6 +557,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
     classId: moduleConfig?.classId || moduleId,
     initialGroups: moduleConfig?.classData?.workingGroups || [],
   });
+  const handledResetTokenRef = useRef(moduleConfig?.demoResetToken || 0);
   const groupDefinitions = moduleConfig?.classData?.groupDefinitions || classGroupDefinitions;
   const activeGroupingSet = groupDefinitions.find((definition) => definition.id === activeGroupingSetId) || null;
   const groupedViewActive = activeGroupingSetId !== 'none';
@@ -623,6 +625,41 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
       window.removeEventListener(LEARNING_MODULE_LEARNING_OBSERVATIONS_STORAGE_EVENT, handleCustomLearningObservationsChange);
     };
   }, [moduleId]);
+
+  useEffect(() => {
+    const resetToken = moduleConfig?.demoResetToken || 0;
+
+    if (!resetToken || handledResetTokenRef.current === resetToken) {
+      return;
+    }
+
+    handledResetTokenRef.current = resetToken;
+    setStoredAssessments(readLearningModuleAssessmentResults(moduleId).assessments);
+    setLocalEvidencePayload(readLearningModuleEvidence(moduleId));
+    setLocalLearningObservationPayload(readLearningModuleLearningObservations(moduleId));
+    setRowNotes({});
+    setCellNotes({});
+    setUnitNotes({});
+    setExpandedStudentId('');
+    setExpandedUnitId('');
+    setHoveredStudentId('');
+    setHoveredRowNoteStudentId('');
+    setEditingRowNoteStudentId('');
+    setDraftRowNote('');
+    setEditingCellKey('');
+    setDraftCellNote('');
+    setEditingUnitId('');
+    setDraftUnitNote('');
+    setActiveGroupingSetId('none');
+    setCollapsedGroupIds([]);
+    setDraggedStudentId('');
+    setDragTargetId('');
+    setGroupDialogOpen(false);
+    setGroupDialogMode('create');
+    setSelectedGroup(null);
+    setMoveAnnouncement('');
+    resetGroups();
+  }, [moduleConfig?.demoResetToken, moduleId, resetGroups]);
 
   const summariesByStudentId = useMemo(() => {
     const summaries = new Map();

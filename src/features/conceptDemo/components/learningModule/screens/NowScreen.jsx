@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
 import LearningModuleQuickCapture from '../LearningModuleQuickCapture.jsx';
 import {
@@ -21,6 +21,16 @@ export default function NowScreen({ moduleConfig }) {
   const [localLearningObservationPayload, setLocalLearningObservationPayload] = useState(() => (
     readLearningModuleLearningObservations(moduleId)
   ));
+
+  useEffect(() => {
+    if (!moduleConfig?.demoResetToken) {
+      return;
+    }
+
+    setSelectedStudentId(students[0]?.id || '');
+    setLocalEvidencePayload(readLearningModuleEvidence(moduleId));
+    setLocalLearningObservationPayload(readLearningModuleLearningObservations(moduleId));
+  }, [moduleConfig?.demoResetToken, moduleId, students]);
 
   function restartLessonSequence() {
     setSelectedStudentId(students[0]?.id || '');
