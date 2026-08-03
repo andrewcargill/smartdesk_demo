@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
+import { useConceptDemoLanguage } from '../../ConceptDemoLanguageContext.jsx';
+import { resolveLocalizedValue } from '../../i18n/conceptDemoTranslations.js';
 import SubjectWorkspaceContainer from '../SubjectWorkspaceContainer.jsx';
 import {
   defaultLearningModuleScreenId,
@@ -8,40 +10,87 @@ import {
   getLearningModuleScreen,
 } from './screens/learningModuleScreens.js';
 
-function getSubjectTitle(subjectId) {
-  if (subjectId === 'mathematics') {
-    return 'Mathematics';
-  }
+const legacyScreenIds = {
+  classPicture: 'class-picture',
+};
 
-  if (!subjectId) {
-    return 'Learning';
-  }
-
-  return subjectId.charAt(0).toUpperCase() + subjectId.slice(1);
+function normalizeScreenId(screenId) {
+  return legacyScreenIds[screenId] || screenId;
 }
 
-function createModuleViewModel(moduleData) {
+function localizeValue(value, language, fallback = '') {
+  return resolveLocalizedValue(value, language) || fallback;
+}
+
+function getSubjectTitle(subjectId, t) {
+  if (!subjectId) {
+    return t('learningModule.fallbackSubject');
+  }
+
+  const translatedSubject = t(`subjects.${subjectId}`);
+
+  return translatedSubject === `subjects.${subjectId}`
+    ? subjectId.charAt(0).toUpperCase() + subjectId.slice(1)
+    : translatedSubject;
+}
+
+function getNavigationItems(moduleData, language, t) {
   const navigationItems = moduleData?.navigation?.items?.length
     ? moduleData.navigation.items
     : getLearningModuleNavigationItems();
 
+  return navigationItems.map((item) => {
+    const id = normalizeScreenId(item.id);
+    return {
+      ...item,
+      id,
+      label: localizeValue(item.label, language, t(`learningModule.navigation.${id === 'class-picture' ? 'classPicture' : id}`)),
+    };
+  });
+}
+
+function localizeScreenConfig(screenConfig, language) {
+  if (!screenConfig) {
+    return {};
+  }
+
+  return {
+    ...screenConfig,
+    title: resolveLocalizedValue(screenConfig.title, language),
+    description: resolveLocalizedValue(screenConfig.description, language),
+  };
+}
+
+function localizeScreens(screens, language) {
+  return Object.entries(screens || {}).reduce((localizedScreens, [screenId, screenConfig]) => ({
+    ...localizedScreens,
+    [normalizeScreenId(screenId)]: localizeScreenConfig(screenConfig, language),
+  }), {});
+}
+
+function createModuleViewModel(moduleData, language, t) {
+  const navigationItems = getNavigationItems(moduleData, language, t);
+  const defaultScreen = normalizeScreenId(moduleData?.navigation?.defaultScreen || navigationItems[0]?.id || defaultLearningModuleScreenId);
+  const title = localizeValue(moduleData?.title, language, t('learningModule.fallbackTitle'));
+  const subtitle = localizeValue(moduleData?.subtitle, language, t('learningModule.fallbackSubtitle'));
+
   return {
     id: moduleData?.id || 'learning-module',
-    title: moduleData?.title || 'Learning module',
-    subtitle: moduleData?.subtitle || 'Reusable class workspace',
+    title,
+    subtitle,
     subjectId: moduleData?.subjectId || null,
     classId: moduleData?.classId || null,
-    className: moduleData?.className || moduleData?.classId || 'Class',
-    subjectTitle: moduleData?.subjectTitle || getSubjectTitle(moduleData?.subjectId),
-    headerSubtitle: moduleData?.headerSubtitle || moduleData?.subtitle || 'Reusable class workspace',
-    contextLine: moduleData?.contextLine || '',
+    className: localizeValue(moduleData?.className, language, moduleData?.classId || t('learningModule.fallbackClassName')),
+    subjectTitle: localizeValue(moduleData?.subjectTitle, language, getSubjectTitle(moduleData?.subjectId, t)),
+    headerSubtitle: localizeValue(moduleData?.headerSubtitle, language, subtitle),
+    contextLine: localizeValue(moduleData?.contextLine, language, ''),
     classData: moduleData?.classData || {},
     curriculum: moduleData?.curriculum || {},
     lessons: moduleData?.lessons || {},
     evidence: moduleData?.evidence || {},
-    screens: moduleData?.screens || {},
+    screens: localizeScreens(moduleData?.screens, language),
     navigation: {
-      defaultScreen: moduleData?.navigation?.defaultScreen || navigationItems[0]?.id || defaultLearningModuleScreenId,
+      defaultScreen,
       items: navigationItems,
     },
     source: moduleData || {},
@@ -49,7 +98,8 @@ function createModuleViewModel(moduleData) {
 }
 
 export default function ReusableLearningModuleShell({ moduleData, onBack }) {
-  const moduleViewModel = useMemo(() => createModuleViewModel(moduleData), [moduleData]);
+  const { language, t } = useConceptDemoLanguage();
+  const moduleViewModel = useMemo(() => createModuleViewModel(moduleData, language, t), [language, moduleData, t]);
   const [activeScreen, setActiveScreen] = useState(moduleViewModel.navigation.defaultScreen);
   const activeScreenDefinition = getLearningModuleScreen(activeScreen);
   const ActiveScreen = activeScreenDefinition.component;
@@ -69,13 +119,13 @@ export default function ReusableLearningModuleShell({ moduleData, onBack }) {
       menuItems={[
         {
           id: `${moduleViewModel.id}-next-lesson`,
-          label: 'Next lesson',
+          label: t('learningModule.shell.nextLesson'),
           icon: <SkipNextIcon fontSize="small" />,
           disabled: true,
         },
         {
           id: `${moduleViewModel.id}-reset-demo`,
-          label: 'Reset demo',
+          label: t('learningModule.shell.resetDemo'),
           icon: <RestartAltIcon fontSize="small" />,
           disabled: true,
         },

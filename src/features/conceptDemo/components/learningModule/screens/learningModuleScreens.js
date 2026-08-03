@@ -33,5 +33,5 @@ export function getLearningModuleScreen(screenId) {
 }
 
 export function getLearningModuleNavigationItems() {
-  return learningModuleScreens.map(({ id, label }) => ({ id, label }));
+  return learningModuleScreens.map(({ id }) => ({ id }));
 }

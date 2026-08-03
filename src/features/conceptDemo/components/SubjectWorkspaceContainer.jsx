@@ -17,6 +17,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import { useConceptDemoLanguage } from '../ConceptDemoLanguageContext.jsx';
 
 const purple = '#9c28af';
 const border = 'rgba(23, 21, 26, 0.1)';
@@ -25,30 +26,22 @@ const modes = [
   {
     id: 'class-picture',
     icon: <GroupsRoundedIcon fontSize="small" />,
-    ariaLabel: 'Class picture mode: viewing class and student progress',
-    tooltipTitle: 'Class picture',
-    tooltipDetail: 'View the class and student progress.',
+    translationKey: 'classPicture',
   },
   {
     id: 'plan',
     icon: <AutoStoriesRoundedIcon fontSize="small" />,
-    ariaLabel: 'Plan mode: planning term and lesson sequence',
-    tooltipTitle: 'Plan',
-    tooltipDetail: 'Plan the term and lesson sequence.',
+    translationKey: 'plan',
   },
   {
     id: 'now',
     icon: <RateReviewRoundedIcon fontSize="small" />,
-    ariaLabel: 'Now mode: recording quick observations',
-    tooltipTitle: 'Now',
-    tooltipDetail: 'Record quick observations and notes.',
+    translationKey: 'now',
   },
   {
     id: 'assessment',
     icon: <FactCheckRoundedIcon fontSize="small" />,
-    ariaLabel: 'Assessment mode: viewing assessment information',
-    tooltipTitle: 'Assessment',
-    tooltipDetail: 'View assessment information.',
+    translationKey: 'assessment',
   },
 ];
 
@@ -62,6 +55,7 @@ export default function SubjectWorkspaceContainer({
   menuItems = [],
   children,
 }) {
+  const { t } = useConceptDemoLanguage();
   const [menuAnchor, setMenuAnchor] = useState(null);
   const menuOpen = Boolean(menuAnchor);
 
@@ -94,10 +88,10 @@ export default function SubjectWorkspaceContainer({
       >
         <Box sx={{ px: { xs: 1.5, md: 3 }, py: { xs: 1, sm: 1.15 } }}>
           <Stack direction="row" spacing={1.15} alignItems="center">
-            <Tooltip title="Back to home">
+            <Tooltip title={t('learningModule.workspace.backToHome')}>
               <IconButton
                 data-focused-workspace-initial-focus
-                aria-label="Back to home"
+                aria-label={t('learningModule.workspace.backToHome')}
                 onClick={onBack}
                 sx={{
                   width: 42,
@@ -134,9 +128,9 @@ export default function SubjectWorkspaceContainer({
 
             {!!menuItems.length && (
               <>
-                <Tooltip title="More options">
+                <Tooltip title={t('learningModule.workspace.moreOptions')}>
                   <IconButton
-                    aria-label="More subject options"
+                    aria-label={t('learningModule.workspace.moreSubjectOptions')}
                     aria-controls={menuOpen ? 'subject-workspace-menu' : undefined}
                     aria-haspopup="menu"
                     aria-expanded={menuOpen ? 'true' : undefined}
@@ -174,7 +168,7 @@ export default function SubjectWorkspaceContainer({
             onChange={(_, nextMode) => onModeChange(nextMode)}
             variant="scrollable"
             scrollButtons="auto"
-            aria-label="Subject workspace modes"
+            aria-label={t('learningModule.workspace.modesLabel')}
             sx={{
               mt: 1,
               maxWidth: 620,
@@ -214,8 +208,12 @@ export default function SubjectWorkspaceContainer({
                   <Tooltip
                     title={(
                       <Box>
-                        <Typography sx={{ fontSize: 12.8, fontWeight: 850, lineHeight: 1.2 }}>{mode.tooltipTitle}</Typography>
-                        <Typography sx={{ mt: 0.35, fontSize: 12.2, lineHeight: 1.35, color: 'rgba(23, 21, 26, 0.74)' }}>{mode.tooltipDetail}</Typography>
+                        <Typography sx={{ fontSize: 12.8, fontWeight: 850, lineHeight: 1.2 }}>
+                          {t(`learningModule.modes.${mode.translationKey}.tooltipTitle`)}
+                        </Typography>
+                        <Typography sx={{ mt: 0.35, fontSize: 12.2, lineHeight: 1.35, color: 'rgba(23, 21, 26, 0.74)' }}>
+                          {t(`learningModule.modes.${mode.translationKey}.tooltipDetail`)}
+                        </Typography>
                       </Box>
                     )}
                     arrow
@@ -250,7 +248,7 @@ export default function SubjectWorkspaceContainer({
                     </Box>
                   </Tooltip>
                 )}
-                aria-label={mode.ariaLabel}
+                aria-label={t(`learningModule.modes.${mode.translationKey}.ariaLabel`)}
                 sx={{
                   color: activeMode === mode.id ? `${purple} !important` : 'rgba(156, 40, 175, 0.4)',
                 }}

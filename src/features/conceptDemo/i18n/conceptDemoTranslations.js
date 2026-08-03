@@ -98,6 +98,55 @@ export const conceptDemoTranslations = {
       contextWelcome: 'Good morning, Anna. {{title}} {{className}} begins at {{start}}. What would be useful right now?',
       contextHome: 'home',
     },
+    learningModule: {
+      fallbackSubject: 'Learning',
+      fallbackTitle: 'Learning module',
+      fallbackSubtitle: 'Reusable class workspace',
+      fallbackClassName: 'Class',
+      shell: {
+        nextLesson: 'Next lesson',
+        resetDemo: 'Reset demo',
+      },
+      workspace: {
+        backToHome: 'Back to home',
+        moreOptions: 'More options',
+        moreSubjectOptions: 'More subject options',
+        modesLabel: 'Subject workspace modes',
+      },
+      navigation: {
+        classPicture: 'Class picture',
+        plan: 'Plan',
+        now: 'Now',
+        assessment: 'Assessment',
+      },
+      modes: {
+        classPicture: {
+          ariaLabel: 'Class picture mode: viewing class and student progress',
+          tooltipTitle: 'Class picture',
+          tooltipDetail: 'View the class and student progress.',
+        },
+        plan: {
+          ariaLabel: 'Plan mode: planning term and lesson sequence',
+          tooltipTitle: 'Plan',
+          tooltipDetail: 'Plan the term and lesson sequence.',
+        },
+        now: {
+          ariaLabel: 'Now mode: recording quick observations',
+          tooltipTitle: 'Now',
+          tooltipDetail: 'Record quick observations and notes.',
+        },
+        assessment: {
+          ariaLabel: 'Assessment mode: viewing assessment information',
+          tooltipTitle: 'Assessment',
+          tooltipDetail: 'View assessment information.',
+        },
+      },
+      screens: {
+        plan: {
+          fallbackDescription: 'Placeholder for reusable planning.',
+        },
+      },
+    },
   },
   sv: {
     common: {
@@ -182,6 +231,55 @@ export const conceptDemoTranslations = {
       noStructuredIdentifier: 'Ingen strukturerad identifierare \u00e4n.',
       contextWelcome: 'God morgon, Anna. {{title}} {{className}} b\u00f6rjar {{start}}. Vad vore anv\u00e4ndbart just nu?',
       contextHome: 'startsidan',
+    },
+    learningModule: {
+      fallbackSubject: 'L\u00e4rande',
+      fallbackTitle: 'L\u00e4rmodul',
+      fallbackSubtitle: '\u00c5teranv\u00e4ndbar klassarbetsyta',
+      fallbackClassName: 'Klass',
+      shell: {
+        nextLesson: 'N\u00e4sta lektion',
+        resetDemo: '\u00c5terst\u00e4ll demo',
+      },
+      workspace: {
+        backToHome: 'Tillbaka till start',
+        moreOptions: 'Fler alternativ',
+        moreSubjectOptions: 'Fler \u00e4mnesalternativ',
+        modesLabel: '\u00c4mnesarbetsytans l\u00e4gen',
+      },
+      navigation: {
+        classPicture: 'Klassbild',
+        plan: 'Planering',
+        now: 'Nu',
+        assessment: 'Bed\u00f6mning',
+      },
+      modes: {
+        classPicture: {
+          ariaLabel: 'Klassbildsl\u00e4ge: visar klassens och elevernas progression',
+          tooltipTitle: 'Klassbild',
+          tooltipDetail: 'Visa klassen och elevernas progression.',
+        },
+        plan: {
+          ariaLabel: 'Planeringsl\u00e4ge: planerar termin och lektionssekvens',
+          tooltipTitle: 'Planering',
+          tooltipDetail: 'Planera terminen och lektionssekvensen.',
+        },
+        now: {
+          ariaLabel: 'Nu-l\u00e4ge: registrerar snabba observationer',
+          tooltipTitle: 'Nu',
+          tooltipDetail: 'Registrera snabba observationer och anteckningar.',
+        },
+        assessment: {
+          ariaLabel: 'Bed\u00f6mningsl\u00e4ge: visar bed\u00f6mningsinformation',
+          tooltipTitle: 'Bed\u00f6mning',
+          tooltipDetail: 'Visa bed\u00f6mningsinformation.',
+        },
+      },
+      screens: {
+        plan: {
+          fallbackDescription: 'Platsh\u00e5llare f\u00f6r \u00e5teranv\u00e4ndbar planering.',
+        },
+      },
     },
   },
 };

@@ -17,13 +17,28 @@ export const english8AConfig = {
   id: 'english-8a',
   subjectId: 'english',
   classId: '8a',
-  title: 'English 8A',
-  subtitle: 'Reusable module prototype',
+  title: {
+    en: 'English 8A',
+    sv: 'Engelska 8A',
+  },
+  subtitle: {
+    en: 'Reusable module prototype',
+    sv: '\u00c5teranv\u00e4ndbar modulprototyp',
+  },
   className: '8A',
-  headerSubtitle: 'Reusable module prototype',
+  headerSubtitle: {
+    en: 'Reusable module prototype',
+    sv: '\u00c5teranv\u00e4ndbar modulprototyp',
+  },
   contextLine: currentLesson
-    ? `${currentLesson.dayLabel} · ${currentLesson.startTime}-${currentLesson.endTime}`
-    : 'English 8A lesson',
+    ? {
+      en: `${currentLesson.dayLabel} \u00b7 ${currentLesson.startTime}-${currentLesson.endTime}`,
+      sv: `M\u00e5ndag \u00b7 ${currentLesson.startTime}-${currentLesson.endTime}`,
+    }
+    : {
+      en: 'English 8A lesson',
+      sv: 'Engelska 8A-lektion',
+    },
   classData: {
     profile: class8AProfile,
     students: class8AStudents,
@@ -45,28 +60,52 @@ export const english8AConfig = {
   navigation: {
     defaultScreen: 'class-picture',
     items: [
-      { id: 'class-picture', label: 'Class picture' },
-      { id: 'plan', label: 'Plan' },
-      { id: 'now', label: 'Now' },
-      { id: 'assessment', label: 'Assessment' },
+      { id: 'class-picture', label: { en: 'Class picture', sv: 'Klassbild' } },
+      { id: 'plan', label: { en: 'Plan', sv: 'Planering' } },
+      { id: 'now', label: { en: 'Now', sv: 'Nu' } },
+      { id: 'assessment', label: { en: 'Assessment', sv: 'Bed\u00f6mning' } },
     ],
   },
   screens: {
     'class-picture': {
-      title: 'Class picture',
-      description: 'Reusable class overview for English 8A.',
+      title: {
+        en: 'Class picture',
+        sv: 'Klassbild',
+      },
+      description: {
+        en: 'Reusable class overview for English 8A.',
+        sv: '\u00c5teranv\u00e4ndbar klass\u00f6versikt f\u00f6r Engelska 8A.',
+      },
     },
     plan: {
-      title: 'Plan',
-      description: 'Reusable planning space for English 8A.',
+      title: {
+        en: 'Plan',
+        sv: 'Planering',
+      },
+      description: {
+        en: 'Reusable planning space for English 8A.',
+        sv: '\u00c5teranv\u00e4ndbar planeringsyta f\u00f6r Engelska 8A.',
+      },
     },
     now: {
-      title: 'Now',
-      description: 'Reusable lesson capture for English 8A.',
+      title: {
+        en: 'Now',
+        sv: 'Nu',
+      },
+      description: {
+        en: 'Reusable lesson capture for English 8A.',
+        sv: '\u00c5teranv\u00e4ndbar lektionsinsamling f\u00f6r Engelska 8A.',
+      },
     },
     assessment: {
-      title: 'Assessment',
-      description: 'Reusable assessment space for English 8A.',
+      title: {
+        en: 'Assessment',
+        sv: 'Bed\u00f6mning',
+      },
+      description: {
+        en: 'Reusable assessment space for English 8A.',
+        sv: '\u00c5teranv\u00e4ndbar bed\u00f6mningsyta f\u00f6r Engelska 8A.',
+      },
     },
   },
 };

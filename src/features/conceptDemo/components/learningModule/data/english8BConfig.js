@@ -2,16 +2,22 @@ export const english8BConfig = {
   id: 'english-8b',
   subjectId: 'english',
   classId: '8b',
-  title: 'English 8B',
-  subtitle: 'Reusable module test config',
+  title: {
+    en: 'English 8B',
+    sv: 'Engelska 8B',
+  },
+  subtitle: {
+    en: 'Reusable module test config',
+    sv: '\u00c5teranv\u00e4ndbar testkonfiguration',
+  },
   className: '8B',
   navigation: {
-    defaultScreen: 'classPicture',
+    defaultScreen: 'class-picture',
     items: [
-      { id: 'classPicture', label: 'Class picture' },
-      { id: 'plan', label: 'Plan' },
-      { id: 'now', label: 'Now' },
-      { id: 'assessment', label: 'Assessment' },
+      { id: 'class-picture', label: { en: 'Class picture', sv: 'Klassbild' } },
+      { id: 'plan', label: { en: 'Plan', sv: 'Planering' } },
+      { id: 'now', label: { en: 'Now', sv: 'Nu' } },
+      { id: 'assessment', label: { en: 'Assessment', sv: 'Bed\u00f6mning' } },
     ],
   },
 };
