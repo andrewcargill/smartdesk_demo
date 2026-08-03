@@ -389,9 +389,9 @@ function LearningObservationHistoryPanel({ observations, activeObservation, lear
   );
 }
 
-function StudentGlobalInsightPanel({ student, evidenceItems, rowNote, learningObservations, subjectTitle, learningObservationAreas, language, t }) {
+function StudentGlobalInsightPanel({ student, evidenceItems, rowNote, learningObservations, subjectId, subjectTitle, learningObservationAreas, language, t }) {
   const studentEvidence = getStudentEvidenceItems(evidenceItems, student.id);
-  const previousResult = student.previousResults?.find((result) => result.subjectId === 'english') || student.previousResults?.[0] || null;
+  const previousResult = student.previousResults?.find((result) => result.subjectId === subjectId) || student.previousResults?.[0] || null;
   const latestEvidenceDate = getLatestDate(studentEvidence);
   const [activeLearningObservation, setActiveLearningObservation] = useState(null);
 
@@ -1534,6 +1534,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
                           evidenceItems={evidenceItems}
                           rowNote={rowNote}
                           learningObservations={studentLearningObservations}
+                          subjectId={moduleConfig?.subjectId}
                           subjectTitle={subjectTitle}
                           learningObservationAreas={learningObservationAreas}
                           language={language}

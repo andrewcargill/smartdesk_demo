@@ -17,6 +17,8 @@ import {
   TIMELINE_ADD_SNAP_MINUTES,
   timeStringToMinutes,
 } from '../utils/weekViewUtils.js';
+import { getSubjectDefinition } from '../data/subjectCatalogue.js';
+import { resolveLocalizedValue } from '../i18n/conceptDemoTranslations.js';
 
 const purple = '#9c28af';
 const darkText = '#17151a';
@@ -98,7 +100,12 @@ function getDisplayTitle(event) {
   const compactTitle = compactTitles[event.title] || event.title;
 
   if (event.type === 'lesson' && event.className) {
-    return `${event.className} · ${event.subjectCode || compactTitles[event.subject] || compactTitle}`;
+    const subjectCode = event.subjectCode
+      || resolveLocalizedValue(getSubjectDefinition(event.subjectId)?.code, event.language, '')
+      || compactTitles[event.subject]
+      || compactTitle;
+
+    return `${event.className} · ${subjectCode}`;
   }
 
   if (event.type === 'mentor' && event.className) {

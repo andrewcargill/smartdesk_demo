@@ -80,6 +80,20 @@ export function getUniqueClasses(events) {
   return [...new Set(events.map((event) => event.className).filter(Boolean))].sort();
 }
 
+function getModuleClasses(events, subjectId, selectedSubjectIds = []) {
+  const classNames = new Set(getUniqueClasses(events));
+
+  if (selectedSubjectIds.includes(subjectId)) {
+    classNames.add('8A');
+  }
+
+  return [...classNames].sort((first, second) => {
+    if (first === '8A') return -1;
+    if (second === '8A') return 1;
+    return first.localeCompare(second);
+  });
+}
+
 export function getNextSubjectLesson(events, currentContext) {
   const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
   const currentOrder = dayOrder.indexOf(currentContext.currentDayId);
@@ -125,7 +139,7 @@ export function getSubjectModules(schedule) {
       title: getSubjectDisplay(events[0]).title,
       shortTitle: getSubjectDisplay(events[0]).shortTitle,
       type: 'subject',
-      classes: getUniqueClasses(events),
+      classes: getModuleClasses(events, id, schedule.selectedSubjectIds || []),
       lessonCount: events.length,
       nextLesson: getNextSubjectLesson(events, schedule.currentContext),
     }))

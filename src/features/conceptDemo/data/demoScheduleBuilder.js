@@ -205,6 +205,7 @@ function localizeLessonEvent(event, selectedSubjectIds, language) {
     subjectTitle: lessonSubject.title,
     subjectShortTitle: lessonSubject.shortTitle,
     subjectCode: lessonSubject.code,
+    language,
     subjectId: lessonSubject.subjectId,
     topic: getLessonTopic(lessonSubject.subjectId, event, language),
   };

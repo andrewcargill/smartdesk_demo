@@ -98,6 +98,8 @@ export const conceptDemoTranslations = {
         subjectCount: '{{count}}/{{max}} selected',
         save: 'Start demo',
         changeSubjects: 'Setup',
+        resetDemo: 'Reset demo',
+        resetDemoAria: 'Reset and restart demo',
       },
     },
     floatingSmartDesk: {
@@ -480,6 +482,8 @@ export const conceptDemoTranslations = {
         subjectCount: '{{count}}/{{max}} valda',
         save: 'Starta demo',
         changeSubjects: 'Inst\u00e4llningar',
+        resetDemo: '\u00c5terst\u00e4ll demo',
+        resetDemoAria: '\u00c5terst\u00e4ll och starta om demon',
       },
     },
     floatingSmartDesk: {

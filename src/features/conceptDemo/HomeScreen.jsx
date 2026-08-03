@@ -19,16 +19,15 @@ import { ConceptDemoLanguageProvider, useConceptDemoLanguage } from './ConceptDe
 import { ConceptDemoSubjectProvider, useConceptDemoSubjects } from './ConceptDemoSubjectContext.jsx';
 import { ConceptDemoTeacherProvider, useConceptDemoTeacher } from './ConceptDemoTeacherContext.jsx';
 import DemoShell from './DemoShell.jsx';
-import English8AModule from './components/English8AModule.jsx';
 import FocusedWorkspace from './components/FocusedWorkspace.jsx';
+import LearningModule from './components/learningModule/LearningModule.jsx';
 import MentorModal from './components/MentorModal.jsx';
-import Maths7AModule from './components/Maths7AModule.jsx';
-import Maths7CModule from './components/Maths7CModule.jsx';
 import MyWeekModal from './components/MyWeekModal.jsx';
 import NotebookModal from './components/NotebookModal.jsx';
 import SmartDeskDrawer from './components/SmartDeskDrawer.jsx';
 import SmartDeskStore from './components/SmartDeskStore.jsx';
 import { buildDemoSchedule } from './data/demoScheduleBuilder.js';
+import { getLearningModuleConfig } from './components/learningModule/data/subject8AConfigFactory.js';
 import { maths7APlanningBlocks } from './data/maths7APlanning.js';
 import { getTeachingUnitForPlanningBlock, normalizeMathsPlanningBlock } from './data/mathsCurriculum.js';
 import { resolveLocalizedValue } from './i18n/conceptDemoTranslations.js';
@@ -89,6 +88,20 @@ function writeSetupCompleted() {
     window.localStorage.setItem(setupCompletedStorageKey, 'true');
   } catch {
     // The modal can still close in-memory if localStorage is unavailable.
+  }
+}
+
+function resetDemoStorage() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    Object.keys(window.localStorage)
+      .filter((key) => key.startsWith('smartdesk_demo_'))
+      .forEach((key) => window.localStorage.removeItem(key));
+  } catch {
+    // The reload still gives the in-memory demo a clean first screen.
   }
 }
 
@@ -296,7 +309,7 @@ function TeacherCircle({ teacherName, onOpenWeek, t }) {
   );
 }
 
-function ModuleCircle({ module, selected, onSelect, onOpenClass, onOpenClassC, onOpenEnglish8A, onOpenNotebook, onOpenMentor, maths7ATriggerRef, t }) {
+function ModuleCircle({ module, selected, onSelect, onOpenSubjectClass, onOpenNotebook, onOpenMentor, maths7ATriggerRef, t }) {
   const showClassBubbles = module.type === 'subject' && module.classes?.length;
   const moduleTitle = getModuleTitle(module, t);
   const moduleShortTitle = getModuleShortTitle(module, t);
@@ -316,18 +329,9 @@ function ModuleCircle({ module, selected, onSelect, onOpenClass, onOpenClassC, o
   function handleClassClick(className) {
     onSelect(module.id);
 
-    if (module.id === 'mathematics' && className === '7A') {
-      onOpenClass?.();
+    if (className === '8A') {
+      onOpenSubjectClass?.(module.id, className);
     }
-
-    if (module.id === 'mathematics' && className === '7C') {
-      onOpenClassC?.();
-    }
-
-    if (module.id === 'english' && className === '8A') {
-      onOpenEnglish8A?.();
-    }
-
   }
 
   return (
@@ -397,7 +401,7 @@ function ModuleCircle({ module, selected, onSelect, onOpenClass, onOpenClassC, o
       {showClassBubbles && module.classes.map((className, index) => (
         <Button
           key={className}
-          ref={module.id === 'mathematics' && className === '7A' ? maths7ATriggerRef : undefined}
+          ref={module.id === 'mathematics' && className === '8A' ? maths7ATriggerRef : undefined}
           type="button"
           className="module-class-bubble"
           aria-label={t('home.openClass', { subject: moduleShortTitle, className })}
@@ -781,37 +785,28 @@ function HomeScreenContent() {
   const nextTeachingEvent = useMemo(() => getNextTeachingEvent(schedule), [schedule]);
   const maths7ALesson = useMemo(() => getMaths7ALesson(schedule), [schedule]);
   const maths7ACurrentPlanningTitle = useMemo(() => getMaths7ACurrentPlanningTitle(), [activeWorkspace]);
+  const activeModuleConfig = useMemo(() => (
+    activeWorkspace?.type === 'class'
+      ? getLearningModuleConfig({
+        subjectId: activeWorkspace.subjectId,
+        classId: activeWorkspace.classId,
+        schedule,
+      })
+      : null
+  ), [activeWorkspace, schedule]);
   const smartDeskContext = useMemo(() => {
     const homeContext = getSmartDeskHomeContext(schedule);
 
-    if (activeWorkspace?.type === 'class' && activeWorkspace.classId === '7a') {
+    if (activeWorkspace?.type === 'class') {
       return {
         ...homeContext,
-        screen: 'maths-7a',
-      };
-    }
-
-    if (activeWorkspace?.type === 'class' && activeWorkspace.classId === '7c') {
-      return {
-        ...homeContext,
-        screen: 'maths-7c',
-      };
-    }
-
-    if (activeWorkspace?.type === 'class' && activeWorkspace.classId === '8a') {
-      return {
-        ...homeContext,
-        screen: 'english-8a',
+        screen: `${activeWorkspace.subjectId}-${activeWorkspace.classId}`,
       };
     }
 
     return homeContext;
   }, [activeWorkspace, schedule]);
-  const subjectWorkspaceActive = activeWorkspace?.type === 'class'
-    && (
-      (activeWorkspace.subjectId === 'mathematics' && ['7a', '7c'].includes(activeWorkspace.classId))
-      || (activeWorkspace.subjectId === 'english' && activeWorkspace.classId === '8a')
-    );
+  const subjectWorkspaceActive = activeWorkspace?.type === 'class' && Boolean(activeModuleConfig);
   const mathsWorkspaceActive = activeWorkspace?.type === 'class'
     && activeWorkspace.subjectId === 'mathematics'
     && ['7a', '7c'].includes(activeWorkspace.classId);
@@ -869,7 +864,7 @@ function HomeScreenContent() {
     };
   }, [subjectWorkspaceOpen]);
 
-  function openMaths7A() {
+  function openSubjectClass(subjectId, classNameOrId) {
     closeToday();
     closeSmartDesk();
     closeWeek();
@@ -877,35 +872,13 @@ function HomeScreenContent() {
     setMentorOpen(false);
     setActiveWorkspace({
       type: 'class',
-      subjectId: 'mathematics',
-      classId: '7a',
+      subjectId,
+      classId: String(classNameOrId || '8A').toLowerCase(),
     });
   }
 
-  function openMaths7C() {
-    closeToday();
-    closeSmartDesk();
-    closeWeek();
-    setNotebookOpen(false);
-    setMentorOpen(false);
-    setActiveWorkspace({
-      type: 'class',
-      subjectId: 'mathematics',
-      classId: '7c',
-    });
-  }
-
-  function openEnglish8A() {
-    closeToday();
-    closeSmartDesk();
-    closeWeek();
-    setNotebookOpen(false);
-    setMentorOpen(false);
-    setActiveWorkspace({
-      type: 'class',
-      subjectId: 'english',
-      classId: '8a',
-    });
+  function openMaths7A(event) {
+    openSubjectClass(event?.subjectId || 'mathematics', '8A');
   }
 
   function backToWeek() {
@@ -972,6 +945,13 @@ function HomeScreenContent() {
     setSetupOpen(false);
   }
 
+  function resetDemo() {
+    resetDemoStorage();
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+  }
+
   return (
     <DemoShell
       onOpenMaths7A={openMaths7A}
@@ -1027,23 +1007,40 @@ function HomeScreenContent() {
             <Typography sx={{ color: 'text.secondary', fontSize: 15.5 }}>
               {t('home.statusLine', { eventSummary: formatTeachingEvent(nextTeachingEvent, t) })}
             </Typography>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={openSetup}
-              sx={{
-                mt: 0.5,
-                borderColor: 'rgba(23, 21, 26, 0.12)',
-                color: darkText,
-                borderRadius: '999px',
-                textTransform: 'none',
-                fontSize: 12.5,
-                fontWeight: 760,
-                '&:hover': { borderColor: 'rgba(156, 40, 175, 0.32)', bgcolor: '#fff' },
-              }}
-            >
-              {t('home.setup.changeSubjects')}
-            </Button>
+            <Stack direction="row" spacing={0.8} alignItems="center" justifyContent="center" sx={{ mt: 0.5 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={openSetup}
+                sx={{
+                  borderColor: 'rgba(23, 21, 26, 0.12)',
+                  color: darkText,
+                  borderRadius: '999px',
+                  textTransform: 'none',
+                  fontSize: 12.5,
+                  fontWeight: 760,
+                  '&:hover': { borderColor: 'rgba(156, 40, 175, 0.32)', bgcolor: '#fff' },
+                }}
+              >
+                {t('home.setup.changeSubjects')}
+              </Button>
+              <Button
+                variant="text"
+                size="small"
+                onClick={resetDemo}
+                aria-label={t('home.setup.resetDemoAria')}
+                sx={{
+                  color: 'text.secondary',
+                  borderRadius: '999px',
+                  textTransform: 'none',
+                  fontSize: 12.5,
+                  fontWeight: 760,
+                  '&:hover': { color: darkText, bgcolor: 'rgba(23, 21, 26, 0.04)' },
+                }}
+              >
+                {t('home.setup.resetDemo')}
+              </Button>
+            </Stack>
           </Stack>
 
           <Box
@@ -1077,9 +1074,7 @@ function HomeScreenContent() {
                   module={module}
                   selected={selectedModule === module.id}
                   onSelect={setSelectedModule}
-                  onOpenClass={openMaths7A}
-                  onOpenClassC={openMaths7C}
-                  onOpenEnglish8A={openEnglish8A}
+                  onOpenSubjectClass={openSubjectClass}
                   onOpenNotebook={openNotebook}
                   onOpenMentor={openMentor}
                   maths7ATriggerRef={maths7ATriggerRef}
@@ -1181,25 +1176,13 @@ function HomeScreenContent() {
       <FocusedWorkspace
         open={subjectWorkspaceOpen}
         onClose={closeWorkspace}
-        title={activeWorkspace?.subjectId === 'english'
-          ? `${t('subjects.english')} - 8A`
-          : activeWorkspace?.classId === '7c' ? `${t('subjects.mathematics')} - 7C` : `${t('subjects.mathematics')} - 7A`}
-        subtitle={activeWorkspace?.subjectId === 'english'
-          ? t('home.focusedWorkspaceSubtitle')
-          : activeWorkspace?.classId === '7c'
-            ? t('home.focusedWorkspaceSubtitle')
-            : `${maths7ACurrentPlanningTitle} - ${t('home.currentWeekday')} - ${maths7ALesson?.start || '08:40'}-${maths7ALesson?.end || '09:30'}`}
+        title={activeModuleConfig?.title?.[language] || activeModuleConfig?.title?.en || ''}
+        subtitle={activeModuleConfig?.subtitle?.[language] || activeModuleConfig?.subtitle?.en || t('home.focusedWorkspaceSubtitle')}
         returnFocusRef={maths7ATriggerRef}
         showHeader={false}
       >
-        {activeWorkspace?.subjectId === 'english' && activeWorkspace?.classId === '8a' && (
-          <English8AModule onBackToWeek={backToWeek} onClose={closeWorkspace} />
-        )}
-        {activeWorkspace?.subjectId === 'mathematics' && activeWorkspace?.classId === '7c' && (
-          <Maths7CModule onBackToWeek={backToWeek} onClose={closeWorkspace} />
-        )}
-        {activeWorkspace?.subjectId === 'mathematics' && activeWorkspace?.classId === '7a' && (
-          <Maths7AModule onBackToWeek={backToWeek} onClose={closeWorkspace} />
+        {activeModuleConfig && (
+          <LearningModule config={activeModuleConfig} onBack={closeWorkspace} />
         )}
       </FocusedWorkspace>
       <MyWeekModal open={weekOpen} onClose={closeWeek} onOpenClass={openMaths7A} schedule={schedule} />
