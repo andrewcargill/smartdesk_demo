@@ -13,6 +13,7 @@ import {
   Typography,
 } from '@mui/material';
 import { smartDeskDemoResponses } from '../data/smartDeskDemoResponses.js';
+import { resolveLocalizedValue } from '../i18n/conceptDemoTranslations.js';
 import { getContextWelcome } from '../utils/smartDeskContextUtils.js';
 
 const purple = '#9c28af';
@@ -28,6 +29,32 @@ const smartDeskDrawerWidth = {
 };
 const drawerEnterTransition = '980ms cubic-bezier(0.22, 1, 0.36, 1)';
 const drawerExitTransition = '680ms cubic-bezier(0.4, 0, 1, 1)';
+const drawerLanguage = 'en';
+
+function localizeMessagePayload(payload) {
+  if (!payload) {
+    return payload;
+  }
+
+  return {
+    ...payload,
+    text: resolveLocalizedValue(payload.text, drawerLanguage),
+    followUpText: resolveLocalizedValue(payload.followUpText, drawerLanguage),
+    actions: payload.actions?.map((action) => ({
+      ...action,
+      label: resolveLocalizedValue(action.label, drawerLanguage),
+    })) || [],
+  };
+}
+
+function localizePrompt(prompt) {
+  return {
+    ...prompt,
+    label: resolveLocalizedValue(prompt.label, drawerLanguage),
+    userText: resolveLocalizedValue(prompt.userText, drawerLanguage),
+    response: localizeMessagePayload(prompt.response),
+  };
+}
 
 function makeAssistantMessage(response, id = `assistant-${Date.now()}`) {
   return {
@@ -218,7 +245,10 @@ export default function SmartDeskDrawer({
   onAction,
 }) {
   const responseSet = smartDeskDemoResponses.home;
-  const prompts = responseSet.suggestedPrompts;
+  const prompts = useMemo(
+    () => responseSet.suggestedPrompts.map(localizePrompt),
+    [responseSet.suggestedPrompts],
+  );
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);
@@ -229,7 +259,7 @@ export default function SmartDeskDrawer({
 
   const welcomeMessage = useMemo(() => ({
     ...responseSet.welcome,
-    text: getContextWelcome(context, responseSet.welcome.text),
+    text: getContextWelcome(context, resolveLocalizedValue(responseSet.welcome.text, drawerLanguage)),
   }), [context, responseSet.welcome]);
 
   function clearTimers() {
@@ -283,7 +313,7 @@ export default function SmartDeskDrawer({
       if (matchedPrompt) {
         addResponseForPrompt(matchedPrompt);
       } else {
-        setMessages((current) => [...current, makeAssistantMessage(responseSet.fallback, `fallback-${Date.now()}`)]);
+        setMessages((current) => [...current, makeAssistantMessage(localizeMessagePayload(responseSet.fallback), `fallback-${Date.now()}`)]);
         setThinking(false);
       }
     }, 680);
@@ -300,7 +330,11 @@ export default function SmartDeskDrawer({
       setListening(false);
       setMessages((current) => [
         ...current,
-        { id: `voice-transcript-${Date.now()}`, role: 'user', text: responseSet.voiceDemo.transcript },
+        {
+          id: `voice-transcript-${Date.now()}`,
+          role: 'user',
+          text: resolveLocalizedValue(responseSet.voiceDemo.transcript, drawerLanguage),
+        },
       ]);
       setThinking(true);
       queueTimer(() => voicePrompt && addResponseForPrompt(voicePrompt), 820);
