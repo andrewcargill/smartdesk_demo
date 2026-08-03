@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import { ConceptDemoDrawerProvider, useConceptDemoDrawers } from './ConceptDemoDrawerContext.jsx';
 import { ConceptDemoLanguageProvider, useConceptDemoLanguage } from './ConceptDemoLanguageContext.jsx';
+import { ConceptDemoSubjectProvider } from './ConceptDemoSubjectContext.jsx';
 import DemoShell from './DemoShell.jsx';
 import English8AModule from './components/English8AModule.jsx';
 import FocusedWorkspace from './components/FocusedWorkspace.jsx';
@@ -1055,9 +1056,11 @@ function HomeScreenContent() {
 export default function HomeScreen() {
   return (
     <ConceptDemoLanguageProvider>
-      <ConceptDemoDrawerProvider>
-        <HomeScreenContent />
-      </ConceptDemoDrawerProvider>
+      <ConceptDemoSubjectProvider>
+        <ConceptDemoDrawerProvider>
+          <HomeScreenContent />
+        </ConceptDemoDrawerProvider>
+      </ConceptDemoSubjectProvider>
     </ConceptDemoLanguageProvider>
   );
 }

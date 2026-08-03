@@ -25,6 +25,9 @@ export const conceptDemoTranslations = {
       mathematics: 'Mathematics',
       english: 'English',
       'physical-education': 'Physical Education',
+      science: 'Science',
+      swedish: 'Swedish',
+      history: 'History',
     },
     home: {
       teacherWorkspace: 'Teacher workspace',
@@ -51,6 +54,15 @@ export const conceptDemoTranslations = {
         },
         'physical-education': {
           shortTitle: 'PE',
+        },
+        science: {
+          shortTitle: 'Science',
+        },
+        swedish: {
+          shortTitle: 'Swedish',
+        },
+        history: {
+          shortTitle: 'History',
         },
       },
       classCount_one: '{{count}} class',
@@ -384,6 +396,9 @@ export const conceptDemoTranslations = {
       mathematics: 'Matematik',
       english: 'Engelska',
       'physical-education': 'Idrott och h\u00e4lsa',
+      science: 'Naturorientering',
+      swedish: 'Svenska',
+      history: 'Historia',
     },
     home: {
       teacherWorkspace: 'L\u00e4rararbetsyta',
@@ -410,6 +425,15 @@ export const conceptDemoTranslations = {
         },
         'physical-education': {
           shortTitle: 'Idrott',
+        },
+        science: {
+          shortTitle: 'NO',
+        },
+        swedish: {
+          shortTitle: 'Svenska',
+        },
+        history: {
+          shortTitle: 'Historia',
         },
       },
       classCount_one: '{{count}} klass',
