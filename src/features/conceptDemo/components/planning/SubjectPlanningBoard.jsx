@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import AddIcon from '@mui/icons-material/Add';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import Tooltip from '@mui/material/Tooltip';
@@ -39,13 +40,14 @@ import {
   moveBlockToPeriod,
   moveBlockToWeek,
 } from '../../utils/subjectPlanningUtils.js';
+import { useConceptDemoLanguage } from '../../ConceptDemoLanguageContext.jsx';
 import PlanningBlockCard from './PlanningBlockCard.jsx';
 import PlanningBlockDialog from './PlanningBlockDialog.jsx';
 
 const darkText = '#17151a';
 const purple = '#9c28af';
 
-const blockTypeLabels = {
+const fallbackBlockTypeLabels = {
   holiday: 'Holiday',
   teaching: 'Teaching',
   revisit: 'Revisit',
@@ -53,20 +55,13 @@ const blockTypeLabels = {
   consolidation: 'Consolidation',
 };
 
-const statusLabels = {
+const fallbackStatusLabels = {
   planned: 'Planned',
   current: 'Current',
   completed: 'Completed',
 };
 
 const quickAddTemplateIds = new Set(['blank-block', 'revision-consolidation', 'assessment-point', 'problem-solving-reasoning']);
-
-const quickAddDescriptions = {
-  'blank-block': 'Create a custom planning block.',
-  'revision-consolidation': 'Create time to revisit and secure earlier learning.',
-  'assessment-point': 'Add a planned assessment or checkpoint.',
-  'problem-solving-reasoning': 'Create time to revisit written explanation and multi-step problem-solving.',
-};
 
 function sortPeriods(periods) {
   return [...(periods || [])].sort((first, second) => (first.order || 0) - (second.order || 0));
@@ -82,28 +77,32 @@ function addDays(date, days) {
   return nextDate;
 }
 
-function getMonthLabel(year, month) {
-  return new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric' }).format(new Date(year, month - 1, 1, 12));
+function getPlanningLocale(language) {
+  return language === 'sv' ? 'sv-SE' : 'en-GB';
 }
 
-function getCompactDateLabel(date) {
-  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(new Date(`${date}T12:00:00`));
+function getMonthLabel(year, month, language = 'en') {
+  return new Intl.DateTimeFormat(getPlanningLocale(language), { month: 'long', year: 'numeric' }).format(new Date(year, month - 1, 1, 12));
+}
+
+function getCompactDateLabel(date, language = 'en') {
+  return new Intl.DateTimeFormat(getPlanningLocale(language), { day: 'numeric', month: 'short' }).format(new Date(`${date}T12:00:00`));
 }
 
 function sortReferenceItems(items) {
   return [...(items || [])].sort((first, second) => (first.order || 0) - (second.order || 0) || first.label.localeCompare(second.label));
 }
 
-function getCurriculumReferenceSections(curriculumAreas, abilities, typeLabels) {
+function getCurriculumReferenceSections(curriculumAreas, abilities, typeLabels, fallbackTypeLabels = {}) {
   return [
     {
       id: 'content',
-      label: typeLabels?.content || 'Content',
+      label: typeLabels?.content || fallbackTypeLabels.content || 'Content',
       areas: sortReferenceItems(curriculumAreas),
     },
     {
       id: 'ability',
-      label: typeLabels?.ability || 'Abilities',
+      label: typeLabels?.ability || fallbackTypeLabels.ability || 'Abilities',
       areas: sortReferenceItems(abilities),
     },
   ].filter((section) => section.areas.length);
@@ -130,7 +129,7 @@ function getTemplateContentSummary(template, curriculumAreas) {
   return contentLabels.join(', ');
 }
 
-function getTemplateInPlanLabel(template, planningBlocks) {
+function getTemplateInPlanLabel(template, planningBlocks, t) {
   const usageCount = template.teachingUnitId
     ? getTeachingUnitUsageCount({ teachingUnitId: template.teachingUnitId, planningBlocks })
     : getTemplateUsageCount({ template, planningBlocks });
@@ -138,11 +137,19 @@ function getTemplateInPlanLabel(template, planningBlocks) {
     return '';
   }
 
-  return `In plan${usageCount > 1 ? ` · ${usageCount} blocks` : ''}`;
+  return usageCount > 1
+    ? t('learningModule.planView.inPlanWithBlocks', { count: usageCount })
+    : t('learningModule.planView.inPlan');
 }
 
-function getTemplateAriaLabel(template, inPlanLabel) {
-  return `Add ${template.title}.${inPlanLabel ? ` ${inPlanLabel}.` : ''}`;
+function getTemplateAriaLabel(template, inPlanLabel, t) {
+  return inPlanLabel
+    ? t('learningModule.planView.addTemplateInPlanAria', { title: template.title, inPlanLabel })
+    : t('learningModule.planView.addTemplateAria', { title: template.title });
+}
+
+function isActivationKey(event) {
+  return event.key === 'Enter' || event.key === ' ';
 }
 
 function getPeriodForDate(periods, date) {
@@ -202,7 +209,7 @@ function getInitialMonthIndex(periods, referenceDate) {
   return index === -1 ? 0 : index;
 }
 
-function getCurrentTermMarker(weeks, referenceDate) {
+function getCurrentTermMarker(weeks, referenceDate, language = 'en') {
   if (!referenceDate) {
     return null;
   }
@@ -220,7 +227,7 @@ function getCurrentTermMarker(weeks, referenceDate) {
   return {
     weekIndex,
     leftPercent: (dayOffset / 6) * 100,
-    label: getCompactDateLabel(referenceDate),
+    label: getCompactDateLabel(referenceDate, language),
   };
 }
 
@@ -262,9 +269,12 @@ function TermTimelineBlock({
   onDelete,
   onResizeStart,
 }) {
+  const { t } = useConceptDemoLanguage();
   const [menuAnchor, setMenuAnchor] = useState(null);
   const adaptationCount = Array.isArray(block.groupAdaptations) ? block.groupAdaptations.length : 0;
   const isHoliday = block.blockType === 'holiday';
+  const blockTypeLabel = t(`learningModule.planView.blockTypes.${block.blockType}`) || fallbackBlockTypeLabels[block.blockType] || block.blockType;
+  const statusLabel = t(`learningModule.planView.statuses.${block.status}`) || fallbackStatusLabels[block.status] || block.status;
 
   function closeMenu() {
     setMenuAnchor(null);
@@ -287,7 +297,7 @@ function TermTimelineBlock({
         event.stopPropagation();
         onEdit(block);
       }}
-      aria-label={`${block.title}, ${blockTypeLabels[block.blockType] || block.blockType}, ${statusLabels[block.status] || block.status}`}
+      aria-label={`${block.title}, ${blockTypeLabel}, ${statusLabel}`}
       sx={{
         gridColumn: `${span.startIndex + 1} / span ${span.span}`,
         p: 0.9,
@@ -308,7 +318,7 @@ function TermTimelineBlock({
           onResizeStart(event, block, 'start');
         }}
         role="button"
-        aria-label={`Adjust start date for ${block.title}`}
+        aria-label={t('learningModule.planView.durationDialog.startDate')}
         tabIndex={0}
         onDragEnd={onDragEnd}
         sx={{
@@ -341,7 +351,7 @@ function TermTimelineBlock({
           onResizeStart(event, block, 'end');
         }}
         role="button"
-        aria-label={`Adjust end date for ${block.title}`}
+        aria-label={t('learningModule.planView.durationDialog.endDate')}
         tabIndex={0}
         onDragEnd={onDragEnd}
         sx={{
@@ -375,7 +385,7 @@ function TermTimelineBlock({
             </Typography>
           </Tooltip>
           <IconButton
-            aria-label={`Planning actions for ${block.title}`}
+            aria-label={t('learningModule.planView.card.planningActions', { title: block.title })}
             size="small"
             onClick={(event) => setMenuAnchor(event.currentTarget)}
             onDoubleClick={(event) => event.stopPropagation()}
@@ -385,18 +395,24 @@ function TermTimelineBlock({
           </IconButton>
         </Stack>
         <Typography noWrap sx={{ color: 'text.secondary', fontSize: 11.6, fontWeight: 700 }}>
-          {statusLabels[block.status] || block.status}{adaptationCount ? ` · ${adaptationCount} adaptations` : ''}
+          {statusLabel}{adaptationCount ? ` · ${t('learningModule.planView.card.focusAdaptations', { count: adaptationCount })}` : ''}
         </Typography>
       </Stack>
       <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
-        <MenuItem onClick={() => runMenuAction(() => onEdit(block))}>Edit</MenuItem>
-        <MenuItem onClick={() => runMenuAction(() => onMove(block))}>Move to...</MenuItem>
-        <MenuItem onClick={() => runMenuAction(() => onAdjustDuration(block))}>Adjust duration</MenuItem>
-        <MenuItem onClick={() => runMenuAction(() => onDuplicate(block))}>Duplicate</MenuItem>
-        <MenuItem onClick={() => runMenuAction(() => onStatusChange(block, 'planned'))}>Change status: Planned</MenuItem>
-        <MenuItem onClick={() => runMenuAction(() => onStatusChange(block, 'current'))}>Change status: Current</MenuItem>
-        <MenuItem onClick={() => runMenuAction(() => onStatusChange(block, 'completed'))}>Change status: Completed</MenuItem>
-        <MenuItem onClick={() => runMenuAction(() => onDelete(block))}>Delete</MenuItem>
+        <MenuItem onClick={() => runMenuAction(() => onEdit(block))}>{t('learningModule.planView.menu.edit')}</MenuItem>
+        <MenuItem onClick={() => runMenuAction(() => onMove(block))}>{t('learningModule.planView.menu.moveTo')}</MenuItem>
+        <MenuItem onClick={() => runMenuAction(() => onAdjustDuration(block))}>{t('learningModule.planView.menu.adjustDuration')}</MenuItem>
+        <MenuItem onClick={() => runMenuAction(() => onDuplicate(block))}>{t('learningModule.planView.menu.duplicate')}</MenuItem>
+        <MenuItem onClick={() => runMenuAction(() => onStatusChange(block, 'planned'))}>
+          {t('learningModule.planView.menu.changeStatus', { status: t('learningModule.planView.statuses.planned') })}
+        </MenuItem>
+        <MenuItem onClick={() => runMenuAction(() => onStatusChange(block, 'current'))}>
+          {t('learningModule.planView.menu.changeStatus', { status: t('learningModule.planView.statuses.current') })}
+        </MenuItem>
+        <MenuItem onClick={() => runMenuAction(() => onStatusChange(block, 'completed'))}>
+          {t('learningModule.planView.menu.changeStatus', { status: t('learningModule.planView.statuses.completed') })}
+        </MenuItem>
+        <MenuItem onClick={() => runMenuAction(() => onDelete(block))}>{t('learningModule.planView.menu.delete')}</MenuItem>
       </Menu>
     </Paper>
   );
@@ -408,11 +424,13 @@ function CurriculumReferencePanel({
   representedAbilityIds,
   sx,
 }) {
+  const { t } = useConceptDemoLanguage();
+
   return (
     <Paper elevation={0} sx={{ p: 1, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.09)', bgcolor: '#fbfafc', width: { xs: '100%', lg: 560, xl: 640 }, maxWidth: '100%', boxSizing: 'border-box', overflow: 'hidden', ...sx }}>
       <Stack spacing={0.75} sx={{ minWidth: 0 }}>
         <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-          <Typography sx={{ color: darkText, fontSize: 12.5, fontWeight: 860 }}>Curriculum reference</Typography>
+          <Typography sx={{ color: darkText, fontSize: 12.5, fontWeight: 860 }}>{t('learningModule.planView.curriculumReference')}</Typography>
         </Stack>
         {sections.map((section) => {
           const representedIds = section.id === 'ability' ? representedAbilityIds : representedCurriculumAreaIds;
@@ -424,16 +442,16 @@ function CurriculumReferencePanel({
                   {section.label}
                 </Typography>
                 <Typography sx={{ color: 'text.secondary', fontSize: 10.8, fontWeight: 760 }}>
-                  {representedSectionCount}/{section.areas.length} represented
+                  {t('learningModule.planView.representedCount', { represented: representedSectionCount, total: section.areas.length })}
                 </Typography>
               </Stack>
             <Stack direction="row" spacing={0.45} flexWrap="wrap" useFlexGap sx={{ minWidth: 0 }}>
               {section.areas.map((area) => {
                 const isRepresented = representedIds.has(area.id);
                 return (
-                  <Tooltip key={area.id} title={`${area.label}${isRepresented ? ' is in the plan' : ' is not yet in the plan'}`}>
+                  <Tooltip key={area.id} title={isRepresented ? t('learningModule.planView.representedTooltip', { label: area.label }) : t('learningModule.planView.notRepresentedTooltip', { label: area.label })}>
                     <Box
-                      aria-label={`${area.label}: ${isRepresented ? 'represented' : 'not represented'}`}
+                      aria-label={isRepresented ? t('learningModule.planView.representedAria', { label: area.label }) : t('learningModule.planView.notRepresentedAria', { label: area.label })}
                       sx={{
                         px: 0.7,
                         py: 0.35,
@@ -481,6 +499,7 @@ export default function SubjectPlanningBoard({
   onResetPlanning,
   onResetCurriculumNotes,
 }) {
+  const { language, t } = useConceptDemoLanguage();
   const [view, setView] = useState('term');
   const [dialogMode, setDialogMode] = useState('create');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -510,7 +529,7 @@ export default function SubjectPlanningBoard({
     [termRange],
   );
   const termMonthSpans = useMemo(() => getMonthSpansForWeeks(termWeeks), [termWeeks]);
-  const currentTermMarker = useMemo(() => getCurrentTermMarker(termWeeks, referenceDate), [referenceDate, termWeeks]);
+  const currentTermMarker = useMemo(() => getCurrentTermMarker(termWeeks, referenceDate, language), [language, referenceDate, termWeeks]);
   const representedCurriculumAreaIds = useMemo(
     () => getRepresentedCurriculumAreaIds({ planningBlocks: blocks, curriculumAreas }),
     [blocks, curriculumAreas],
@@ -520,8 +539,11 @@ export default function SubjectPlanningBoard({
     [abilities, blocks],
   );
   const curriculumReferenceSections = useMemo(
-    () => getCurriculumReferenceSections(curriculumAreas, abilities, curriculumAreaTypeLabels),
-    [abilities, curriculumAreas, curriculumAreaTypeLabels],
+    () => getCurriculumReferenceSections(curriculumAreas, abilities, curriculumAreaTypeLabels, {
+      content: t('learningModule.planView.content'),
+      ability: t('learningModule.planView.abilities'),
+    }),
+    [abilities, curriculumAreas, curriculumAreaTypeLabels, t],
   );
   const contentFilterAreas = useMemo(
     () => sortReferenceItems(curriculumAreas),
@@ -563,6 +585,14 @@ export default function SubjectPlanningBoard({
   const representedContentCount = representedCurriculumAreaIds.size;
   const representedAbilityCount = representedAbilityIds.size;
   const blockTypeOrder = ['holiday', 'teaching', 'revisit', 'assessment', 'consolidation'];
+  const blockTypeLabels = useMemo(() => Object.fromEntries(blockTypeOrder.map((blockType) => [
+    blockType,
+    t(`learningModule.planView.blockTypes.${blockType}`) || fallbackBlockTypeLabels[blockType],
+  ])), [t]);
+  const quickAddDescriptions = useMemo(() => Object.fromEntries([...quickAddTemplateIds].map((templateId) => [
+    templateId,
+    t(`learningModule.planView.quickAddDescriptions.${templateId}`),
+  ])), [t]);
   const unscheduledBlocks = blocks.filter((block) => !block.startDate && !block.endDate);
 
   useEffect(() => {
@@ -799,6 +829,20 @@ export default function SubjectPlanningBoard({
     setLibraryOpen(true);
   }
 
+  function openLibraryAtMonthWeek(week) {
+    setLibraryPlacement({
+      period: getPeriodForWeek(sortedPeriods, week.startDate) || selectedPeriod,
+      weekStart: week.startDate,
+      weekLabel: week.label,
+    });
+    setLibraryOpen(true);
+  }
+
+  function openLibraryWithoutPlacement() {
+    setLibraryPlacement(null);
+    setLibraryOpen(true);
+  }
+
   function toggleAbilityFilter(abilityId) {
     setLibraryAbilityFilters((currentFilters) => (
       currentFilters.includes(abilityId)
@@ -832,7 +876,7 @@ export default function SubjectPlanningBoard({
             exclusive
             value={view}
             onChange={(_, nextView) => nextView && setView(nextView)}
-            aria-label="Planning views"
+            aria-label={t('learningModule.planView.viewsLabel')}
             sx={{
               flexWrap: 'wrap',
               gap: 0.8,
@@ -854,11 +898,31 @@ export default function SubjectPlanningBoard({
               },
             }}
           >
-            <ToggleButton value="term">Term overview</ToggleButton>
-            <ToggleButton value="month">Month view</ToggleButton>
+            <ToggleButton value="term">{t('learningModule.planView.termOverview')}</ToggleButton>
+            <ToggleButton value="month">{t('learningModule.planView.monthView')}</ToggleButton>
           </ToggleButtonGroup>
         </Stack>
         <Stack direction="row" spacing={0.8} alignItems="center" sx={{ justifySelf: { xs: 'stretch', lg: 'end' }, alignSelf: 'start' }}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon fontSize="small" />}
+            onClick={openLibraryWithoutPlacement}
+            sx={{
+              bgcolor: purple,
+              borderRadius: '999px',
+              px: 1.8,
+              py: 0.75,
+              textTransform: 'none',
+              fontWeight: 780,
+              boxShadow: 'none',
+              '&:hover': {
+                bgcolor: '#842194',
+                boxShadow: 'none',
+              },
+            }}
+          >
+            {t('learningModule.planView.addBlock')}
+          </Button>
           <Button
             variant="outlined"
             onClick={() => setCurriculumCheckOpen(true)}
@@ -877,11 +941,11 @@ export default function SubjectPlanningBoard({
               },
             }}
           >
-            curriculm check
+            {t('learningModule.planView.curriculumCheck')}
           </Button>
-          <Tooltip title="Reset planning">
+          <Tooltip title={t('learningModule.planView.resetPlanning')}>
             <IconButton
-              aria-label="Reset this subject planning to the seeded view"
+              aria-label={t('learningModule.planView.resetPlanningAria')}
               onClick={() => {
                 onResetPlanning?.();
                 onResetCurriculumNotes?.();
@@ -924,7 +988,7 @@ export default function SubjectPlanningBoard({
                         {week.label}
                       </Typography>
                       {isCurrentWeek && (
-                        <Tooltip title={`Demo date: ${currentTermMarker.label}`}>
+                        <Tooltip title={t('learningModule.planView.demoDate', { date: currentTermMarker.label })}>
                           <Box
                             data-demo-date-marker="true"
                             sx={{
@@ -992,10 +1056,24 @@ export default function SubjectPlanningBoard({
                         {termWeeks.map((week) => (
                           <Box
                             key={`${blockType}-${week.id}`}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={t('learningModule.planView.addTypedBlockInWeek', { blockType: blockTypeLabels[blockType] || blockType, week: week.label })}
                             onDragOver={(event) => event.preventDefault()}
                             onDrop={(event) => handleTermWeekDrop(event, week, blockType)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              openLibraryAtTermWeek(week, blockType);
+                            }}
                             onDoubleClick={(event) => {
                               event.stopPropagation();
+                              openLibraryAtTermWeek(week, blockType);
+                            }}
+                            onKeyDown={(event) => {
+                              if (!isActivationKey(event)) {
+                                return;
+                              }
+                              event.preventDefault();
                               openLibraryAtTermWeek(week, blockType);
                             }}
                             sx={{
@@ -1003,6 +1081,14 @@ export default function SubjectPlanningBoard({
                               gridRow: `1 / span ${Math.max(1, laneRows.length)}`,
                               borderLeft: '1px solid rgba(23, 21, 26, 0.05)',
                               minHeight: '100%',
+                              cursor: 'copy',
+                              borderRadius: '10px',
+                              outline: 'none',
+                              transition: 'background-color 140ms ease, box-shadow 140ms ease',
+                              '&:hover, &:focus-visible': {
+                                bgcolor: 'rgba(156, 40, 175, 0.06)',
+                                boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.18)',
+                              },
                             }}
                           />
                         ))}
@@ -1054,7 +1140,7 @@ export default function SubjectPlanningBoard({
                         )))}
                         {!laneRows.length && (
                           <Typography sx={{ gridColumn: `1 / span ${termWeeks.length}`, color: 'text.secondary', fontSize: 13, alignSelf: 'center' }}>
-                            Drop a block into this lane or use Move to...
+                            {t('learningModule.planView.dropIntoLane')}
                           </Typography>
                         )}
                       </Box>
@@ -1064,7 +1150,7 @@ export default function SubjectPlanningBoard({
               </Box>
               {!!unscheduledBlocks.length && (
                 <Paper elevation={0} sx={{ mt: 1.2, p: 1.2, borderRadius: '16px', border: '1px dashed rgba(23, 21, 26, 0.16)', bgcolor: '#fbfafc' }}>
-                  <Typography sx={{ color: darkText, fontWeight: 850 }}>Unscheduled</Typography>
+                  <Typography sx={{ color: darkText, fontWeight: 850 }}>{t('learningModule.planView.unscheduled')}</Typography>
                   <Stack spacing={1} sx={{ mt: 1 }}>
                     {unscheduledBlocks.map((block) => (
                       <PlanningBlockCard key={block.id} block={block} curriculumAreas={curriculumAreas} {...cardActions} />
@@ -1081,13 +1167,13 @@ export default function SubjectPlanningBoard({
         <Stack spacing={1.4}>
           <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
             <Button disabled={selectedMonthIndex === 0} onClick={() => setSelectedMonthIndex((current) => Math.max(0, current - 1))} sx={{ color: 'text.secondary' }}>
-              Previous month
+              {t('learningModule.planView.previousMonth')}
             </Button>
             <Typography component="h3" sx={{ color: darkText, fontSize: 18, fontWeight: 860 }}>
-              {getMonthLabel(selectedYear, selectedMonth)}
+              {getMonthLabel(selectedYear, selectedMonth, language)}
             </Typography>
             <Button disabled={selectedMonthIndex >= sortedPeriods.length - 1} onClick={() => setSelectedMonthIndex((current) => Math.min(sortedPeriods.length - 1, current + 1))} sx={{ color: 'text.secondary' }}>
-              Next month
+              {t('learningModule.planView.nextMonth')}
             </Button>
           </Stack>
           <Box sx={{ overflowX: 'auto', pb: 0.5 }}>
@@ -1096,9 +1182,35 @@ export default function SubjectPlanningBoard({
                 <Paper
                   key={week.id}
                   elevation={0}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={t('learningModule.planView.addBlockInWeek', { week: week.label })}
                   onDragOver={(event) => event.preventDefault()}
                   onDrop={(event) => handleWeekDrop(event, week)}
-                  sx={{ p: 1, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.1)', bgcolor: draggedBlockId ? '#f7f4f8' : '#fbfafc' }}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    openLibraryAtMonthWeek(week);
+                  }}
+                  onKeyDown={(event) => {
+                    if (!isActivationKey(event)) {
+                      return;
+                    }
+                    event.preventDefault();
+                    openLibraryAtMonthWeek(week);
+                  }}
+                  sx={{
+                    p: 1,
+                    borderRadius: '14px',
+                    border: '1px solid rgba(23, 21, 26, 0.1)',
+                    bgcolor: draggedBlockId ? '#f7f4f8' : '#fbfafc',
+                    cursor: 'copy',
+                    outline: 'none',
+                    transition: 'background-color 140ms ease, border-color 140ms ease',
+                    '&:hover, &:focus-visible': {
+                      bgcolor: 'rgba(156, 40, 175, 0.06)',
+                      borderColor: 'rgba(156, 40, 175, 0.24)',
+                    },
+                  }}
                 >
                   <Typography sx={{ color: darkText, fontSize: 13, fontWeight: 820 }}>{week.label}</Typography>
                 </Paper>
@@ -1117,7 +1229,7 @@ export default function SubjectPlanningBoard({
       )}
 
       <Dialog open={curriculumCheckOpen} onClose={() => setCurriculumCheckOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Curriculum reference</DialogTitle>
+        <DialogTitle>{t('learningModule.planView.curriculumReference')}</DialogTitle>
         <DialogContent>
           <CurriculumReferencePanel
             sections={curriculumReferenceSections}
@@ -1127,7 +1239,7 @@ export default function SubjectPlanningBoard({
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCurriculumCheckOpen(false)} sx={{ color: 'text.secondary' }}>Close</Button>
+          <Button onClick={() => setCurriculumCheckOpen(false)} sx={{ color: 'text.secondary' }}>{t('learningModule.planView.close')}</Button>
         </DialogActions>
       </Dialog>
 
@@ -1144,22 +1256,27 @@ export default function SubjectPlanningBoard({
           },
         }}
       >
-        <DialogTitle>Add from library</DialogTitle>
+        <DialogTitle>{t('learningModule.planView.addFromLibrary')}</DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           {libraryPlacement && (
             <Typography sx={{ mb: 1.2, color: 'text.secondary', fontSize: 13.5, fontWeight: 700 }}>
-              New block will start around {libraryPlacement.weekLabel} in {blockTypeLabels[libraryPlacement.blockType] || libraryPlacement.blockType}.
+              {libraryPlacement.blockType
+                ? t('learningModule.planView.newTypedBlockPlacement', {
+                  week: libraryPlacement.weekLabel,
+                  blockType: blockTypeLabels[libraryPlacement.blockType] || libraryPlacement.blockType,
+                })
+                : t('learningModule.planView.newBlockPlacement', { week: libraryPlacement.weekLabel })}
             </Typography>
           )}
           <Stack spacing={1.35}>
             <Box>
-              <Typography sx={{ mb: 0.65, color: darkText, fontSize: 12.4, fontWeight: 880 }}>Quick add</Typography>
+              <Typography sx={{ mb: 0.65, color: darkText, fontSize: 12.4, fontWeight: 880 }}>{t('learningModule.planView.quickAdd')}</Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 0.7 }}>
                 {quickAddTemplates.map((template) => (
                   <Button
                     key={template.id}
                     onClick={() => addTemplate(template)}
-                    aria-label={`Add ${template.title}. ${quickAddDescriptions[template.id] || ''}`}
+                    aria-label={`${t('learningModule.planView.addTemplateAria', { title: template.title })} ${quickAddDescriptions[template.id] || ''}`.trim()}
                     sx={{ alignItems: 'flex-start', justifyContent: 'flex-start', textAlign: 'left', color: darkText, border: '1px solid rgba(23, 21, 26, 0.1)', borderRadius: '14px', px: 1, py: 0.9, minHeight: 76 }}
                   >
                     <Box sx={{ minWidth: 0 }}>
@@ -1174,7 +1291,7 @@ export default function SubjectPlanningBoard({
             </Box>
 
             <Box sx={{ borderTop: '1px solid rgba(23, 21, 26, 0.08)', pt: 1.15 }}>
-              <Typography sx={{ mb: 0.55, color: darkText, fontSize: 12.4, fontWeight: 880 }}>Content</Typography>
+              <Typography sx={{ mb: 0.55, color: darkText, fontSize: 12.4, fontWeight: 880 }}>{t('learningModule.planView.content')}</Typography>
               <Box sx={{ display: 'flex', gap: 0.55, overflowX: 'auto', pb: 0.2 }}>
                 <Button
                   aria-pressed={!libraryContentFilter}
@@ -1191,7 +1308,7 @@ export default function SubjectPlanningBoard({
                     fontWeight: 820,
                   }}
                 >
-                  All
+                  {t('learningModule.planView.all')}
                 </Button>
                 {contentFilterAreas.map((area) => {
                   const isSelected = libraryContentFilter === area.id;
@@ -1220,7 +1337,7 @@ export default function SubjectPlanningBoard({
             </Box>
 
             <Box>
-              <Typography sx={{ mb: 0.55, color: darkText, fontSize: 12.4, fontWeight: 880 }}>Abilities</Typography>
+              <Typography sx={{ mb: 0.55, color: darkText, fontSize: 12.4, fontWeight: 880 }}>{t('learningModule.planView.abilities')}</Typography>
               <Box sx={{ display: 'flex', gap: 0.55, overflowX: 'auto', pb: 0.2 }}>
                 {abilityFilterAreas.map((area) => {
                   const isSelected = libraryAbilityFilters.includes(area.id);
@@ -1250,21 +1367,21 @@ export default function SubjectPlanningBoard({
 
             <Box sx={{ borderTop: '1px solid rgba(23, 21, 26, 0.08)', pt: 1.15 }}>
               <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" sx={{ mb: 0.65 }}>
-                <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 880 }}>Matching templates</Typography>
+                <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 880 }}>{t('learningModule.planView.matchingTemplates')}</Typography>
                 <Typography sx={{ color: 'text.secondary', fontSize: 11.4, fontWeight: 720 }}>
-                  {representedContentCount} content · {representedAbilityCount} abilities
+                  {t('learningModule.planView.representedSummary', { contentCount: representedContentCount, abilityCount: representedAbilityCount })}
                 </Typography>
               </Stack>
               {matchingTemplates.length ? (
                 <Stack spacing={0.8}>
                   {matchingTemplates.map((template) => {
-                    const inPlanLabel = getTemplateInPlanLabel(template, blocks);
+                    const inPlanLabel = getTemplateInPlanLabel(template, blocks, t);
                     const contentSummary = getTemplateContentSummary(template, curriculumAreas);
                     return (
                       <Button
                         key={template.id}
                         onClick={() => addTemplate(template)}
-                        aria-label={getTemplateAriaLabel(template, inPlanLabel)}
+                        aria-label={getTemplateAriaLabel(template, inPlanLabel, t)}
                         sx={{ justifyContent: 'flex-start', textAlign: 'left', color: darkText, border: '1px solid rgba(23, 21, 26, 0.1)', borderRadius: '14px', p: 1.05 }}
                       >
                         <Box sx={{ width: '100%', minWidth: 0 }}>
@@ -1291,10 +1408,10 @@ export default function SubjectPlanningBoard({
                 </Stack>
               ) : (
                 <Box sx={{ border: '1px solid rgba(23, 21, 26, 0.1)', borderRadius: '14px', p: 1.2, bgcolor: '#fbfafc' }}>
-                  <Typography sx={{ color: darkText, fontSize: 13, fontWeight: 850 }}>No matching templates</Typography>
-                  <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 12.4 }}>Clear one of the filters or use Blank block.</Typography>
+                  <Typography sx={{ color: darkText, fontSize: 13, fontWeight: 850 }}>{t('learningModule.planView.noMatchingTemplates')}</Typography>
+                  <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 12.4 }}>{t('learningModule.planView.noMatchingTemplatesHint')}</Typography>
                   <Button onClick={clearLibraryFilters} sx={{ mt: 0.6, color: purple, fontSize: 12, fontWeight: 850 }}>
-                    Clear filters
+                    {t('learningModule.planView.clearFilters')}
                   </Button>
                 </Box>
               )}
@@ -1302,30 +1419,30 @@ export default function SubjectPlanningBoard({
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => { setLibraryOpen(false); setLibraryPlacement(null); }} sx={{ color: 'text.secondary' }}>Close</Button>
+          <Button onClick={() => { setLibraryOpen(false); setLibraryPlacement(null); }} sx={{ color: 'text.secondary' }}>{t('learningModule.planView.close')}</Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={Boolean(moveBlock)} onClose={() => setMoveBlock(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>Move to...</DialogTitle>
+        <DialogTitle>{t('learningModule.planView.moveDialog.title')}</DialogTitle>
         <DialogContent>
           <Stack spacing={1} sx={{ pt: 1 }}>
-            <Typography sx={{ color: darkText, fontWeight: 850 }}>Lane</Typography>
+            <Typography sx={{ color: darkText, fontWeight: 850 }}>{t('learningModule.planView.moveDialog.lane')}</Typography>
             {blockTypeOrder.map((blockType) => (
               <Button key={blockType} onClick={() => { updateBlock(moveBlock, { blockType }); setMoveBlock(null); }} sx={{ justifyContent: 'flex-start', color: darkText }}>
                 {blockTypeLabels[blockType]}
               </Button>
             ))}
-            <Typography sx={{ color: darkText, fontWeight: 850, pt: 1 }}>Period</Typography>
+            <Typography sx={{ color: darkText, fontWeight: 850, pt: 1 }}>{t('learningModule.planView.moveDialog.period')}</Typography>
             {sortedPeriods.map((period) => (
               <Button key={period.id} onClick={() => { moveToPeriod(moveBlock, period); setMoveBlock(null); }} sx={{ justifyContent: 'flex-start', color: darkText }}>
                 {period.label}
               </Button>
             ))}
-            <Typography sx={{ color: darkText, fontWeight: 850, pt: 1 }}>Week</Typography>
+            <Typography sx={{ color: darkText, fontWeight: 850, pt: 1 }}>{t('learningModule.planView.moveDialog.week')}</Typography>
             {weeks.map((week) => (
               <Button key={week.id} onClick={() => { moveToWeek(moveBlock, week.startDate); setMoveBlock(null); }} sx={{ justifyContent: 'flex-start', color: 'text.secondary' }}>
-                {week.label} in {getMonthLabel(selectedYear, selectedMonth)}
+                {t('learningModule.planView.moveDialog.weekInMonth', { week: week.label, month: getMonthLabel(selectedYear, selectedMonth, language) })}
               </Button>
             ))}
           </Stack>
@@ -1333,29 +1450,29 @@ export default function SubjectPlanningBoard({
       </Dialog>
 
       <Dialog open={Boolean(durationBlock)} onClose={() => setDurationBlock(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>Adjust duration</DialogTitle>
+        <DialogTitle>{t('learningModule.planView.durationDialog.title')}</DialogTitle>
         <DialogContent>
           <Stack spacing={1.2} sx={{ pt: 1 }}>
-            <TextField label="Start date" type="date" value={durationDraft.startDate} onChange={(event) => setDurationDraft((current) => ({ ...current, startDate: event.target.value }))} InputLabelProps={{ shrink: true }} />
-            <TextField label="End date" type="date" value={durationDraft.endDate} onChange={(event) => setDurationDraft((current) => ({ ...current, endDate: event.target.value }))} InputLabelProps={{ shrink: true }} />
+            <TextField label={t('learningModule.planView.durationDialog.startDate')} type="date" value={durationDraft.startDate} onChange={(event) => setDurationDraft((current) => ({ ...current, startDate: event.target.value }))} InputLabelProps={{ shrink: true }} />
+            <TextField label={t('learningModule.planView.durationDialog.endDate')} type="date" value={durationDraft.endDate} onChange={(event) => setDurationDraft((current) => ({ ...current, endDate: event.target.value }))} InputLabelProps={{ shrink: true }} />
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDurationBlock(null)} sx={{ color: 'text.secondary' }}>Cancel</Button>
-          <Button variant="contained" onClick={saveDuration} sx={{ bgcolor: purple, '&:hover': { bgcolor: '#842194' } }}>Save duration</Button>
+          <Button onClick={() => setDurationBlock(null)} sx={{ color: 'text.secondary' }}>{t('learningModule.planView.durationDialog.cancel')}</Button>
+          <Button variant="contained" onClick={saveDuration} sx={{ bgcolor: purple, '&:hover': { bgcolor: '#842194' } }}>{t('learningModule.planView.durationDialog.save')}</Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={Boolean(deleteBlock)} onClose={() => setDeleteBlock(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>Delete this planning block?</DialogTitle>
+        <DialogTitle>{t('learningModule.planView.deleteDialog.title')}</DialogTitle>
         <DialogContent>
           <Typography sx={{ color: 'text.secondary', lineHeight: 1.5 }}>
-            This removes the block from Anna's plan. It does not remove evidence or curriculum references.
+            {t('learningModule.planView.deleteDialog.body')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteBlock(null)} sx={{ color: 'text.secondary' }}>Keep block</Button>
-          <Button variant="contained" color="inherit" onClick={() => { onDeleteBlock(deleteBlock.id); setDeleteBlock(null); }}>Delete block</Button>
+          <Button onClick={() => setDeleteBlock(null)} sx={{ color: 'text.secondary' }}>{t('learningModule.planView.deleteDialog.keep')}</Button>
+          <Button variant="contained" color="inherit" onClick={() => { onDeleteBlock(deleteBlock.id); setDeleteBlock(null); }}>{t('learningModule.planView.deleteDialog.delete')}</Button>
         </DialogActions>
       </Dialog>
 

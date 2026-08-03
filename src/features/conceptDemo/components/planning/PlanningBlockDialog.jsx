@@ -23,39 +23,29 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { useConceptDemoLanguage } from '../../ConceptDemoLanguageContext.jsx';
 
 const darkText = '#17151a';
 const purple = '#9c28af';
 const palePurple = '#fbf5fd';
 
-const blockTypeOptions = [
-  { id: 'holiday', label: 'Holiday' },
-  { id: 'teaching', label: 'Teaching' },
-  { id: 'revisit', label: 'Revisit' },
-  { id: 'assessment', label: 'Assessment' },
-  { id: 'consolidation', label: 'Consolidation' },
-];
-
-const statusOptions = [
-  { id: 'planned', label: 'Planned' },
-  { id: 'current', label: 'Current' },
-  { id: 'completed', label: 'Completed' },
-];
+const blockTypeOptionIds = ['holiday', 'teaching', 'revisit', 'assessment', 'consolidation'];
+const statusOptionIds = ['planned', 'current', 'completed'];
 
 function sortReferenceItems(items) {
   return [...(items || [])].sort((first, second) => (first.order || 0) - (second.order || 0) || first.label.localeCompare(second.label));
 }
 
-function getCurriculumReferenceSections(curriculumAreas, abilities, typeLabels) {
+function getCurriculumReferenceSections(curriculumAreas, abilities, typeLabels, fallbackTypeLabels = {}) {
   return [
     {
       id: 'content',
-      label: typeLabels.content || 'Content',
+      label: typeLabels.content || fallbackTypeLabels.content || 'Content',
       areas: sortReferenceItems(curriculumAreas),
     },
     {
       id: 'ability',
-      label: typeLabels.ability || 'Abilities',
+      label: typeLabels.ability || fallbackTypeLabels.ability || 'Abilities',
       areas: sortReferenceItems(abilities),
     },
   ].filter((section) => section.areas.length);
@@ -133,6 +123,7 @@ export default function PlanningBlockDialog({
   onUpdateBlock,
   onDeleteBlock,
 }) {
+  const { t } = useConceptDemoLanguage();
   const titleRef = useRef(null);
   const [title, setTitle] = useState('');
   const [periodId, setPeriodId] = useState(periods[0]?.id || '');
@@ -153,13 +144,24 @@ export default function PlanningBlockDialog({
   const [adaptationError, setAdaptationError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const groupedCurriculumAreas = useMemo(
-    () => getCurriculumReferenceSections(curriculumAreas, abilities, curriculumAreaTypeLabels),
-    [abilities, curriculumAreas, curriculumAreaTypeLabels],
+    () => getCurriculumReferenceSections(curriculumAreas, abilities, curriculumAreaTypeLabels, {
+      content: t('learningModule.planView.content'),
+      ability: t('learningModule.planView.abilities'),
+    }),
+    [abilities, curriculumAreas, curriculumAreaTypeLabels, t],
   );
   const activeWorkingGroups = useMemo(
     () => (workingGroups || []).filter((group) => group?.status !== 'archived'),
     [workingGroups],
   );
+  const blockTypeOptions = useMemo(() => blockTypeOptionIds.map((id) => ({
+    id,
+    label: t(`learningModule.planView.blockTypes.${id}`),
+  })), [t]);
+  const statusOptions = useMemo(() => statusOptionIds.map((id) => ({
+    id,
+    label: t(`learningModule.planView.statuses.${id}`),
+  })), [t]);
 
   useEffect(() => {
     if (!open) {
@@ -250,7 +252,7 @@ export default function PlanningBlockDialog({
   }
 
   function getWorkingGroupLabel(workingGroupId) {
-    return activeWorkingGroups.find((group) => group.id === workingGroupId)?.label || 'Focus no longer available';
+    return activeWorkingGroups.find((group) => group.id === workingGroupId)?.label || t('learningModule.planView.editDialog.focusUnavailable');
   }
 
   function getWorkingGroupTypeLabel(typeId) {
@@ -267,7 +269,7 @@ export default function PlanningBlockDialog({
       ...activeWorkingGroups,
       {
         id: adaptation.workingGroupId,
-        label: 'Focus no longer available',
+        label: t('learningModule.planView.editDialog.focusUnavailable'),
         typeId: '',
         status: 'unavailable',
       },
@@ -278,12 +280,12 @@ export default function PlanningBlockDialog({
     const retainedAdaptations = groupAdaptations.filter((adaptation) => adaptation.workingGroupId || adaptation.instruction.trim());
 
     if (retainedAdaptations.some((adaptation) => !adaptation.workingGroupId || !adaptation.instruction.trim())) {
-      return 'Choose a focus and add an instruction for each adaptation.';
+      return t('learningModule.planView.editDialog.adaptationIncomplete');
     }
 
     const groupIds = retainedAdaptations.map((adaptation) => adaptation.workingGroupId);
     if (new Set(groupIds).size !== groupIds.length) {
-      return 'Use each focus only once in this planning block.';
+      return t('learningModule.planView.editDialog.adaptationDuplicate');
     }
 
     return '';
@@ -368,48 +370,48 @@ export default function PlanningBlockDialog({
       PaperProps={{ sx: { borderRadius: { xs: 0, sm: '24px' } } }}
     >
       <DialogTitle ref={titleRef} tabIndex={-1} sx={{ outline: 'none', pr: 3 }}>
-        {mode === 'edit' ? 'Edit planning block' : 'Add planning block'}
+        {mode === 'edit' ? t('learningModule.planView.editDialog.editTitle') : t('learningModule.planView.editDialog.addTitle')}
       </DialogTitle>
       <DialogContent>
         <Stack spacing={1.6} sx={{ pt: 0.5 }}>
           <TextField
             autoFocus
-            label="Title"
+            label={t('learningModule.planView.editDialog.title')}
             value={title}
             onChange={(event) => {
               setTitle(event.target.value);
               setShowNameError(false);
             }}
             error={showNameError}
-            helperText={showNameError ? 'Title is required.' : ' '}
+            helperText={showNameError ? t('learningModule.planView.editDialog.titleRequired') : ' '}
             fullWidth
           />
 
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.2 }}>
             <FormControl fullWidth>
-              <InputLabel id="planning-period-label">Period</InputLabel>
-              <Select labelId="planning-period-label" label="Period" value={periodId} onChange={(event) => setPeriodId(event.target.value)}>
+              <InputLabel id="planning-period-label">{t('learningModule.planView.editDialog.period')}</InputLabel>
+              <Select labelId="planning-period-label" label={t('learningModule.planView.editDialog.period')} value={periodId} onChange={(event) => setPeriodId(event.target.value)}>
                 {periods.map((period) => (
                   <MenuItem key={period.id} value={period.id}>{period.label}</MenuItem>
                 ))}
               </Select>
             </FormControl>
             <FormControl fullWidth>
-              <InputLabel id="planning-block-type-label">Block type</InputLabel>
-              <Select labelId="planning-block-type-label" label="Block type" value={blockType} onChange={(event) => setBlockType(event.target.value)}>
+              <InputLabel id="planning-block-type-label">{t('learningModule.planView.editDialog.blockType')}</InputLabel>
+              <Select labelId="planning-block-type-label" label={t('learningModule.planView.editDialog.blockType')} value={blockType} onChange={(event) => setBlockType(event.target.value)}>
                 {blockTypeOptions.map((option) => (
                   <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>
                 ))}
               </Select>
             </FormControl>
-            <TextField label="Start date" type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} InputLabelProps={{ shrink: true }} />
-            <TextField label="End date" type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} InputLabelProps={{ shrink: true }} />
+            <TextField label={t('learningModule.planView.editDialog.startDate')} type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} InputLabelProps={{ shrink: true }} />
+            <TextField label={t('learningModule.planView.editDialog.endDate')} type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} InputLabelProps={{ shrink: true }} />
           </Box>
 
           <Box>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between">
-              <Typography sx={{ color: darkText, fontWeight: 850 }}>Linked content and abilities</Typography>
-              <Chip label={`${curriculumAreaIds.length} content · ${abilityIds.length} abilities`} size="small" sx={{ alignSelf: { xs: 'flex-start', sm: 'center' }, bgcolor: palePurple, color: purple, fontWeight: 760 }} />
+              <Typography sx={{ color: darkText, fontWeight: 850 }}>{t('learningModule.planView.editDialog.linkedContent')}</Typography>
+              <Chip label={t('learningModule.planView.editDialog.linkedSummary', { contentCount: curriculumAreaIds.length, abilityCount: abilityIds.length })} size="small" sx={{ alignSelf: { xs: 'flex-start', sm: 'center' }, bgcolor: palePurple, color: purple, fontWeight: 760 }} />
             </Stack>
             <Paper elevation={0} sx={{ mt: 1, maxHeight: 230, overflowY: 'auto', border: '1px solid rgba(23, 21, 26, 0.1)', borderRadius: '16px', p: 1 }}>
               <Stack spacing={1.1}>
@@ -446,15 +448,15 @@ export default function PlanningBlockDialog({
               endIcon={<ExpandMoreIcon sx={{ transform: moreOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 160ms ease' }} />}
               sx={{ color: darkText, px: 0.5, textTransform: 'none', fontWeight: 820 }}
             >
-              More options
+              {t('learningModule.planView.editDialog.moreOptions')}
             </Button>
             <Collapse in={moreOpen}>
               <Stack id="planning-more-options" spacing={1.4} sx={{ pt: 1 }}>
                 <FormControl fullWidth>
-                  <InputLabel id="planning-status-label">Status</InputLabel>
+                  <InputLabel id="planning-status-label">{t('learningModule.planView.editDialog.status')}</InputLabel>
                   <Select
                     labelId="planning-status-label"
-                    label="Status"
+                    label={t('learningModule.planView.editDialog.status')}
                     value={status}
                     onChange={(event) => {
                       setStatus(event.target.value);
@@ -467,21 +469,21 @@ export default function PlanningBlockDialog({
                   </Select>
                 </FormControl>
 
-                <TextField label="Optional short description" value={description} onChange={(event) => setDescription(event.target.value)} multiline minRows={2} fullWidth />
-                <TextField label="Optional notes" value={notes} onChange={(event) => setNotes(event.target.value)} multiline minRows={2} fullWidth />
+                <TextField label={t('learningModule.planView.editDialog.optionalDescription')} value={description} onChange={(event) => setDescription(event.target.value)} multiline minRows={2} fullWidth />
+                <TextField label={t('learningModule.planView.editDialog.optionalNotes')} value={notes} onChange={(event) => setNotes(event.target.value)} multiline minRows={2} fullWidth />
 
                 <Paper elevation={0} sx={{ p: 1.25, borderRadius: '16px', border: '1px solid rgba(23, 21, 26, 0.09)', bgcolor: '#fff' }}>
                   <Stack spacing={1}>
                     <Box>
-                      <Typography sx={{ color: darkText, fontWeight: 850 }}>Quick capture moments</Typography>
+                      <Typography sx={{ color: darkText, fontWeight: 850 }}>{t('learningModule.planView.editDialog.quickCaptureMoments')}</Typography>
                       <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 13.2, lineHeight: 1.45 }}>
-                        Optional one-tap observation choices for a future Now workflow.
+                        {t('learningModule.planView.editDialog.quickCaptureHint')}
                       </Typography>
                     </Box>
                     {quickCaptureOptions.map((option, index) => (
                       <Box key={option.id} sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1fr) auto' }, gap: 0.8, alignItems: 'center' }}>
                         <TextField
-                          label={`Moment ${index + 1}`}
+                          label={t('learningModule.planView.editDialog.momentLabel', { number: index + 1 })}
                           value={option.label}
                           onChange={(event) => updateMoment(option.id, event.target.value)}
                           error={showMomentError && !option.label.trim()}
@@ -489,17 +491,17 @@ export default function PlanningBlockDialog({
                           fullWidth
                         />
                         <Button onClick={() => removeMoment(option.id)} sx={{ color: 'text.secondary' }}>
-                          Remove
+                          {t('learningModule.planView.editDialog.remove')}
                         </Button>
                       </Box>
                     ))}
                     {showMomentError && (
                       <Typography sx={{ color: '#7a4250', fontSize: 13 }}>
-                        Each quick capture moment needs a label.
+                        {t('learningModule.planView.editDialog.momentRequired')}
                       </Typography>
                     )}
                     <Button startIcon={<AddIcon />} onClick={addMoment} sx={{ alignSelf: 'flex-start', color: purple }}>
-                      Add moment
+                      {t('learningModule.planView.editDialog.addMoment')}
                     </Button>
                   </Stack>
                 </Paper>
@@ -507,9 +509,9 @@ export default function PlanningBlockDialog({
                 <Paper elevation={0} sx={{ p: 1.25, borderRadius: '16px', border: '1px solid rgba(23, 21, 26, 0.09)', bgcolor: '#fff' }}>
                   <Stack spacing={1.1}>
                     <Box>
-                      <Typography sx={{ color: darkText, fontWeight: 850 }}>Focus adaptations</Typography>
+                      <Typography sx={{ color: darkText, fontWeight: 850 }}>{t('learningModule.planView.editDialog.focusAdaptations')}</Typography>
                       <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 13.2, lineHeight: 1.45 }}>
-                        Optional adjustments for current focus.
+                        {t('learningModule.planView.editDialog.focusAdaptationsHint')}
                       </Typography>
                     </Box>
                     {groupAdaptations.map((adaptation, index) => {
@@ -520,15 +522,15 @@ export default function PlanningBlockDialog({
                         <Paper key={adaptation.id} elevation={0} sx={{ p: 1, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fbfafc' }}>
                           <Stack spacing={1}>
                             <FormControl fullWidth size="small">
-                              <InputLabel id={`group-adaptation-${adaptation.id}-label`}>Focus</InputLabel>
+                              <InputLabel id={`group-adaptation-${adaptation.id}-label`}>{t('learningModule.planView.editDialog.focus')}</InputLabel>
                               <Select
                                 labelId={`group-adaptation-${adaptation.id}-label`}
-                                label="Focus"
+                                label={t('learningModule.planView.editDialog.focus')}
                                 value={adaptation.workingGroupId}
                                 onChange={(event) => updateGroupAdaptation(adaptation.id, { workingGroupId: event.target.value })}
                               >
                                 <MenuItem value="">
-                                  <Typography sx={{ color: 'text.secondary' }}>Select focus</Typography>
+                                  <Typography sx={{ color: 'text.secondary' }}>{t('learningModule.planView.editDialog.selectFocus')}</Typography>
                                 </MenuItem>
                                 {getSelectableGroupsForAdaptation(adaptation).map((group) => (
                                   <MenuItem key={group.id} value={group.id}>
@@ -541,7 +543,7 @@ export default function PlanningBlockDialog({
                                       )}
                                       {group.status === 'unavailable' && (
                                         <Typography sx={{ color: 'text.secondary', fontSize: 12.3 }}>
-                                          Focus no longer available
+                                          {t('learningModule.planView.editDialog.focusUnavailable')}
                                         </Typography>
                                       )}
                                     </Box>
@@ -550,7 +552,7 @@ export default function PlanningBlockDialog({
                               </Select>
                             </FormControl>
                             <TextField
-                              label={`Adaptation instruction ${index + 1}`}
+                              label={t('learningModule.planView.editDialog.adaptationInstruction', { number: index + 1 })}
                               value={adaptation.instruction}
                               onChange={(event) => updateGroupAdaptation(adaptation.id, { instruction: event.target.value })}
                               multiline
@@ -560,10 +562,10 @@ export default function PlanningBlockDialog({
                             />
                             <Button
                               onClick={() => removeGroupAdaptation(adaptation.id)}
-                              aria-label={`Remove adaptation for ${selectedGroupLabel}`}
+                              aria-label={t('learningModule.planView.editDialog.removeAdaptation', { label: selectedGroupLabel })}
                               sx={{ alignSelf: 'flex-start', color: 'text.secondary' }}
                             >
-                              Remove
+                              {t('learningModule.planView.editDialog.remove')}
                             </Button>
                           </Stack>
                         </Paper>
@@ -575,7 +577,7 @@ export default function PlanningBlockDialog({
                       </Typography>
                     )}
                     <Button startIcon={<AddIcon />} onClick={addGroupAdaptation} sx={{ alignSelf: 'flex-start', color: purple }}>
-                      Add focus adaptation
+                      {t('learningModule.planView.editDialog.addFocusAdaptation')}
                     </Button>
                   </Stack>
                 </Paper>
@@ -588,17 +590,17 @@ export default function PlanningBlockDialog({
               <Divider />
               {!showDeleteConfirm ? (
                 <Button startIcon={<DeleteOutlineIcon />} onClick={() => setShowDeleteConfirm(true)} sx={{ alignSelf: 'flex-start', color: 'text.secondary' }}>
-                  Delete block
+                  {t('learningModule.planView.editDialog.deleteBlock')}
                 </Button>
               ) : (
                 <Paper elevation={0} sx={{ p: 1.4, borderRadius: '15px', border: '1px solid rgba(23, 21, 26, 0.12)', bgcolor: '#fff' }}>
-                  <Typography sx={{ color: darkText, fontWeight: 850 }}>Delete this planning block?</Typography>
+                  <Typography sx={{ color: darkText, fontWeight: 850 }}>{t('learningModule.planView.deleteDialog.title')}</Typography>
                   <Typography sx={{ mt: 0.35, color: 'text.secondary', lineHeight: 1.45 }}>
-                    This removes the block from Anna's plan. It does not remove evidence or curriculum references.
+                    {t('learningModule.planView.deleteDialog.body')}
                   </Typography>
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 1 }}>
-                    <Button variant="contained" color="inherit" onClick={deleteBlock}>Delete block</Button>
-                    <Button onClick={() => setShowDeleteConfirm(false)} sx={{ color: 'text.secondary' }}>Keep block</Button>
+                    <Button variant="contained" color="inherit" onClick={deleteBlock}>{t('learningModule.planView.deleteDialog.delete')}</Button>
+                    <Button onClick={() => setShowDeleteConfirm(false)} sx={{ color: 'text.secondary' }}>{t('learningModule.planView.deleteDialog.keep')}</Button>
                   </Stack>
                 </Paper>
               )}
@@ -607,9 +609,9 @@ export default function PlanningBlockDialog({
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button onClick={onClose} sx={{ color: 'text.secondary' }}>Cancel</Button>
+        <Button onClick={onClose} sx={{ color: 'text.secondary' }}>{t('learningModule.planView.editDialog.cancel')}</Button>
         <Button variant="contained" onClick={saveBlock} sx={{ bgcolor: purple, '&:hover': { bgcolor: '#842194' } }}>
-          {mode === 'edit' ? 'Save block' : 'Add block'}
+          {mode === 'edit' ? t('learningModule.planView.editDialog.saveBlock') : t('learningModule.planView.addBlock')}
         </Button>
       </DialogActions>
     </Dialog>

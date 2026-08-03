@@ -116,6 +116,7 @@ function createModuleViewModel(moduleData, language, t) {
     curriculum: localizeContent(moduleData?.curriculum || {}, language),
     lessons: localizeContent(moduleData?.lessons || {}, language),
     evidence: localizeContent(moduleData?.evidence || {}, language),
+    planning: localizeContent(moduleData?.planning || {}, language),
     screens: localizeScreens(moduleData?.screens, language),
     navigation: {
       defaultScreen,

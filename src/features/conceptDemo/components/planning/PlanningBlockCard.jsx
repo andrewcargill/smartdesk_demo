@@ -11,37 +11,28 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { useConceptDemoLanguage } from '../../ConceptDemoLanguageContext.jsx';
 
 const darkText = '#17151a';
 
-const blockTypeLabels = {
-  holiday: 'Holiday',
-  teaching: 'Teaching',
-  revisit: 'Revisit',
-  assessment: 'Assessment',
-  consolidation: 'Consolidation',
-};
+function getPlanningLocale(language) {
+  return language === 'sv' ? 'sv-SE' : 'en-GB';
+}
 
-const statusLabels = {
-  planned: 'Planned',
-  current: 'Current',
-  completed: 'Completed',
-};
-
-function formatPlanningDate(date) {
+function formatPlanningDate(date, language) {
   if (!date) {
     return '';
   }
 
-  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(new Date(`${date}T12:00:00`));
+  return new Intl.DateTimeFormat(getPlanningLocale(language), { day: 'numeric', month: 'short' }).format(new Date(`${date}T12:00:00`));
 }
 
-function formatDateRange(block) {
+function formatDateRange(block, language, t) {
   if (block.startDate && block.endDate && block.startDate !== block.endDate) {
-    return `${formatPlanningDate(block.startDate)}-${formatPlanningDate(block.endDate)}`;
+    return `${formatPlanningDate(block.startDate, language)}-${formatPlanningDate(block.endDate, language)}`;
   }
 
-  return formatPlanningDate(block.startDate || block.endDate) || 'Dates to be set';
+  return formatPlanningDate(block.startDate || block.endDate, language) || t('learningModule.planView.card.datesToBeSet');
 }
 
 export default function PlanningBlockCard({
@@ -57,6 +48,7 @@ export default function PlanningBlockCard({
   onStatusChange,
   onDelete,
 }) {
+  const { language, t } = useConceptDemoLanguage();
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [renaming, setRenaming] = useState(false);
   const [draftTitle, setDraftTitle] = useState(block.title);
@@ -67,6 +59,8 @@ export default function PlanningBlockCard({
   const hiddenAreaCount = Math.max(0, areaLabels.length - visibleAreaLabels.length);
   const adaptationCount = Array.isArray(block.groupAdaptations) ? block.groupAdaptations.length : 0;
   const menuOpen = Boolean(menuAnchor);
+  const blockTypeLabel = t(`learningModule.planView.blockTypes.${block.blockType}`) || block.blockType;
+  const statusLabel = t(`learningModule.planView.statuses.${block.status}`) || block.status;
 
   function closeMenu() {
     setMenuAnchor(null);
@@ -108,14 +102,14 @@ export default function PlanningBlockCard({
             {renaming ? (
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.7}>
                 <TextField
-                  label="Planning block title"
+                  label={t('learningModule.planView.card.titleLabel')}
                   value={draftTitle}
                   onChange={(event) => setDraftTitle(event.target.value)}
                   size="small"
                   fullWidth
                   autoFocus
                 />
-                <Button onClick={saveRename} sx={{ color: darkText }}>Save</Button>
+                <Button onClick={saveRename} sx={{ color: darkText }}>{t('learningModule.planView.card.save')}</Button>
               </Stack>
             ) : (
               <Button
@@ -131,11 +125,11 @@ export default function PlanningBlockCard({
               </Button>
             )}
             <Typography sx={{ mt: 0.35, color: 'text.secondary', fontSize: 12.8, fontWeight: 700 }}>
-              {formatDateRange(block)}
+              {formatDateRange(block, language, t)}
             </Typography>
           </Box>
           <IconButton
-            aria-label={`Planning actions for ${block.title}`}
+            aria-label={t('learningModule.planView.card.planningActions', { title: block.title })}
             size="small"
             onClick={(event) => setMenuAnchor(event.currentTarget)}
             sx={{ color: 'text.secondary', mt: -0.55, mr: -0.55 }}
@@ -145,30 +139,36 @@ export default function PlanningBlockCard({
         </Stack>
 
         <Typography sx={{ color: 'text.secondary', fontSize: 13, fontWeight: 760 }}>
-          {blockTypeLabels[block.blockType] || block.blockType} · {statusLabels[block.status] || block.status}
+          {blockTypeLabel} · {statusLabel}
         </Typography>
 
         {!!visibleAreaLabels.length && (
           <Typography sx={{ color: 'text.secondary', fontSize: 12.6, lineHeight: 1.45 }}>
-            {visibleAreaLabels.join(' · ')}{hiddenAreaCount ? ` · +${hiddenAreaCount} more` : ''}
+            {visibleAreaLabels.join(' · ')}{hiddenAreaCount ? ` · ${t('learningModule.planView.card.moreAreas', { count: hiddenAreaCount })}` : ''}
           </Typography>
         )}
         {!!adaptationCount && (
           <Typography sx={{ color: 'text.secondary', fontSize: 12.6, lineHeight: 1.45 }}>
-            Focus adaptations · {adaptationCount}
+            {t('learningModule.planView.card.focusAdaptations', { count: adaptationCount })}
           </Typography>
         )}
       </Stack>
 
       <Menu anchorEl={menuAnchor} open={menuOpen} onClose={closeMenu}>
-        <MenuItem onClick={() => runMenuAction(() => onEdit(block))}>Edit</MenuItem>
-        <MenuItem onClick={() => runMenuAction(() => onMove(block))}>Move to...</MenuItem>
-        <MenuItem onClick={() => runMenuAction(() => onAdjustDuration(block))}>Adjust duration</MenuItem>
-        <MenuItem onClick={() => runMenuAction(() => onDuplicate(block))}>Duplicate</MenuItem>
-        <MenuItem onClick={() => runMenuAction(() => onStatusChange(block, 'planned'))}>Change status: Planned</MenuItem>
-        <MenuItem onClick={() => runMenuAction(() => onStatusChange(block, 'current'))}>Change status: Current</MenuItem>
-        <MenuItem onClick={() => runMenuAction(() => onStatusChange(block, 'completed'))}>Change status: Completed</MenuItem>
-        <MenuItem onClick={() => runMenuAction(() => onDelete(block))}>Delete</MenuItem>
+        <MenuItem onClick={() => runMenuAction(() => onEdit(block))}>{t('learningModule.planView.menu.edit')}</MenuItem>
+        <MenuItem onClick={() => runMenuAction(() => onMove(block))}>{t('learningModule.planView.menu.moveTo')}</MenuItem>
+        <MenuItem onClick={() => runMenuAction(() => onAdjustDuration(block))}>{t('learningModule.planView.menu.adjustDuration')}</MenuItem>
+        <MenuItem onClick={() => runMenuAction(() => onDuplicate(block))}>{t('learningModule.planView.menu.duplicate')}</MenuItem>
+        <MenuItem onClick={() => runMenuAction(() => onStatusChange(block, 'planned'))}>
+          {t('learningModule.planView.menu.changeStatus', { status: t('learningModule.planView.statuses.planned') })}
+        </MenuItem>
+        <MenuItem onClick={() => runMenuAction(() => onStatusChange(block, 'current'))}>
+          {t('learningModule.planView.menu.changeStatus', { status: t('learningModule.planView.statuses.current') })}
+        </MenuItem>
+        <MenuItem onClick={() => runMenuAction(() => onStatusChange(block, 'completed'))}>
+          {t('learningModule.planView.menu.changeStatus', { status: t('learningModule.planView.statuses.completed') })}
+        </MenuItem>
+        <MenuItem onClick={() => runMenuAction(() => onDelete(block))}>{t('learningModule.planView.menu.delete')}</MenuItem>
       </Menu>
     </Paper>
   );
