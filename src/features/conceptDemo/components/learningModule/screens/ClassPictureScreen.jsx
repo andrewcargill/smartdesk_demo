@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import NotesIcon from '@mui/icons-material/Notes';
 import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
-import { Box, ButtonBase, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import { Box, ButtonBase, IconButton, MenuItem, Paper, Select, Stack, Tooltip, Typography } from '@mui/material';
 import { useConceptDemoLanguage } from '../../../ConceptDemoLanguageContext.jsx';
+import { classGroupDefinitions } from '../../../data/classGroupDefinitions.js';
+import { useClassWorkingGroups } from '../../../hooks/useClassWorkingGroups.js';
+import { getActiveGroups } from '../../../utils/classGroupUtils.js';
+import { GroupDialog } from '../ClassWorkingGroups.jsx';
 import StudentUnitInsightPanel from '../StudentUnitInsightPanel.jsx';
 import {
   LEARNING_MODULE_ASSESSMENT_RESULTS_STORAGE_EVENT,
@@ -469,6 +475,27 @@ function getStudentUnitCellNoteKey(studentId, unitId) {
   return `${studentId}:${unitId}`;
 }
 
+function sortGroupsForDisplay(groups) {
+  return [...(groups || [])].sort((first, second) => (
+    (first.order || 0) - (second.order || 0)
+    || (first.createdAt || '').localeCompare(second.createdAt || '')
+    || first.label.localeCompare(second.label)
+  ));
+}
+
+function getStudentsInGroupOrder(group, students) {
+  const studentById = new Map((students || []).map((student) => [student.id, student]));
+  return (group?.studentIds || []).map((studentId) => studentById.get(studentId)).filter(Boolean);
+}
+
+function getUngroupedStudentsForType(students, groups, typeId) {
+  const groupedStudentIds = new Set((groups || [])
+    .filter((group) => group.typeId === typeId && group.status !== 'archived')
+    .flatMap((group) => group.studentIds || []));
+
+  return (students || []).filter((student) => !groupedStudentIds.has(student.id));
+}
+
 export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
   const { language, t } = useConceptDemoLanguage();
   const learningObservationAreas = useMemo(() => getLearningObservationAreas(t), [t]);
@@ -508,6 +535,38 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
   const [draftCellNote, setDraftCellNote] = useState('');
   const [editingUnitId, setEditingUnitId] = useState('');
   const [draftUnitNote, setDraftUnitNote] = useState('');
+  const [activeGroupingSetId, setActiveGroupingSetId] = useState('none');
+  const [collapsedGroupIds, setCollapsedGroupIds] = useState([]);
+  const [draggedStudentId, setDraggedStudentId] = useState('');
+  const [dragTargetId, setDragTargetId] = useState('');
+  const [groupDialogOpen, setGroupDialogOpen] = useState(false);
+  const [groupDialogMode, setGroupDialogMode] = useState('create');
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [moveAnnouncement, setMoveAnnouncement] = useState('');
+  const {
+    groups: workingGroups,
+    createGroup,
+    updateGroup,
+    deleteGroup,
+    moveStudentToGroup,
+    moveStudentToUngrouped,
+    resetGroups,
+  } = useClassWorkingGroups({
+    subjectId: moduleConfig?.subjectId || moduleId,
+    classId: moduleConfig?.classId || moduleId,
+    initialGroups: moduleConfig?.classData?.workingGroups || [],
+  });
+  const groupDefinitions = moduleConfig?.classData?.groupDefinitions || classGroupDefinitions;
+  const activeGroupingSet = groupDefinitions.find((definition) => definition.id === activeGroupingSetId) || null;
+  const groupedViewActive = activeGroupingSetId !== 'none';
+  const activeGroups = useMemo(
+    () => sortGroupsForDisplay(getActiveGroups(workingGroups).filter((group) => group.typeId === activeGroupingSetId)),
+    [activeGroupingSetId, workingGroups],
+  );
+  const notGroupedStudents = useMemo(
+    () => (groupedViewActive ? getUngroupedStudentsForType(students, workingGroups, activeGroupingSetId) : []),
+    [activeGroupingSetId, groupedViewActive, students, workingGroups],
+  );
 
   useEffect(() => {
     function refreshStoredAssessments() {
@@ -579,6 +638,29 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
     });
     return summaries;
   }, [evidenceItems, students, teachingUnits]);
+  const classPictureRows = useMemo(() => {
+    if (!groupedViewActive) {
+      return students.map((student, index) => ({ type: 'student', student, groupId: '', index }));
+    }
+
+    const rows = [];
+    activeGroups.forEach((group) => {
+      rows.push({ type: 'group', group });
+      if (!collapsedGroupIds.includes(group.id)) {
+        getStudentsInGroupOrder(group, students).forEach((student, index) => {
+          rows.push({ type: 'student', student, groupId: group.id, index });
+        });
+      }
+    });
+    rows.push({ type: 'unassigned' });
+    if (!collapsedGroupIds.includes('not-grouped')) {
+      notGroupedStudents.forEach((student, index) => {
+        rows.push({ type: 'student', student, groupId: '', index });
+      });
+    }
+
+    return rows;
+  }, [activeGroups, collapsedGroupIds, groupedViewActive, notGroupedStudents, students]);
 
   function toggleStudent(studentId, unitId = '') {
     if (expandedStudentId === studentId && expandedUnitId === unitId) {
@@ -588,6 +670,84 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
       setExpandedStudentId(studentId);
       setExpandedUnitId(unitId);
     }
+  }
+
+  function toggleGroup(groupId) {
+    setCollapsedGroupIds((currentIds) => (
+      currentIds.includes(groupId)
+        ? currentIds.filter((id) => id !== groupId)
+        : [...currentIds, groupId]
+    ));
+  }
+
+  function openCreateGroupDialog() {
+    setGroupDialogMode('create');
+    setSelectedGroup(null);
+    setGroupDialogOpen(true);
+  }
+
+  function openEditGroupDialog(group) {
+    setGroupDialogMode('edit');
+    setSelectedGroup(group);
+    setGroupDialogOpen(true);
+  }
+
+  function handleCreateGroup(groupInput) {
+    createGroup({
+      ...groupInput,
+      typeId: groupedViewActive ? activeGroupingSetId : groupInput.typeId,
+    });
+  }
+
+  function announceMove(studentId, groupLabel) {
+    const student = students.find((item) => item.id === studentId);
+    setMoveAnnouncement(t('learningModule.classPicture.studentMovedToGroup', {
+      student: student?.displayName || 'Student',
+      group: groupLabel,
+    }));
+  }
+
+  function moveStudent(studentId, groupId, index) {
+    if (!groupedViewActive) {
+      return;
+    }
+
+    if (groupId) {
+      const group = activeGroups.find((item) => item.id === groupId);
+      moveStudentToGroup(groupId, studentId, index);
+      announceMove(studentId, group?.label || t('learningModule.classPicture.focusFallback'));
+    } else {
+      moveStudentToUngrouped(activeGroupingSetId, studentId);
+      announceMove(studentId, t('learningModule.classPicture.unassigned'));
+    }
+  }
+
+  function handleDragStart(event, studentId) {
+    setDraggedStudentId(studentId);
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', studentId);
+    event.stopPropagation();
+  }
+
+  function allowDrop(event, targetId) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    setDragTargetId(targetId);
+  }
+
+  function handleDrop(event, groupId, index) {
+    event.preventDefault();
+    const studentId = event.dataTransfer.getData('text/plain') || draggedStudentId;
+    if (studentId) {
+      moveStudent(studentId, groupId, index);
+    }
+    setDraggedStudentId('');
+    setDragTargetId('');
+  }
+
+  function handleDragEnd() {
+    setDraggedStudentId('');
+    setDragTargetId('');
   }
 
   function startEditingRowNote(studentId) {
@@ -686,10 +846,62 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
 
   return (
     <Stack spacing={2.25} sx={{ minWidth: 0 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'auto' }, gap: 1.2, alignItems: 'start', justifyContent: 'end' }}>
+        <Stack direction="row" spacing={0.7} alignItems="center" sx={{ justifySelf: { xs: 'stretch', lg: 'end' }, alignSelf: 'start' }}>
+          <Select
+            value={activeGroupingSetId}
+            onChange={(event) => {
+              setActiveGroupingSetId(event.target.value);
+              setCollapsedGroupIds([]);
+            }}
+            size="small"
+            inputProps={{ 'aria-label': t('learningModule.classPicture.focus') }}
+            sx={{
+              minWidth: { xs: 180, sm: 220 },
+              borderRadius: '999px',
+              color: groupedViewActive ? purple : 'text.secondary',
+              fontSize: 13,
+              fontWeight: 760,
+              '& .MuiSelect-select': {
+                py: 0.75,
+                pl: 1.8,
+                pr: 4,
+              },
+              '& fieldset': {
+                borderColor: groupedViewActive ? 'rgba(156, 40, 175, 0.28)' : 'rgba(23, 21, 26, 0.12)',
+              },
+              '&:hover fieldset': {
+                borderColor: 'rgba(156, 40, 175, 0.28) !important',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: 'rgba(156, 40, 175, 0.38) !important',
+              },
+            }}
+          >
+            <MenuItem value="none">{t('learningModule.classPicture.classList')}</MenuItem>
+            {groupDefinitions.map((definition, index) => (
+              <MenuItem key={definition.id} value={definition.id}>{index + 1}</MenuItem>
+            ))}
+          </Select>
+          <Tooltip title={t('learningModule.classPicture.resetFocus')}>
+            <IconButton aria-label={t('learningModule.classPicture.resetGroupsAria')} onClick={resetGroups} size="small" sx={{ color: 'text.secondary' }}>
+              <RestartAltIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+      </Box>
+      <Box aria-live="polite" sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
+        {moveAnnouncement}
+      </Box>
       <Box sx={{ overflowX: { xs: 'auto', lg: 'visible' }, pb: 0.5 }}>
         <Box
           role="table"
-          aria-label={t('learningModule.classPicture.classPictureAria', { title: moduleConfig?.title || t('learningModule.fallbackTitle') })}
+          aria-label={groupedViewActive
+            ? t('learningModule.classPicture.evidenceMapFocused', {
+              title: moduleConfig?.title || t('learningModule.fallbackTitle'),
+              focus: activeGroupingSet?.label || t('learningModule.classPicture.focus'),
+            })
+            : t('learningModule.classPicture.classPictureAria', { title: moduleConfig?.title || t('learningModule.fallbackTitle') })}
           sx={{
             minWidth: { xs: 760, lg: 0 },
             display: 'grid',
@@ -806,7 +1018,118 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
             );
           })}
 
-          {students.map((student) => {
+          {classPictureRows.map((row) => {
+            if (row.type === 'group') {
+              const group = row.group;
+              const isCollapsed = collapsedGroupIds.includes(group.id);
+              const isDragTarget = dragTargetId === group.id;
+
+              return (
+                <Box key={`group-${group.id}`} role="rowgroup" sx={{ display: 'contents' }}>
+                  <Box
+                    role="row"
+                    onDragOver={(event) => allowDrop(event, group.id)}
+                    onDrop={(event) => handleDrop(event, group.id)}
+                    sx={{ display: 'contents' }}
+                  >
+                    <Box
+                      role="cell"
+                      onDoubleClick={(event) => {
+                        event.stopPropagation();
+                        openEditGroupDialog(group);
+                      }}
+                      aria-label={t('learningModule.classPicture.groupHeaderEditAria', { group: group.label })}
+                      sx={{
+                        gridColumn: `1 / span ${teachingUnits.length + 3}`,
+                        p: 0.85,
+                        borderTop: '1px solid rgba(23, 21, 26, 0.12)',
+                        bgcolor: isDragTarget ? 'rgba(156, 40, 175, 0.12)' : '#fff',
+                        cursor: 'default',
+                      }}
+                    >
+                      <ButtonBase
+                        onClick={() => toggleGroup(group.id)}
+                        onDoubleClick={(event) => {
+                          event.stopPropagation();
+                          openEditGroupDialog(group);
+                        }}
+                        aria-expanded={!isCollapsed}
+                        sx={{ minWidth: 0, gap: 0.55, borderRadius: '8px', textAlign: 'left', '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 } }}
+                      >
+                        <KeyboardArrowDownIcon sx={{ color: 'text.secondary', fontSize: 18, transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease' }} />
+                        <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 860 }}>
+                          {group.label}
+                        </Typography>
+                      </ButtonBase>
+                    </Box>
+                  </Box>
+                </Box>
+              );
+            }
+
+            if (row.type === 'unassigned') {
+              const isCollapsed = collapsedGroupIds.includes('not-grouped');
+              const isDragTarget = dragTargetId === 'not-grouped';
+
+              return (
+                <Box key="not-grouped" role="rowgroup" sx={{ display: 'contents' }}>
+                  <Box
+                    role="row"
+                    onDragOver={(event) => allowDrop(event, 'not-grouped')}
+                    onDrop={(event) => handleDrop(event, '')}
+                    sx={{ display: 'contents' }}
+                  >
+                    <Tooltip
+                      arrow
+                      enterDelay={1200}
+                      enterNextDelay={1200}
+                      title={(
+                        <Box sx={{ px: 0.25, py: 0.15 }}>
+                          <Typography sx={{ color: '#fff', fontSize: 12.4, fontWeight: 820, lineHeight: 1.35 }}>
+                            {t('learningModule.classPicture.doubleClickCreateFocus')}
+                          </Typography>
+                        </Box>
+                      )}
+                    >
+                      <Box
+                        role="cell"
+                        onDoubleClick={(event) => {
+                          event.stopPropagation();
+                          openCreateGroupDialog();
+                        }}
+                        aria-label={t('learningModule.classPicture.unassignedStudentsCreateFocus')}
+                        sx={{
+                          gridColumn: `1 / span ${teachingUnits.length + 3}`,
+                          p: 0.85,
+                          borderTop: '1px solid rgba(23, 21, 26, 0.12)',
+                          bgcolor: isDragTarget ? 'rgba(156, 40, 175, 0.12)' : '#fff',
+                          cursor: 'default',
+                        }}
+                      >
+                        <ButtonBase
+                          onClick={() => toggleGroup('not-grouped')}
+                          onDoubleClick={(event) => {
+                            event.stopPropagation();
+                            openCreateGroupDialog();
+                          }}
+                          aria-expanded={!isCollapsed}
+                          sx={{ gap: 0.55, borderRadius: '8px', textAlign: 'left', '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 } }}
+                        >
+                          <KeyboardArrowDownIcon sx={{ color: 'text.secondary', fontSize: 18, transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease' }} />
+                          <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 860 }}>
+                            {t('learningModule.classPicture.unassigned')}
+                          </Typography>
+                        </ButtonBase>
+                      </Box>
+                    </Tooltip>
+                  </Box>
+                </Box>
+              );
+            }
+
+            const student = row.student;
+            const groupId = row.groupId || '';
+            const rowIndex = row.index || 0;
             const isExpanded = expandedStudentId === student.id;
             const isHovered = hoveredStudentId === student.id;
             const isRowNoteHovered = hoveredRowNoteStudentId === student.id;
@@ -830,6 +1153,8 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
               <Box key={student.id} role="rowgroup" sx={{ display: 'contents' }}>
                 <Box
                   role="row"
+                  onDragOver={groupedViewActive ? (event) => allowDrop(event, `${groupId || 'not-grouped'}-${student.id}`) : undefined}
+                  onDrop={groupedViewActive ? (event) => handleDrop(event, groupId, rowIndex) : undefined}
                   onMouseEnter={() => setHoveredStudentId(student.id)}
                   onMouseLeave={() => setHoveredStudentId('')}
                   sx={{ display: 'contents' }}
@@ -844,11 +1169,31 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
                       p: 1,
                       borderTop: isHovered ? '1px solid rgba(156, 40, 175, 0.34)' : '1px solid rgba(23, 21, 26, 0.08)',
                       borderBottom: isHovered ? '1px solid rgba(156, 40, 175, 0.22)' : '1px solid transparent',
-                      bgcolor: isHovered ? 'rgba(156, 40, 175, 0.045)' : '#fff',
+                      bgcolor: draggedStudentId === student.id ? 'rgba(156, 40, 175, 0.08)' : isHovered ? 'rgba(156, 40, 175, 0.045)' : '#fff',
                       minWidth: 0,
                       transition: 'background-color 140ms ease, border-color 140ms ease',
                     }}
                   >
+                    {groupedViewActive && (
+                      <ButtonBase
+                        draggable
+                        onDragStart={(event) => handleDragStart(event, student.id)}
+                        onDragEnd={handleDragEnd}
+                        onClick={(event) => event.stopPropagation()}
+                        aria-label={t('learningModule.classPicture.moveStudent', { student: student.displayName })}
+                        sx={{
+                          width: 24,
+                          height: 28,
+                          flexShrink: 0,
+                          borderRadius: '8px',
+                          color: 'text.secondary',
+                          cursor: 'grab',
+                          '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+                        }}
+                      >
+                        <DragIndicatorIcon sx={{ fontSize: 17 }} />
+                      </ButtonBase>
+                    )}
                     <ButtonBase
                       onClick={() => toggleStudent(student.id, '')}
                       aria-expanded={isExpanded}
@@ -1166,6 +1511,23 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
           })}
         </Box>
       </Box>
+      <GroupDialog
+        open={groupDialogOpen}
+        mode={groupDialogMode}
+        group={selectedGroup}
+        students={students}
+        groupDefinitions={groupDefinitions}
+        initialTypeId={groupedViewActive ? activeGroupingSetId : ''}
+        onClose={() => setGroupDialogOpen(false)}
+        onCreateGroup={handleCreateGroup}
+        onUpdateGroup={updateGroup}
+        onDeleteGroup={deleteGroup}
+        onAddStudent={moveStudentToGroup}
+        onRemoveStudent={(groupId, studentId) => {
+          const group = activeGroups.find((item) => item.id === groupId);
+          moveStudentToUngrouped(group?.typeId || activeGroupingSetId, studentId);
+        }}
+      />
     </Stack>
   );
 }
