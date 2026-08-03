@@ -28,6 +28,7 @@ export const conceptDemoTranslations = {
       science: 'Science',
       swedish: 'Swedish',
       history: 'History',
+      sloyd: 'Crafts',
     },
     home: {
       teacherWorkspace: 'Teacher workspace',
@@ -64,6 +65,9 @@ export const conceptDemoTranslations = {
         },
         history: {
           shortTitle: 'History',
+        },
+        sloyd: {
+          shortTitle: 'Crafts',
         },
       },
       classCount_one: '{{count}} class',
@@ -412,6 +416,7 @@ export const conceptDemoTranslations = {
       science: 'Naturorientering',
       swedish: 'Svenska',
       history: 'Historia',
+      sloyd: 'Sl\u00f6jd',
     },
     home: {
       teacherWorkspace: 'L\u00e4rararbetsyta',
@@ -448,6 +453,9 @@ export const conceptDemoTranslations = {
         },
         history: {
           shortTitle: 'Historia',
+        },
+        sloyd: {
+          shortTitle: 'Sl\u00f6jd',
         },
       },
       classCount_one: '{{count}} klass',

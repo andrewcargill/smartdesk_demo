@@ -46,6 +46,13 @@ export const subjectCatalogue = [
     code: { en: 'Hi', sv: 'Hi' },
     color: '#8a5a44',
   },
+  {
+    id: 'sloyd',
+    title: { en: 'Crafts', sv: 'Sl\u00f6jd' },
+    shortTitle: { en: 'Crafts', sv: 'Sl\u00f6jd' },
+    code: { en: 'Sl', sv: 'Sl' },
+    color: '#7c3f16',
+  },
 ];
 
 export function getSubjectDefinition(subjectId) {

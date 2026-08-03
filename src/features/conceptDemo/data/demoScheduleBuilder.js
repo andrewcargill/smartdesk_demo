@@ -102,6 +102,10 @@ const subjectTopicTemplates = {
     en: ['Source criticism', 'Industrialisation', 'Historical cause and consequence', 'Democracy development'],
     sv: ['K\u00e4llkritik', 'Industrialiseringen', 'Historiska orsaker och konsekvenser', 'Demokratins utveckling'],
   },
+  sloyd: {
+    en: ['Textile techniques', 'Wood and metal construction', 'Design process', 'Sustainable material choices'],
+    sv: ['Textila tekniker', 'Tr\u00e4- och metallkonstruktion', 'Designprocess', 'H\u00e5llbara materialval'],
+  },
 };
 
 const fixedEventTextById = {
