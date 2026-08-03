@@ -2,9 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Paper,
   Stack,
   Switch,
+  TextField,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
@@ -12,6 +17,7 @@ import {
 import { ConceptDemoDrawerProvider, useConceptDemoDrawers } from './ConceptDemoDrawerContext.jsx';
 import { ConceptDemoLanguageProvider, useConceptDemoLanguage } from './ConceptDemoLanguageContext.jsx';
 import { ConceptDemoSubjectProvider, useConceptDemoSubjects } from './ConceptDemoSubjectContext.jsx';
+import { ConceptDemoTeacherProvider, useConceptDemoTeacher } from './ConceptDemoTeacherContext.jsx';
 import DemoShell from './DemoShell.jsx';
 import English8AModule from './components/English8AModule.jsx';
 import FocusedWorkspace from './components/FocusedWorkspace.jsx';
@@ -25,6 +31,7 @@ import SmartDeskStore from './components/SmartDeskStore.jsx';
 import { buildDemoSchedule } from './data/demoScheduleBuilder.js';
 import { maths7APlanningBlocks } from './data/maths7APlanning.js';
 import { getTeachingUnitForPlanningBlock, normalizeMathsPlanningBlock } from './data/mathsCurriculum.js';
+import { resolveLocalizedValue } from './i18n/conceptDemoTranslations.js';
 import { getSmartDeskHomeContext } from './utils/smartDeskContextUtils.js';
 import { getSubjectModules, getTeachingEvents } from './utils/annaSubjectUtils.js';
 import { getCurrentWeekContext } from './utils/weekDataUtils.js';
@@ -44,6 +51,7 @@ const homeBackgrounds = {
 };
 const maths7APlanningStorageKey = 'smartdesk_demo_subject_planning_mathematics_7a';
 const legacyMaths7APlanningStorageKey = 'smartdesk_demo_maths7a_plan';
+const setupCompletedStorageKey = 'smartdesk_demo_setup_complete';
 
 const fixedModules = [
   {
@@ -59,6 +67,30 @@ const fixedModules = [
     type: 'fixed',
   },
 ];
+
+function hasCompletedSetup() {
+  if (typeof window === 'undefined') {
+    return true;
+  }
+
+  try {
+    return window.localStorage.getItem(setupCompletedStorageKey) === 'true';
+  } catch {
+    return true;
+  }
+}
+
+function writeSetupCompleted() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(setupCompletedStorageKey, 'true');
+  } catch {
+    // The modal can still close in-memory if localStorage is unavailable.
+  }
+}
 
 function getSubjectTitle(subjectId, t, fallbackTitle) {
   const translatedTitle = t(`subjects.${subjectId}`);
@@ -214,12 +246,12 @@ function getMaths7ALesson(schedule) {
     ?.events.find((event) => event.originalId === 'mon-maths-7a');
 }
 
-function TeacherCircle({ onOpenWeek, t }) {
+function TeacherCircle({ teacherName, onOpenWeek, t }) {
   return (
     <Paper
       component="button"
       type="button"
-      aria-label={t('home.openAnnaWeek')}
+      aria-label={t('home.openTeacherWeek', { teacherName })}
       onClick={onOpenWeek}
       elevation={0}
       sx={{
@@ -254,7 +286,7 @@ function TeacherCircle({ onOpenWeek, t }) {
     >
       <Box>
         <Typography variant="h3" sx={{ fontSize: { xs: 34, md: 42 }, color: darkText }}>
-          Anna
+          {teacherName}
         </Typography>
         <Typography sx={{ mt: 0.75, color: 'text.secondary', fontWeight: 650 }}>
           {t('home.teacherWorkspace')}
@@ -432,7 +464,7 @@ function ConnectorLine({ line }) {
   );
 }
 
-function InsightPanel({ subjectCount, nextTeachingEvent, controls, onOpenWeek, children, t }) {
+function InsightPanel({ teacherName, subjectCount, nextTeachingEvent, controls, onOpenWeek, children, t }) {
   const nextBlock = nextTeachingEvent
     ? t('home.nextTeachingBlock', {
       title: getSubjectTitle(nextTeachingEvent.subjectId, t, nextTeachingEvent.title),
@@ -462,7 +494,7 @@ function InsightPanel({ subjectCount, nextTeachingEvent, controls, onOpenWeek, c
             {t('home.insightTitle')}
           </Typography>
           <Typography sx={{ mt: 1, maxWidth: 700, color: 'text.secondary', fontSize: 16.5, lineHeight: 1.65 }}>
-            {t('home.insightText', { subjectCount, nextBlock })}
+            {t('home.insightText', { teacherName, subjectCount, nextBlock })}
           </Typography>
         </Box>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
@@ -477,6 +509,198 @@ function InsightPanel({ subjectCount, nextTeachingEvent, controls, onOpenWeek, c
         {controls}
       </Stack>
     </Paper>
+  );
+}
+
+function SetupDialog({ open, onClose, initialSetup = false }) {
+  const { language, languages, setLanguage, t } = useConceptDemoLanguage();
+  const {
+    availableSubjects,
+    maxSelectedSubjectCount,
+    selectedSubjectIds,
+    setSelectedSubjectIds,
+  } = useConceptDemoSubjects();
+  const { teacherName, setTeacherName } = useConceptDemoTeacher();
+  const [draftLanguage, setDraftLanguage] = useState(language);
+  const [draftTeacherName, setDraftTeacherName] = useState(teacherName);
+  const [draftSubjectIds, setDraftSubjectIds] = useState(selectedSubjectIds);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    setDraftLanguage(language);
+    setDraftTeacherName(teacherName);
+    setDraftSubjectIds(selectedSubjectIds);
+  }, [language, open, selectedSubjectIds, teacherName]);
+
+  function toggleDraftSubject(subjectId) {
+    setDraftSubjectIds((currentSubjectIds) => {
+      if (currentSubjectIds.includes(subjectId)) {
+        return currentSubjectIds.filter((currentSubjectId) => currentSubjectId !== subjectId);
+      }
+
+      if (currentSubjectIds.length >= maxSelectedSubjectCount) {
+        return currentSubjectIds;
+      }
+
+      return [...currentSubjectIds, subjectId];
+    });
+  }
+
+  function handleSave() {
+    const cleanedTeacherName = draftTeacherName.replace(/\s+/g, ' ').trim();
+
+    if (!cleanedTeacherName || draftSubjectIds.length !== maxSelectedSubjectCount) {
+      return;
+    }
+
+    setLanguage(draftLanguage);
+    setTeacherName(cleanedTeacherName);
+    setSelectedSubjectIds(draftSubjectIds);
+    onClose();
+  }
+
+  const saveDisabled = !draftTeacherName.trim() || draftSubjectIds.length !== maxSelectedSubjectCount;
+
+  return (
+    <Dialog
+      open={open}
+      onClose={initialSetup ? undefined : onClose}
+      fullWidth
+      maxWidth="sm"
+      aria-labelledby="concept-demo-setup-title"
+      PaperProps={{
+        sx: {
+          borderRadius: '16px',
+          border: '1px solid rgba(23, 21, 26, 0.12)',
+          boxShadow: '0 24px 70px rgba(23, 21, 26, 0.18)',
+        },
+      }}
+    >
+      <DialogTitle id="concept-demo-setup-title" sx={{ color: darkText, fontSize: 22, fontWeight: 880, pb: 1 }}>
+        {t('home.setup.title')}
+      </DialogTitle>
+      <DialogContent sx={{ pt: '8px !important' }}>
+        <Stack spacing={2.25}>
+          <Typography sx={{ color: 'text.secondary', fontSize: 14.5, lineHeight: 1.55 }}>
+            {t('home.setup.description')}
+          </Typography>
+
+          <Box>
+            <Typography sx={{ mb: 0.8, color: darkText, fontSize: 13.5, fontWeight: 820 }}>
+              {t('home.setup.languageLabel')}
+            </Typography>
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={draftLanguage}
+              onChange={(_, nextLanguage) => {
+                if (nextLanguage) {
+                  setDraftLanguage(nextLanguage);
+                }
+              }}
+              aria-label={t('home.setup.languageLabel')}
+              sx={{
+                '& .MuiToggleButton-root': {
+                  minWidth: 74,
+                  color: darkText,
+                  borderColor: 'rgba(23, 21, 26, 0.12)',
+                  px: 1.4,
+                  py: 0.7,
+                  fontSize: 12.5,
+                  fontWeight: 800,
+                },
+                '& .Mui-selected': {
+                  color: purple,
+                  bgcolor: palePurple,
+                },
+                '& .Mui-selected:hover': {
+                  bgcolor: palePurple,
+                },
+              }}
+            >
+              {Object.values(languages).map((option) => (
+                <ToggleButton key={option.code} value={option.code} aria-label={option.label}>
+                  {option.shortLabel}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
+          </Box>
+
+          <TextField
+            label={t('home.setup.teacherNameLabel')}
+            value={draftTeacherName}
+            onChange={(event) => setDraftTeacherName(event.target.value)}
+            fullWidth
+            size="small"
+            inputProps={{ maxLength: 40 }}
+          />
+
+          <Box>
+            <Stack direction="row" justifyContent="space-between" spacing={1} alignItems="baseline" sx={{ mb: 1 }}>
+              <Typography sx={{ color: darkText, fontSize: 13.5, fontWeight: 820 }}>
+                {t('home.setup.subjectsLabel')}
+              </Typography>
+              <Typography sx={{ color: draftSubjectIds.length === maxSelectedSubjectCount ? purple : 'text.secondary', fontSize: 12.4, fontWeight: 760 }}>
+                {t('home.setup.subjectCount', { count: draftSubjectIds.length, max: maxSelectedSubjectCount })}
+              </Typography>
+            </Stack>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 0.8 }}>
+              {availableSubjects.map((subject) => {
+                const selected = draftSubjectIds.includes(subject.id);
+                const disabled = !selected && draftSubjectIds.length >= maxSelectedSubjectCount;
+                const subjectTitle = resolveLocalizedValue(subject.title, draftLanguage, subject.id);
+                const subjectShortTitle = resolveLocalizedValue(subject.shortTitle, draftLanguage, subjectTitle);
+
+                return (
+                  <Button
+                    key={subject.id}
+                    type="button"
+                    variant="outlined"
+                    disabled={disabled}
+                    aria-pressed={selected}
+                    onClick={() => toggleDraftSubject(subject.id)}
+                    sx={{
+                      justifyContent: 'space-between',
+                      minHeight: 46,
+                      borderRadius: '10px',
+                      textTransform: 'none',
+                      borderColor: selected ? 'rgba(156, 40, 175, 0.42)' : 'rgba(23, 21, 26, 0.12)',
+                      bgcolor: selected ? palePurple : '#fff',
+                      color: selected ? purple : darkText,
+                      px: 1.4,
+                      '&:hover': {
+                        bgcolor: selected ? palePurple : '#fff',
+                        borderColor: 'rgba(156, 40, 175, 0.36)',
+                      },
+                    }}
+                  >
+                    <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 820 }}>
+                      {subjectTitle}
+                    </Box>
+                    <Box component="span" sx={{ ml: 1, color: selected ? purple : 'text.secondary', fontSize: 11.5, fontWeight: 850 }}>
+                      {subjectShortTitle}
+                    </Box>
+                  </Button>
+                );
+              })}
+            </Box>
+          </Box>
+        </Stack>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        {!initialSetup && (
+          <Button onClick={onClose} sx={{ color: 'text.secondary' }}>
+            {t('common.close')}
+          </Button>
+        )}
+        <Button variant="contained" disabled={saveDisabled} onClick={handleSave} sx={{ bgcolor: purple, '&:hover': { bgcolor: '#842195' } }}>
+          {t('home.setup.save')}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
@@ -547,9 +771,12 @@ function LanguageToggle() {
 function HomeScreenContent() {
   const { language, t } = useConceptDemoLanguage();
   const { selectedSubjectIds } = useConceptDemoSubjects();
+  const { teacherName } = useConceptDemoTeacher();
   const [activeWorkspace, setActiveWorkspace] = useState(null);
   const maths7ATriggerRef = useRef(null);
-  const schedule = useMemo(() => buildDemoSchedule({ selectedSubjectIds, language }), [language, selectedSubjectIds]);
+  const [setupOpen, setSetupOpen] = useState(() => !hasCompletedSetup());
+  const [setupInitial, setSetupInitial] = useState(() => !hasCompletedSetup());
+  const schedule = useMemo(() => buildDemoSchedule({ selectedSubjectIds, language, teacherName }), [language, selectedSubjectIds, teacherName]);
   const subjectModules = useMemo(() => getSubjectModules(schedule), [schedule]);
   const nextTeachingEvent = useMemo(() => getNextTeachingEvent(schedule), [schedule]);
   const maths7ALesson = useMemo(() => getMaths7ALesson(schedule), [schedule]);
@@ -734,6 +961,17 @@ function HomeScreenContent() {
     }
   }
 
+  function openSetup() {
+    setSetupInitial(false);
+    setSetupOpen(true);
+  }
+
+  function closeSetup() {
+    writeSetupCompleted();
+    setSetupInitial(false);
+    setSetupOpen(false);
+  }
+
   return (
     <DemoShell
       onOpenMaths7A={openMaths7A}
@@ -789,6 +1027,23 @@ function HomeScreenContent() {
             <Typography sx={{ color: 'text.secondary', fontSize: 15.5 }}>
               {t('home.statusLine', { eventSummary: formatTeachingEvent(nextTeachingEvent, t) })}
             </Typography>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={openSetup}
+              sx={{
+                mt: 0.5,
+                borderColor: 'rgba(23, 21, 26, 0.12)',
+                color: darkText,
+                borderRadius: '999px',
+                textTransform: 'none',
+                fontSize: 12.5,
+                fontWeight: 760,
+                '&:hover': { borderColor: 'rgba(156, 40, 175, 0.32)', bgcolor: '#fff' },
+              }}
+            >
+              {t('home.setup.changeSubjects')}
+            </Button>
           </Stack>
 
           <Box
@@ -805,7 +1060,7 @@ function HomeScreenContent() {
             {modules.map((module) => (
               <ConnectorLine key={`${module.id}-line`} line={module.line} />
             ))}
-            <TeacherCircle onOpenWeek={openWeek} t={t} />
+            <TeacherCircle teacherName={teacherName} onOpenWeek={openWeek} t={t} />
             <Box
               sx={{
                 display: { xs: 'grid', md: 'contents' },
@@ -835,6 +1090,7 @@ function HomeScreenContent() {
           </Box>
 
           <InsightPanel
+            teacherName={teacherName}
             subjectCount={subjectModules.length}
             nextTeachingEvent={nextTeachingEvent}
             onOpenWeek={openWeek}
@@ -1052,6 +1308,7 @@ function HomeScreenContent() {
           onAction={handleSmartDeskAction}
         />
       )}
+      <SetupDialog open={setupOpen} initialSetup={setupInitial} onClose={closeSetup} />
     </DemoShell>
   );
 }
@@ -1060,9 +1317,11 @@ export default function HomeScreen() {
   return (
     <ConceptDemoLanguageProvider>
       <ConceptDemoSubjectProvider>
-        <ConceptDemoDrawerProvider>
-          <HomeScreenContent />
-        </ConceptDemoDrawerProvider>
+        <ConceptDemoTeacherProvider>
+          <ConceptDemoDrawerProvider>
+            <HomeScreenContent />
+          </ConceptDemoDrawerProvider>
+        </ConceptDemoTeacherProvider>
       </ConceptDemoSubjectProvider>
     </ConceptDemoLanguageProvider>
   );

@@ -104,6 +104,7 @@ function getLocalizedWelcomeText(context, fallbackText, language, t) {
   }
 
   return t('floatingSmartDesk.contextWelcome', {
+    teacherName: context.teacherName || 'Anna',
     title: getLocalizedSubjectTitle(context.nextEvent.subjectId, context.nextEvent.title, t),
     className: context.nextEvent.className,
     start: context.nextEvent.start,

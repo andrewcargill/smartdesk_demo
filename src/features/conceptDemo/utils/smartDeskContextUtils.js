@@ -13,6 +13,7 @@ export function getSmartDeskHomeContext(schedule = annaSchedule) {
 
   return {
     screen: 'Home',
+    teacherName: schedule.teacher?.name || 'Anna',
     currentTime: currentContext.currentTime,
     dateLabel: currentContext.dateLabel,
     dayLabel: currentContext.dateLabel.split(' ')[0],
@@ -27,7 +28,7 @@ export function getContextWelcome(context, fallbackText) {
     return fallbackText;
   }
 
-  return `Good morning, Anna. ${context.nextEvent.title} ${context.nextEvent.className} begins at ${context.nextEvent.start}. What would be useful right now?`;
+  return `Good morning, ${context.teacherName || 'Anna'}. ${context.nextEvent.title} ${context.nextEvent.className} begins at ${context.nextEvent.start}. What would be useful right now?`;
 }
 
 export function getMinutesUntil(event, currentTime) {

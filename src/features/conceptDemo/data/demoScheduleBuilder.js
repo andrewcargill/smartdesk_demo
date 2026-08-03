@@ -213,6 +213,7 @@ function localizeLessonEvent(event, selectedSubjectIds, language) {
 export function buildDemoSchedule({
   selectedSubjectIds = defaultSelectedSubjectIds,
   language = defaultConceptDemoLanguage,
+  teacherName = annaSchedule.teacher.name,
 } = {}) {
   const safeSubjectIds = normalizeSelectedSubjectIds(selectedSubjectIds);
   const teacherSubjects = safeSubjectIds
@@ -224,6 +225,7 @@ export function buildDemoSchedule({
     ...annaSchedule,
     teacher: {
       ...annaSchedule.teacher,
+      name: teacherName,
       subjects: teacherSubjects,
     },
     currentContext: {
