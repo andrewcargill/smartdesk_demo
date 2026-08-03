@@ -7,7 +7,10 @@ export const english8AEvidence = [
     teachingUnitId: 'reading',
     skillId: 'understanding-purpose',
     levelId: 'developing',
-    note: 'Identified a valid inference but needed prompting to connect it to a quotation.',
+    note: {
+      en: 'Identified a valid inference but needed prompting to connect it to a quotation.',
+      sv: 'Identifierade en rimlig inferens men beh\u00f6vde st\u00f6d f\u00f6r att koppla den till ett citat.',
+    },
   },
   {
     id: 'eng8a-evidence-002',
@@ -17,7 +20,10 @@ export const english8AEvidence = [
     teachingUnitId: 'reading',
     skillId: 'response-to-text',
     levelId: 'secure',
-    note: 'Selected a precise quotation and explained its effect clearly.',
+    note: {
+      en: 'Selected a precise quotation and explained its effect clearly.',
+      sv: 'Valde ett precist citat och f\u00f6rklarade dess effekt tydligt.',
+    },
   },
   {
     id: 'eng8a-evidence-003',
@@ -27,7 +33,10 @@ export const english8AEvidence = [
     teachingUnitId: 'reading',
     skillId: 'understanding-detail',
     levelId: 'emerging',
-    note: 'Could describe what happened but did not yet explain the writer choice.',
+    note: {
+      en: 'Could describe what happened but did not yet explain the writer choice.',
+      sv: 'Kunde beskriva vad som h\u00e4nde men f\u00f6rklarade \u00e4nnu inte f\u00f6rfattarens val.',
+    },
   },
   {
     id: 'eng8a-evidence-004',
@@ -37,7 +46,10 @@ export const english8AEvidence = [
     teachingUnitId: 'reading',
     skillId: 'response-to-text',
     levelId: 'secure',
-    note: 'Explained tension through sentence length and vocabulary choice.',
+    note: {
+      en: 'Explained tension through sentence length and vocabulary choice.',
+      sv: 'F\u00f6rklarade sp\u00e4nning genom meningsl\u00e4ngd och ordval.',
+    },
   },
   {
     id: 'eng8a-evidence-005',
@@ -47,7 +59,10 @@ export const english8AEvidence = [
     teachingUnitId: 'writing',
     skillId: 'structure',
     levelId: 'emerging',
-    note: 'Has a clear opinion; needs support to sequence reasons.',
+    note: {
+      en: 'Has a clear opinion; needs support to sequence reasons.',
+      sv: 'Har en tydlig \u00e5sikt men beh\u00f6ver st\u00f6d f\u00f6r att ordna sk\u00e4len.',
+    },
   },
   {
     id: 'eng8a-evidence-006',
@@ -57,7 +72,10 @@ export const english8AEvidence = [
     teachingUnitId: 'writing',
     skillId: 'vocabulary',
     levelId: 'developing',
-    note: 'Used some persuasive vocabulary but repeated the same phrase several times.',
+    note: {
+      en: 'Used some persuasive vocabulary but repeated the same phrase several times.',
+      sv: 'Anv\u00e4nde viss \u00f6vertygande vokabul\u00e4r men upprepade samma fras flera g\u00e5nger.',
+    },
   },
   {
     id: 'eng8a-evidence-007',
@@ -67,7 +85,10 @@ export const english8AEvidence = [
     teachingUnitId: 'reading',
     skillId: 'response-to-text',
     levelId: 'advanced',
-    note: 'Linked imagery to speaker perspective with confidence.',
+    note: {
+      en: 'Linked imagery to speaker perspective with confidence.',
+      sv: 'Kopplade bildspr\u00e5k till ber\u00e4ttarperspektiv med s\u00e4kerhet.',
+    },
   },
   {
     id: 'eng8a-evidence-008',
@@ -77,12 +98,18 @@ export const english8AEvidence = [
     teachingUnitId: 'speaking',
     skillId: 'interaction',
     levelId: 'developing',
-    note: 'Contributed when invited and built on another student response once.',
+    note: {
+      en: 'Contributed when invited and built on another student response once.',
+      sv: 'Bidrog n\u00e4r hen blev inbjuden och byggde vidare p\u00e5 ett annat elevsvar en g\u00e5ng.',
+    },
   },
   {
     id: 'eng8a-assessment-001',
     type: 'assessment',
-    title: 'Short story inference check',
+    title: {
+      en: 'Short story inference check',
+      sv: 'Inferenskontroll om novell',
+    },
     date: '2026-05-15',
     teachingUnitId: 'reading',
     max: 20,
@@ -108,7 +135,10 @@ export const english8ALearningObservations = [
     focus: '0',
     participation: '+',
     independence: '0',
-    comment: 'Engaged well in paired reading.',
+    comment: {
+      en: 'Engaged well in paired reading.',
+      sv: 'Deltog v\u00e4l i parl\u00e4sning.',
+    },
   },
   {
     id: 'eng8a-learning-002',
@@ -117,7 +147,10 @@ export const english8ALearningObservations = [
     focus: '-',
     participation: '0',
     independence: '-',
-    comment: 'Needed check-ins to begin the written paragraph.',
+    comment: {
+      en: 'Needed check-ins to begin the written paragraph.',
+      sv: 'Beh\u00f6vde avst\u00e4mningar f\u00f6r att komma ig\u00e5ng med det skriftliga stycket.',
+    },
   },
   {
     id: 'eng8a-learning-003',
@@ -126,6 +159,9 @@ export const english8ALearningObservations = [
     focus: '+',
     participation: '+',
     independence: '+',
-    comment: 'Worked independently and supported group discussion.',
+    comment: {
+      en: 'Worked independently and supported group discussion.',
+      sv: 'Arbetade sj\u00e4lvst\u00e4ndigt och st\u00f6ttade gruppdiskussionen.',
+    },
   },
 ];

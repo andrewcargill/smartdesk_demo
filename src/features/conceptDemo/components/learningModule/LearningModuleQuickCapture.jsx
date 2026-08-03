@@ -22,16 +22,11 @@ import {
   updateLearningModuleLearningObservation,
   updateLearningModuleObservation,
 } from './utils/learningModuleEvidenceStorage.js';
+import { useConceptDemoLanguage } from '../../ConceptDemoLanguageContext.jsx';
 
 const purple = '#9c28af';
 const selectedPurple = '#b45ac2';
 const darkText = '#17151a';
-
-const learningObservationItems = [
-  { id: 'focus', label: 'Focus' },
-  { id: 'participation', label: 'Participation' },
-  { id: 'independence', label: 'Independence' },
-];
 
 const learningObservationChoices = [
   { id: '-', label: '−' },
@@ -70,7 +65,15 @@ function Panel({ children, sx }) {
   );
 }
 
-function buildCaptureFocuses(teachingUnits, skills, activeLesson) {
+function getLearningObservationItems(t) {
+  return [
+    { id: 'focus', label: t('learningModule.evidenceLabels.focus') },
+    { id: 'participation', label: t('learningModule.evidenceLabels.participation') },
+    { id: 'independence', label: t('learningModule.evidenceLabels.independence') },
+  ];
+}
+
+function buildCaptureFocuses(teachingUnits, skills, activeLesson, t) {
   const skillById = new Map((skills || []).map((skill) => [skill.id, skill]));
 
   return (teachingUnits || [])
@@ -86,7 +89,7 @@ function buildCaptureFocuses(teachingUnits, skills, activeLesson) {
           id: `${unit.id}-observations`,
           label: unit.id === activeLesson?.teachingUnitId && activeLesson?.focus
             ? activeLesson.focus
-            : 'Unit observations',
+            : t('learningModule.evidenceLabels.unitObservations'),
           capturePoints: unitSkills.map((skill) => ({
             ...skill,
             label: skill.label || skill.title || skill.id,
@@ -113,9 +116,11 @@ export default function LearningModuleQuickCapture({
   onLocalLearningObservationPayloadChange,
   onStudentChange,
 }) {
+  const { t } = useConceptDemoLanguage();
+  const learningObservationItems = useMemo(() => getLearningObservationItems(t), [t]);
   const captureFocuses = useMemo(
-    () => buildCaptureFocuses(teachingUnits, skills, activeLesson),
-    [activeLesson, skills, teachingUnits],
+    () => buildCaptureFocuses(teachingUnits, skills, activeLesson, t),
+    [activeLesson, skills, t, teachingUnits],
   );
   const selectedStudent = students.find((student) => student.id === selectedStudentId) || students[0];
   const initialUnitId = activeLesson?.teachingUnitId || captureFocuses[0]?.id || '';

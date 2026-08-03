@@ -146,6 +146,12 @@ export const conceptDemoTranslations = {
           fallbackDescription: 'Placeholder for reusable planning.',
         },
       },
+      evidenceLabels: {
+        focus: 'Focus',
+        participation: 'Participation',
+        independence: 'Independence',
+        unitObservations: 'Unit observations',
+      },
     },
   },
   sv: {
@@ -279,6 +285,12 @@ export const conceptDemoTranslations = {
         plan: {
           fallbackDescription: 'Platsh\u00e5llare f\u00f6r \u00e5teranv\u00e4ndbar planering.',
         },
+      },
+      evidenceLabels: {
+        focus: 'Fokus',
+        participation: 'Deltagande',
+        independence: 'Sj\u00e4lvst\u00e4ndighet',
+        unitObservations: 'Observationer f\u00f6r omr\u00e5det',
       },
     },
   },

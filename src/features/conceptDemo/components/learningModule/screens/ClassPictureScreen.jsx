@@ -4,6 +4,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import NotesIcon from '@mui/icons-material/Notes';
 import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
 import { Box, ButtonBase, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material';
+import { useConceptDemoLanguage } from '../../../ConceptDemoLanguageContext.jsx';
 import StudentUnitInsightPanel from '../StudentUnitInsightPanel.jsx';
 import {
   LEARNING_MODULE_ASSESSMENT_RESULTS_STORAGE_EVENT,
@@ -25,12 +26,6 @@ const purple = '#9c28af';
 const darkText = '#17151a';
 const border = 'rgba(23, 21, 26, 0.1)';
 const absentOrange = '#b85c00';
-
-const learningObservationAreas = [
-  { id: 'focus', label: 'Focus' },
-  { id: 'participation', label: 'Participation' },
-  { id: 'independence', label: 'Independence' },
-];
 
 const learningObservationChoices = [
   { id: '-', label: '-' },
@@ -186,7 +181,15 @@ function getLearningObservationChoiceValue(choiceId) {
   return 0;
 }
 
-function LearningObservationTimelineGraph({ observations, activeObservationId, onActiveObservationChange }) {
+function getLearningObservationAreas(t) {
+  return [
+    { id: 'focus', label: t('learningModule.evidenceLabels.focus') },
+    { id: 'participation', label: t('learningModule.evidenceLabels.participation') },
+    { id: 'independence', label: t('learningModule.evidenceLabels.independence') },
+  ];
+}
+
+function LearningObservationTimelineGraph({ observations, activeObservationId, onActiveObservationChange, learningObservationAreas }) {
   const sortedObservations = sortByDate(observations || [], 'asc');
   const pointEvents = sortedObservations.flatMap((observation) => (
     learningObservationAreas
@@ -287,7 +290,7 @@ function LearningObservationTimelineGraph({ observations, activeObservationId, o
   );
 }
 
-function LearningObservationHistoryPanel({ observations, activeObservation }) {
+function LearningObservationHistoryPanel({ observations, activeObservation, learningObservationAreas }) {
   const sortedObservations = sortByDate(observations || [], 'desc');
   const latestByAreaId = learningObservationAreas.reduce((itemsByArea, area) => {
     itemsByArea[area.id] = sortedObservations.find((observation) => observation[area.id]) || null;
@@ -367,7 +370,7 @@ function LearningObservationHistoryPanel({ observations, activeObservation }) {
   );
 }
 
-function StudentGlobalInsightPanel({ student, evidenceItems, rowNote, learningObservations, subjectTitle }) {
+function StudentGlobalInsightPanel({ student, evidenceItems, rowNote, learningObservations, subjectTitle, learningObservationAreas }) {
   const studentEvidence = getStudentEvidenceItems(evidenceItems, student.id);
   const previousResult = student.previousResults?.find((result) => result.subjectId === 'english') || student.previousResults?.[0] || null;
   const latestEvidenceDate = getLatestDate(studentEvidence);
@@ -391,11 +394,13 @@ function StudentGlobalInsightPanel({ student, evidenceItems, rowNote, learningOb
               observations={learningObservations}
               activeObservationId={activeLearningObservation?.id || ''}
               onActiveObservationChange={setActiveLearningObservation}
+              learningObservationAreas={learningObservationAreas}
             />
             <Stack spacing={1.1}>
               <LearningObservationHistoryPanel
                 observations={learningObservations}
                 activeObservation={activeLearningObservation}
+                learningObservationAreas={learningObservationAreas}
               />
               <Paper elevation={0} sx={{ p: 0.95, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
                 <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 880 }}>Known anchors</Typography>
@@ -448,6 +453,8 @@ function getStudentUnitCellNoteKey(studentId, unitId) {
 }
 
 export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
+  const { t } = useConceptDemoLanguage();
+  const learningObservationAreas = useMemo(() => getLearningObservationAreas(t), [t]);
   const students = moduleConfig?.classData?.students || [];
   const teachingUnits = [...(moduleConfig?.curriculum?.teachingUnits || [])]
     .sort((first, second) => (first.order || 0) - (second.order || 0));
@@ -1118,6 +1125,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
                           rowNote={rowNote}
                           learningObservations={studentLearningObservations}
                           subjectTitle={subjectTitle}
+                          learningObservationAreas={learningObservationAreas}
                         />
                       )}
                     </Box>

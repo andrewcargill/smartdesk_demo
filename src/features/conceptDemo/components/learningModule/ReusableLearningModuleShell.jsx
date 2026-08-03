@@ -22,6 +22,34 @@ function localizeValue(value, language, fallback = '') {
   return resolveLocalizedValue(value, language) || fallback;
 }
 
+function isLocalizedValue(value) {
+  return Boolean(
+    value
+    && typeof value === 'object'
+    && !Array.isArray(value)
+    && ('en' in value || 'sv' in value)
+  );
+}
+
+function localizeContent(value, language) {
+  if (Array.isArray(value)) {
+    return value.map((item) => localizeContent(item, language));
+  }
+
+  if (isLocalizedValue(value)) {
+    return resolveLocalizedValue(value, language);
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.entries(value).reduce((localizedObject, [key, currentValue]) => ({
+      ...localizedObject,
+      [key]: localizeContent(currentValue, language),
+    }), {});
+  }
+
+  return value;
+}
+
 function getSubjectTitle(subjectId, t) {
   if (!subjectId) {
     return t('learningModule.fallbackSubject');
@@ -84,10 +112,10 @@ function createModuleViewModel(moduleData, language, t) {
     subjectTitle: localizeValue(moduleData?.subjectTitle, language, getSubjectTitle(moduleData?.subjectId, t)),
     headerSubtitle: localizeValue(moduleData?.headerSubtitle, language, subtitle),
     contextLine: localizeValue(moduleData?.contextLine, language, ''),
-    classData: moduleData?.classData || {},
-    curriculum: moduleData?.curriculum || {},
-    lessons: moduleData?.lessons || {},
-    evidence: moduleData?.evidence || {},
+    classData: localizeContent(moduleData?.classData || {}, language),
+    curriculum: localizeContent(moduleData?.curriculum || {}, language),
+    lessons: localizeContent(moduleData?.lessons || {}, language),
+    evidence: localizeContent(moduleData?.evidence || {}, language),
     screens: localizeScreens(moduleData?.screens, language),
     navigation: {
       defaultScreen,

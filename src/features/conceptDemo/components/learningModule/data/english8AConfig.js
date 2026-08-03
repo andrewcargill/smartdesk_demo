@@ -32,8 +32,8 @@ export const english8AConfig = {
   },
   contextLine: currentLesson
     ? {
-      en: `${currentLesson.dayLabel} \u00b7 ${currentLesson.startTime}-${currentLesson.endTime}`,
-      sv: `M\u00e5ndag \u00b7 ${currentLesson.startTime}-${currentLesson.endTime}`,
+      en: `Tuesday \u00b7 ${currentLesson.startTime}-${currentLesson.endTime}`,
+      sv: `Tisdag \u00b7 ${currentLesson.startTime}-${currentLesson.endTime}`,
     }
     : {
       en: 'English 8A lesson',
