@@ -241,11 +241,12 @@ function normaliseObservationFocuses({ configuredFocuses = [], observations = []
   };
 }
 
-function AssessmentPie({ assessment, size = 86, t = fallbackT }) {
+function AssessmentPie({ assessment, size = 86, onEditAssessment, t = fallbackT }) {
   const passPercentage = getAssessmentPassPercentage(assessment);
   const passRadians = passPercentage !== null ? (passPercentage / 100) * Math.PI * 2 : null;
   const hoverText = getAssessmentPieHoverText(assessment, t);
   const notPassed = isAssessmentNotPassed(assessment);
+  const canEditAssessment = typeof onEditAssessment === 'function';
   const percentage = assessment.absent || !Number.isFinite(Number(assessment.percentage))
     ? 0
     : Math.max(0, Math.min(100, Number(assessment.percentage)));
@@ -271,6 +272,15 @@ function AssessmentPie({ assessment, size = 86, t = fallbackT }) {
   return (
     <Tooltip title={hoverText} arrow>
       <Box
+        role={canEditAssessment ? 'button' : undefined}
+        tabIndex={canEditAssessment ? 0 : undefined}
+        onClick={canEditAssessment ? () => onEditAssessment(assessment) : undefined}
+        onKeyDown={canEditAssessment ? (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onEditAssessment(assessment);
+          }
+        } : undefined}
         sx={{
           width: size,
           height: size,
@@ -280,6 +290,7 @@ function AssessmentPie({ assessment, size = 86, t = fallbackT }) {
           placeItems: 'center',
           position: 'relative',
           overflow: 'hidden',
+          cursor: canEditAssessment ? 'pointer' : 'default',
           color: assessment.absent ? absentOrange : notPassed ? '#d32f2f' : purple,
           background: assessment.absent
             ? 'rgba(184, 92, 0, 0.08)'
@@ -290,6 +301,10 @@ function AssessmentPie({ assessment, size = 86, t = fallbackT }) {
               ? 'inset 0 0 0 2px rgba(211, 47, 47, 0.38)'
               : 'inset 0 0 0 1px rgba(156, 40, 175, 0.28)',
           transition: 'transform 140ms ease, box-shadow 140ms ease',
+          '&:focus-visible': {
+            outline: `2px solid ${purple}`,
+            outlineOffset: 3,
+          },
           '&:hover': {
             transform: 'scale(1.04)',
             boxShadow: assessment.absent
@@ -596,6 +611,7 @@ export default function StudentUnitInsightPanel({
   configuredFocuses = [],
   levels = [],
   onClose,
+  onEditAssessment,
   language = 'en',
   t = fallbackT,
 }) {
@@ -670,7 +686,7 @@ export default function StudentUnitInsightPanel({
                 <Stack direction="row" spacing={1.4} flexWrap="wrap" useFlexGap alignItems="flex-start">
                   {assessments.length ? assessments.map((assessment) => (
                     <Stack key={assessment.id || assessment.date} spacing={0.65} sx={{ width: 126 }}>
-                      <AssessmentPie assessment={assessment} t={t} />
+                      <AssessmentPie assessment={assessment} onEditAssessment={onEditAssessment} t={t} />
                       <Tooltip title={getAssessmentPieHoverText(assessment, t)} arrow>
                         <Stack direction="row" spacing={0.35} alignItems="center">
                           <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 850, lineHeight: 1.2, minWidth: 0 }}>

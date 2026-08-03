@@ -11,6 +11,7 @@ import { classGroupDefinitions } from '../../../data/classGroupDefinitions.js';
 import { useClassWorkingGroups } from '../../../hooks/useClassWorkingGroups.js';
 import { getActiveGroups } from '../../../utils/classGroupUtils.js';
 import { GroupDialog } from '../ClassWorkingGroups.jsx';
+import AssessmentResultsEntryModal from '../AssessmentResultsEntryModal.jsx';
 import StudentUnitInsightPanel from '../StudentUnitInsightPanel.jsx';
 import {
   LEARNING_MODULE_ASSESSMENT_RESULTS_STORAGE_EVENT,
@@ -95,6 +96,53 @@ function getStudentEvidenceItems(evidenceItems, studentId) {
     ...getObservationItemsForStudent(evidenceItems, studentId),
     ...getAssessmentResultsForStudent(evidenceItems, studentId),
   ];
+}
+
+function getAssessmentRecordId(assessmentEvidence) {
+  return assessmentEvidence?.id ? String(assessmentEvidence.id).split(':')[0] : '';
+}
+
+function createStoredAssessmentFromEvidence(assessment, students = []) {
+  if (!assessment) {
+    return null;
+  }
+
+  const maxScore = assessment.maxScore ?? assessment.max ?? null;
+  const passScore = assessment.passScore ?? assessment.pass ?? null;
+  const resultsByStudentId = new Map((assessment.results || assessment.studentResults || [])
+    .map((result) => [result.studentId, result]));
+
+  return {
+    id: assessment.id,
+    assessmentId: assessment.assessmentId || assessment.id,
+    title: assessment.title || assessment.assessmentTitle || assessment.label || 'Assessment',
+    date: assessment.date || '',
+    createdAt: assessment.createdAt || `${assessment.date || new Date().toISOString().slice(0, 10)}T12:00:00.000`,
+    updatedAt: assessment.updatedAt || `${assessment.date || new Date().toISOString().slice(0, 10)}T12:00:00.000`,
+    teachingUnitId: assessment.teachingUnitId || '',
+    teachingUnitTitle: assessment.teachingUnitTitle || '',
+    resultMode: assessment.resultMode || 'number',
+    maxScore,
+    passScore,
+    studentResults: students.map((student) => {
+      const result = resultsByStudentId.get(student.id) || {};
+      const absent = Boolean(result.absent);
+      const score = result.score ?? result.actualValue ?? null;
+      const hasScore = score !== null && score !== undefined && score !== '';
+      const numericScore = Number(score);
+
+      return {
+        studentId: student.id,
+        rawResult: absent ? '' : hasScore ? String(score) : (result.rawResult || ''),
+        actualValue: !absent && hasScore && Number.isFinite(numericScore) ? numericScore : null,
+        percentage: absent ? null : result.percentage ?? (
+          hasScore && Number(maxScore) > 0 ? Math.round((Number(score) / Number(maxScore)) * 100) : null
+        ),
+        absent,
+        warning: !absent && Boolean(result.warning || result.passed === false),
+      };
+    }).filter((result) => result.absent || result.rawResult),
+  };
 }
 
 function buildStudentUnitSummary(evidenceItems, studentId, teachingUnitId) {
@@ -507,11 +555,17 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
   const [storedAssessments, setStoredAssessments] = useState(() => readLearningModuleAssessmentResults(moduleId).assessments);
   const [localEvidencePayload, setLocalEvidencePayload] = useState(() => readLearningModuleEvidence(moduleId));
   const [localLearningObservationPayload, setLocalLearningObservationPayload] = useState(() => readLearningModuleLearningObservations(moduleId));
-  const evidenceItems = useMemo(() => [
-    ...storedAssessments.map(normalizeLearningModuleAssessmentAsEvidence),
-    ...(localEvidencePayload.observations || []),
-    ...(moduleConfig?.evidence?.items || []),
-  ].filter((item) => !activeLessonDate || !item.date || item.date <= activeLessonDate), [activeLessonDate, localEvidencePayload, moduleConfig, storedAssessments]);
+  const evidenceItems = useMemo(() => {
+    const storedAssessmentItems = storedAssessments.map(normalizeLearningModuleAssessmentAsEvidence);
+    const storedAssessmentIds = new Set(storedAssessmentItems.map((assessment) => assessment.id));
+
+    return [
+      ...storedAssessmentItems,
+      ...(localEvidencePayload.observations || []),
+      ...(moduleConfig?.evidence?.items || [])
+        .filter((item) => item?.type !== 'assessment' || !storedAssessmentIds.has(item.id)),
+    ].filter((item) => !activeLessonDate || !item.date || item.date <= activeLessonDate);
+  }, [activeLessonDate, localEvidencePayload, moduleConfig, storedAssessments]);
   const learningObservations = useMemo(() => [
     ...(moduleConfig?.evidence?.learningObservations || []),
     ...groupLearningObservationRecords(localLearningObservationPayload.observations || []),
@@ -544,6 +598,10 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
   const [groupDialogMode, setGroupDialogMode] = useState('create');
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [moveAnnouncement, setMoveAnnouncement] = useState('');
+  const [assessmentEditModal, setAssessmentEditModal] = useState({
+    open: false,
+    storedAssessment: null,
+  });
   const {
     groups: workingGroups,
     createGroup,
@@ -657,9 +715,41 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
     setGroupDialogOpen(false);
     setGroupDialogMode('create');
     setSelectedGroup(null);
+    setAssessmentEditModal({
+      open: false,
+      storedAssessment: null,
+    });
     setMoveAnnouncement('');
     resetGroups();
   }, [moduleConfig?.demoResetToken, moduleId, resetGroups]);
+
+  function openAssessmentEdit(assessmentEvidence) {
+    const assessmentRecordId = getAssessmentRecordId(assessmentEvidence);
+    const storedAssessment = storedAssessments.find((assessment) => assessment.id === assessmentRecordId);
+    const seedAssessment = (moduleConfig?.evidence?.items || [])
+      .find((item) => item?.type === 'assessment' && item.id === assessmentRecordId);
+    const editableAssessment = storedAssessment || createStoredAssessmentFromEvidence(seedAssessment, students);
+
+    if (!editableAssessment) {
+      return;
+    }
+
+    setAssessmentEditModal({
+      open: true,
+      storedAssessment: editableAssessment,
+    });
+  }
+
+  function closeAssessmentEdit() {
+    setAssessmentEditModal((currentState) => ({
+      ...currentState,
+      open: false,
+    }));
+  }
+
+  function handleAssessmentEditSaved(saveResult) {
+    setStoredAssessments(saveResult?.payload?.assessments || readLearningModuleAssessmentResults(moduleId).assessments);
+  }
 
   const summariesByStudentId = useMemo(() => {
     const summaries = new Map();
@@ -1565,6 +1655,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
                             setExpandedStudentId('');
                             setExpandedUnitId('');
                           }}
+                          onEditAssessment={openAssessmentEdit}
                           language={language}
                           t={t}
                         />
@@ -1605,6 +1696,17 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
           const group = activeGroups.find((item) => item.id === groupId);
           moveStudentToUngrouped(group?.typeId || activeGroupingSetId, studentId);
         }}
+      />
+      <AssessmentResultsEntryModal
+        assessment={{ id: 'enter-results', title: t('learningModule.classPicture.assessmentFallback') }}
+        storedAssessment={assessmentEditModal.storedAssessment}
+        demoDate={activeLessonDate}
+        moduleId={moduleId}
+        students={students}
+        teachingUnits={teachingUnits}
+        open={assessmentEditModal.open}
+        onClose={closeAssessmentEdit}
+        onSaved={handleAssessmentEditSaved}
       />
     </Stack>
   );

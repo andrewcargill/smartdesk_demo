@@ -254,10 +254,16 @@ export default function AssessmentScreen({ moduleConfig }) {
   const moduleId = moduleConfig?.id || 'learning-module';
   const demoDate = moduleConfig?.lessons?.current?.date || new Date().toISOString().slice(0, 10);
   const [storedAssessments, setStoredAssessments] = useState(() => readLearningModuleAssessmentResults(moduleId).assessments);
-  const assessments = useMemo(() => [
-    ...storedAssessments.map(normalizeLearningModuleAssessmentAsEvidence),
-    ...getAssessmentItems(moduleConfig?.evidence?.items),
-  ].filter((assessment) => !demoDate || !assessment.date || assessment.date <= demoDate), [demoDate, moduleConfig, storedAssessments]);
+  const assessments = useMemo(() => {
+    const storedAssessmentItems = storedAssessments.map(normalizeLearningModuleAssessmentAsEvidence);
+    const storedAssessmentIds = new Set(storedAssessmentItems.map((assessment) => assessment.id));
+
+    return [
+      ...storedAssessmentItems,
+      ...getAssessmentItems(moduleConfig?.evidence?.items)
+        .filter((assessment) => !storedAssessmentIds.has(assessment.id)),
+    ].filter((assessment) => !demoDate || !assessment.date || assessment.date <= demoDate);
+  }, [demoDate, moduleConfig, storedAssessments]);
   const continueAssessments = useMemo(
     () => assessments.map((assessment) => buildAssessmentCard(assessment, students, teachingUnits)),
     [assessments, students, teachingUnits],
