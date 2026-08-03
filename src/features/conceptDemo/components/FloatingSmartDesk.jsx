@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import AdsClickIcon from '@mui/icons-material/AdsClick';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import CloseIcon from '@mui/icons-material/Close';
@@ -16,8 +16,9 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { useConceptDemoLanguage } from '../ConceptDemoLanguageContext.jsx';
 import { smartDeskDemoResponses } from '../data/smartDeskDemoResponses.js';
-import { getContextWelcome } from '../utils/smartDeskContextUtils.js';
+import { resolveLocalizedValue } from '../i18n/conceptDemoTranslations.js';
 
 const purple = '#9c28af';
 const darkPurple = '#842194';
@@ -59,6 +60,56 @@ function formatContextValue(value) {
   return String(value);
 }
 
+function getLocalizedSubjectTitle(subjectId, fallbackTitle, t) {
+  const translatedTitle = t(`subjects.${subjectId}`);
+  return translatedTitle === `subjects.${subjectId}` ? fallbackTitle : translatedTitle;
+}
+
+function localizeMessagePayload(payload, language) {
+  if (!payload) {
+    return payload;
+  }
+
+  return {
+    ...payload,
+    text: resolveLocalizedValue(payload.text, language),
+    followUpText: resolveLocalizedValue(payload.followUpText, language),
+    actions: payload.actions?.map((action) => ({
+      ...action,
+      label: resolveLocalizedValue(action.label, language),
+    })) || [],
+  };
+}
+
+function localizePrompt(prompt, language) {
+  return {
+    ...prompt,
+    label: resolveLocalizedValue(prompt.label, language),
+    userText: resolveLocalizedValue(prompt.userText, language),
+    response: localizeMessagePayload(prompt.response, language),
+  };
+}
+
+function getLocalizedContextLabel(context, t) {
+  if (context?.screen === 'Home') {
+    return t('floatingSmartDesk.contextHome');
+  }
+
+  return formatContextValue(context?.screen) || t('floatingSmartDesk.thisContext');
+}
+
+function getLocalizedWelcomeText(context, fallbackText, language, t) {
+  if (!context?.nextEvent) {
+    return resolveLocalizedValue(fallbackText, language);
+  }
+
+  return t('floatingSmartDesk.contextWelcome', {
+    title: getLocalizedSubjectTitle(context.nextEvent.subjectId, context.nextEvent.title, t),
+    className: context.nextEvent.className,
+    start: context.nextEvent.start,
+  });
+}
+
 function getPointerPoint(event) {
   const point = event.changedTouches?.[0] || event.touches?.[0] || event;
 
@@ -68,11 +119,11 @@ function getPointerPoint(event) {
   };
 }
 
-function describeCapturedElement(element) {
+function describeCapturedElement(element, t) {
   if (!element) {
     return {
-      text: 'I could not capture anything at that point.',
-      followUpText: 'Try the cursor again and release over a visible item.',
+      text: t('floatingSmartDesk.noCaptureText'),
+      followUpText: t('floatingSmartDesk.noCaptureFollowUp'),
     };
   }
 
@@ -94,8 +145,8 @@ function describeCapturedElement(element) {
   ].filter(Boolean).join(' · ');
 
   return {
-    text: `Captured: ${type} - ${label.slice(0, 90)}`,
-    followUpText: details || 'No structured identifier yet.',
+    text: t('floatingSmartDesk.capturedText', { type, label: label.slice(0, 90) }),
+    followUpText: details || t('floatingSmartDesk.noStructuredIdentifier'),
   };
 }
 
@@ -112,26 +163,32 @@ function makeAssistantMessage(response, id = `assistant-${Date.now()}`) {
 function matchPrompt(input, prompts) {
   const value = input.toLowerCase();
 
-  if (value.includes('maths') || value.includes('mathematics')) {
+  if (value.includes('maths') || value.includes('mathematics') || value.includes('matematik')) {
     return prompts.find((prompt) => prompt.id === 'prepare-maths-7a');
   }
 
-  if (value.includes('today')) {
+  if (value.includes('today') || value.includes('idag')) {
     return prompts.find((prompt) => prompt.id === 'today-overview');
   }
 
-  if (value.includes('follow-up') || value.includes('follow up') || value.includes('followups')) {
+  if (
+    value.includes('follow-up')
+    || value.includes('follow up')
+    || value.includes('followups')
+    || value.includes('uppfolj')
+    || value.includes('uppfölj')
+  ) {
     return prompts.find((prompt) => prompt.id === 'show-follow-ups');
   }
 
-  if (value.includes('week')) {
+  if (value.includes('week') || value.includes('vecka') || value.includes('veckan')) {
     return prompts.find((prompt) => prompt.id === 'week-overview');
   }
 
   return null;
 }
 
-function FloatingMessage({ message }) {
+function FloatingMessage({ message, t }) {
   const user = message.role === 'user';
 
   return (
@@ -153,7 +210,7 @@ function FloatingMessage({ message }) {
           <Stack direction="row" spacing={0.6} alignItems="center" sx={{ mb: 0.55 }}>
             <AdsClickIcon sx={{ color: purple, fontSize: 14 }} />
             <Typography sx={{ color: purple, fontSize: 10.8, fontWeight: 850, lineHeight: 1 }}>
-              Captured context
+              {t('floatingSmartDesk.capturedContext')}
             </Typography>
           </Stack>
         )}
@@ -170,7 +227,7 @@ function FloatingMessage({ message }) {
   );
 }
 
-function FloatingVoiceState() {
+function FloatingVoiceState({ t }) {
   return (
     <Box
       aria-live="polite"
@@ -205,7 +262,7 @@ function FloatingVoiceState() {
           ))}
         </Box>
         <Typography sx={{ color: darkText, fontSize: 11.7, fontWeight: 750 }}>
-          Listening...
+          {t('floatingSmartDesk.listening')}
         </Typography>
       </Stack>
     </Box>
@@ -213,8 +270,16 @@ function FloatingVoiceState() {
 }
 
 export default function FloatingSmartDesk({ context }) {
+  const { language, t } = useConceptDemoLanguage();
   const responseSet = smartDeskDemoResponses.home;
-  const prompts = responseSet.suggestedPrompts;
+  const prompts = useMemo(
+    () => responseSet.suggestedPrompts.map((prompt) => localizePrompt(prompt, language)),
+    [language, responseSet.suggestedPrompts],
+  );
+  const voiceDemo = useMemo(() => ({
+    ...responseSet.voiceDemo,
+    transcript: resolveLocalizedValue(responseSet.voiceDemo.transcript, language),
+  }), [language, responseSet.voiceDemo]);
   const [expanded, setExpanded] = useState(false);
   const [position, setPosition] = useState(() => getDefaultPosition());
   const [returningHome, setReturningHome] = useState(false);
@@ -231,7 +296,7 @@ export default function FloatingSmartDesk({ context }) {
 
   const welcomeMessage = {
     ...responseSet.welcome,
-    text: getContextWelcome(context, responseSet.welcome.text),
+    text: getLocalizedWelcomeText(context, responseSet.welcome.text, language, t),
   };
 
   function clearTimers() {
@@ -284,7 +349,10 @@ export default function FloatingSmartDesk({ context }) {
         return;
       }
 
-      setMessages((current) => [...current, makeAssistantMessage(responseSet.fallback, `fallback-${Date.now()}`)]);
+      setMessages((current) => [...current, makeAssistantMessage(
+        localizeMessagePayload(responseSet.fallback, language),
+        `fallback-${Date.now()}`,
+      )]);
       setThinking(false);
     }, 680);
   }
@@ -296,14 +364,30 @@ export default function FloatingSmartDesk({ context }) {
     setThinking(false);
 
     queueTimer(() => {
-      const voicePrompt = prompts.find((prompt) => prompt.id === responseSet.voiceDemo.responsePromptId);
+      const voicePrompt = matchPrompt(voiceDemo.transcript, prompts)
+        || prompts.find((prompt) => prompt.id === voiceDemo.responsePromptId);
       setListening(false);
       setMessages((current) => [
         ...current,
-        { id: `voice-transcript-${Date.now()}`, role: 'user', text: responseSet.voiceDemo.transcript },
+        {
+          id: `voice-transcript-${Date.now()}`,
+          role: 'user',
+          text: voiceDemo.transcript,
+        },
       ]);
       setThinking(true);
-      queueTimer(() => voicePrompt && addResponseForPrompt(voicePrompt), 820);
+      queueTimer(() => {
+        if (voicePrompt) {
+          addResponseForPrompt(voicePrompt);
+          return;
+        }
+
+        setMessages((current) => [...current, makeAssistantMessage(
+          localizeMessagePayload(responseSet.fallback, language),
+          `voice-fallback-${Date.now()}`,
+        )]);
+        setThinking(false);
+      }, 820);
     }, 1600);
   }
 
@@ -319,7 +403,7 @@ export default function FloatingSmartDesk({ context }) {
   function finishContextSelection(event) {
     const point = getPointerPoint(event);
     const capturedElement = document.elementFromPoint(point.x, point.y);
-    const capture = describeCapturedElement(capturedElement);
+    const capture = describeCapturedElement(capturedElement, t);
 
     setSelectingContext(false);
     setMessages((current) => [
@@ -552,10 +636,10 @@ export default function FloatingSmartDesk({ context }) {
               whiteSpace: 'nowrap',
             }}
           >
-            Ask SmartDesk
+            {t('floatingSmartDesk.askSmartDesk')}
           </Typography>
           <IconButton
-            aria-label="Select context for SmartDesk"
+            aria-label={t('floatingSmartDesk.selectContext')}
             size="small"
             onMouseDown={(event) => {
               event.stopPropagation();
@@ -583,7 +667,7 @@ export default function FloatingSmartDesk({ context }) {
             <AdsClickIcon sx={{ fontSize: 17 }} />
           </IconButton>
           <IconButton
-            aria-label="Use SmartDesk microphone"
+            aria-label={t('floatingSmartDesk.microphone')}
             size="small"
             onMouseDown={(event) => event.stopPropagation()}
             onTouchStart={(event) => event.stopPropagation()}
@@ -609,7 +693,7 @@ export default function FloatingSmartDesk({ context }) {
             <MicIcon sx={{ fontSize: 18, opacity: expanded ? 0.75 : 0.9 }} />
           </IconButton>
           <IconButton
-            aria-label={expanded ? 'Minimize floating SmartDesk' : 'Expand floating SmartDesk'}
+            aria-label={expanded ? t('floatingSmartDesk.minimize') : t('floatingSmartDesk.expand')}
             size="small"
             onMouseDown={(event) => event.stopPropagation()}
             onTouchStart={(event) => event.stopPropagation()}
@@ -673,7 +757,7 @@ export default function FloatingSmartDesk({ context }) {
             }}
           >
             {messages.map((message) => (
-              <FloatingMessage key={message.id} message={message} />
+              <FloatingMessage key={message.id} message={message} t={t} />
             ))}
 
             {suggestionsVisible && (
@@ -706,7 +790,7 @@ export default function FloatingSmartDesk({ context }) {
               </Stack>
             )}
 
-            {listening && <FloatingVoiceState />}
+            {listening && <FloatingVoiceState t={t} />}
 
             {selectingContext && (
               <Box
@@ -720,7 +804,7 @@ export default function FloatingSmartDesk({ context }) {
                 }}
               >
                 <Typography sx={{ color: darkText, fontSize: 11.7, fontWeight: 750 }}>
-                  Release over something to capture it.
+                  {t('floatingSmartDesk.releaseToCapture')}
                 </Typography>
               </Box>
             )}
@@ -728,7 +812,7 @@ export default function FloatingSmartDesk({ context }) {
             {thinking && (
               <Stack direction="row" spacing={0.75} alignItems="center" aria-live="polite" sx={{ color: 'text.secondary', px: 0.4 }}>
                 <CircularProgress size={13} sx={{ color: purple }} />
-                <Typography sx={{ fontSize: 11.5 }}>Looking...</Typography>
+                <Typography sx={{ fontSize: 11.5 }}>{t('floatingSmartDesk.looking')}</Typography>
               </Stack>
             )}
             <Box ref={endRef} />
@@ -737,8 +821,8 @@ export default function FloatingSmartDesk({ context }) {
           <Box sx={{ borderTop: `1px solid ${border}`, px: 0.85, py: 0.8, bgcolor: '#fff' }}>
             <Stack direction="row" spacing={0.6} alignItems="flex-end" sx={{ minWidth: 0 }}>
               <TextField
-                label="Ask"
-                placeholder={`Ask about ${formatContextValue(context?.screen) || 'this'}...`}
+                label={t('floatingSmartDesk.ask')}
+                placeholder={t('floatingSmartDesk.askPlaceholder', { context: getLocalizedContextLabel(context, t) })}
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 onKeyDown={(keyboardEvent) => {
@@ -761,7 +845,7 @@ export default function FloatingSmartDesk({ context }) {
                 }}
               />
               <IconButton
-                aria-label="Send message"
+                aria-label={t('floatingSmartDesk.sendMessage')}
                 disabled={!input.trim()}
                 onClick={submitText}
                 sx={{ color: purple, width: 34, height: 34, mb: 0.1 }}

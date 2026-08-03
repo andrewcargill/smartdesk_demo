@@ -59,13 +59,39 @@ const fixedModules = [
   },
 ];
 
-function getModuleDetail(module) {
+function getSubjectTitle(subjectId, t, fallbackTitle) {
+  const translatedTitle = t(`subjects.${subjectId}`);
+  return translatedTitle === `subjects.${subjectId}` ? fallbackTitle : translatedTitle;
+}
+
+function getModuleTitle(module, t) {
+  if (module.type === 'subject') {
+    return getSubjectTitle(module.id, t, module.title);
+  }
+
+  const translatedTitle = t(`home.modules.${module.id}.title`);
+  return translatedTitle === `home.modules.${module.id}.title` ? module.title : translatedTitle;
+}
+
+function getModuleShortTitle(module, t) {
+  if (module.type === 'subject') {
+    const translatedShortTitle = t(`home.modules.${module.id}.shortTitle`);
+    return translatedShortTitle === `home.modules.${module.id}.shortTitle`
+      ? module.shortTitle || getModuleTitle(module, t)
+      : translatedShortTitle;
+  }
+
+  return getModuleTitle(module, t);
+}
+
+function getModuleDetail(module, t) {
   if (module.type !== 'subject') {
-    return module.detail;
+    const translatedDetail = t(`home.modules.${module.id}.detail`);
+    return translatedDetail === `home.modules.${module.id}.detail` ? module.detail : translatedDetail;
   }
 
   const classCount = module.classes.length;
-  return `${classCount} ${classCount === 1 ? 'class' : 'classes'}`;
+  return t(classCount === 1 ? 'home.classCount_one' : 'home.classCount_other', { count: classCount });
 }
 
 function readJsonStorage(key) {
@@ -142,8 +168,16 @@ function withOrbitLayout(modulesToPlace) {
   }));
 }
 
-function formatTeachingEvent(event) {
-  return event ? `${event.title} ${event.className} begins at ${event.start}` : 'Your teaching day is ready';
+function formatTeachingEvent(event, t) {
+  if (!event) {
+    return t('home.teachingDayReady');
+  }
+
+  return t('home.teachingEventBegins', {
+    title: getSubjectTitle(event.subjectId, t, event.title),
+    className: event.className,
+    start: event.start,
+  });
 }
 
 function getNextTeachingEvent(schedule) {
@@ -179,12 +213,12 @@ function getMaths7ALesson() {
     ?.events.find((event) => event.originalId === 'mon-maths-7a');
 }
 
-function TeacherCircle({ onOpenWeek }) {
+function TeacherCircle({ onOpenWeek, t }) {
   return (
     <Paper
       component="button"
       type="button"
-      aria-label="Open Anna's week"
+      aria-label={t('home.openAnnaWeek')}
       onClick={onOpenWeek}
       elevation={0}
       sx={{
@@ -222,15 +256,17 @@ function TeacherCircle({ onOpenWeek }) {
           Anna
         </Typography>
         <Typography sx={{ mt: 0.75, color: 'text.secondary', fontWeight: 650 }}>
-          Teacher workspace
+          {t('home.teacherWorkspace')}
         </Typography>
       </Box>
     </Paper>
   );
 }
 
-function ModuleCircle({ module, selected, onSelect, onOpenClass, onOpenClassC, onOpenEnglish8A, onOpenNotebook, onOpenMentor, maths7ATriggerRef }) {
+function ModuleCircle({ module, selected, onSelect, onOpenClass, onOpenClassC, onOpenEnglish8A, onOpenNotebook, onOpenMentor, maths7ATriggerRef, t }) {
   const showClassBubbles = module.type === 'subject' && module.classes?.length;
+  const moduleTitle = getModuleTitle(module, t);
+  const moduleShortTitle = getModuleShortTitle(module, t);
 
   function handleModuleClick() {
     onSelect(module.id);
@@ -318,10 +354,10 @@ function ModuleCircle({ module, selected, onSelect, onOpenClass, onOpenClassC, o
       >
         <Box sx={{ position: 'relative' }}>
           <Typography sx={{ fontSize: 20, fontWeight: 800, lineHeight: 1.15 }}>
-            {module.title}
+            {moduleTitle}
           </Typography>
           <Typography sx={{ mt: 0.75, color: 'text.secondary', fontSize: 14.5, fontWeight: 650, lineHeight: 1.35 }}>
-            {getModuleDetail(module)}
+            {getModuleDetail(module, t)}
           </Typography>
         </Box>
       </Box>
@@ -331,7 +367,7 @@ function ModuleCircle({ module, selected, onSelect, onOpenClass, onOpenClassC, o
           ref={module.id === 'mathematics' && className === '7A' ? maths7ATriggerRef : undefined}
           type="button"
           className="module-class-bubble"
-          aria-label={`Open ${module.shortTitle || module.title} ${className}`}
+          aria-label={t('home.openClass', { subject: moduleShortTitle, className })}
           onClick={() => handleClassClick(className)}
           sx={{
             '--class-bubble-transform': getClassBubbleTransform(index, module.classes.length),
@@ -395,7 +431,15 @@ function ConnectorLine({ line }) {
   );
 }
 
-function InsightPanel({ subjectCount, nextTeachingEvent, controls, onOpenWeek, children }) {
+function InsightPanel({ subjectCount, nextTeachingEvent, controls, onOpenWeek, children, t }) {
+  const nextBlock = nextTeachingEvent
+    ? t('home.nextTeachingBlock', {
+      title: getSubjectTitle(nextTeachingEvent.subjectId, t, nextTeachingEvent.title),
+      className: nextTeachingEvent.className,
+      start: nextTeachingEvent.start,
+    })
+    : t('home.nextTeachingBlockReady');
+
   return (
     <Paper
       elevation={0}
@@ -414,18 +458,18 @@ function InsightPanel({ subjectCount, nextTeachingEvent, controls, onOpenWeek, c
       <Stack spacing={2.25}>
         <Box>
           <Typography variant="h2" sx={{ fontSize: { xs: 22, sm: 25 }, color: darkText }}>
-            SmartDesk noticed
+            {t('home.insightTitle')}
           </Typography>
           <Typography sx={{ mt: 1, maxWidth: 700, color: 'text.secondary', fontSize: 16.5, lineHeight: 1.65 }}>
-            Anna's week includes {subjectCount} teaching areas. The next teaching block is {nextTeachingEvent ? `${nextTeachingEvent.title} ${nextTeachingEvent.className} at ${nextTeachingEvent.start}` : 'ready when you are'}.
+            {t('home.insightText', { subjectCount, nextBlock })}
           </Typography>
         </Box>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
           <Button variant="text" onClick={onOpenWeek} sx={{ color: purple }}>
-            View weekly picture
+            {t('home.viewWeeklyPicture')}
           </Button>
           <Button variant="text" sx={{ color: purple }}>
-            Ask SmartDesk
+            {t('home.askSmartDesk')}
           </Button>
           {children}
         </Stack>
@@ -500,6 +544,7 @@ function LanguageToggle() {
 }
 
 function HomeScreenContent() {
+  const { t } = useConceptDemoLanguage();
   const [activeWorkspace, setActiveWorkspace] = useState(null);
   const maths7ATriggerRef = useRef(null);
   const subjectModules = useMemo(() => getSubjectModules(annaSchedule), []);
@@ -735,10 +780,10 @@ function HomeScreenContent() {
               Welcome back, Anna
             </Typography> */}
             <Typography sx={{ color: 'text.secondary', fontSize: { xs: 17, sm: 19 }, fontWeight: 650 }}>
-              Monday · 3 lessons · 1 follow-up
+              {t('home.weekSummary')}
             </Typography>
             <Typography sx={{ color: 'text.secondary', fontSize: 15.5 }}>
-              V4 - Nothing pressing. {formatTeachingEvent(nextTeachingEvent)}.
+              {t('home.statusLine', { eventSummary: formatTeachingEvent(nextTeachingEvent, t) })}
             </Typography>
           </Stack>
 
@@ -756,7 +801,7 @@ function HomeScreenContent() {
             {modules.map((module) => (
               <ConnectorLine key={`${module.id}-line`} line={module.line} />
             ))}
-            <TeacherCircle onOpenWeek={openWeek} />
+            <TeacherCircle onOpenWeek={openWeek} t={t} />
             <Box
               sx={{
                 display: { xs: 'grid', md: 'contents' },
@@ -779,6 +824,7 @@ function HomeScreenContent() {
                   onOpenNotebook={openNotebook}
                   onOpenMentor={openMentor}
                   maths7ATriggerRef={maths7ATriggerRef}
+                  t={t}
                 />
               ))}
             </Box>
@@ -788,10 +834,11 @@ function HomeScreenContent() {
             subjectCount={subjectModules.length}
             nextTeachingEvent={nextTeachingEvent}
             onOpenWeek={openWeek}
+            t={t}
             controls={(
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
                 <Typography sx={{ color: 'text.secondary', fontSize: 12.5, fontWeight: 750 }}>
-                  Home background
+                  {t('home.homeBackground')}
                 </Typography>
                 <ToggleButtonGroup
                   exclusive
@@ -802,7 +849,7 @@ function HomeScreenContent() {
                       setHomeBackground(nextBackground);
                     }
                   }}
-                  aria-label="Choose home background image"
+                  aria-label={t('home.chooseHomeBackground')}
                   sx={{
                     '& .MuiToggleButton-root': {
                       color: darkText,
@@ -822,10 +869,10 @@ function HomeScreenContent() {
                     },
                   }}
                 >
-                  <ToggleButton value="none" aria-label="No home background image">None</ToggleButton>
-                  <ToggleButton value="bg1" aria-label="Use background image 1">BG 1</ToggleButton>
-                  <ToggleButton value="bg2" aria-label="Use background image 2">BG 2</ToggleButton>
-                  <ToggleButton value="bg3" aria-label="Use background image 3">BG 3</ToggleButton>
+                  <ToggleButton value="none" aria-label={t('home.noHomeBackground')}>{t('home.noBackground')}</ToggleButton>
+                  <ToggleButton value="bg1" aria-label={t('home.useBackground', { number: 1 })}>{t('home.backgroundShort', { number: 1 })}</ToggleButton>
+                  <ToggleButton value="bg2" aria-label={t('home.useBackground', { number: 2 })}>{t('home.backgroundShort', { number: 2 })}</ToggleButton>
+                  <ToggleButton value="bg3" aria-label={t('home.useBackground', { number: 3 })}>{t('home.backgroundShort', { number: 3 })}</ToggleButton>
                 </ToggleButtonGroup>
               </Stack>
             )}
@@ -835,24 +882,24 @@ function HomeScreenContent() {
               onClick={() => setSmartDeskInfoOpen(true)}
               sx={{ color: purple }}
             >
-              What is SmartDesk?
+              {t('home.whatIsSmartDesk')}
             </Button>
             <Button
               variant="text"
               onClick={() => setSmartDeskStoreOpen(true)}
               sx={{ color: purple }}
             >
-              Open SmartDeskStore
+              {t('home.openSmartDeskStore')}
             </Button>
             <Stack direction="row" spacing={0.75} alignItems="center" sx={{ pl: { sm: 0.5 } }}>
               <Typography sx={{ color: smartDeskSurface === 'drawer' ? darkText : 'text.secondary', fontSize: 12.5, fontWeight: 750 }}>
-                Drawer
+                {t('home.drawer')}
               </Typography>
               <Switch
                 size="small"
                 checked={smartDeskSurface === 'floating'}
                 onChange={handleSmartDeskSurfaceChange}
-                inputProps={{ 'aria-label': 'Toggle SmartDesk surface' }}
+                inputProps={{ 'aria-label': t('home.toggleSmartDeskSurface') }}
                 sx={{
                   '& .MuiSwitch-switchBase.Mui-checked': {
                     color: purple,
@@ -863,7 +910,7 @@ function HomeScreenContent() {
                 }}
               />
               <Typography sx={{ color: smartDeskSurface === 'floating' ? darkText : 'text.secondary', fontSize: 12.5, fontWeight: 750 }}>
-                Floating
+                {t('home.floating')}
               </Typography>
             </Stack>
           </InsightPanel>
@@ -875,13 +922,13 @@ function HomeScreenContent() {
         open={subjectWorkspaceOpen}
         onClose={closeWorkspace}
         title={activeWorkspace?.subjectId === 'english'
-          ? 'English - 8A'
-          : activeWorkspace?.classId === '7c' ? 'Mathematics - 7C' : 'Mathematics - 7A'}
+          ? `${t('subjects.english')} - 8A`
+          : activeWorkspace?.classId === '7c' ? `${t('subjects.mathematics')} - 7C` : `${t('subjects.mathematics')} - 7A`}
         subtitle={activeWorkspace?.subjectId === 'english'
-          ? 'Reusable module prototype'
+          ? t('home.focusedWorkspaceSubtitle')
           : activeWorkspace?.classId === '7c'
-            ? 'Reusable module prototype'
-            : `${maths7ACurrentPlanningTitle} - Monday - ${maths7ALesson?.start || '08:40'}-${maths7ALesson?.end || '09:30'}`}
+            ? t('home.focusedWorkspaceSubtitle')
+            : `${maths7ACurrentPlanningTitle} - ${t('home.currentWeekday')} - ${maths7ALesson?.start || '08:40'}-${maths7ALesson?.end || '09:30'}`}
         returnFocusRef={maths7ATriggerRef}
         showHeader={false}
       >
@@ -915,7 +962,7 @@ function HomeScreenContent() {
           <Paper
             role="dialog"
             aria-modal="true"
-            aria-label="SmartDeskStore"
+            aria-label={t('home.openSmartDeskStore')}
             elevation={0}
             onClick={(event) => event.stopPropagation()}
             sx={{
@@ -965,15 +1012,15 @@ function HomeScreenContent() {
             }}
           >
             <Typography id="smartdesk-info-title" variant="h2" sx={{ color: darkText, fontSize: 24, fontWeight: 750 }}>
-              What is SmartDesk?
+              {t('home.whatIsSmartDesk')}
             </Typography>
                <Typography sx={{ mt: 1.25, color: 'text.secondary', lineHeight: 1.7 }}>
-              Your smart diary and personal assistant. 
+              {t('home.smartDeskInfoBody')}
             </Typography>
             <Box
               component="img"
               src={smartDeskImage}
-              alt="SmartDesk concept overview"
+              alt={t('home.smartDeskInfoImageAlt')}
               sx={{
                 display: 'block',
                 width: '100%',
@@ -985,7 +1032,7 @@ function HomeScreenContent() {
          
             <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2.5 }}>
               <Button variant="text" onClick={() => setSmartDeskInfoOpen(false)} sx={{ color: purple }}>
-                Close
+                {t('common.close')}
               </Button>
             </Stack>
           </Paper>
