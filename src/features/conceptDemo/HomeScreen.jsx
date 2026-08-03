@@ -10,6 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 import { ConceptDemoDrawerProvider, useConceptDemoDrawers } from './ConceptDemoDrawerContext.jsx';
+import { ConceptDemoLanguageProvider, useConceptDemoLanguage } from './ConceptDemoLanguageContext.jsx';
 import DemoShell from './DemoShell.jsx';
 import English8AModule from './components/English8AModule.jsx';
 import FocusedWorkspace from './components/FocusedWorkspace.jsx';
@@ -434,6 +435,70 @@ function InsightPanel({ subjectCount, nextTeachingEvent, controls, onOpenWeek, c
   );
 }
 
+function LanguageToggle() {
+  const { language, languages, setLanguage, t } = useConceptDemoLanguage();
+
+  return (
+    <Stack
+      direction="row"
+      spacing={1}
+      alignItems="center"
+      justifyContent="flex-end"
+      sx={{
+        position: 'absolute',
+        top: { xs: 0, sm: 2 },
+        right: 0,
+        zIndex: 8,
+      }}
+    >
+      <Typography sx={{ color: 'text.secondary', fontSize: 12.5, fontWeight: 750 }}>
+        {t('common.language')}
+      </Typography>
+      <ToggleButtonGroup
+        exclusive
+        size="small"
+        value={language}
+        onChange={(_, nextLanguage) => {
+          if (nextLanguage) {
+            setLanguage(nextLanguage);
+          }
+        }}
+        aria-label={t('common.language')}
+        sx={{
+          bgcolor: '#fff',
+          '& .MuiToggleButton-root': {
+            width: 38,
+            height: 30,
+            color: darkText,
+            borderColor: 'rgba(23, 21, 26, 0.12)',
+            px: 0,
+            py: 0,
+            fontSize: 11.5,
+            fontWeight: 850,
+          },
+          '& .Mui-selected': {
+            color: purple,
+            bgcolor: palePurple,
+          },
+          '& .Mui-selected:hover': {
+            bgcolor: palePurple,
+          },
+        }}
+      >
+        {Object.values(languages).map((option) => (
+          <ToggleButton
+            key={option.code}
+            value={option.code}
+            aria-label={option.label}
+          >
+            {option.shortLabel}
+          </ToggleButton>
+        ))}
+      </ToggleButtonGroup>
+    </Stack>
+  );
+}
+
 function HomeScreenContent() {
   const [activeWorkspace, setActiveWorkspace] = useState(null);
   const maths7ATriggerRef = useRef(null);
@@ -664,6 +729,7 @@ function HomeScreenContent() {
           }}
         >
         <Box sx={{ position: 'relative', maxWidth: 1160, mx: 'auto' }}>
+          <LanguageToggle />
           <Stack spacing={1.1} alignItems="center" textAlign="center" sx={{ pt: { xs: 5, sm: 2 }, mb: { xs: 4, md: 2 } }}>
             {/* <Typography variant="h1" sx={{ fontSize: { xs: 36, sm: 48, md: 58 }, lineHeight: 1.04, color: darkText }}>
               Welcome back, Anna
@@ -941,8 +1007,10 @@ function HomeScreenContent() {
 
 export default function HomeScreen() {
   return (
-    <ConceptDemoDrawerProvider>
-      <HomeScreenContent />
-    </ConceptDemoDrawerProvider>
+    <ConceptDemoLanguageProvider>
+      <ConceptDemoDrawerProvider>
+        <HomeScreenContent />
+      </ConceptDemoDrawerProvider>
+    </ConceptDemoLanguageProvider>
   );
 }
