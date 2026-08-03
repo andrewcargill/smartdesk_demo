@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import { useConceptDemoLanguage } from '../../ConceptDemoLanguageContext.jsx';
@@ -186,6 +186,41 @@ export default function ReusableLearningModuleShell({ moduleData, onBack }) {
     ...(moduleViewModel.screens[activeScreenDefinition.id] || {}),
   };
   const canAdvanceLesson = activeLessonIndex < Math.max(0, lessonCount - 1);
+
+  useEffect(() => {
+    console.groupCollapsed('[LearningModuleShell] render state');
+    console.log({
+      moduleId,
+      hasModuleData: Boolean(moduleData),
+      language,
+      subjectId: moduleViewModel.subjectId,
+      classId: moduleViewModel.classId,
+      title: moduleViewModel.title,
+      subjectTitle: moduleViewModel.subjectTitle,
+      className: moduleViewModel.className,
+      lessonCount,
+      activeLessonIndex,
+      activeLesson: moduleViewModel.lessons.current?.id || moduleViewModel.lessons.current?.title || null,
+      activeScreen,
+      resolvedScreen: activeScreenDefinition.id,
+      navigationDefault: moduleViewModel.navigation.defaultScreen,
+      navigationItems: moduleViewModel.navigation.items.map((item) => item.id),
+      studentCount: moduleViewModel.classData?.students?.length || 0,
+      curriculumUnits: moduleViewModel.curriculum?.teachingUnits?.length || 0,
+      evidenceItems: moduleViewModel.evidence?.items?.length || 0,
+      planningBlocks: moduleViewModel.planning?.blocks?.length || 0,
+    });
+    console.groupEnd();
+  }, [
+    activeLessonIndex,
+    activeScreen,
+    activeScreenDefinition.id,
+    language,
+    lessonCount,
+    moduleData,
+    moduleId,
+    moduleViewModel,
+  ]);
 
   function advanceLesson() {
     if (!canAdvanceLesson) {

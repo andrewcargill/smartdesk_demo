@@ -36,7 +36,7 @@ export const conceptDemoTranslations = {
       openTeacherWeek: "Open {{teacherName}}'s week",
       currentWeekday: 'Monday',
       weekSummary: 'Monday \u00b7 3 lessons \u00b7 1 follow-up',
-      statusLine: 'V4 - Nothing pressing. {{eventSummary}}.',
+      statusLine: 'V5 - Nothing pressing. {{eventSummary}}.',
       teachingDayReady: 'Your teaching day is ready',
       teachingEventBegins: '{{title}} {{className}} begins at {{start}}',
       modules: {
@@ -431,7 +431,7 @@ export const conceptDemoTranslations = {
       openTeacherWeek: '\u00d6ppna {{teacherName}}s vecka',
       currentWeekday: 'M\u00e5ndag',
       weekSummary: 'M\u00e5ndag \u00b7 3 lektioner \u00b7 1 uppf\u00f6ljning',
-      statusLine: 'V4 - Inget akut. {{eventSummary}}.',
+      statusLine: 'V5- Inget akut. {{eventSummary}}.',
       teachingDayReady: 'Din undervisningsdag \u00e4r redo',
       teachingEventBegins: '{{title}} {{className}} b\u00f6rjar {{start}}',
       modules: {

@@ -327,6 +327,11 @@ function ModuleCircle({ module, selected, onSelect, onOpenSubjectClass, onOpenNo
   }
 
   function handleClassClick(className) {
+    console.log('[HomeScreen] class bubble clicked', {
+      subjectId: module.id,
+      className,
+      opensLearningModule: className === '8A',
+    });
     onSelect(module.id);
 
     if (className === '8A') {
@@ -867,6 +872,11 @@ function HomeScreenContent() {
   }, [subjectWorkspaceOpen]);
 
   function openSubjectClass(subjectId, classNameOrId) {
+    console.log('[HomeScreen] open subject class', {
+      subjectId,
+      classNameOrId,
+      classId: String(classNameOrId || '8A').toLowerCase(),
+    });
     closeToday();
     closeSmartDesk();
     closeWeek();

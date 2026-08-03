@@ -29,11 +29,6 @@ const modes = [
     translationKey: 'classPicture',
   },
   {
-    id: 'plan',
-    icon: <AutoStoriesRoundedIcon fontSize="small" />,
-    translationKey: 'plan',
-  },
-  {
     id: 'now',
     icon: <RateReviewRoundedIcon fontSize="small" />,
     translationKey: 'now',
@@ -42,6 +37,11 @@ const modes = [
     id: 'assessment',
     icon: <FactCheckRoundedIcon fontSize="small" />,
     translationKey: 'assessment',
+  },
+  {
+    id: 'plan',
+    icon: <AutoStoriesRoundedIcon fontSize="small" />,
+    translationKey: 'plan',
   },
 ];
 

@@ -91,14 +91,25 @@ export default function FocusedWorkspace({
       return undefined;
     }
 
+    console.log('[FocusedWorkspace] open', {
+      title,
+      showHeader,
+      enterDuration,
+    });
     setContentVisible(false);
 
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) {
+      console.log('[FocusedWorkspace] content visible: reduced motion');
       setContentVisible(true);
     }
 
-    return undefined;
-  }, [open, returnFocusRef]);
+    const contentFallbackTimer = window.setTimeout(() => {
+      console.log('[FocusedWorkspace] content visible: fallback timer');
+      setContentVisible(true);
+    }, enterDuration + 180);
+
+    return () => window.clearTimeout(contentFallbackTimer);
+  }, [open, returnFocusRef, showHeader, title]);
 
   return (
     <Drawer
@@ -142,7 +153,14 @@ export default function FocusedWorkspace({
             return;
           }
 
+          console.log('[FocusedWorkspace] transition end', {
+            propertyName: event.propertyName,
+            elapsedTime: event.elapsedTime,
+            targetClass: event.target?.className,
+          });
+
           if (event.propertyName === 'transform') {
+            console.log('[FocusedWorkspace] content visible: transform transition');
             setContentVisible(true);
           }
         },
