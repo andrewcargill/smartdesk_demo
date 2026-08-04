@@ -19,6 +19,13 @@ const timelineFallbackTranslations = {
   'learningModule.classPicture.timelineEvidence': 'Evidence',
   'learningModule.classPicture.timelineTeachingResponse': 'Teaching response',
   'learningModule.classPicture.timelineOpenActivityContext': 'Open {{activity}} linked observations',
+  'learningModule.classPicture.timelineResponseLabel': 'Label',
+  'learningModule.classPicture.timelineResponseComment': 'Comment',
+  'learningModule.classPicture.timelineSaveResponse': 'Save',
+  'learningModule.classPicture.timelineCancelResponse': 'Cancel',
+  'learningModule.classPicture.timelineViewResponse': 'View',
+  'learningModule.classPicture.timelineEditResponse': 'Edit',
+  'learningModule.classPicture.timelineDeleteResponse': 'Delete',
 };
 const levelReferenceMarks = [
   { order: 4, mark: '●', tint: 'rgba(156, 40, 175, 0.13)', color: 'rgba(156, 40, 175, 0.58)' },
@@ -502,9 +509,49 @@ function layoutUnitSpans(units) {
     });
 }
 
+function groupTimelineItemsByPosition(items, range) {
+  const proximityThreshold = 22;
+  const groups = [];
+
+  [...(items || [])]
+    .sort((first, second) => (first.date || '').localeCompare(second.date || '') || String(first.id || '').localeCompare(String(second.id || '')))
+    .forEach((item) => {
+      const position = getPosition(item.date, range);
+      const currentGroup = groups[groups.length - 1];
+
+      if (currentGroup && position - currentGroup.endPosition <= proximityThreshold) {
+        currentGroup.items.push(item);
+        currentGroup.endPosition = Math.max(currentGroup.endPosition, position);
+        currentGroup.date = currentGroup.items[0]?.date || item.date;
+        return;
+      }
+
+      groups.push({
+        id: `${item.date || 'no-date'}-${groups.length}`,
+        date: item.date,
+        startPosition: position,
+        endPosition: position,
+        items: [item],
+      });
+    });
+
+  return groups.map((group) => ({
+    ...group,
+    items: group.items.sort((first, second) => (
+      (first.date || '').localeCompare(second.date || '')
+      || (first.type === 'timeline-comment' ? 0 : 1) - (second.type === 'timeline-comment' ? 0 : 1)
+      || String(first.id || '').localeCompare(String(second.id || ''))
+    )),
+  }));
+}
+
 function TimelineIcon({ type }) {
   if (type === 'assessment') {
     return <SquareIcon sx={{ color: purple, fontSize: 13, transform: 'rotate(45deg)' }} />;
+  }
+
+  if (type === 'timeline-comment') {
+    return <NotesIcon sx={{ color: purple, fontSize: 14 }} />;
   }
 
   if (type === 'response') {
@@ -1015,6 +1062,9 @@ export default function ClassPictureExpandedView({
   const [lessonCaptureExpanded, setLessonCaptureExpanded] = useState(false);
   const [selectedCaptureUnitIds, setSelectedCaptureUnitIds] = useState([]);
   const [hoverCursor, setHoverCursor] = useState(null);
+  const [timelineResponses, setTimelineResponses] = useState([]);
+  const [responseDraft, setResponseDraft] = useState(null);
+  const [activeResponseMenuId, setActiveResponseMenuId] = useState('');
   const timeline = buildTimelineData({
     student,
     evidenceItems,
@@ -1051,8 +1101,14 @@ export default function ClassPictureExpandedView({
     isDateInRange(item.date, visibleRange)
     && (!unitFilterActive || selectedCaptureUnitIds.includes(item.teachingUnitId))
   ));
-  const visibleTeachingResponses = timeline.teachingResponses.filter((item) => isDateInRange(item.date, visibleRange));
+  const visibleTeachingResponses = [
+    ...timeline.teachingResponses,
+    ...timelineResponses,
+  ]
+    .filter((item) => isDateInRange(item.date, visibleRange))
+    .sort((first, second) => (first.date || '').localeCompare(second.date || ''));
   const zoomed = Boolean(selectedMonthDate);
+  const visibleTeachingResponseGroups = groupTimelineItemsByPosition(visibleTeachingResponses, visibleRange);
   const activityContextLaneCount = Math.max(1, ...visibleActivityContextClusters.map((cluster) => cluster.lane + 1));
   const activityContextRowHeight = Math.max(48, 26 + (activityContextLaneCount * 30));
   const classContentLaneCount = Math.max(1, ...visibleUnits.map((unit) => unit.lane + 1));
@@ -1062,6 +1118,10 @@ export default function ClassPictureExpandedView({
   const lessonCaptureRowHeight = lessonCaptureExpanded
     ? Math.max(132, 72 + (lessonCaptureTrackCount * 55))
     : Math.max(70, 34 + (lessonCaptureLaneCount * (zoomed ? 48 : 36)));
+  const teachingResponseStackCount = zoomed
+    ? Math.max(1, ...visibleTeachingResponseGroups.map((group) => group.items.length))
+    : 1;
+  const teachingResponseRowHeight = Math.max(70, 34 + (teachingResponseStackCount * 34));
 
   function toggleContentUnitFilter(unitId) {
     setLessonCaptureExpanded(true);
@@ -1103,6 +1163,65 @@ export default function ClassPictureExpandedView({
     });
   }
 
+  function openTimelineResponseDraft() {
+    if (!hoverCursor?.date) {
+      return;
+    }
+
+    setResponseDraft({
+      id: '',
+      mode: 'new',
+      date: hoverCursor.date,
+      position: hoverCursor.position,
+      label: '',
+      comment: '',
+    });
+  }
+
+  function saveTimelineResponse(event) {
+    event.preventDefault();
+    const label = (responseDraft?.label || '').trim();
+    const comment = (responseDraft?.comment || '').trim();
+
+    if (!responseDraft?.date || (!label && !comment)) {
+      setResponseDraft(null);
+      return;
+    }
+
+    setTimelineResponses((currentResponses) => {
+      const response = {
+        id: responseDraft.id || `timeline-response-${responseDraft.date}-${Date.now()}`,
+        type: 'timeline-comment',
+        date: responseDraft.date,
+        label,
+        comment,
+        text: label && comment ? `${label}: ${comment}` : label || comment,
+      };
+
+      return responseDraft.id
+        ? currentResponses.map((item) => (item.id === responseDraft.id ? response : item))
+        : [...currentResponses, response];
+    });
+    setResponseDraft(null);
+  }
+
+  function openExistingTimelineResponse(item, mode) {
+    setResponseDraft({
+      id: item.id,
+      mode,
+      date: item.date,
+      position: getPosition(item.date, visibleRange),
+      label: item.label || '',
+      comment: item.comment || '',
+    });
+  }
+
+  function deleteTimelineResponse(responseId) {
+    setTimelineResponses((currentResponses) => currentResponses.filter((item) => item.id !== responseId));
+    setResponseDraft((draft) => (draft?.id === responseId ? null : draft));
+    setActiveResponseMenuId('');
+  }
+
   return (
     <Box
       onMouseLeave={() => setHoverCursor(null)}
@@ -1140,13 +1259,17 @@ export default function ClassPictureExpandedView({
           </Box>
           <Box
             onMouseMove={updateHoverCursor}
-            sx={{ position: 'relative', height: 28 }}
+            onClick={openTimelineResponseDraft}
+            sx={{ position: 'relative', height: 28, cursor: 'crosshair' }}
           >
             {(zoomed ? getMonthMarkers(visibleRange) : monthMarkers).map((date) => (
               <ButtonBase
                 key={date}
                 type="button"
-                onClick={() => setSelectedMonthDate((currentDate) => (currentDate === date ? '' : date))}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setSelectedMonthDate((currentDate) => (currentDate === date ? '' : date));
+                }}
                 sx={{
                   position: 'absolute',
                   left: `${getPosition(date, visibleRange)}%`,
@@ -1183,6 +1306,122 @@ export default function ClassPictureExpandedView({
                 <Typography sx={{ color: 'inherit', fontSize: 10.8, fontWeight: 900, lineHeight: 1 }}>
                   {formatShortDate(hoverCursor.date, language)}
                 </Typography>
+              </Box>
+            ) : null}
+            {responseDraft ? (
+              <Box
+                component="form"
+                onClick={(event) => event.stopPropagation()}
+                onSubmit={saveTimelineResponse}
+                sx={{
+                  position: 'absolute',
+                  left: `${responseDraft.position}%`,
+                  top: 34,
+                  width: 238,
+                  p: 0.85,
+                  borderRadius: '10px',
+                  bgcolor: '#fff',
+                  border: `1px solid ${purple}`,
+                  boxShadow: '0 14px 34px rgba(23, 21, 26, 0.16)',
+                  transform: 'translateX(-50%)',
+                  zIndex: 30,
+                }}
+              >
+                <Stack spacing={0.55}>
+	                  <Typography sx={{ color: purple, fontSize: 11.4, fontWeight: 900, lineHeight: 1 }}>
+	                    {formatShortDate(responseDraft.date, language)}
+	                  </Typography>
+                  {responseDraft.mode === 'view' ? (
+                    <Box sx={{ p: 0.75, borderRadius: '8px', bgcolor: 'rgba(156, 40, 175, 0.055)', border: '1px solid rgba(156, 40, 175, 0.14)' }}>
+                      {!!responseDraft.label && (
+                        <Typography sx={{ color: purple, fontSize: 12.2, fontWeight: 900, lineHeight: 1.2 }}>
+                          {responseDraft.label}
+                        </Typography>
+                      )}
+                      {!!responseDraft.comment && (
+                        <Typography sx={{ mt: responseDraft.label ? 0.35 : 0, color: darkText, fontSize: 12.2, lineHeight: 1.35 }}>
+                          {responseDraft.comment}
+                        </Typography>
+                      )}
+                    </Box>
+                  ) : (
+                    <>
+                      <Box
+                        component="input"
+                        value={responseDraft.label}
+                        placeholder={t('learningModule.classPicture.timelineResponseLabel')}
+                        onChange={(event) => setResponseDraft((draft) => ({ ...draft, label: event.target.value }))}
+                        sx={{
+                          width: '100%',
+                          boxSizing: 'border-box',
+                          px: 0.75,
+                          py: 0.55,
+                          borderRadius: '7px',
+                          border: '1px solid rgba(23, 21, 26, 0.14)',
+                          color: darkText,
+                          font: 'inherit',
+                          fontSize: 12.2,
+                          fontWeight: 760,
+                          outline: 'none',
+                          '&:focus': { borderColor: purple, boxShadow: '0 0 0 2px rgba(156, 40, 175, 0.1)' },
+                        }}
+                      />
+                      <Box
+                        component="textarea"
+                        value={responseDraft.comment}
+                        placeholder={t('learningModule.classPicture.timelineResponseComment')}
+                        onChange={(event) => setResponseDraft((draft) => ({ ...draft, comment: event.target.value }))}
+                        sx={{
+                          width: '100%',
+                          minHeight: 58,
+                          resize: 'vertical',
+                          boxSizing: 'border-box',
+                          px: 0.75,
+                          py: 0.55,
+                          borderRadius: '7px',
+                          border: '1px solid rgba(23, 21, 26, 0.14)',
+                          color: darkText,
+                          font: 'inherit',
+                          fontSize: 12.2,
+                          lineHeight: 1.35,
+                          outline: 'none',
+                          '&:focus': { borderColor: purple, boxShadow: '0 0 0 2px rgba(156, 40, 175, 0.1)' },
+                        }}
+                      />
+                    </>
+                  )}
+	                  <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                    <ButtonBase
+                      type="button"
+                      onClick={() => setResponseDraft(null)}
+                      sx={{ px: 0.75, py: 0.45, borderRadius: '7px', color: mutedText, '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 } }}
+                    >
+                      <Typography sx={{ fontSize: 11.5, fontWeight: 820, lineHeight: 1 }}>
+                        {t('learningModule.classPicture.timelineCancelResponse')}
+                      </Typography>
+                    </ButtonBase>
+                    {responseDraft.mode === 'view' ? (
+                      <ButtonBase
+                        type="button"
+                        onClick={() => setResponseDraft((draft) => ({ ...draft, mode: 'edit' }))}
+                        sx={{ px: 0.85, py: 0.45, borderRadius: '7px', color: '#fff', bgcolor: purple, '&:hover': { bgcolor: '#87239a' }, '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 } }}
+                      >
+                        <Typography sx={{ color: 'inherit', fontSize: 11.5, fontWeight: 880, lineHeight: 1 }}>
+                          {t('learningModule.classPicture.timelineEditResponse')}
+                        </Typography>
+                      </ButtonBase>
+                    ) : (
+                      <ButtonBase
+                        type="submit"
+                        sx={{ px: 0.85, py: 0.45, borderRadius: '7px', color: '#fff', bgcolor: purple, '&:hover': { bgcolor: '#87239a' }, '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 } }}
+                      >
+                        <Typography sx={{ color: 'inherit', fontSize: 11.5, fontWeight: 880, lineHeight: 1 }}>
+                          {t('learningModule.classPicture.timelineSaveResponse')}
+                        </Typography>
+                      </ButtonBase>
+                    )}
+	                  </Stack>
+                </Stack>
               </Box>
             ) : null}
           </Box>
@@ -1411,14 +1650,179 @@ export default function ClassPictureExpandedView({
             </TimelineRow>
           )}
 
-          <TimelineRow label={t('learningModule.classPicture.timelineTeachingResponse')}>
-            {visibleTeachingResponses.length ? visibleTeachingResponses.map((item) => (
-              <TimelineItem key={item.id} item={item} range={visibleRange} type="response">
-                <Typography sx={{ color: darkText, fontSize: 12.2, fontWeight: 780, lineHeight: 1.25 }}>
-                  {item.text}
-                </Typography>
-              </TimelineItem>
-            )) : <EmptyRow />}
+          <TimelineRow label={t('learningModule.classPicture.timelineTeachingResponse')} minHeight={teachingResponseRowHeight}>
+            {visibleTeachingResponseGroups.length ? visibleTeachingResponseGroups.flatMap((group) => {
+              const itemsToRender = zoomed ? group.items : group.items.slice(0, 1);
+              const hiddenCount = zoomed ? 0 : Math.max(0, group.items.length - itemsToRender.length);
+
+              return itemsToRender.map((item, itemIndex) => {
+                const top = zoomed ? itemIndex * 34 : 0;
+
+                return item.type === 'timeline-comment' ? (
+                  <Box
+                    key={item.id}
+                    sx={{
+                      position: 'absolute',
+                      left: `${getPosition(item.date, visibleRange)}%`,
+                      top,
+                      width: 190,
+                      maxWidth: 190,
+                      transform: 'translateX(-6px)',
+                    }}
+                  >
+                    <Stack direction="row" spacing={0.45} alignItems="flex-start">
+                      <Box sx={{ position: 'relative', pt: 0.05, flexShrink: 0 }}>
+                        <ButtonBase
+                          type="button"
+                          aria-label={item.label || item.comment}
+                          aria-expanded={activeResponseMenuId === item.id}
+                          onClick={() => setActiveResponseMenuId((currentId) => (currentId === item.id ? '' : item.id))}
+                          sx={{
+                            width: 19,
+                            height: 19,
+                            borderRadius: '6px',
+                            color: purple,
+                            '&:hover': { bgcolor: 'rgba(156, 40, 175, 0.08)' },
+                            '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+                          }}
+                        >
+                          <NotesIcon sx={{ color: 'inherit', fontSize: 14 }} />
+                        </ButtonBase>
+                        {!!hiddenCount && (
+                          <ButtonBase
+                            type="button"
+                            onClick={() => setSelectedMonthDate(group.date)}
+                            sx={{
+                              position: 'absolute',
+                              left: 11,
+                              top: -8,
+                              minWidth: 18,
+                              height: 16,
+                              px: 0.35,
+                              borderRadius: '999px',
+                              bgcolor: purple,
+                              color: '#fff',
+                              boxShadow: '0 5px 12px rgba(156, 40, 175, 0.16)',
+                              '&:hover': { bgcolor: '#87239a' },
+                              '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+                            }}
+                          >
+                            <Typography sx={{ color: 'inherit', fontSize: 9.8, fontWeight: 900, lineHeight: 1 }}>
+                              +{hiddenCount}
+                            </Typography>
+                          </ButtonBase>
+                        )}
+                        {activeResponseMenuId === item.id ? (
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              left: -4,
+                              top: 22,
+                              zIndex: 25,
+                              display: 'grid',
+                              gap: 0.25,
+                              p: 0.35,
+                              borderRadius: '8px',
+                              bgcolor: '#fff',
+                              border: '1px solid rgba(156, 40, 175, 0.2)',
+                              boxShadow: '0 10px 24px rgba(23, 21, 26, 0.14)',
+                            }}
+                          >
+                            {[
+                              [t('learningModule.classPicture.timelineViewResponse'), () => openExistingTimelineResponse(item, 'view')],
+                              [t('learningModule.classPicture.timelineEditResponse'), () => openExistingTimelineResponse(item, 'edit')],
+                              [t('learningModule.classPicture.timelineDeleteResponse'), () => deleteTimelineResponse(item.id)],
+                            ].map(([label, action]) => (
+                              <ButtonBase
+                                key={label}
+                                type="button"
+                                onClick={() => {
+                                  action();
+                                  if (label !== t('learningModule.classPicture.timelineDeleteResponse')) {
+                                    setActiveResponseMenuId('');
+                                  }
+                                }}
+                                sx={{
+                                  justifyContent: 'flex-start',
+                                  px: 0.55,
+                                  py: 0.4,
+                                  borderRadius: '6px',
+                                  color: label === t('learningModule.classPicture.timelineDeleteResponse') ? 'rgba(184, 66, 42, 0.82)' : purple,
+                                  '&:hover': { bgcolor: 'rgba(156, 40, 175, 0.07)' },
+                                  '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+                                }}
+                              >
+                                <Typography sx={{ color: 'inherit', fontSize: 10.7, fontWeight: 850, lineHeight: 1, whiteSpace: 'nowrap' }}>
+                                  {label}
+                                </Typography>
+                              </ButtonBase>
+                            ))}
+                          </Box>
+                        ) : null}
+                      </Box>
+                      <Box
+                        sx={{
+                          width: 166,
+                          p: 0.55,
+                          borderRadius: '9px',
+                          bgcolor: 'rgba(156, 40, 175, 0.08)',
+                          border: `1px solid rgba(156, 40, 175, 0.28)`,
+                          boxShadow: '0 8px 18px rgba(156, 40, 175, 0.08)',
+                        }}
+                      >
+                        <Typography sx={{ color: purple, fontSize: 11.6, fontWeight: 900, lineHeight: 1.15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {item.label || item.comment}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Box>
+                ) : (
+                  <Box
+                    key={item.id}
+                    sx={{
+                      position: 'absolute',
+                      left: `${getPosition(item.date, visibleRange)}%`,
+                      top,
+                      width: 150,
+                      maxWidth: 150,
+                      transform: 'translateX(-6px)',
+                    }}
+                  >
+                    <Stack direction="row" spacing={0.45} alignItems="flex-start">
+                      <Box sx={{ position: 'relative', pt: 0.2, flexShrink: 0 }}>
+                        <TimelineIcon type="response" />
+                        {!!hiddenCount && (
+                          <ButtonBase
+                            type="button"
+                            onClick={() => setSelectedMonthDate(group.date)}
+                            sx={{
+                              position: 'absolute',
+                              left: 10,
+                              top: -8,
+                              minWidth: 18,
+                              height: 16,
+                              px: 0.35,
+                              borderRadius: '999px',
+                              bgcolor: purple,
+                              color: '#fff',
+                              '&:hover': { bgcolor: '#87239a' },
+                              '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+                            }}
+                          >
+                            <Typography sx={{ color: 'inherit', fontSize: 9.8, fontWeight: 900, lineHeight: 1 }}>
+                              +{hiddenCount}
+                            </Typography>
+                          </ButtonBase>
+                        )}
+                      </Box>
+                      <Typography sx={{ color: darkText, fontSize: 12.2, fontWeight: 780, lineHeight: 1.25 }}>
+                        {item.text}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                );
+              });
+            }) : <EmptyRow />}
           </TimelineRow>
         </Box>
       </Box>
