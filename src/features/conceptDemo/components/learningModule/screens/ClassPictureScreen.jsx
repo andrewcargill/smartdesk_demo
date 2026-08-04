@@ -1331,6 +1331,7 @@ function ClassPictureEvidenceGridV1({
                         levels={levels}
                         learningContexts={moduleConfig?.subjectId === 'physical-education' ? physicalEducationLearningContexts : []}
                         language={language}
+                        t={t}
                       />
                     )}
                   </Box>

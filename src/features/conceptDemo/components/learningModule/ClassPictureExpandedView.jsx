@@ -9,12 +9,28 @@ import AssessmentPieChart from './AssessmentPieChart.jsx';
 const purple = '#9c28af';
 const darkText = '#17151a';
 const mutedText = 'rgba(23, 21, 26, 0.62)';
+const timelineFallbackTranslations = {
+  'learningModule.classPicture.timelineOverview': 'Overview',
+  'learningModule.classPicture.timelineClassContext': 'Class context',
+  'learningModule.classPicture.timelineCurriculumAreas': 'Curriculum areas',
+  'learningModule.classPicture.timelineLearningObservations': 'Learning observations',
+  'learningModule.classPicture.timelineLessonCapture': 'Lesson capture',
+  'learningModule.classPicture.timelineAssessments': 'Assessments',
+  'learningModule.classPicture.timelineEvidence': 'Evidence',
+  'learningModule.classPicture.timelineTeachingResponse': 'Teaching response',
+  'learningModule.classPicture.timelineOpenActivityContext': 'Open {{activity}} linked observations',
+};
 const levelReferenceMarks = [
   { order: 4, mark: '●', tint: 'rgba(156, 40, 175, 0.13)', color: 'rgba(156, 40, 175, 0.58)' },
   { order: 3, mark: '◑', tint: 'rgba(156, 40, 175, 0.095)', color: 'rgba(156, 40, 175, 0.48)' },
   { order: 2, mark: '◔', tint: 'rgba(156, 40, 175, 0.065)', color: 'rgba(156, 40, 175, 0.38)' },
   { order: 1, mark: '○', tint: 'rgba(156, 40, 175, 0.035)', color: 'rgba(156, 40, 175, 0.3)' },
 ];
+
+function fallbackT(key, values = {}) {
+  const template = timelineFallbackTranslations[key] || key;
+  return template.replace(/\{\{(\w+)\}\}/g, (match, name) => (values[name] == null ? match : String(values[name])));
+}
 
 function getTimelineLocale(language) {
   return language === 'sv' ? 'sv-SE' : 'en-GB';
@@ -159,6 +175,7 @@ function buildTimelineData({
   levels,
   learningContexts = [],
   language,
+  t = fallbackT,
 }) {
   const studentId = student?.id;
   const unitById = new Map((teachingUnits || []).map((unit) => [unit.id, unit]));
@@ -997,6 +1014,7 @@ export default function ClassPictureExpandedView({
   levels,
   learningContexts = [],
   language,
+  t = fallbackT,
 }) {
   const [selectedMonthDate, setSelectedMonthDate] = useState('');
   const [lessonCaptureExpanded, setLessonCaptureExpanded] = useState(false);
@@ -1059,6 +1077,26 @@ export default function ClassPictureExpandedView({
     ));
   }
 
+  function openActivityContext(cluster) {
+    const linkedUnitIds = [...new Set((cluster.items || []).map((item) => item.teachingUnitId).filter(Boolean))];
+
+    if (!linkedUnitIds.length) {
+      return;
+    }
+
+    setSelectedCaptureUnitIds((currentIds) => {
+      const allLinkedUnitsSelected = linkedUnitIds.every((unitId) => currentIds.includes(unitId)) && currentIds.length === linkedUnitIds.length;
+
+      if (allLinkedUnitsSelected) {
+        setLessonCaptureExpanded(false);
+        return [];
+      }
+
+      setLessonCaptureExpanded(true);
+      return linkedUnitIds;
+    });
+  }
+
   function updateHoverCursor(event) {
     const rect = event.currentTarget.getBoundingClientRect();
     const x = rect.width ? ((event.clientX - rect.left) / rect.width) * 100 : 0;
@@ -1100,7 +1138,7 @@ export default function ClassPictureExpandedView({
                 }}
               >
                 <Typography sx={{ fontSize: 11.5, fontWeight: 880, lineHeight: 1 }}>
-                  Overview
+                  {t('learningModule.classPicture.timelineOverview')}
                 </Typography>
               </ButtonBase>
             ) : null}
@@ -1187,7 +1225,7 @@ export default function ClassPictureExpandedView({
           ) : null}
 
           {visibleActivityContextClusters.length ? (
-            <TimelineRow label="Class context" minHeight={activityContextRowHeight}>
+            <TimelineRow label={t('learningModule.classPicture.timelineClassContext')} minHeight={activityContextRowHeight}>
               {visibleActivityContextClusters.map((cluster) => (
                 (() => {
                   const clippedStart = cluster.startDate < visibleRange.start ? visibleRange.start : cluster.startDate;
@@ -1232,23 +1270,36 @@ export default function ClassPictureExpandedView({
                           </Stack>
                         )}
                       >
-                        <Box
+                        <ButtonBase
+                          type="button"
+                          onClick={() => openActivityContext(cluster)}
+                          aria-label={t('learningModule.classPicture.timelineOpenActivityContext', { activity: cluster.activityLabel })}
                           sx={{
                             width: '100%',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        px: 0.65,
-                        py: 0.4,
-                        borderRadius: '7px',
-                        bgcolor: 'rgba(156, 40, 175, 0.1)',
-                        border: '1px solid rgba(156, 40, 175, 0.2)',
-                        boxShadow: '0 5px 14px rgba(156, 40, 175, 0.08)',
-                      }}
-                    >
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-start',
+                            px: 0.65,
+                            py: 0.4,
+                            borderRadius: '7px',
+                            bgcolor: 'rgba(156, 40, 175, 0.1)',
+                            border: '1px solid rgba(156, 40, 175, 0.2)',
+                            boxShadow: '0 5px 14px rgba(156, 40, 175, 0.08)',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            transition: 'background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease',
+                            '&:hover': {
+                              bgcolor: 'rgba(156, 40, 175, 0.15)',
+                              borderColor: 'rgba(156, 40, 175, 0.38)',
+                              boxShadow: '0 7px 18px rgba(156, 40, 175, 0.12)',
+                            },
+                            '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                          }}
+                        >
                           <Typography sx={{ color: purple, fontSize: 11.6, fontWeight: 900, lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {cluster.activityLabel}
                           </Typography>
-                        </Box>
+                        </ButtonBase>
                       </Tooltip>
                     </Box>
                   );
@@ -1257,7 +1308,7 @@ export default function ClassPictureExpandedView({
             </TimelineRow>
           ) : null}
 
-          <TimelineRow label="Class content" minHeight={classContentRowHeight}>
+          <TimelineRow label={t('learningModule.classPicture.timelineCurriculumAreas')} minHeight={classContentRowHeight}>
             {visibleUnits.length ? visibleUnits.map((unit) => {
               const clippedStart = unit.startDate < visibleRange.start ? visibleRange.start : unit.startDate;
               const clippedEnd = unit.endDate > visibleRange.end ? visibleRange.end : unit.endDate;
@@ -1300,7 +1351,7 @@ export default function ClassPictureExpandedView({
             }) : <EmptyRow />}
           </TimelineRow>
 
-          <TimelineRow label="Learning observations">
+          <TimelineRow label={t('learningModule.classPicture.timelineLearningObservations')}>
             <LearningObservationGraph
               events={visibleLearningEvents}
               areas={learningObservationAreas}
@@ -1328,7 +1379,7 @@ export default function ClassPictureExpandedView({
                   >
                     <KeyboardArrowDownIcon sx={{ fontSize: 16, transform: lessonCaptureExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 140ms ease' }} />
                     <Typography sx={{ color: 'inherit', fontSize: 12.2, fontWeight: 850, lineHeight: 1.2 }}>
-                      Lesson capture
+                      {t('learningModule.classPicture.timelineLessonCapture')}
                     </Typography>
                   </ButtonBase>
                 )}
@@ -1353,19 +1404,19 @@ export default function ClassPictureExpandedView({
                   )) : <EmptyRow />}
               </TimelineRow>
 
-              <TimelineRow label="Assessments">
+              <TimelineRow label={t('learningModule.classPicture.timelineAssessments')}>
                 {visibleAssessments.length ? visibleAssessments.map((item) => (
                   <AssessmentTimelineItem key={item.id} item={item} range={visibleRange} language={language} />
                 )) : <EmptyRow />}
               </TimelineRow>
             </>
           ) : (
-            <TimelineRow label="Evidence">
+            <TimelineRow label={t('learningModule.classPicture.timelineEvidence')}>
               <SelectClassContentPrompt />
             </TimelineRow>
           )}
 
-          <TimelineRow label="Teaching response">
+          <TimelineRow label={t('learningModule.classPicture.timelineTeachingResponse')}>
             {visibleTeachingResponses.length ? visibleTeachingResponses.map((item) => (
               <TimelineItem key={item.id} item={item} range={visibleRange} type="response">
                 <Typography sx={{ color: darkText, fontSize: 12.2, fontWeight: 780, lineHeight: 1.25 }}>
