@@ -21,7 +21,7 @@ import { ConceptDemoTeacherProvider, useConceptDemoTeacher } from './ConceptDemo
 import DemoShell from './DemoShell.jsx';
 import FocusedWorkspace from './components/FocusedWorkspace.jsx';
 import LearningModule from './components/learningModule/LearningModule.jsx';
-import MentorModal from './components/MentorModal.jsx';
+import MentorModule from './components/MentorModule.jsx';
 import MyWeekModal from './components/MyWeekModal.jsx';
 import NotebookModal from './components/NotebookModal.jsx';
 import SmartDeskDrawer from './components/SmartDeskDrawer.jsx';
@@ -850,13 +850,13 @@ function HomeScreenContent() {
   }, [subjectModules]);
   const [selectedModule, setSelectedModule] = useState(modules[0]?.id || 'mentor');
   const [notebookOpen, setNotebookOpen] = useState(false);
-  const [mentorOpen, setMentorOpen] = useState(false);
   const [smartDeskInfoOpen, setSmartDeskInfoOpen] = useState(false);
   const [smartDeskStoreOpen, setSmartDeskStoreOpen] = useState(false);
   const [smartDeskSurface, setSmartDeskSurface] = useState('floating');
   const [homeBackground, setHomeBackground] = useState('none');
   const selectedHomeBackground = homeBackgrounds[homeBackground];
-  const subjectWorkspaceOpen = subjectWorkspaceActive;
+  const mentorWorkspaceActive = activeWorkspace?.type === 'mentor';
+  const subjectWorkspaceOpen = subjectWorkspaceActive || mentorWorkspaceActive;
 
   useEffect(() => {
     if (!subjectWorkspaceOpen || typeof document === 'undefined') {
@@ -881,7 +881,6 @@ function HomeScreenContent() {
     closeSmartDesk();
     closeWeek();
     setNotebookOpen(false);
-    setMentorOpen(false);
     setActiveWorkspace({
       type: 'class',
       subjectId,
@@ -906,7 +905,7 @@ function HomeScreenContent() {
     closeToday();
     closeSmartDesk();
     closeWeek();
-    setMentorOpen(false);
+    setActiveWorkspace(null);
     setNotebookOpen(true);
   }
 
@@ -915,7 +914,7 @@ function HomeScreenContent() {
     closeSmartDesk();
     closeWeek();
     setNotebookOpen(false);
-    setMentorOpen(true);
+    setActiveWorkspace({ type: 'mentor' });
   }
 
   function handleSmartDeskAction(actionName) {
@@ -1188,18 +1187,19 @@ function HomeScreenContent() {
       <FocusedWorkspace
         open={subjectWorkspaceOpen}
         onClose={closeWorkspace}
-        title={activeModuleConfig?.title?.[language] || activeModuleConfig?.title?.en || ''}
-        subtitle={activeModuleConfig?.subtitle?.[language] || activeModuleConfig?.subtitle?.en || t('home.focusedWorkspaceSubtitle')}
+        title={mentorWorkspaceActive ? 'Mentor' : activeModuleConfig?.title?.[language] || activeModuleConfig?.title?.en || ''}
+        subtitle={mentorWorkspaceActive ? 'Follow-ups, meeting rhythm, and Prorenata handoff' : activeModuleConfig?.subtitle?.[language] || activeModuleConfig?.subtitle?.en || t('home.focusedWorkspaceSubtitle')}
         returnFocusRef={maths7ATriggerRef}
         showHeader={false}
       >
-        {activeModuleConfig && (
+        {mentorWorkspaceActive ? (
+          <MentorModule onBack={closeWorkspace} />
+        ) : activeModuleConfig && (
           <LearningModule config={activeModuleConfig} onBack={closeWorkspace} />
         )}
       </FocusedWorkspace>
       <MyWeekModal open={weekOpen} onClose={closeWeek} onOpenClass={openMaths7A} schedule={schedule} />
       <NotebookModal open={notebookOpen} onClose={() => setNotebookOpen(false)} />
-      <MentorModal open={mentorOpen} onClose={() => setMentorOpen(false)} />
       {smartDeskStoreOpen && (
         <Box
           role="presentation"
