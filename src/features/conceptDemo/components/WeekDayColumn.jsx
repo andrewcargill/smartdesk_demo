@@ -192,7 +192,7 @@ function getEventRelation(event) {
 }
 
 function canOpenClass(event) {
-  return event.type === 'lesson' && event.originalId === 'mon-maths-7a';
+  return event.type === 'lesson' && event.classId === '8a' && event.subjectId;
 }
 
 function canManageTeacherDiaryItem(event) {

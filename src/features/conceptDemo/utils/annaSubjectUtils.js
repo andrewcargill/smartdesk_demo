@@ -80,12 +80,8 @@ export function getUniqueClasses(events) {
   return [...new Set(events.map((event) => event.className).filter(Boolean))].sort();
 }
 
-function getModuleClasses(events, subjectId, selectedSubjectIds = []) {
+function getModuleClasses(events) {
   const classNames = new Set(getUniqueClasses(events));
-
-  if (selectedSubjectIds.includes(subjectId)) {
-    classNames.add('8A');
-  }
 
   return [...classNames].sort((first, second) => {
     if (first === '8A') return -1;
@@ -139,7 +135,7 @@ export function getSubjectModules(schedule) {
       title: getSubjectDisplay(events[0]).title,
       shortTitle: getSubjectDisplay(events[0]).shortTitle,
       type: 'subject',
-      classes: getModuleClasses(events, id, schedule.selectedSubjectIds || []),
+      classes: getModuleClasses(events),
       lessonCount: events.length,
       nextLesson: getNextSubjectLesson(events, schedule.currentContext),
     }))

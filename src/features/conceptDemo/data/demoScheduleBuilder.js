@@ -8,6 +8,12 @@ import {
 
 const subjectRoleOrder = ['mathematics', 'english', 'physical-education'];
 
+const demoClassPatternsBySubjectRole = {
+  mathematics: ['8A', '7C', '8A', '9A', '8A', '7C', '8A', '9A'],
+  english: ['8A', '8B', '8A', '8A', '8B'],
+  'physical-education': ['8A', '8B', '8A', '7A', '8A'],
+};
+
 const localizedDayDefinitions = {
   en: [
     { id: 'monday', dayOfWeek: 1, label: 'Monday', shortLabel: 'Mon' },
@@ -215,6 +221,40 @@ function localizeLessonEvent(event, selectedSubjectIds, language) {
   };
 }
 
+function getClassId(className) {
+  return String(className || '').trim().toLowerCase();
+}
+
+function applyDemoClassPatterns(scheduleEntries) {
+  const roleLessonCounts = {};
+
+  return scheduleEntries.map((event) => {
+    if (event.type !== 'lesson') {
+      return event;
+    }
+
+    const subjectRoleId = event.subjectRoleId || event.subjectId;
+    const classPattern = demoClassPatternsBySubjectRole[subjectRoleId];
+
+    if (!classPattern?.length) {
+      return event;
+    }
+
+    const lessonIndex = roleLessonCounts[subjectRoleId] || 0;
+    roleLessonCounts[subjectRoleId] = lessonIndex + 1;
+
+    const className = classPattern[lessonIndex % classPattern.length];
+    const classId = getClassId(className);
+
+    return {
+      ...event,
+      id: `${event.originalId || event.id}--${event.subjectId}--${classId}`,
+      classId,
+      className,
+    };
+  });
+}
+
 export function buildDemoSchedule({
   selectedSubjectIds = defaultSelectedSubjectIds,
   language = defaultConceptDemoLanguage,
@@ -238,11 +278,13 @@ export function buildDemoSchedule({
       ...(localizedCurrentContext[getLanguageBucket(language)] || localizedCurrentContext.en),
     },
     dayDefinitions: localizedDayDefinitions[getLanguageBucket(language)] || localizedDayDefinitions.en,
-    scheduleEntries: annaSchedule.scheduleEntries.map((event) => (
-      event.type === 'lesson'
-        ? localizeLessonEvent(event, safeSubjectIds, language)
-        : localizeFixedEvent(event, safeSubjectIds, language)
-    )),
+    scheduleEntries: applyDemoClassPatterns(
+      annaSchedule.scheduleEntries.map((event) => (
+        event.type === 'lesson'
+          ? localizeLessonEvent(event, safeSubjectIds, language)
+          : localizeFixedEvent(event, safeSubjectIds, language)
+      )),
+    ),
     selectedSubjectIds: safeSubjectIds,
   };
 }

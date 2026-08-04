@@ -5,9 +5,10 @@ import { annaSchedule } from './data/annaSchedule.js';
 import TodayDrawer from './TodayDrawer.jsx';
 import { getCurrentDayEvents, getCurrentScheduleDay } from './utils/todayScheduleUtils.js';
 
-function isMaths7AEvent(event) {
+function isDemoClassEvent(event) {
   return event.type === 'lesson'
-    && event.originalId === 'mon-maths-7a';
+    && event.classId === '8a'
+    && event.subjectId;
 }
 
 export default function DemoShell({
@@ -28,7 +29,7 @@ export default function DemoShell({
   }
 
   function handleOpenEvent(event) {
-    if (isMaths7AEvent(event)) {
+    if (isDemoClassEvent(event)) {
       closeToday();
       onOpenMaths7A?.(event);
     }
