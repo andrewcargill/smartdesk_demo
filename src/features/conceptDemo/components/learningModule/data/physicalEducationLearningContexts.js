@@ -97,6 +97,81 @@ export const physicalEducationLearningContexts = [
       },
     ],
   },
+  {
+    id: 'swimming',
+    type: 'activity',
+    label: {
+      en: 'Swimming',
+      sv: 'Simning',
+    },
+    primaryCurriculumAreaId: 'swimming-emergencies',
+    possibleCurriculumAreaIds: [
+      'swimming-emergencies',
+      'movement-adaption',
+      'safety-risk-management',
+    ],
+    capturePoints: [
+      {
+        id: 'swimming-controlled-action',
+        label: {
+          en: 'Maintains a controlled and sustainable swimming action',
+          sv: 'Beh\u00e5ller en kontrollerad och h\u00e5llbar simr\u00f6relse',
+        },
+        observationDimensionId: 'swimming-technique-control',
+        curriculumAreaIds: ['swimming-emergencies'],
+      },
+      {
+        id: 'swimming-breathing-coordination',
+        label: {
+          en: 'Coordinates breathing and movement',
+          sv: 'Koordinerar andning och r\u00f6relse',
+        },
+        observationDimensionId: 'coordination',
+        curriculumAreaIds: ['movement-adaption'],
+      },
+      {
+        id: 'swimming-adapts-technique',
+        label: {
+          en: 'Adapts technique, pace or position in the water',
+          sv: 'Anpassar teknik, tempo eller position i vattnet',
+        },
+        observationDimensionId: 'adaptation-purpose-feedback',
+        curriculumAreaIds: ['movement-adaption'],
+      },
+      {
+        id: 'swimming-water-safety',
+        label: {
+          en: 'Behaves safely in and around the water',
+          sv: 'Agerar s\u00e4kert i och vid vatten',
+        },
+        observationDimensionId: 'water-safety',
+        curriculumAreaIds: [
+          'swimming-emergencies',
+          'safety-risk-management',
+        ],
+      },
+      {
+        id: 'swimming-water-emergency',
+        label: {
+          en: 'Responds appropriately in a simulated water emergency',
+          sv: 'Agerar l\u00e4mpligt vid en simulerad vattenn\u00f6dsituation',
+        },
+        observationDimensionId: 'emergency-action-water',
+        curriculumAreaIds: ['swimming-emergencies'],
+      },
+    ],
+    requirements: [
+      {
+        id: 'swim-200m-50m-back',
+        label: {
+          en: 'Swims 200 m continuously, including 50 m in a back position',
+          sv: 'Simmar 200 m sammanh\u00e4ngande, varav 50 m i ryggl\u00e4ge',
+        },
+        resultType: 'requirement',
+        curriculumAreaId: 'swimming-emergencies',
+      },
+    ],
+  },
 ];
 
 export function getPhysicalEducationLearningContextById(contextId) {

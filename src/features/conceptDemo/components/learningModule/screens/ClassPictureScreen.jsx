@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
+import GroupsIcon from '@mui/icons-material/Groups';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import NotesIcon from '@mui/icons-material/Notes';
 import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import TimelineIcon from '@mui/icons-material/Timeline';
 import { Box, ButtonBase, IconButton, MenuItem, Paper, Select, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material';
 import { useConceptDemoLanguage } from '../../../ConceptDemoLanguageContext.jsx';
 import { classGroupDefinitions } from '../../../data/classGroupDefinitions.js';
@@ -636,7 +638,32 @@ function ClassPictureEvidenceGridV1({
         aria-label={buildGridAriaLabel()}
         sx={gridShellSx}
       >
-        <Box role="columnheader" sx={{ p: 1, bgcolor: '#fff', borderBottom: '1px solid rgba(23, 21, 26, 0.12)' }} />
+        <Box
+          role="columnheader"
+          aria-label={t('learningModule.classPicture.classList')}
+          sx={{
+            p: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            bgcolor: '#fff',
+            borderBottom: '1px solid rgba(23, 21, 26, 0.12)',
+          }}
+        >
+          <Box
+            aria-hidden="true"
+            sx={{
+              width: 28,
+              height: 28,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'rgba(156, 40, 175, 0.52)',
+            }}
+          >
+            <GroupsIcon sx={{ fontSize: 16, opacity: 1 }} />
+          </Box>
+        </Box>
         <Box role="columnheader" aria-label={t('learningModule.classPicture.assessmentAlerts')} sx={{ p: 1, bgcolor: '#fff', borderBottom: '1px solid rgba(23, 21, 26, 0.12)' }} />
         <Box
           role="columnheader"
@@ -679,7 +706,33 @@ function ClassPictureEvidenceGridV1({
             </Typography>
           )}
         </Box>
-        <Box role="columnheader" aria-label={t('learningModule.classPicture.learningObservations')} sx={{ p: 1, bgcolor: '#fff', borderBottom: '1px solid rgba(23, 21, 26, 0.12)', borderLeft: '1px solid rgba(23, 21, 26, 0.055)' }} />
+        <Box
+          role="columnheader"
+          aria-label={t('learningModule.classPicture.learningObservations')}
+          sx={{
+            p: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: '#fff',
+            borderBottom: '1px solid rgba(23, 21, 26, 0.12)',
+            borderLeft: '1px solid rgba(23, 21, 26, 0.055)',
+          }}
+        >
+          <Box
+            aria-hidden="true"
+            sx={{
+              width: 28,
+              height: 28,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'rgba(156, 40, 175, 0.52)',
+            }}
+          >
+            <TimelineIcon sx={{ fontSize: 16, opacity: 1 }} />
+          </Box>
+        </Box>
         {teachingUnits.map((unit) => {
           const isEditingUnit = editingUnitId === unit.id;
 
@@ -990,20 +1043,35 @@ function ClassPictureEvidenceGridV1({
                 >
                   {alerts.map((alert) => (
                     <Tooltip key={alert.id} title={alert.label} arrow>
-                      <Box
-                        component="span"
+                      <ButtonBase
+                        type="button"
+                        aria-label={alert.label}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (alert.teachingUnitId) {
+                            toggleStudent(student.id, alert.teachingUnitId, 'unit');
+                          }
+                        }}
                         sx={{
                           display: 'inline-flex',
                           alignItems: 'center',
+                          justifyContent: 'center',
+                          width: isExpanded ? 23 : 20,
+                          height: isExpanded ? 23 : 20,
                           borderRadius: '5px',
+                          cursor: alert.teachingUnitId ? 'pointer' : 'default',
+                          '&:hover': {
+                            bgcolor: alert.type === 'absent' ? 'rgba(184, 92, 0, 0.08)' : 'rgba(156, 40, 175, 0.08)',
+                          },
+                          '&:focus-visible': { outline: `2px solid ${alert.type === 'absent' ? absentOrange : purple}`, outlineOffset: 1 },
                         }}
                       >
                         {alert.type === 'absent' ? (
-                          <PersonOffOutlinedIcon aria-label={alert.label} sx={{ color: absentOrange, fontSize: isExpanded ? 18 : 15, flexShrink: 0, opacity: 0.88 }} />
+                          <PersonOffOutlinedIcon sx={{ color: absentOrange, fontSize: isExpanded ? 18 : 15, flexShrink: 0, opacity: 0.88 }} />
                         ) : (
-                          <ErrorOutlineIcon aria-label={alert.label} sx={{ color: purple, fontSize: isExpanded ? 18 : 15, flexShrink: 0, opacity: 0.88 }} />
+                          <ErrorOutlineIcon sx={{ color: purple, fontSize: isExpanded ? 18 : 15, flexShrink: 0, opacity: 0.88 }} />
                         )}
-                      </Box>
+                      </ButtonBase>
                     </Tooltip>
                   ))}
                 </Box>
