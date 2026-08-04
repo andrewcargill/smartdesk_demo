@@ -9,6 +9,12 @@ import AssessmentPieChart from './AssessmentPieChart.jsx';
 const purple = '#9c28af';
 const darkText = '#17151a';
 const mutedText = 'rgba(23, 21, 26, 0.62)';
+const levelReferenceMarks = [
+  { order: 4, mark: '●', tint: 'rgba(156, 40, 175, 0.13)', color: 'rgba(156, 40, 175, 0.58)' },
+  { order: 3, mark: '◑', tint: 'rgba(156, 40, 175, 0.095)', color: 'rgba(156, 40, 175, 0.48)' },
+  { order: 2, mark: '◔', tint: 'rgba(156, 40, 175, 0.065)', color: 'rgba(156, 40, 175, 0.38)' },
+  { order: 1, mark: '○', tint: 'rgba(156, 40, 175, 0.035)', color: 'rgba(156, 40, 175, 0.3)' },
+];
 
 function getTimelineLocale(language) {
   return language === 'sv' ? 'sv-SE' : 'en-GB';
@@ -770,7 +776,39 @@ function UnitCaptureTrendGraph({ clusters, range, language, selectedUnitIds }) {
                   <Typography sx={{ color: darkText, fontSize: 12.1, fontWeight: 850, lineHeight: 1.12, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {track.skillLabel}
                   </Typography>
-                  <Box sx={{ position: 'relative', width: '100%', height: 44 }}>
+                  <Box sx={{ position: 'relative', width: '100%', height: 54 }}>
+                    {levelReferenceMarks.map((level) => (
+                      <Box
+                        key={level.order}
+                        sx={{
+                          position: 'absolute',
+                          left: 0,
+                          right: 0,
+                          top: `${(getLevelY(level.order) / 52) * 100}%`,
+                          height: 10,
+                          transform: 'translateY(-50%)',
+                          borderRadius: '999px',
+                          bgcolor: level.tint,
+                        }}
+                      >
+                        <Typography
+                          component="span"
+                          aria-hidden="true"
+                          sx={{
+                            position: 'absolute',
+                            left: -18,
+                            top: '50%',
+                            color: level.color,
+                            fontSize: 10.5,
+                            fontWeight: 850,
+                            lineHeight: 1,
+                            transform: 'translateY(-50%)',
+                          }}
+                        >
+                          {level.mark}
+                        </Typography>
+                      </Box>
+                    ))}
                     <Box
                       component="svg"
                       viewBox="0 0 100 52"
@@ -790,7 +828,7 @@ function UnitCaptureTrendGraph({ clusters, range, language, selectedUnitIds }) {
                         <path
                           d={path}
                           fill="none"
-                          stroke="rgba(156, 40, 175, 0.45)"
+                          stroke={purple}
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -820,26 +858,27 @@ function UnitCaptureTrendGraph({ clusters, range, language, selectedUnitIds }) {
                         <Typography
                           component="span"
                           aria-label={`${point.unitTitle}, ${point.skillLabel}: ${point.levelLabel}`}
-                          sx={{
-                            position: 'absolute',
-                            left: `${point.x}%`,
-                            top: `${(point.y / 52) * 100}%`,
-                            color: purple,
-                            fontSize: 18,
-                            fontWeight: 900,
-                            lineHeight: 1,
-                            transform: 'translate(-50%, -50%)',
-                            cursor: 'default',
-                            transition: 'transform 120ms ease, text-shadow 120ms ease',
-                            '&:hover': {
-                              transform: 'translate(-50%, -50%) scale(1.18)',
-                              textShadow: '0 0 0 rgba(156, 40, 175, 0.16)',
-                            },
-                          }}
-                        >
-                          {point.levelMark}
-                        </Typography>
-                      </Tooltip>
+                    sx={{
+                      position: 'absolute',
+                      left: `${point.x}%`,
+                      top: `${(point.y / 52) * 100}%`,
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      border: `2px solid ${purple}`,
+                      bgcolor: '#fff',
+                      transform: 'translate(-50%, -50%)',
+                      boxSizing: 'border-box',
+                      cursor: 'default',
+                      transition: 'width 120ms ease, height 120ms ease, box-shadow 120ms ease',
+                      '&:hover': {
+                        width: 11,
+                        height: 11,
+                        boxShadow: '0 0 0 4px rgba(156, 40, 175, 0.12)',
+                      },
+                    }}
+                  />
+                </Tooltip>
                     ))}
                   </Box>
                 </Box>
