@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import NotesIcon from '@mui/icons-material/Notes';
 import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
 import SquareIcon from '@mui/icons-material/Square';
@@ -69,6 +70,10 @@ function getObservationY(value) {
   if (value === '+') return 8;
   if (value === '-') return 44;
   return 26;
+}
+
+function getLevelY(levelOrder) {
+  return Math.max(8, Math.min(44, 56 - ((levelOrder || 1) * 12)));
 }
 
 function getLevelMark(level) {
@@ -243,6 +248,7 @@ function getObservationClusters(observations) {
     const cluster = clustersByKey.get(key) || {
       id: key,
       date: observation.date,
+      teachingUnitId: observation.teachingUnitId,
       unitTitle: observation.unitTitle,
       items: [],
     };
@@ -260,6 +266,117 @@ function getObservationClusters(observations) {
       )),
     }))
     .sort((first, second) => first.date.localeCompare(second.date));
+}
+
+function getMedianObservation(items) {
+  const sortedItems = [...(items || [])].sort((first, second) => (first.levelOrder || 1) - (second.levelOrder || 1));
+  return sortedItems[Math.floor(sortedItems.length / 2)] || sortedItems[0] || null;
+}
+
+function getUnitCaptureTracks(clusters) {
+  const tracksByUnit = new Map();
+
+  (clusters || []).forEach((cluster) => {
+    const summaryItem = getMedianObservation(cluster.items);
+
+    if (!summaryItem) {
+      return;
+    }
+
+    const key = cluster.teachingUnitId || cluster.unitTitle || 'unit';
+    const track = tracksByUnit.get(key) || {
+      id: key,
+      title: cluster.unitTitle,
+      points: [],
+    };
+
+    track.points.push({
+      id: cluster.id,
+      date: cluster.date,
+      unitTitle: cluster.unitTitle,
+      items: cluster.items,
+      levelOrder: summaryItem.levelOrder,
+      levelMark: summaryItem.levelMark,
+      levelLabel: summaryItem.levelLabel,
+    });
+    tracksByUnit.set(key, track);
+  });
+
+  return [...tracksByUnit.values()]
+    .map((track) => ({
+      ...track,
+      points: track.points.sort((first, second) => first.date.localeCompare(second.date)),
+    }))
+    .sort((first, second) => first.title.localeCompare(second.title));
+}
+
+function getCaptureUnitOptions(clusters, teachingUnits, language) {
+  const unitIdsWithObservations = new Set((clusters || []).map((cluster) => cluster.teachingUnitId).filter(Boolean));
+
+  return (teachingUnits || [])
+    .filter((unit) => unitIdsWithObservations.has(unit.id))
+    .map((unit) => ({
+      id: unit.id,
+      title: getLocalizedValue(unit.title || unit.label, language),
+    }));
+}
+
+function getCapturePointTracks(clusters, selectedUnitIds) {
+  const selectedUnitIdSet = new Set(selectedUnitIds || []);
+  const tracksByKey = new Map();
+
+  (clusters || [])
+    .filter((cluster) => selectedUnitIdSet.has(cluster.teachingUnitId))
+    .forEach((cluster) => {
+      cluster.items.forEach((item) => {
+        const key = `${cluster.teachingUnitId || 'unit'}:${item.skillId || item.capturePointId || item.skillLabel}`;
+        const track = tracksByKey.get(key) || {
+          id: key,
+          unitTitle: cluster.unitTitle,
+          skillLabel: item.skillLabel,
+          points: [],
+        };
+
+        track.points.push({
+          id: item.id,
+          date: item.date,
+          unitTitle: cluster.unitTitle,
+          skillLabel: item.skillLabel,
+          levelOrder: item.levelOrder,
+          levelMark: item.levelMark,
+          levelLabel: item.levelLabel,
+          item,
+        });
+        tracksByKey.set(key, track);
+      });
+    });
+
+  return [...tracksByKey.values()]
+    .map((track) => ({
+      ...track,
+      points: track.points.sort((first, second) => first.date.localeCompare(second.date)),
+    }))
+    .sort((first, second) => (
+      first.unitTitle.localeCompare(second.unitTitle)
+      || first.skillLabel.localeCompare(second.skillLabel)
+    ));
+}
+
+function getUnitCaptureTrackGroups(clusters, selectedUnitIds) {
+  const groupsByUnit = new Map();
+
+  getCapturePointTracks(clusters, selectedUnitIds).forEach((track) => {
+    const group = groupsByUnit.get(track.unitTitle) || {
+      id: track.unitTitle,
+      title: track.unitTitle,
+      tracks: [],
+    };
+
+    group.tracks.push(track);
+    groupsByUnit.set(track.unitTitle, group);
+  });
+
+  return [...groupsByUnit.values()].sort((first, second) => first.title.localeCompare(second.title));
 }
 
 function layoutObservationClusters(clusters) {
@@ -453,9 +570,11 @@ function TimelineRow({ label, minHeight = 70, children }) {
         borderTop: '1px solid rgba(23, 21, 26, 0.07)',
       }}
     >
-      <Typography sx={{ color: mutedText, fontSize: 12.2, fontWeight: 850, lineHeight: 1.2 }}>
-        {label}
-      </Typography>
+      {typeof label === 'string' ? (
+        <Typography sx={{ color: mutedText, fontSize: 12.2, fontWeight: 850, lineHeight: 1.2 }}>
+          {label}
+        </Typography>
+      ) : label}
       <Box sx={{ position: 'relative', minHeight: 52 }}>
         {children}
       </Box>
@@ -465,6 +584,16 @@ function TimelineRow({ label, minHeight = 70, children }) {
 
 function EmptyRow() {
   return <Box sx={{ width: 24, height: 2, mt: 1, borderRadius: 999, bgcolor: 'rgba(23, 21, 26, 0.16)' }} />;
+}
+
+function SelectCaptureUnitPrompt() {
+  return (
+    <Box sx={{ py: 0.8 }}>
+      <Typography sx={{ color: 'rgba(23, 21, 26, 0.42)', fontSize: 12.2, fontWeight: 760 }}>
+        Select one or more units to compare.
+      </Typography>
+    </Box>
+  );
 }
 
 function LearningObservationGraph({ events, areas, range, language }) {
@@ -597,6 +726,132 @@ function LearningObservationGraph({ events, areas, range, language }) {
   );
 }
 
+function UnitCaptureTrendGraph({ clusters, range, language, selectedUnitIds }) {
+  const groups = getUnitCaptureTrackGroups(clusters, selectedUnitIds);
+
+  if (!groups.length) {
+    return <EmptyRow />;
+  }
+
+  return (
+    <Stack spacing={1}>
+      {groups.map((group) => (
+        <Box
+          key={group.id}
+          sx={{
+            p: 1,
+            borderRadius: '9px',
+            border: '1px solid rgba(156, 40, 175, 0.14)',
+            bgcolor: 'rgba(156, 40, 175, 0.025)',
+          }}
+        >
+          <Typography sx={{ color: purple, fontSize: 11.8, fontWeight: 900, lineHeight: 1.15 }}>
+            {group.title}
+          </Typography>
+          <Stack spacing={0.85} sx={{ mt: 0.75 }}>
+            {group.tracks.map((track) => {
+              const points = track.points.map((point) => ({
+                ...point,
+                x: getPosition(point.date, range),
+                y: getLevelY(point.levelOrder),
+              }));
+              const path = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+
+              return (
+                <Box
+                  key={track.id}
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: '112px minmax(0, 1fr)',
+                    gap: 1.1,
+                    alignItems: 'center',
+                  }}
+                >
+                  <Typography sx={{ color: darkText, fontSize: 12.1, fontWeight: 850, lineHeight: 1.12, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {track.skillLabel}
+                  </Typography>
+                  <Box sx={{ position: 'relative', width: '100%', height: 44 }}>
+                    <Box
+                      component="svg"
+                      viewBox="0 0 100 52"
+                      preserveAspectRatio="none"
+                      role="img"
+                      aria-label={`${track.unitTitle}: ${track.skillLabel}`}
+                      sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'block',
+                        width: '100%',
+                        height: '100%',
+                        overflow: 'visible',
+                      }}
+                    >
+                      {points.length > 1 ? (
+                        <path
+                          d={path}
+                          fill="none"
+                          stroke="rgba(156, 40, 175, 0.45)"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          vectorEffect="non-scaling-stroke"
+                        />
+                      ) : null}
+                    </Box>
+                    {points.map((point) => (
+                      <Tooltip
+                        key={point.id}
+                        arrow
+                        placement="top"
+                        title={(
+                          <Stack spacing={0.45}>
+                            <Typography sx={{ color: '#fff', fontSize: 11.8, fontWeight: 850, lineHeight: 1.2 }}>
+                              {point.unitTitle}
+                            </Typography>
+                            <Typography sx={{ color: 'rgba(255, 255, 255, 0.82)', fontSize: 11.2, lineHeight: 1.2 }}>
+                              {formatShortDate(point.date, language)}
+                            </Typography>
+                            <Typography sx={{ color: 'rgba(255, 255, 255, 0.88)', fontSize: 11.2, lineHeight: 1.25 }}>
+                              {point.levelMark} {point.skillLabel}
+                            </Typography>
+                          </Stack>
+                        )}
+                      >
+                        <Typography
+                          component="span"
+                          aria-label={`${point.unitTitle}, ${point.skillLabel}: ${point.levelLabel}`}
+                          sx={{
+                            position: 'absolute',
+                            left: `${point.x}%`,
+                            top: `${(point.y / 52) * 100}%`,
+                            color: purple,
+                            fontSize: 18,
+                            fontWeight: 900,
+                            lineHeight: 1,
+                            transform: 'translate(-50%, -50%)',
+                            cursor: 'default',
+                            transition: 'transform 120ms ease, text-shadow 120ms ease',
+                            '&:hover': {
+                              transform: 'translate(-50%, -50%) scale(1.18)',
+                              textShadow: '0 0 0 rgba(156, 40, 175, 0.16)',
+                            },
+                          }}
+                        >
+                          {point.levelMark}
+                        </Typography>
+                      </Tooltip>
+                    ))}
+                  </Box>
+                </Box>
+              );
+            })}
+          </Stack>
+        </Box>
+      ))}
+    </Stack>
+  );
+}
+
 export default function ClassPictureExpandedView({
   student,
   evidenceItems,
@@ -611,6 +866,8 @@ export default function ClassPictureExpandedView({
   language,
 }) {
   const [selectedMonthDate, setSelectedMonthDate] = useState('');
+  const [lessonCaptureExpanded, setLessonCaptureExpanded] = useState(false);
+  const [selectedCaptureUnitIds, setSelectedCaptureUnitIds] = useState([]);
   const timeline = buildTimelineData({
     student,
     evidenceItems,
@@ -631,13 +888,29 @@ export default function ClassPictureExpandedView({
   const visibleObservationClusters = layoutObservationClusters(
     getObservationClusters(timeline.observations).filter((cluster) => isDateInRange(cluster.date, visibleRange)),
   );
+  const captureUnitOptions = getCaptureUnitOptions(visibleObservationClusters, teachingUnits, language);
+  const allCaptureUnitIds = captureUnitOptions.map((unit) => unit.id);
+  const visibleSelectedCaptureUnitIds = selectedCaptureUnitIds.filter((unitId) => allCaptureUnitIds.includes(unitId));
+  const effectiveSelectedCaptureUnitIds = visibleSelectedCaptureUnitIds;
   const visibleAssessments = timeline.assessments.filter((item) => isDateInRange(item.date, visibleRange));
   const visibleTeachingResponses = timeline.teachingResponses.filter((item) => isDateInRange(item.date, visibleRange));
   const zoomed = Boolean(selectedMonthDate);
   const classContentLaneCount = Math.max(1, ...visibleUnits.map((unit) => unit.lane + 1));
   const classContentRowHeight = Math.max(70, 34 + (classContentLaneCount * 34));
   const lessonCaptureLaneCount = Math.max(1, ...visibleObservationClusters.map((cluster) => cluster.lane + 1));
-  const lessonCaptureRowHeight = Math.max(70, 34 + (lessonCaptureLaneCount * (zoomed ? 48 : 36)));
+  const lessonCaptureTrackCount = Math.max(1, getCapturePointTracks(visibleObservationClusters, effectiveSelectedCaptureUnitIds).length);
+  const lessonCaptureRowHeight = lessonCaptureExpanded
+    ? Math.max(132, 72 + (lessonCaptureTrackCount * 55))
+    : Math.max(70, 34 + (lessonCaptureLaneCount * (zoomed ? 48 : 36)));
+
+  function toggleCaptureUnit(unitId) {
+    setSelectedCaptureUnitIds((currentIds) => {
+      const currentSelection = currentIds.filter((id) => allCaptureUnitIds.includes(id));
+      return currentSelection.includes(unitId)
+        ? currentSelection.filter((id) => id !== unitId)
+        : [...currentSelection, unitId];
+    });
+  }
 
   return (
     <Box
@@ -737,17 +1010,77 @@ export default function ClassPictureExpandedView({
           />
         </TimelineRow>
 
-        <TimelineRow label="Lesson capture" minHeight={lessonCaptureRowHeight}>
-          {visibleObservationClusters.length ? visibleObservationClusters.map((cluster) => (
-            <LessonCaptureCluster
-              key={cluster.id}
-              cluster={cluster}
-              range={visibleRange}
-              language={language}
-              zoomed={zoomed}
-              onZoom={setSelectedMonthDate}
-            />
-          )) : <EmptyRow />}
+        <TimelineRow
+          label={(
+            <ButtonBase
+              type="button"
+              onClick={() => setLessonCaptureExpanded((isExpanded) => !isExpanded)}
+              aria-expanded={lessonCaptureExpanded}
+              sx={{
+                justifyContent: 'flex-start',
+                gap: 0.3,
+                color: mutedText,
+                borderRadius: '7px',
+                textAlign: 'left',
+                '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+              }}
+            >
+              <KeyboardArrowDownIcon sx={{ fontSize: 16, transform: lessonCaptureExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 140ms ease' }} />
+              <Typography sx={{ color: 'inherit', fontSize: 12.2, fontWeight: 850, lineHeight: 1.2 }}>
+                Lesson capture
+              </Typography>
+            </ButtonBase>
+          )}
+          minHeight={lessonCaptureRowHeight}
+        >
+          {lessonCaptureExpanded ? (
+            <Stack spacing={1.05}>
+              <Stack direction="row" spacing={0.45} alignItems="center" flexWrap="wrap" useFlexGap>
+                {captureUnitOptions.map((unit) => {
+                  const selected = effectiveSelectedCaptureUnitIds.includes(unit.id);
+
+                  return (
+                    <ButtonBase
+                      key={unit.id}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => toggleCaptureUnit(unit.id)}
+                      sx={{
+                        px: 0.75,
+                        py: 0.35,
+                        borderRadius: '999px',
+                        border: selected ? `1px solid ${purple}` : '1px solid rgba(23, 21, 26, 0.12)',
+                        bgcolor: selected ? 'rgba(156, 40, 175, 0.08)' : '#fff',
+                        color: selected ? purple : mutedText,
+                        '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                      }}
+                    >
+                      <Typography sx={{ color: 'inherit', fontSize: 11.6, fontWeight: 850, lineHeight: 1.1 }}>
+                        {unit.title}
+                      </Typography>
+                    </ButtonBase>
+                  );
+                })}
+              </Stack>
+              {effectiveSelectedCaptureUnitIds.length ? (
+                <UnitCaptureTrendGraph
+                  clusters={visibleObservationClusters}
+                  range={visibleRange}
+                  language={language}
+                  selectedUnitIds={effectiveSelectedCaptureUnitIds}
+                />
+              ) : <SelectCaptureUnitPrompt />}
+            </Stack>
+          ) : visibleObservationClusters.length ? visibleObservationClusters.map((cluster) => (
+              <LessonCaptureCluster
+                key={cluster.id}
+                cluster={cluster}
+                range={visibleRange}
+                language={language}
+                zoomed={zoomed}
+                onZoom={setSelectedMonthDate}
+              />
+            )) : <EmptyRow />}
         </TimelineRow>
 
         <TimelineRow label="Assessments">
