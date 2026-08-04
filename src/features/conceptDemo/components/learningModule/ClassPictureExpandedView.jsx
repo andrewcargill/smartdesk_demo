@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import NotesIcon from '@mui/icons-material/Notes';
 import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
 import SquareIcon from '@mui/icons-material/Square';
-import { Box, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, ButtonBase, Stack, Tooltip, Typography } from '@mui/material';
 import AssessmentPieChart from './AssessmentPieChart.jsx';
 
 const purple = '#9c28af';
@@ -42,6 +43,26 @@ function getPosition(date, range) {
   const span = Math.max(end - start, 1);
 
   return Math.max(0, Math.min(100, ((current - start) / span) * 100));
+}
+
+function isDateInRange(date, range) {
+  return Boolean(date) && date >= range.start && date <= range.end;
+}
+
+function isSpanInRange(startDate, endDate, range) {
+  return Boolean(startDate && endDate) && startDate <= range.end && endDate >= range.start;
+}
+
+function getMonthRange(date) {
+  const start = new Date(`${date}T12:00:00`);
+  const end = new Date(`${date}T12:00:00`);
+  start.setDate(1);
+  end.setMonth(end.getMonth() + 1, 0);
+
+  return {
+    start: start.toISOString().slice(0, 10),
+    end: end.toISOString().slice(0, 10),
+  };
 }
 
 function getObservationY(value) {
@@ -134,6 +155,7 @@ function buildTimelineData({
         skillLabel: getLocalizedValue(skill?.label || skill?.title, language) || item.skillId || item.capturePointId || '',
         levelLabel: getLocalizedValue(level?.label, language) || item.levelId || '',
         levelMark: getLevelMark(level),
+        levelOrder: level?.order || 1,
       };
     });
   const assessments = getAssessmentEvents(evidenceItems, studentId).filter((item) => item.date);
@@ -240,6 +262,41 @@ function getObservationClusters(observations) {
     .sort((first, second) => first.date.localeCompare(second.date));
 }
 
+function layoutObservationClusters(clusters) {
+  const countsByDate = new Map();
+
+  return (clusters || []).map((cluster) => {
+    const lane = countsByDate.get(cluster.date) || 0;
+    countsByDate.set(cluster.date, lane + 1);
+
+    return {
+      ...cluster,
+      lane,
+    };
+  });
+}
+
+function layoutUnitSpans(units) {
+  const laneEndDates = [];
+
+  return [...(units || [])]
+    .sort((first, second) => (
+      first.startDate.localeCompare(second.startDate)
+      || first.endDate.localeCompare(second.endDate)
+      || first.title.localeCompare(second.title)
+    ))
+    .map((unit) => {
+      const lane = laneEndDates.findIndex((endDate) => endDate < unit.startDate);
+      const assignedLane = lane === -1 ? laneEndDates.length : lane;
+      laneEndDates[assignedLane] = unit.endDate;
+
+      return {
+        ...unit,
+        lane: assignedLane,
+      };
+    });
+}
+
 function TimelineIcon({ type }) {
   if (type === 'assessment') {
     return <SquareIcon sx={{ color: purple, fontSize: 13, transform: 'rotate(45deg)' }} />;
@@ -301,8 +358,10 @@ function AssessmentTimelineItem({ item, range, language }) {
   );
 }
 
-function LessonCaptureCluster({ cluster, range, language }) {
-  const visibleMarks = cluster.items.slice(0, 6);
+function LessonCaptureCluster({ cluster, range, language, zoomed, onZoom }) {
+  const sortedByLevel = [...cluster.items].sort((first, second) => (first.levelOrder || 1) - (second.levelOrder || 1));
+  const summaryItem = sortedByLevel[Math.floor(sortedByLevel.length / 2)] || cluster.items[0];
+  const visibleMarks = zoomed ? cluster.items.slice(0, 6) : [summaryItem].filter(Boolean);
   const hiddenCount = Math.max(0, cluster.items.length - visibleMarks.length);
 
   return (
@@ -310,7 +369,7 @@ function LessonCaptureCluster({ cluster, range, language }) {
       sx={{
         position: 'absolute',
         left: `${getPosition(cluster.date, range)}%`,
-        top: 0,
+        top: cluster.lane * (zoomed ? 48 : 36),
         width: 132,
         maxWidth: 132,
         transform: 'translateX(-8px)',
@@ -337,7 +396,20 @@ function LessonCaptureCluster({ cluster, range, language }) {
           </Stack>
         )}
       >
-        <Box sx={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0.35, cursor: 'default' }}>
+        <ButtonBase
+          type="button"
+          onClick={() => onZoom?.(cluster.date)}
+          sx={{
+            display: 'inline-flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            gap: 0.35,
+            cursor: zoomed ? 'default' : 'zoom-in',
+            textAlign: 'left',
+            borderRadius: '7px',
+            '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+          }}
+        >
           <Typography sx={{ color: darkText, fontSize: 11.8, fontWeight: 850, lineHeight: 1.15, maxWidth: 120, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {cluster.unitTitle}
           </Typography>
@@ -359,24 +431,24 @@ function LessonCaptureCluster({ cluster, range, language }) {
             ))}
             {!!hiddenCount && (
               <Typography component="span" sx={{ color: mutedText, fontSize: 10.8, fontWeight: 850, lineHeight: 1 }}>
-                +{hiddenCount}
+                {zoomed ? `+${hiddenCount}` : `x${cluster.items.length}`}
               </Typography>
             )}
           </Stack>
-        </Box>
+        </ButtonBase>
       </Tooltip>
     </Box>
   );
 }
 
-function TimelineRow({ label, children }) {
+function TimelineRow({ label, minHeight = 70, children }) {
   return (
     <Box
       sx={{
         display: 'grid',
         gridTemplateColumns: '132px minmax(0, 1fr)',
         gap: 1.2,
-        minHeight: 70,
+        minHeight,
         py: 0.9,
         borderTop: '1px solid rgba(23, 21, 26, 0.07)',
       }}
@@ -538,6 +610,7 @@ export default function ClassPictureExpandedView({
   levels,
   language,
 }) {
+  const [selectedMonthDate, setSelectedMonthDate] = useState('');
   const timeline = buildTimelineData({
     student,
     evidenceItems,
@@ -552,7 +625,19 @@ export default function ClassPictureExpandedView({
     language,
   });
   const monthMarkers = getMonthMarkers(timeline.range);
-  const observationClusters = getObservationClusters(timeline.observations);
+  const visibleRange = selectedMonthDate ? getMonthRange(selectedMonthDate) : timeline.range;
+  const visibleUnits = layoutUnitSpans(timeline.units.filter((unit) => isSpanInRange(unit.startDate, unit.endDate, visibleRange)));
+  const visibleLearningEvents = timeline.learningEvents.filter((item) => isDateInRange(item.date, visibleRange));
+  const visibleObservationClusters = layoutObservationClusters(
+    getObservationClusters(timeline.observations).filter((cluster) => isDateInRange(cluster.date, visibleRange)),
+  );
+  const visibleAssessments = timeline.assessments.filter((item) => isDateInRange(item.date, visibleRange));
+  const visibleTeachingResponses = timeline.teachingResponses.filter((item) => isDateInRange(item.date, visibleRange));
+  const zoomed = Boolean(selectedMonthDate);
+  const classContentLaneCount = Math.max(1, ...visibleUnits.map((unit) => unit.lane + 1));
+  const classContentRowHeight = Math.max(70, 34 + (classContentLaneCount * 34));
+  const lessonCaptureLaneCount = Math.max(1, ...visibleObservationClusters.map((cluster) => cluster.lane + 1));
+  const lessonCaptureRowHeight = Math.max(70, 34 + (lessonCaptureLaneCount * (zoomed ? 48 : 36)));
 
   return (
     <Box
@@ -565,32 +650,57 @@ export default function ClassPictureExpandedView({
     >
       <Box sx={{ minWidth: 780 }}>
         <Box sx={{ display: 'grid', gridTemplateColumns: '132px minmax(0, 1fr)', gap: 1.2, pb: 0.75 }}>
-          <Box />
-          <Box sx={{ position: 'relative', height: 28 }}>
-            {monthMarkers.map((date) => (
-              <Typography
-                key={date}
+          <Box>
+            {zoomed ? (
+              <ButtonBase
+                type="button"
+                onClick={() => setSelectedMonthDate('')}
                 sx={{
-                  position: 'absolute',
-                  left: `${getPosition(date, timeline.range)}%`,
-                  transform: 'translateX(-1px)',
-                  color: mutedText,
-                  fontSize: 12,
-                  fontWeight: 850,
-                  textTransform: 'capitalize',
+                  px: 0.65,
+                  py: 0.35,
+                  borderRadius: '7px',
+                  color: purple,
+                  bgcolor: 'rgba(156, 40, 175, 0.06)',
+                  '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
                 }}
               >
-                {formatMonth(date, language)}
-              </Typography>
+                <Typography sx={{ fontSize: 11.5, fontWeight: 880, lineHeight: 1 }}>
+                  Overview
+                </Typography>
+              </ButtonBase>
+            ) : null}
+          </Box>
+          <Box sx={{ position: 'relative', height: 28 }}>
+            {(zoomed ? getMonthMarkers(visibleRange) : monthMarkers).map((date) => (
+              <ButtonBase
+                key={date}
+                type="button"
+                onClick={() => setSelectedMonthDate(date)}
+                sx={{
+                  position: 'absolute',
+                  left: `${getPosition(date, visibleRange)}%`,
+                  transform: 'translateX(-1px)',
+                  borderRadius: '7px',
+                  px: 0.3,
+                  py: 0.15,
+                  color: zoomed ? purple : mutedText,
+                  '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                }}
+              >
+                <Typography sx={{ fontSize: 12, fontWeight: 850, textTransform: 'capitalize', lineHeight: 1.2 }}>
+                  {formatMonth(date, language)}
+                </Typography>
+              </ButtonBase>
             ))}
           </Box>
         </Box>
 
-        <TimelineRow label="Class content">
-          <Box sx={{ position: 'absolute', top: 13, left: 0, right: 0, height: 2, bgcolor: 'rgba(23, 21, 26, 0.12)' }} />
-          {timeline.units.length ? timeline.units.map((unit) => {
-            const left = getPosition(unit.startDate, timeline.range);
-            const right = getPosition(unit.endDate, timeline.range);
+        <TimelineRow label="Class content" minHeight={classContentRowHeight}>
+          {visibleUnits.length ? visibleUnits.map((unit) => {
+            const clippedStart = unit.startDate < visibleRange.start ? visibleRange.start : unit.startDate;
+            const clippedEnd = unit.endDate > visibleRange.end ? visibleRange.end : unit.endDate;
+            const left = getPosition(clippedStart, visibleRange);
+            const right = getPosition(clippedEnd, visibleRange);
             return (
               <Box
                 key={unit.id}
@@ -598,7 +708,7 @@ export default function ClassPictureExpandedView({
                   position: 'absolute',
                   left: `${left}%`,
                   width: `${Math.max(right - left, 8)}%`,
-                  top: 4,
+                  top: unit.lane * 34,
                 }}
               >
                 <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 850, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -612,28 +722,35 @@ export default function ClassPictureExpandedView({
 
         <TimelineRow label="Learning observations">
           <LearningObservationGraph
-            events={timeline.learningEvents}
+            events={visibleLearningEvents}
             areas={learningObservationAreas}
-            range={timeline.range}
+            range={visibleRange}
             language={language}
           />
         </TimelineRow>
 
-        <TimelineRow label="Lesson capture">
-          {observationClusters.length ? observationClusters.map((cluster) => (
-            <LessonCaptureCluster key={cluster.id} cluster={cluster} range={timeline.range} language={language} />
+        <TimelineRow label="Lesson capture" minHeight={lessonCaptureRowHeight}>
+          {visibleObservationClusters.length ? visibleObservationClusters.map((cluster) => (
+            <LessonCaptureCluster
+              key={cluster.id}
+              cluster={cluster}
+              range={visibleRange}
+              language={language}
+              zoomed={zoomed}
+              onZoom={setSelectedMonthDate}
+            />
           )) : <EmptyRow />}
         </TimelineRow>
 
         <TimelineRow label="Assessments">
-          {timeline.assessments.length ? timeline.assessments.map((item) => (
-            <AssessmentTimelineItem key={item.id} item={item} range={timeline.range} language={language} />
+          {visibleAssessments.length ? visibleAssessments.map((item) => (
+            <AssessmentTimelineItem key={item.id} item={item} range={visibleRange} language={language} />
           )) : <EmptyRow />}
         </TimelineRow>
 
         <TimelineRow label="Teaching response">
-          {timeline.teachingResponses.length ? timeline.teachingResponses.map((item) => (
-            <TimelineItem key={item.id} item={item} range={timeline.range} type="response">
+          {visibleTeachingResponses.length ? visibleTeachingResponses.map((item) => (
+            <TimelineItem key={item.id} item={item} range={visibleRange} type="response">
               <Typography sx={{ color: darkText, fontSize: 12.2, fontWeight: 780, lineHeight: 1.25 }}>
                 {item.text}
               </Typography>
