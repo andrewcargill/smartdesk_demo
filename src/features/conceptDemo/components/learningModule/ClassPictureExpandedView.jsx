@@ -2,6 +2,7 @@ import NotesIcon from '@mui/icons-material/Notes';
 import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
 import SquareIcon from '@mui/icons-material/Square';
 import { Box, Stack, Tooltip, Typography } from '@mui/material';
+import AssessmentPieChart from './AssessmentPieChart.jsx';
 
 const purple = '#9c28af';
 const darkText = '#17151a';
@@ -86,8 +87,17 @@ function getAssessmentEvents(evidenceItems, studentId) {
         date: assessment.date,
         title: assessment.title,
         teachingUnitId: assessment.teachingUnitId,
+        max: assessment.max,
+        maxScore: assessment.maxScore,
+        pass: assessment.pass,
+        passScore: assessment.passScore,
+        score: result.score,
+        actualValue: result.actualValue,
+        rawResult: result.rawResult,
         percentage: result.percentage,
         absent: result.absent,
+        warning: result.warning,
+        passed: result.passed,
       })));
 }
 
@@ -218,6 +228,31 @@ function TimelineItem({ item, range, type, children }) {
         <Box sx={{ minWidth: 0 }}>
           {children}
         </Box>
+      </Stack>
+    </Box>
+  );
+}
+
+function AssessmentTimelineItem({ item, range, language }) {
+  return (
+    <Box
+      sx={{
+        position: 'absolute',
+        left: `${getPosition(item.date, range)}%`,
+        top: 0,
+        width: 120,
+        maxWidth: 120,
+        transform: 'translateX(-17px)',
+      }}
+    >
+      <Stack spacing={0.45} alignItems="flex-start">
+        <AssessmentPieChart assessment={item} size={34} />
+        <Typography sx={{ color: darkText, fontSize: 11.8, fontWeight: 850, lineHeight: 1.15, maxWidth: 106 }}>
+          {getLocalizedValue(item.title, language)}
+        </Typography>
+        <Typography sx={{ color: mutedText, fontSize: 11.1, lineHeight: 1.1 }}>
+          {formatShortDate(item.date, language)}
+        </Typography>
       </Stack>
     </Box>
   );
@@ -483,14 +518,7 @@ export default function ClassPictureExpandedView({
 
         <TimelineRow label="Assessments">
           {timeline.assessments.length ? timeline.assessments.map((item) => (
-            <TimelineItem key={item.id} item={item} range={timeline.range} type="assessment">
-              <Typography sx={{ color: darkText, fontSize: 12.2, fontWeight: 850, lineHeight: 1.2 }}>
-                {getLocalizedValue(item.title, language)}
-              </Typography>
-              <Typography sx={{ mt: 0.15, color: mutedText, fontSize: 11.5 }}>
-                {item.absent ? 'Absent' : `${item.percentage}%`}
-              </Typography>
-            </TimelineItem>
+            <AssessmentTimelineItem key={item.id} item={item} range={timeline.range} language={language} />
           )) : <EmptyRow />}
         </TimelineRow>
 

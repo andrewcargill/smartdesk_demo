@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
-import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
 import { Box, ButtonBase, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material';
+import AssessmentPieChart, { getAssessmentPieHoverText } from './AssessmentPieChart.jsx';
 
 const purple = '#9c28af';
 const darkText = '#17151a';
-const absentOrange = '#b85c00';
 
 function fallbackT(key, values = {}) {
   const fallbacks = {
@@ -85,52 +83,6 @@ function getSortedAssessments(summary) {
     }))
     .filter((item) => item.absent || item.percentage !== null)
     .sort((first, second) => (first.date || '').localeCompare(second.date || ''));
-}
-
-function getAssessmentPassPercentage(assessment) {
-  const maxScore = Number(assessment.maxScore ?? assessment.max);
-  const passScore = Number(assessment.passScore ?? assessment.pass);
-
-  return Number.isFinite(maxScore) && maxScore > 0 && Number.isFinite(passScore)
-    ? Math.max(0, Math.min(100, (passScore / maxScore) * 100))
-    : null;
-}
-
-function isAssessmentNotPassed(assessment) {
-  const passPercentage = getAssessmentPassPercentage(assessment);
-
-  return !assessment.absent && (
-    Boolean(assessment.warning)
-    || assessment.passed === false
-    || (passPercentage !== null && Number(assessment.percentage) < passPercentage)
-  );
-}
-
-function formatAssessmentHoverValue(value, fallback = '-') {
-  const numberValue = Number(value);
-
-  if (!Number.isFinite(numberValue)) {
-    return fallback;
-  }
-
-  return Number.isInteger(numberValue) ? String(numberValue) : String(numberValue);
-}
-
-function getAssessmentPieHoverText(assessment, t = fallbackT) {
-  if (assessment.absent) {
-    return t('learningModule.classPicture.studentAbsentAssessment');
-  }
-
-  const score = assessment.actualValue ?? assessment.rawResult ?? assessment.score ?? assessment.percentage;
-  const passScore = assessment.passScore ?? assessment.pass;
-  const maxScore = assessment.maxScore ?? assessment.max;
-  const text = t('learningModule.classPicture.scorePassMax', {
-    score: formatAssessmentHoverValue(score),
-    pass: formatAssessmentHoverValue(passScore),
-    max: formatAssessmentHoverValue(maxScore),
-  });
-
-  return isAssessmentNotPassed(assessment) ? `${t('learningModule.classPicture.notPassed')} - ${text}` : text;
 }
 
 function getObservationTimestamp(item) {
@@ -239,108 +191,6 @@ function normaliseObservationFocuses({ configuredFocuses = [], observations = []
     representedConfiguredFocusCount: representedConfiguredOptions.length,
     otherObservationCount: otherFocus.observations.length,
   };
-}
-
-function AssessmentPie({ assessment, size = 86, onEditAssessment, t = fallbackT }) {
-  const passPercentage = getAssessmentPassPercentage(assessment);
-  const passRadians = passPercentage !== null ? (passPercentage / 100) * Math.PI * 2 : null;
-  const hoverText = getAssessmentPieHoverText(assessment, t);
-  const notPassed = isAssessmentNotPassed(assessment);
-  const canEditAssessment = typeof onEditAssessment === 'function';
-  const percentage = assessment.absent || !Number.isFinite(Number(assessment.percentage))
-    ? 0
-    : Math.max(0, Math.min(100, Number(assessment.percentage)));
-  const passMarker = passRadians !== null
-    ? (() => {
-      const radial = { x: Math.sin(passRadians), y: -Math.cos(passRadians) };
-      const tangent = { x: Math.cos(passRadians), y: Math.sin(passRadians) };
-      const tip = { x: 50 + radial.x * 38, y: 50 + radial.y * 38 };
-      const base = { x: 50 + radial.x * 49, y: 50 + radial.y * 49 };
-      const halfWidth = 6.1;
-      const leftBase = { x: base.x + tangent.x * halfWidth, y: base.y + tangent.y * halfWidth };
-      const rightBase = { x: base.x - tangent.x * halfWidth, y: base.y - tangent.y * halfWidth };
-
-      return {
-        tip,
-        leftBase,
-        rightBase,
-        points: [`${tip.x},${tip.y}`, `${leftBase.x},${leftBase.y}`, `${rightBase.x},${rightBase.y}`].join(' '),
-      };
-    })()
-    : null;
-
-  return (
-    <Tooltip title={hoverText} arrow>
-      <Box
-        role={canEditAssessment ? 'button' : undefined}
-        tabIndex={canEditAssessment ? 0 : undefined}
-        onClick={canEditAssessment ? () => onEditAssessment(assessment) : undefined}
-        onKeyDown={canEditAssessment ? (event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            onEditAssessment(assessment);
-          }
-        } : undefined}
-        sx={{
-          width: size,
-          height: size,
-          borderRadius: '50%',
-          flexShrink: 0,
-          display: 'grid',
-          placeItems: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-          cursor: canEditAssessment ? 'pointer' : 'default',
-          color: assessment.absent ? absentOrange : notPassed ? '#d32f2f' : purple,
-          background: assessment.absent
-            ? 'rgba(184, 92, 0, 0.08)'
-            : `conic-gradient(${purple} 0 ${percentage}%, rgba(156, 40, 175, 0.12) ${percentage}% 100%)`,
-          boxShadow: assessment.absent
-            ? 'inset 0 0 0 1px rgba(184, 92, 0, 0.34)'
-            : notPassed
-              ? 'inset 0 0 0 2px rgba(211, 47, 47, 0.38)'
-              : 'inset 0 0 0 1px rgba(156, 40, 175, 0.28)',
-          transition: 'transform 140ms ease, box-shadow 140ms ease',
-          '&:focus-visible': {
-            outline: `2px solid ${purple}`,
-            outlineOffset: 3,
-          },
-          '&:hover': {
-            transform: 'scale(1.04)',
-            boxShadow: assessment.absent
-              ? 'inset 0 0 0 1px rgba(184, 92, 0, 0.5), 0 10px 24px rgba(184, 92, 0, 0.12)'
-              : notPassed
-                ? 'inset 0 0 0 2px rgba(211, 47, 47, 0.5), 0 10px 24px rgba(211, 47, 47, 0.1)'
-                : 'inset 0 0 0 1px rgba(156, 40, 175, 0.45), 0 10px 24px rgba(156, 40, 175, 0.13)',
-          },
-        }}
-      >
-        {passMarker && !assessment.absent && (
-          <Box component="svg" aria-hidden="true" viewBox="0 0 100 100" sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'none' }}>
-            <polygon points={passMarker.points} fill="#fff" />
-            <line x1={passMarker.tip.x} y1={passMarker.tip.y} x2={passMarker.leftBase.x} y2={passMarker.leftBase.y} stroke="rgba(156, 40, 175, 0.28)" strokeWidth="1.4" strokeLinecap="round" />
-            <line x1={passMarker.tip.x} y1={passMarker.tip.y} x2={passMarker.rightBase.x} y2={passMarker.rightBase.y} stroke="rgba(156, 40, 175, 0.28)" strokeWidth="1.4" strokeLinecap="round" />
-            <line x1={passMarker.leftBase.x} y1={passMarker.leftBase.y} x2={passMarker.rightBase.x} y2={passMarker.rightBase.y} stroke="#fff" strokeWidth="2.2" strokeLinecap="round" />
-          </Box>
-        )}
-        {assessment.absent && <PersonOffOutlinedIcon sx={{ position: 'relative', zIndex: 2, fontSize: Math.round(size * 0.38) }} />}
-        {!assessment.absent && notPassed && (
-          <ErrorOutlineIcon
-            sx={{
-              position: 'absolute',
-              right: Math.max(5, Math.round(size * 0.08)),
-              bottom: Math.max(5, Math.round(size * 0.08)),
-              zIndex: 2,
-              fontSize: Math.round(size * 0.28),
-              color: '#d32f2f',
-              bgcolor: '#fff',
-              borderRadius: '50%',
-            }}
-          />
-        )}
-      </Box>
-    </Tooltip>
-  );
 }
 
 function getAssessmentStats(assessments) {
@@ -686,7 +536,7 @@ export default function StudentUnitInsightPanel({
                 <Stack direction="row" spacing={1.4} flexWrap="wrap" useFlexGap alignItems="flex-start">
                   {assessments.length ? assessments.map((assessment) => (
                     <Stack key={assessment.id || assessment.date} spacing={0.65} sx={{ width: 126 }}>
-                      <AssessmentPie assessment={assessment} onEditAssessment={onEditAssessment} t={t} />
+                      <AssessmentPieChart assessment={assessment} onEditAssessment={onEditAssessment} t={t} />
                       <Tooltip title={getAssessmentPieHoverText(assessment, t)} arrow>
                         <Stack direction="row" spacing={0.35} alignItems="center">
                           <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 850, lineHeight: 1.2, minWidth: 0 }}>
