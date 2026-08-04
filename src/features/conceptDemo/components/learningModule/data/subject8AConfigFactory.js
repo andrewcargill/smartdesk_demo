@@ -135,22 +135,61 @@ const subjectBlueprints = {
   },
   'physical-education': {
     areas: [
-      ['movement', 'Movement', 'R\u00f6relse'],
-      ['health', 'Health', 'H\u00e4lsa'],
-      ['training', 'Training', 'Tr\u00e4ning'],
-      ['collaboration', 'Collaboration', 'Samarbete'],
+      ['movement-adaption', 'Movement and adaption', 'R\u00f6relse och anpassning'],
+      ['outdoor-activities-adaption', 'Outdoor activities and adaption', 'Friluftsliv och anpassning'],
+      ['planning-implementation', 'Planning and implementation', 'Planering och genomf\u00f6rande'],
+      ['evaluation-health', 'Evaluation and health', 'Utv\u00e4rdering och h\u00e4lsa'],
+      ['safety-risk-management', 'Safety and risk management', 'S\u00e4kerhet och riskhantering'],
+      ['swimming-emergencies', 'Swimming and emergencies', 'Simning och n\u00f6dsituationer'],
     ],
     skills: [
+      ['balance-body-control', 'Balance and body control', 'Balans och kroppskontroll'],
       ['coordination', 'Coordination', 'Koordination'],
-      ['planning', 'Planning', 'Planering'],
-      ['evaluation', 'Evaluation', 'Utv\u00e4rdering'],
-      ['participation', 'Participation', 'Deltagande'],
+      ['timing-rhythm', 'Timing and rhythm', 'Timing och rytm'],
+      ['precision-movement-control', 'Precision and movement control', 'Precision och r\u00f6relsekontroll'],
+      ['adaptation-purpose-feedback', 'Adaptation to purpose and feedback', 'Anpassning till syfte och feedback'],
+      ['navigation-orientation', 'Navigation and orientation', 'Navigering och orientering'],
+      ['adaptation-environment-conditions', 'Adaptation to environment and conditions', 'Anpassning till milj\u00f6 och f\u00f6rh\u00e5llanden'],
+      ['practical-outdoor-skills', 'Practical outdoor skills', 'Praktiska friluftsf\u00e4rdigheter'],
+      ['responsibility-preparedness', 'Responsibility and preparedness', 'Ansvar och beredskap'],
+      ['sustainable-choices-outdoors', 'Sustainable choices outdoors', 'H\u00e5llbara val utomhus'],
+      ['sets-appropriate-goal', 'Sets an appropriate goal', 'S\u00e4tter ett l\u00e4mpligt m\u00e5l'],
+      ['selects-suitable-activities-methods', 'Selects suitable activities or methods', 'V\u00e4ljer l\u00e4mpliga aktiviteter eller metoder'],
+      ['creates-workable-plan', 'Creates a workable plan', 'Skapar en fungerande plan'],
+      ['carries-out-plan', 'Carries out the plan', 'Genomf\u00f6r planen'],
+      ['adjusts-plan-when-needed', 'Adjusts the plan when needed', 'Anpassar planen vid behov'],
+      ['describes-effects-activity', 'Describes effects of activity', 'Beskriver effekter av aktivitet'],
+      ['explains-relationships-affecting-health', 'Explains relationships affecting health', 'F\u00f6rklarar samband som p\u00e5verkar h\u00e4lsa'],
+      ['uses-relevant-concepts', 'Uses relevant concepts', 'Anv\u00e4nder relevanta begrepp'],
+      ['evaluates-choices-outcomes', 'Evaluates choices and outcomes', 'Utv\u00e4rderar val och resultat'],
+      ['suggests-relevant-improvements', 'Suggests relevant improvements', 'F\u00f6resl\u00e5r relevanta f\u00f6rb\u00e4ttringar'],
+      ['identifies-risks', 'Identifies risks', 'Identifierar risker'],
+      ['prepares-appropriately', 'Prepares appropriately', 'F\u00f6rbereder sig p\u00e5 l\u00e4mpligt s\u00e4tt'],
+      ['uses-equipment-methods-safely', 'Uses equipment and methods safely', 'Anv\u00e4nder utrustning och metoder s\u00e4kert'],
+      ['adapts-actions-conditions', 'Adapts actions to conditions', 'Anpassar handlingar efter f\u00f6rh\u00e5llanden'],
+      ['responds-appropriately', 'Responds appropriately when something happens', 'Agerar l\u00e4mpligt n\u00e4r n\u00e5got h\u00e4nder'],
+      ['continuous-swimming-ability', 'Continuous swimming ability', 'Simma sammanh\u00e4ngande'],
+      ['swimming-technique-control', 'Swimming technique and control', 'Simteknik och kontroll'],
+      ['water-safety', 'Water safety', 'Vattens\u00e4kerhet'],
+      ['emergency-action-land', 'Emergency action on land', 'N\u00f6d\u00e5tg\u00e4rder p\u00e5 land'],
+      ['emergency-action-water', 'Emergency action in water', 'N\u00f6d\u00e5tg\u00e4rder i vatten'],
     ],
     unitTitles: [
-      ['Movement and coordination', 'R\u00f6relse och koordination'],
-      ['Training methods', 'Tr\u00e4ningsmetoder'],
-      ['Health evaluation', 'H\u00e4lsoutv\u00e4rdering'],
+      ['Movement and adaption', 'R\u00f6relse och anpassning'],
+      ['Outdoor activities and adaption', 'Friluftsliv och anpassning'],
+      ['Planning and implementation', 'Planering och genomf\u00f6rande'],
+      ['Evaluation and health', 'Utv\u00e4rdering och h\u00e4lsa'],
+      ['Safety and risk management', 'S\u00e4kerhet och riskhantering'],
+      ['Swimming and emergencies', 'Simning och n\u00f6dsituationer'],
     ],
+    unitSkillIds: {
+      'movement-adaption': ['balance-body-control', 'coordination', 'timing-rhythm', 'precision-movement-control', 'adaptation-purpose-feedback'],
+      'outdoor-activities-adaption': ['navigation-orientation', 'adaptation-environment-conditions', 'practical-outdoor-skills', 'responsibility-preparedness', 'sustainable-choices-outdoors'],
+      'planning-implementation': ['sets-appropriate-goal', 'selects-suitable-activities-methods', 'creates-workable-plan', 'carries-out-plan', 'adjusts-plan-when-needed'],
+      'evaluation-health': ['describes-effects-activity', 'explains-relationships-affecting-health', 'uses-relevant-concepts', 'evaluates-choices-outcomes', 'suggests-relevant-improvements'],
+      'safety-risk-management': ['identifies-risks', 'prepares-appropriately', 'uses-equipment-methods-safely', 'adapts-actions-conditions', 'responds-appropriately'],
+      'swimming-emergencies': ['continuous-swimming-ability', 'swimming-technique-control', 'water-safety', 'emergency-action-land', 'emergency-action-water'],
+    },
   },
 };
 
@@ -415,13 +454,14 @@ function buildCurriculum(subjectId) {
   const teachingUnits = blueprint.unitTitles.map(([en, sv], index) => {
     const area = areas[index % areas.length];
     const unitSkills = skills.slice(index, index + 3);
+    const configuredUnitSkillIds = blueprint.unitSkillIds?.[area.id] || null;
 
     return {
       id: area.id,
       title: localized(en, sv),
       label: localized(en, sv),
       curriculumAreaId: area.id,
-      skillIds: unitSkills.length ? unitSkills.map((skill) => skill.id) : skills.slice(0, 3).map((skill) => skill.id),
+      skillIds: configuredUnitSkillIds || (unitSkills.length ? unitSkills.map((skill) => skill.id) : skills.slice(0, 3).map((skill) => skill.id)),
       order: index + 1,
     };
   });
@@ -472,7 +512,10 @@ function buildLessonSequence(subjectId, schedule, curriculum) {
 function buildEvidence(subjectId, curriculum) {
   const [firstUnit] = curriculum.teachingUnits;
   const students = class8AStudents;
-  const observations = students.flatMap((student, studentIndex) => {
+  const evidenceStudents = subjectId === 'physical-education'
+    ? students.filter((student) => student.id === 'elias-nilsson')
+    : students;
+  const observations = evidenceStudents.flatMap((student, studentIndex) => {
     const profile = studentProfiles[student.id] || studentProfiles['william-dahl'];
     const levelProgression = levelProgressions[profile.pattern] || levelProgressions.steady;
 
@@ -529,7 +572,7 @@ function buildEvidence(subjectId, curriculum) {
       teachingUnitId: unit.id,
       max: 20,
       pass: 10,
-      results: students.map((student) => {
+      results: evidenceStudents.map((student) => {
         const profile = studentProfiles[student.id] || studentProfiles['william-dahl'];
         const absent = absentAssessments[student.id]?.includes(assessmentIndex) || false;
         const score = absent ? null : (profile.assessmentScores[assessmentIndex] ?? 12);
@@ -590,41 +633,41 @@ function buildEvidence(subjectId, curriculum) {
     : [];
   const physicalEducationEliasObservationClusters = subjectId === 'physical-education'
     ? [
-      ['2026-01-22', 'movement', [
-        ['coordination', 'developing'],
-        ['planning', 'emerging'],
-        ['evaluation', 'developing'],
+      ['2026-01-22', 'movement-adaption', [
+        ['balance-body-control', 'developing'],
+        ['coordination', 'emerging'],
+        ['adaptation-purpose-feedback', 'developing'],
       ]],
-      ['2026-02-12', 'training', [
-        ['evaluation', 'developing'],
-        ['participation', 'secure'],
+      ['2026-02-12', 'planning-implementation', [
+        ['sets-appropriate-goal', 'developing'],
+        ['carries-out-plan', 'secure'],
       ]],
-      ['2026-02-12', 'health', [
-        ['planning', 'developing'],
-        ['evaluation', 'emerging'],
+      ['2026-02-12', 'outdoor-activities-adaption', [
+        ['navigation-orientation', 'developing'],
+        ['responsibility-preparedness', 'emerging'],
       ]],
-      ['2026-03-12', 'movement', [
+      ['2026-03-12', 'movement-adaption', [
         ['coordination', 'secure'],
-        ['planning', 'developing'],
-        ['evaluation', 'developing'],
+        ['timing-rhythm', 'developing'],
+        ['precision-movement-control', 'developing'],
       ]],
-      ['2026-04-16', 'training', [
-        ['evaluation', 'secure'],
-        ['participation', 'secure'],
+      ['2026-04-16', 'evaluation-health', [
+        ['describes-effects-activity', 'secure'],
+        ['evaluates-choices-outcomes', 'secure'],
       ]],
-      ['2026-04-16', 'health', [
-        ['planning', 'secure'],
-        ['evaluation', 'developing'],
-        ['participation', 'secure'],
+      ['2026-04-16', 'safety-risk-management', [
+        ['identifies-risks', 'secure'],
+        ['uses-equipment-methods-safely', 'developing'],
+        ['responds-appropriately', 'secure'],
       ]],
-      ['2026-05-14', 'movement', [
+      ['2026-05-14', 'movement-adaption', [
         ['coordination', 'secure'],
-        ['planning', 'secure'],
-        ['evaluation', 'secure'],
+        ['precision-movement-control', 'secure'],
+        ['adaptation-purpose-feedback', 'secure'],
       ]],
-      ['2026-05-14', 'training', [
-        ['evaluation', 'secure'],
-        ['participation', 'advanced'],
+      ['2026-05-14', 'swimming-emergencies', [
+        ['continuous-swimming-ability', 'secure'],
+        ['water-safety', 'advanced'],
       ]],
     ].flatMap(([date, teachingUnitId, captures], clusterIndex) => captures.map(([skillId, levelId], captureIndex) => ({
       id: `physical-education-8a-evidence-elias-extra-${clusterIndex + 1}-${captureIndex + 1}`,
@@ -636,7 +679,7 @@ function buildEvidence(subjectId, curriculum) {
       levelId,
     })))
     : [];
-  const learningObservations = students.flatMap((student) => {
+  const learningObservations = evidenceStudents.flatMap((student) => {
     const profile = studentProfiles[student.id] || studentProfiles['william-dahl'];
     const windows = getLearningObservationWindows(subjectId, student, profile);
 
