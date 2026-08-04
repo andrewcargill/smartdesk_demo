@@ -1329,6 +1329,7 @@ function ClassPictureEvidenceGridV1({
                         learningObservationAreas={learningObservationAreas}
                         skills={skills}
                         levels={levels}
+                        learningContexts={moduleConfig?.subjectId === 'physical-education' ? physicalEducationLearningContexts : []}
                         language={language}
                       />
                     )}
