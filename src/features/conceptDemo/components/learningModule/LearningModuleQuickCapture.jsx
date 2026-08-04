@@ -6,10 +6,12 @@ import {
   Box,
   Button,
   ButtonBase,
-  Divider,
+  FormControl,
   IconButton,
+  InputLabel,
+  MenuItem,
   Paper,
-  Popover,
+  Select,
   Stack,
   TextField,
   Typography,
@@ -73,6 +75,14 @@ function getLearningObservationItems(t) {
   ];
 }
 
+function getLocalizedValue(value, language = 'en') {
+  if (value && typeof value === 'object') {
+    return value[language] || value.en || Object.values(value)[0] || '';
+  }
+
+  return value || '';
+}
+
 function buildCaptureFocuses(teachingUnits, skills, activeLesson, t) {
   const skillById = new Map((skills || []).map((skill) => [skill.id, skill]));
 
@@ -106,6 +116,8 @@ export default function LearningModuleQuickCapture({
   teachingUnits,
   skills,
   levels,
+  learningContexts = [],
+  subjectId = '',
   selectedStudentId,
   localEvidencePayload,
   learningObservations = [],
@@ -116,7 +128,7 @@ export default function LearningModuleQuickCapture({
   onLocalLearningObservationPayloadChange,
   onStudentChange,
 }) {
-  const { t } = useConceptDemoLanguage();
+  const { language, t } = useConceptDemoLanguage();
   const learningObservationItems = useMemo(() => getLearningObservationItems(t), [t]);
   const captureFocuses = useMemo(
     () => buildCaptureFocuses(teachingUnits, skills, activeLesson, t),
@@ -126,7 +138,8 @@ export default function LearningModuleQuickCapture({
   const initialUnitId = activeLesson?.teachingUnitId || captureFocuses[0]?.id || '';
   const [activeUnitId, setActiveUnitId] = useState(initialUnitId);
   const [activeTopicId, setActiveTopicId] = useState('');
-  const [contextAnchorEl, setContextAnchorEl] = useState(null);
+  const [captureMode, setCaptureMode] = useState(learningContexts.length ? 'activity' : 'direct');
+  const [activeLearningContextId, setActiveLearningContextId] = useState(learningContexts[0]?.id || '');
   const [recentActionId, setRecentActionId] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [learnObservationSelections, setLearnObservationSelections] = useState({});
@@ -136,9 +149,53 @@ export default function LearningModuleQuickCapture({
   const learnObservationNoteInputRefs = useRef({});
   const activeUnit = captureFocuses.find((unit) => unit.id === activeUnitId) || captureFocuses[0];
   const activeTopic = activeUnit?.topics.find((topic) => topic.id === activeTopicId) || activeUnit?.topics[0];
-  const activeCapturePoints = activeTopic?.capturePoints || [];
-  const contextPanelOpen = Boolean(contextAnchorEl);
+  const activeLearningContext = learningContexts.find((context) => context.id === activeLearningContextId) || learningContexts[0] || null;
+  const activeLearningContextAreaIds = useMemo(() => new Set(
+    (activeLearningContext?.capturePoints || []).flatMap((point) => point.curriculumAreaIds || []),
+  ), [activeLearningContext]);
+  const selectableCaptureFocuses = useMemo(() => (
+    captureMode === 'activity' && activeLearningContext
+      ? captureFocuses.filter((unit) => activeLearningContextAreaIds.has(unit.id))
+      : captureFocuses
+  ), [activeLearningContext, activeLearningContextAreaIds, captureFocuses, captureMode]);
+  const activeActivityCapturePoints = activeLearningContext
+    ? (activeLearningContext.capturePoints || [])
+      .map((point) => ({
+        ...point,
+        label: getLocalizedValue(point.label, language),
+        skillId: point.observationDimensionId,
+        capturePointId: point.id,
+        teachingUnitId: point.curriculumAreaIds?.[0] || activeUnit?.id,
+        evidenceTopicId: `${point.curriculumAreaIds?.[0] || activeUnit?.id}-observations`,
+      }))
+    : [];
+  const activeCapturePoints = captureMode === 'activity'
+    ? activeActivityCapturePoints
+    : activeTopic?.capturePoints || [];
+  const captureFocusById = useMemo(() => new Map(captureFocuses.map((unit) => [unit.id, unit])), [captureFocuses]);
+  const skillById = useMemo(() => new Map((skills || []).map((skill) => [skill.id, skill])), [skills]);
+  const learningContextCapturePointById = useMemo(() => new Map(
+    (learningContexts || []).flatMap((context) => (context.capturePoints || []).map((point) => [
+      point.id,
+      {
+        ...point,
+        label: getLocalizedValue(point.label, language),
+      },
+    ])),
+  ), [language, learningContexts]);
   const localObservations = localEvidencePayload?.observations || [];
+
+  useEffect(() => {
+    if (!selectableCaptureFocuses.length || selectableCaptureFocuses.some((unit) => unit.id === activeUnitId)) {
+      return;
+    }
+
+    const nextUnit = selectableCaptureFocuses[0];
+    setActiveUnitId(nextUnit.id);
+    setActiveTopicId(nextUnit.topics[0]?.id || '');
+    setRecentActionId('');
+  }, [activeUnitId, selectableCaptureFocuses]);
+
   const visibleLocalObservations = useMemo(
     () => localObservations.filter((capture) => !activeLesson?.date || capture.date <= activeLesson.date),
     [activeLesson?.date, localObservations],
@@ -211,10 +268,11 @@ export default function LearningModuleQuickCapture({
   const currentLevelByCapturePointId = useMemo(() => activeCapturePoints.reduce((levelsByCapturePoint, capturePoint) => {
     const matchingCaptures = selectedStudentCaptures
       .filter((capture) => (
-        capture.teachingUnitId === activeUnit?.id
-        && capture.evidenceTopicId === activeTopic?.id
-        && (capture.skillId || capture.capturePointId) === capturePoint.id
+        capture.teachingUnitId === (capturePoint.teachingUnitId || activeUnit?.id)
+        && capture.evidenceTopicId === (capturePoint.evidenceTopicId || activeTopic?.id)
+        && (capture.capturePointId || capture.skillId) === (capturePoint.capturePointId || capturePoint.id)
         && capture.date === activeLesson?.date
+        && (captureMode !== 'activity' || capture.contextId === activeLearningContext?.id)
       ))
       .sort((first, second) => (
         (second.updatedAt || second.createdAt || second.date).localeCompare(first.updatedAt || first.createdAt || first.date)
@@ -225,7 +283,7 @@ export default function LearningModuleQuickCapture({
     }
 
     return levelsByCapturePoint;
-  }, {}), [activeCapturePoints, activeLesson?.date, activeTopic?.id, activeUnit?.id, selectedStudentCaptures]);
+  }, {}), [activeCapturePoints, activeLearningContext?.id, activeLesson?.date, activeTopic?.id, activeUnit?.id, captureMode, selectedStudentCaptures]);
 
   useEffect(() => {
     if (!captureFocuses.some((unit) => unit.id === activeUnitId)) {
@@ -290,10 +348,11 @@ export default function LearningModuleQuickCapture({
   function captureLevel(capturePoint, level, mode = 'update') {
     const latestLocalObservation = selectedStudentCaptures
       .filter((capture) => (
-        capture.teachingUnitId === activeUnit.id
-        && capture.evidenceTopicId === activeTopic.id
-        && (capture.skillId || capture.capturePointId) === capturePoint.id
+        capture.teachingUnitId === (capturePoint.teachingUnitId || activeUnit.id)
+        && capture.evidenceTopicId === (capturePoint.evidenceTopicId || activeTopic.id)
+        && (capture.capturePointId || capture.skillId) === (capturePoint.capturePointId || capturePoint.id)
         && capture.date === activeLesson.date
+        && (captureMode !== 'activity' || capture.contextId === activeLearningContext?.id)
       ))
       .sort((first, second) => (
         (second.updatedAt || second.createdAt || second.date).localeCompare(first.updatedAt || first.createdAt || first.date)
@@ -302,11 +361,15 @@ export default function LearningModuleQuickCapture({
     const observationInput = {
       studentId: selectedStudent.id,
       date: activeLesson.date,
-      teachingUnitId: activeUnit.id,
-      evidenceTopicId: activeTopic.id,
-      skillId: capturePoint.id,
-      capturePointId: capturePoint.id,
+      teachingUnitId: capturePoint.teachingUnitId || activeUnit.id,
+      evidenceTopicId: capturePoint.evidenceTopicId || activeTopic.id,
+      skillId: capturePoint.skillId || capturePoint.observationDimensionId || capturePoint.id,
+      capturePointId: capturePoint.capturePointId || capturePoint.id,
       levelId: level.id,
+      ...(captureMode === 'activity' && activeLearningContext ? {
+        contextId: activeLearningContext.id,
+        contextLabel: activeLearningContext.label,
+      } : {}),
     };
     const outcome = shouldUpdate
       ? updateLearningModuleObservation(moduleId, localEvidencePayload, latestLocalObservation.id, { levelId: level.id })
@@ -328,20 +391,33 @@ export default function LearningModuleQuickCapture({
       : 'Observation removed for this session but could not be saved locally.');
   }
 
-  function openContextPanel(event) {
-    setContextAnchorEl(event.currentTarget);
-  }
-
-  function closeContextPanel() {
-    const trigger = contextAnchorEl;
-    setContextAnchorEl(null);
-    window.requestAnimationFrame(() => trigger?.focus?.());
-  }
-
   function chooseUnit(unit) {
     setActiveUnitId(unit.id);
     setActiveTopicId(unit.topics[0]?.id || '');
     setRecentActionId('');
+  }
+
+  function chooseLearningContext(context) {
+    setActiveLearningContextId(context.id);
+    setCaptureMode('activity');
+    const primaryUnit = captureFocuses.find((unit) => unit.id === context.primaryCurriculumAreaId)
+      || captureFocuses.find((unit) => (context.possibleCurriculumAreaIds || []).includes(unit.id));
+
+    if (primaryUnit) {
+      setActiveUnitId(primaryUnit.id);
+      setActiveTopicId(primaryUnit.topics[0]?.id || '');
+    }
+    setRecentActionId('');
+  }
+
+  function getCapturePointCurriculumMapping(capturePoint) {
+    const unit = captureFocusById.get(capturePoint.teachingUnitId || activeUnit?.id);
+    const skill = skillById.get(capturePoint.skillId || capturePoint.observationDimensionId || capturePoint.id);
+
+    return {
+      areaLabel: unit?.label || activeUnit?.label || '',
+      pointLabel: skill?.label || skill?.title || capturePoint.label || '',
+    };
   }
 
   function chooseLearningObservation(itemId, choiceId) {
@@ -635,7 +711,8 @@ export default function LearningModuleQuickCapture({
                             </Typography>
                             <Box component="ul" sx={{ m: 0, mt: 0.25, p: 0, listStyle: 'none', display: 'grid', gap: 0.35 }}>
                               {captures.map((capture) => {
-                                const capturePoint = activeCapturePoints.find((point) => point.id === (capture.skillId || capture.capturePointId))
+                                const capturePoint = learningContextCapturePointById.get(capture.capturePointId)
+                                  || activeCapturePoints.find((point) => point.id === (capture.capturePointId || capture.skillId))
                                   || skills.find((skill) => skill.id === (capture.skillId || capture.capturePointId));
                                 const captureLevel = levels.find((level) => level.id === capture.levelId);
                                 const capturePointLabel = capturePoint?.label || capturePoint?.title || capture.skillId || 'Observation';
@@ -807,121 +884,139 @@ export default function LearningModuleQuickCapture({
         <Panel sx={{ p: { xs: 0.95, sm: 1.2, md: 1.35 }, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.12)' }}>
           <Stack spacing={{ xs: 0.8, sm: 0.95 }}>
             <Box>
-              <Stack direction="row" spacing={0.65} alignItems="center">
-                <Typography
-                  component="button"
-                  type="button"
-                  aria-label="Change lesson or capture focus"
-                  aria-haspopup="dialog"
-                  aria-expanded={contextPanelOpen ? 'true' : undefined}
-                  onClick={openContextPanel}
-                  sx={{
-                    appearance: 'none',
-                    p: 0,
-                    m: 0,
-                    border: 0,
-                    bgcolor: 'transparent',
-                    color: darkText,
-                    font: 'inherit',
-                    fontSize: { xs: 17.5, sm: 19.5 },
-                    lineHeight: 1.15,
-                    fontWeight: 880,
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    '&:hover': { color: purple },
-                    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 3, borderRadius: '4px' },
-                  }}
-                >
-                  {activeUnit.label}
-                </Typography>
-              </Stack>
+              <Typography sx={{ color: darkText, fontSize: { xs: 17.5, sm: 19.5 }, lineHeight: 1.15, fontWeight: 880 }}>
+                {captureMode === 'activity' && activeLearningContext
+                  ? getLocalizedValue(activeLearningContext.label, language)
+                  : activeUnit.label}
+              </Typography>
               <Typography sx={{ mt: 0.15, color: 'text.secondary', fontSize: 12.6, fontWeight: 650 }}>
-                {activeTopic.label}
+                {captureMode === 'activity' ? activeUnit.label : activeTopic.label}
               </Typography>
             </Box>
 
-            <Popover
-              open={contextPanelOpen}
-              anchorEl={contextAnchorEl}
-              onClose={closeContextPanel}
-              anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-              transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-              PaperProps={{
-                sx: {
-                  mt: 0.55,
-                  width: { xs: 'calc(100vw - 32px)', sm: 380 },
-                  maxWidth: 'calc(100vw - 32px)',
-                  p: 0,
-                  borderRadius: '14px',
-                  border: '1px solid rgba(23, 21, 26, 0.14)',
-                  boxShadow: '0 18px 45px rgba(23, 21, 26, 0.14)',
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  md: learningContexts.length && captureMode === 'activity'
+                    ? 'minmax(140px, 0.7fr) minmax(180px, 1fr) auto'
+                    : learningContexts.length
+                      ? 'minmax(150px, 0.75fr) minmax(220px, 1.25fr) auto'
+                      : 'minmax(220px, 1fr) auto',
                 },
+                gap: 0.75,
+                alignItems: 'center',
               }}
             >
-              <Box sx={{ p: { xs: 1.55, sm: 1.75 } }}>
-                <Stack spacing={1.2} role="dialog" aria-label="Capture focus">
-                  <Typography sx={{ color: darkText, fontSize: 14.2, fontWeight: 880 }}>
-                    Capture focus
-                  </Typography>
-                  <Box>
-                    <Typography sx={{ mb: 0.55, color: 'text.secondary', fontSize: 12.2, fontWeight: 760 }}>
-                      Teaching unit
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.45 }}>
-                      {captureFocuses.map((unit) => {
-                        const isActive = unit.id === activeUnit.id;
-                        return (
-                          <Button
-                            key={unit.id}
-                            type="button"
-                            aria-pressed={isActive}
-                            onClick={() => chooseUnit(unit)}
-                            variant="outlined"
-                            sx={{
-                              borderRadius: '999px',
-                              borderColor: isActive ? selectedPurple : 'rgba(23, 21, 26, 0.14)',
-                              bgcolor: isActive ? selectedPurple : '#fff',
-                              color: isActive ? '#fff' : 'text.secondary',
-                              fontSize: 12.4,
-                              fontWeight: isActive ? 850 : 720,
-                              textTransform: 'none',
-                              '&:hover': {
-                                bgcolor: isActive ? selectedPurple : '#fff',
-                                borderColor: isActive ? selectedPurple : darkText,
-                                color: isActive ? '#fff' : darkText,
-                              },
-                              '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
-                            }}
-                          >
-                            {unit.label}
-                          </Button>
-                        );
-                      })}
-                    </Box>
-                  </Box>
-                  <Divider />
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      onRestartLessonSequence?.();
-                      closeContextPanel();
+              {!!learningContexts.length && (
+                <FormControl size="small" fullWidth>
+                  <InputLabel id="capture-route-label">Route</InputLabel>
+                  <Select
+                    labelId="capture-route-label"
+                    value={captureMode}
+                    label="Route"
+                    onChange={(event) => {
+                      const nextMode = event.target.value;
+                      if (nextMode === 'activity' && (activeLearningContext || learningContexts[0])) {
+                        chooseLearningContext(activeLearningContext || learningContexts[0]);
+                      } else {
+                        setCaptureMode(nextMode);
+                        setRecentActionId('');
+                      }
                     }}
-                    startIcon={<RestartAltIcon fontSize="small" />}
                     sx={{
-                      alignSelf: 'flex-start',
-                      color: 'text.secondary',
-                      fontSize: 12.4,
+                      borderRadius: '10px',
+                      bgcolor: '#fff',
+                      fontSize: 13,
                       fontWeight: 760,
-                      textTransform: 'none',
-                      '&:hover': { color: purple, bgcolor: '#fff' },
-                      '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
                     }}
                   >
-                    Restart lesson sequence
-                  </Button>
-                </Stack>
-              </Box>
-            </Popover>
+                    <MenuItem value="activity">Activity</MenuItem>
+                    <MenuItem value="direct">Direct curriculum</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
+
+              {!!learningContexts.length && captureMode === 'activity' && (
+                <FormControl size="small" fullWidth>
+                  <InputLabel id="capture-activity-label">Activity</InputLabel>
+                  <Select
+                    labelId="capture-activity-label"
+                    value={activeLearningContext?.id || ''}
+                    label="Activity"
+                    onChange={(event) => {
+                      const context = learningContexts.find((item) => item.id === event.target.value);
+                      if (context) {
+                        chooseLearningContext(context);
+                      }
+                    }}
+                    sx={{
+                      borderRadius: '10px',
+                      bgcolor: '#fff',
+                      fontSize: 13,
+                      fontWeight: 760,
+                    }}
+                  >
+                    {learningContexts.map((context) => (
+                      <MenuItem key={context.id} value={context.id}>
+                        {getLocalizedValue(context.label, language)}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+
+              {captureMode !== 'activity' && (
+                <FormControl size="small" fullWidth>
+                  <InputLabel id="capture-focus-label">Teaching unit</InputLabel>
+                  <Select
+                    labelId="capture-focus-label"
+                    value={activeUnit?.id || ''}
+                    label="Teaching unit"
+                    onChange={(event) => {
+                      const unit = captureFocuses.find((item) => item.id === event.target.value);
+                      if (unit) {
+                        chooseUnit(unit);
+                      }
+                    }}
+                    sx={{
+                      borderRadius: '10px',
+                      bgcolor: '#fff',
+                      fontSize: 13,
+                      fontWeight: 760,
+                    }}
+                  >
+                    {selectableCaptureFocuses.map((unit) => (
+                      <MenuItem key={unit.id} value={unit.id}>
+                        {unit.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+
+              <Button
+                type="button"
+                onClick={() => onRestartLessonSequence?.()}
+                startIcon={<RestartAltIcon fontSize="small" />}
+                sx={{
+                  minHeight: 40,
+                  justifySelf: { xs: 'stretch', md: 'end' },
+                  borderRadius: '10px',
+                  border: '1px solid rgba(23, 21, 26, 0.14)',
+                  color: 'text.secondary',
+                  fontSize: 12.4,
+                  fontWeight: 760,
+                  textTransform: 'none',
+                  whiteSpace: 'nowrap',
+                  '&:hover': { color: purple, bgcolor: '#fff', borderColor: purple },
+                  '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                }}
+              >
+                Restart
+              </Button>
+            </Box>
 
             <Typography sx={{ color: darkText, fontSize: { xs: 15.5, sm: 17 }, lineHeight: 1.18, fontWeight: 850 }}>
               Unit Observations
@@ -932,78 +1027,100 @@ export default function LearningModuleQuickCapture({
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: {
-                    xs: 'minmax(132px, 150px) repeat(4, 36px)',
-                    sm: 'minmax(160px, 180px) repeat(4, 38px)',
+                    xs: 'minmax(180px, 220px) minmax(158px, 190px) repeat(4, 36px)',
+                    sm: 'minmax(230px, 1fr) minmax(210px, 0.85fr) repeat(4, 38px)',
                   },
                   columnGap: { xs: 0.25, sm: 0.3 },
                   rowGap: 0.35,
-                  minWidth: { xs: 292, sm: 0 },
+                  minWidth: { xs: 526, sm: 592 },
                   alignItems: 'center',
                 }}
               >
+                <Box />
                 <Box />
                 {levels.map((level) => (
                   <Typography key={level.id} aria-label={level.label} sx={{ color: 'text.secondary', fontSize: 12.2, fontWeight: 760, textAlign: 'center', lineHeight: 1.2 }}>
                     {getLevelMark(level)}
                   </Typography>
                 ))}
-                {activeCapturePoints.map((capturePoint) => (
-                  <Box
-                    key={capturePoint.id}
-                    sx={{
-                      display: 'contents',
-                      '&:hover .unitObservationRowCell': { bgcolor: 'rgba(156, 40, 175, 0.045)' },
-                      '&:hover .unitObservationRowCell:first-of-type': { borderTopLeftRadius: '8px', borderBottomLeftRadius: '8px' },
-                      '&:hover .unitObservationRowCell:last-child': { borderTopRightRadius: '8px', borderBottomRightRadius: '8px' },
-                    }}
-                  >
-                    <Typography className="unitObservationRowCell" sx={{ color: darkText, fontSize: 13.4, fontWeight: 850, lineHeight: 1.2, py: 0.45, transition: 'background-color 140ms ease' }}>
-                      {capturePoint.label}
-                    </Typography>
-                    {levels.map((level) => {
-                      const isRecentAction = recentActionId === `${capturePoint.id}-${level.id}`;
-                      const isCurrentLevel = currentLevelByCapturePointId[capturePoint.id] === level.id;
-                      const isActive = isRecentAction || isCurrentLevel;
-                      const hasCurrentLevel = Boolean(currentLevelByCapturePointId[capturePoint.id]);
-                      const mainLabel = hasCurrentLevel ? `Update ${capturePoint.label} to ${level.label}` : `Add ${capturePoint.label} as ${level.label}`;
+                {activeCapturePoints.map((capturePoint) => {
+                  const mapping = getCapturePointCurriculumMapping(capturePoint);
 
-                      return (
-                        <Box key={level.id} className="unitObservationRowCell" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minWidth: 0, py: 0.2, transition: 'background-color 140ms ease' }}>
-                          <Button
-                            type="button"
-                            variant="outlined"
-                            aria-label={mainLabel}
-                            aria-pressed={isActive}
-                            onClick={() => captureLevel(capturePoint, level, hasCurrentLevel ? 'update' : 'new')}
-                            sx={{
-                              width: 32,
-                              height: 32,
-                              maxWidth: 32,
-                              minHeight: 32,
-                              minWidth: 32,
-                              px: 0,
-                              borderRadius: '999px',
-                              borderColor: isActive ? selectedPurple : 'rgba(23, 21, 26, 0.14)',
-                              bgcolor: isActive ? selectedPurple : '#fff',
-                              color: isActive ? '#fff' : 'text.secondary',
-                              fontSize: 14,
-                              fontWeight: isActive ? 850 : 760,
-                              lineHeight: 1,
-                              textTransform: 'none',
-                              transition: 'background-color 140ms ease, border-color 140ms ease, color 140ms ease',
-                              '&:hover': {
-                                borderColor: isActive ? selectedPurple : darkText,
+                  return (
+                    <Box
+                      key={capturePoint.id}
+                      sx={{
+                        display: 'contents',
+                        '&:hover .unitObservationRowCell, &:focus-within .unitObservationRowCell': { bgcolor: 'rgba(156, 40, 175, 0.045)' },
+                        '&:hover .unitObservationMeta, &:focus-within .unitObservationMeta': { opacity: 1 },
+                        '&:hover .unitObservationRowCell:first-of-type, &:focus-within .unitObservationRowCell:first-of-type': { borderTopLeftRadius: '8px', borderBottomLeftRadius: '8px' },
+                        '&:hover .unitObservationRowCell:last-child, &:focus-within .unitObservationRowCell:last-child': { borderTopRightRadius: '8px', borderBottomRightRadius: '8px' },
+                      }}
+                    >
+                      <Typography className="unitObservationRowCell" sx={{ color: darkText, fontSize: 13.4, fontWeight: 850, lineHeight: 1.2, py: 0.45, transition: 'background-color 140ms ease' }}>
+                        {capturePoint.label}
+                      </Typography>
+                      <Box
+                        className="unitObservationRowCell unitObservationMeta"
+                        sx={{
+                          minWidth: 0,
+                          py: 0.35,
+                          opacity: 0,
+                          transition: 'opacity 140ms ease, background-color 140ms ease',
+                        }}
+                      >
+                        <Typography sx={{ color: purple, fontSize: 11.6, fontWeight: 850, lineHeight: 1.15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {mapping.areaLabel}
+                        </Typography>
+                        <Typography sx={{ color: 'text.secondary', fontSize: 11.2, fontWeight: 720, lineHeight: 1.15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {mapping.pointLabel}
+                        </Typography>
+                      </Box>
+                      {levels.map((level) => {
+                        const isRecentAction = recentActionId === `${capturePoint.id}-${level.id}`;
+                        const isCurrentLevel = currentLevelByCapturePointId[capturePoint.id] === level.id;
+                        const isActive = isRecentAction || isCurrentLevel;
+                        const hasCurrentLevel = Boolean(currentLevelByCapturePointId[capturePoint.id]);
+                        const mainLabel = hasCurrentLevel ? `Update ${capturePoint.label} to ${level.label}` : `Add ${capturePoint.label} as ${level.label}`;
+
+                        return (
+                          <Box key={level.id} className="unitObservationRowCell" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minWidth: 0, py: 0.2, transition: 'background-color 140ms ease' }}>
+                            <Button
+                              type="button"
+                              variant="outlined"
+                              aria-label={mainLabel}
+                              aria-pressed={isActive}
+                              onClick={() => captureLevel(capturePoint, level, hasCurrentLevel ? 'update' : 'new')}
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                maxWidth: 32,
+                                minHeight: 32,
+                                minWidth: 32,
+                                px: 0,
+                                borderRadius: '999px',
+                                borderColor: isActive ? selectedPurple : 'rgba(23, 21, 26, 0.14)',
                                 bgcolor: isActive ? selectedPurple : '#fff',
-                                color: isActive ? '#fff' : darkText,
-                              },
-                              '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
-                            }}
-                          />
-                        </Box>
-                      );
-                    })}
-                  </Box>
-                ))}
+                                color: isActive ? '#fff' : 'text.secondary',
+                                fontSize: 14,
+                                fontWeight: isActive ? 850 : 760,
+                                lineHeight: 1,
+                                textTransform: 'none',
+                                transition: 'background-color 140ms ease, border-color 140ms ease, color 140ms ease',
+                                '&:hover': {
+                                  borderColor: isActive ? selectedPurple : darkText,
+                                  bgcolor: isActive ? selectedPurple : '#fff',
+                                  color: isActive ? '#fff' : darkText,
+                                },
+                                '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                              }}
+                            />
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  );
+                })}
               </Box>
             </Paper>
             {learnObservationsPanel}

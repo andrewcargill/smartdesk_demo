@@ -110,13 +110,31 @@ function getObservationNote(item) {
   return item?.observationText || item?.note || item?.label || '';
 }
 
+function getLocalizedValue(value, language = 'en') {
+  if (value && typeof value === 'object') {
+    return value[language] || value.en || Object.values(value)[0] || '';
+  }
+
+  return value || '';
+}
+
 function getLevelMap(levels) {
   return new Map((levels || []).map((level) => [level.id, level]));
 }
 
-function normaliseObservationFocuses({ configuredFocuses = [], observations = [], levels = [], t = fallbackT }) {
+function normaliseObservationFocuses({ configuredFocuses = [], observations = [], levels = [], learningContexts = [], language = 'en', t = fallbackT }) {
   const levelById = getLevelMap(levels);
   const configuredFocusById = new Map();
+  const activityCapturePointById = new Map(
+    (learningContexts || []).flatMap((context) => (context.capturePoints || []).map((capturePoint) => [
+      capturePoint.id,
+      {
+        ...capturePoint,
+        contextLabel: getLocalizedValue(context.label, language),
+        label: getLocalizedValue(capturePoint.label, language),
+      },
+    ])),
+  );
 
   configuredFocuses.forEach((focus) => {
     if (focus?.id) {
@@ -145,6 +163,9 @@ function normaliseObservationFocuses({ configuredFocuses = [], observations = []
     const group = configuredFocus || otherFocus;
     const level = item?.levelId ? levelById.get(item.levelId) : null;
     const recordKey = item.id || `${item.date || 'no-date'}-${item.levelId || 'no-level'}-${group.observations.length}`;
+    const activityCapturePoint = item?.capturePointId ? activityCapturePointById.get(item.capturePointId) : null;
+    const activityLabel = getLocalizedValue(item?.contextLabel, language) || activityCapturePoint?.contextLabel || '';
+    const activityCaptureLabel = activityCapturePoint?.label || '';
 
     group.observations.push({
       ...item,
@@ -155,6 +176,8 @@ function normaliseObservationFocuses({ configuredFocuses = [], observations = []
       levelLabel: level?.label || '',
       levelOrder: level?.order || null,
       note: getObservationNote(item),
+      activityLabel,
+      activityCaptureLabel,
       timestamp: getObservationTimestamp(item),
     });
   });
@@ -285,6 +308,7 @@ function ObservationRecordsList({ observations, activeRecordId, onActiveRecordCh
       {observations.map((item, index) => {
         const recordKey = getObservationRecordKey(item, index);
         const isActive = activeRecordId === recordKey;
+        const hasActivityContext = Boolean(item.activityLabel || item.activityCaptureLabel);
 
         return (
           <Box
@@ -323,9 +347,27 @@ function ObservationRecordsList({ observations, activeRecordId, onActiveRecordCh
             <Typography sx={{ color: darkText, fontSize: 11.8, fontWeight: 820 }}>
               {item.levelLabel || ''}
             </Typography>
-            <Typography sx={{ color: 'text.secondary', fontSize: 11.8, lineHeight: 1.35 }}>
-              {item.note || ''}
-            </Typography>
+            <Stack spacing={0.25} sx={{ minWidth: 0 }}>
+              {hasActivityContext && (
+                <Box sx={{ minWidth: 0 }}>
+                  {!!item.activityLabel && (
+                    <Typography sx={{ color: purple, fontSize: 11.2, fontWeight: 860, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item.activityLabel}
+                    </Typography>
+                  )}
+                  {!!item.activityCaptureLabel && (
+                    <Typography sx={{ color: darkText, fontSize: 11.8, fontWeight: 820, lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item.activityCaptureLabel}
+                    </Typography>
+                  )}
+                </Box>
+              )}
+              {!!item.note && (
+                <Typography sx={{ color: 'text.secondary', fontSize: 11.8, lineHeight: 1.35 }}>
+                  {item.note}
+                </Typography>
+              )}
+            </Stack>
           </Box>
         );
       })}
@@ -459,6 +501,7 @@ export default function StudentUnitInsightPanel({
   summary,
   unit,
   configuredFocuses = [],
+  learningContexts = [],
   levels = [],
   onClose,
   onEditAssessment,
@@ -468,12 +511,26 @@ export default function StudentUnitInsightPanel({
   const panelUnit = summary?.unit || unit || {};
   const assessments = getSortedAssessments(summary || {});
   const assessmentStats = getAssessmentStats(assessments);
+  const unitObservations = useMemo(() => (
+    (summary?.observations || []).filter((item) => !panelUnit.id || item.teachingUnitId === panelUnit.id)
+  ), [panelUnit.id, summary?.observations]);
+  const configuredFocusesForUnit = useMemo(() => {
+    const unitSkillIds = new Set(panelUnit.skillIds || []);
+
+    if (!unitSkillIds.size) {
+      return configuredFocuses;
+    }
+
+    return configuredFocuses.filter((focus) => unitSkillIds.has(focus.id));
+  }, [configuredFocuses, panelUnit.skillIds]);
   const observationFocusModel = useMemo(() => normaliseObservationFocuses({
-    configuredFocuses,
-    observations: summary?.observations || [],
+    configuredFocuses: configuredFocusesForUnit,
+    observations: unitObservations,
     levels,
+    learningContexts,
+    language,
     t,
-  }), [configuredFocuses, levels, summary, t]);
+  }), [configuredFocusesForUnit, language, learningContexts, levels, t, unitObservations]);
   const observationFocusOptions = observationFocusModel.options;
   const firstObservedFocusId = observationFocusOptions.find((option) => option.count > 0)?.focusId || observationFocusOptions[0]?.focusId || '';
   const [activeObservationFocusId, setActiveObservationFocusId] = useState(firstObservedFocusId);

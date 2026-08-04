@@ -14,6 +14,7 @@ import { GroupDialog } from '../ClassWorkingGroups.jsx';
 import AssessmentResultsEntryModal from '../AssessmentResultsEntryModal.jsx';
 import ClassPictureExpandedView from '../ClassPictureExpandedView.jsx';
 import StudentUnitInsightPanel from '../StudentUnitInsightPanel.jsx';
+import { physicalEducationLearningContexts } from '../data/physicalEducationLearningContexts.js';
 import {
   LEARNING_MODULE_ASSESSMENT_RESULTS_STORAGE_EVENT,
   getLearningModuleAssessmentResultsStorageKey,
@@ -1297,6 +1298,7 @@ function ClassPictureEvidenceGridV1({
                         summary={expandedUnitSummary}
                         unit={expandedUnit}
                         configuredFocuses={skills}
+                        learningContexts={moduleConfig?.subjectId === 'physical-education' ? physicalEducationLearningContexts : []}
                         levels={levels}
                         onClose={() => toggleStudent(student.id, expandedUnitId, 'unit')}
                         onEditAssessment={openAssessmentEdit}

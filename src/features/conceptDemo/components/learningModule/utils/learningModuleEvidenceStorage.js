@@ -61,11 +61,12 @@ export function normalizeLearningModuleObservation(item) {
   const studentId = normaliseText(item.studentId, 80);
   const date = normaliseText(item.date, 20);
   const teachingUnitId = normaliseText(item.teachingUnitId, 80);
-  const skillId = normaliseText(item.skillId || item.capturePointId, 80);
+  const skillId = normaliseText(item.skillId || item.observationDimensionId || item.capturePointId, 80);
+  const capturePointId = normaliseText(item.capturePointId || skillId, 100);
   const evidenceTopicId = normaliseText(item.evidenceTopicId || item.topicId || `${teachingUnitId}-observations`, 100);
   const levelId = normaliseText(item.levelId, 80);
 
-  if (!id || !studentId || !date || !teachingUnitId || !skillId || !levelId) {
+  if (!id || !studentId || !date || !teachingUnitId || !skillId || !capturePointId || !levelId) {
     return null;
   }
 
@@ -79,7 +80,9 @@ export function normalizeLearningModuleObservation(item) {
     teachingUnitId,
     evidenceTopicId,
     skillId,
-    capturePointId: skillId,
+    capturePointId,
+    ...(item.contextId ? { contextId: normaliseText(item.contextId, 80) } : {}),
+    ...(item.contextLabel ? { contextLabel: item.contextLabel } : {}),
     levelId,
     source: item.source || 'teacher',
     observationText: normaliseText(item.observationText || item.note || 'Quick capture from Now.', 180),
