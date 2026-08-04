@@ -12,6 +12,8 @@ import { useClassWorkingGroups } from '../../../hooks/useClassWorkingGroups.js';
 import { getActiveGroups } from '../../../utils/classGroupUtils.js';
 import { GroupDialog } from '../ClassWorkingGroups.jsx';
 import AssessmentResultsEntryModal from '../AssessmentResultsEntryModal.jsx';
+import ClassPictureExpandedView from '../ClassPictureExpandedView.jsx';
+import StudentUnitInsightPanel from '../StudentUnitInsightPanel.jsx';
 import {
   LEARNING_MODULE_ASSESSMENT_RESULTS_STORAGE_EVENT,
   getLearningModuleAssessmentResultsStorageKey,
@@ -543,22 +545,6 @@ function getUngroupedStudentsForType(students, groups, typeId) {
   return (students || []).filter((student) => !groupedStudentIds.has(student.id));
 }
 
-function ClassPictureExpandedView() {
-  return (
-    <Box
-      sx={{
-        p: 2,
-        borderTop: '1px solid rgba(23, 21, 26, 0.08)',
-        bgcolor: '#fff',
-      }}
-    >
-      <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 760 }}>
-        new expanded view
-      </Typography>
-    </Box>
-  );
-}
-
 function ClassPictureEvidenceGridV1({
   activeGroupingSet,
   allowDrop,
@@ -581,6 +567,7 @@ function ClassPictureEvidenceGridV1({
   evidenceItems,
   expandedStudentId,
   expandedUnitId,
+  expandedViewMode,
   groupedViewActive,
   handleDragEnd,
   handleDragStart,
@@ -933,7 +920,7 @@ function ClassPictureEvidenceGridV1({
                     </ButtonBase>
                   )}
                   <ButtonBase
-                    onClick={() => toggleStudent(student.id, '')}
+                    onClick={() => toggleStudent(student.id, '', 'timeline')}
                     aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${student.displayName}`}
                     aria-expanded={isExpanded}
                     aria-controls={`student-insight-${student.id}`}
@@ -988,21 +975,10 @@ function ClassPictureEvidenceGridV1({
                     <Tooltip key={alert.id} title={alert.label} arrow>
                       <Box
                         component="span"
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => toggleStudent(student.id, alert.teachingUnitId)}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            toggleStudent(student.id, alert.teachingUnitId);
-                          }
-                        }}
                         sx={{
                           display: 'inline-flex',
                           alignItems: 'center',
                           borderRadius: '5px',
-                          cursor: 'pointer',
-                          '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
                         }}
                       >
                         {alert.type === 'absent' ? (
@@ -1116,11 +1092,11 @@ function ClassPictureEvidenceGridV1({
                         component="span"
                         role="button"
                         tabIndex={0}
-                        onClick={() => toggleStudent(student.id, '')}
+                        onClick={() => toggleStudent(student.id, '', 'global')}
                         onKeyDown={(event) => {
                           if (event.key === 'Enter' || event.key === ' ') {
                             event.preventDefault();
-                            toggleStudent(student.id, '');
+                            toggleStudent(student.id, '', 'global');
                           }
                         }}
                         sx={{
@@ -1170,8 +1146,19 @@ function ClassPictureEvidenceGridV1({
                     <Box
                       key={`${student.id}:${unit.id}`}
                       role="cell"
+                      tabIndex={isEditingCell ? -1 : 0}
                       aria-label={`${student.displayName}, ${unit.title || unit.label}: ${cellDetail}`}
-                      onClick={() => toggleStudent(student.id, unit.id)}
+                      onClick={() => {
+                        if (!isEditingCell) {
+                          toggleStudent(student.id, unit.id, 'unit');
+                        }
+                      }}
+                      onKeyDown={(event) => {
+                        if (!isEditingCell && (event.key === 'Enter' || event.key === ' ')) {
+                          event.preventDefault();
+                          toggleStudent(student.id, unit.id, 'unit');
+                        }
+                      }}
                       sx={{
                         p: 1,
                         borderTop: isHovered ? '1px solid rgba(156, 40, 175, 0.34)' : '1px solid rgba(23, 21, 26, 0.08)',
@@ -1181,7 +1168,7 @@ function ClassPictureEvidenceGridV1({
                         position: 'relative',
                         bgcolor: isActiveUnitCell ? 'rgba(156, 40, 175, 0.095)' : isHovered ? 'rgba(156, 40, 175, 0.045)' : '#fff',
                         boxShadow: isActiveUnitCell ? 'inset 0 0 0 1px rgba(156, 40, 175, 0.22)' : 'none',
-                        cursor: 'pointer',
+                        cursor: isEditingCell ? 'text' : 'pointer',
                         transition: 'background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease',
                         '&:hover, &:focus-within': {
                           bgcolor: 'rgba(156, 40, 175, 0.085)',
@@ -1285,7 +1272,43 @@ function ClassPictureEvidenceGridV1({
               {isExpanded && (
                 <Box role="row" sx={{ display: 'contents' }}>
                   <Box id={`student-insight-${student.id}`} role="cell" sx={{ gridColumn: `1 / span ${teachingUnits.length + 4}`, minWidth: 0 }}>
-                    <ClassPictureExpandedView />
+                    {expandedViewMode === 'unit' && expandedUnit ? (
+                      <StudentUnitInsightPanel
+                        student={student}
+                        summary={expandedUnitSummary}
+                        unit={expandedUnit}
+                        configuredFocuses={skills}
+                        levels={levels}
+                        onClose={() => toggleStudent(student.id, expandedUnitId, 'unit')}
+                        onEditAssessment={openAssessmentEdit}
+                        language={language}
+                        t={t}
+                      />
+                    ) : expandedViewMode === 'global' ? (
+                      <StudentGlobalInsightPanel
+                        student={student}
+                        evidenceItems={evidenceItems}
+                        rowNote={rowNote}
+                        learningObservations={studentLearningObservations}
+                        subjectId={moduleConfig?.subjectId}
+                        subjectTitle={subjectTitle}
+                        learningObservationAreas={learningObservationAreas}
+                        language={language}
+                        t={t}
+                      />
+                    ) : (
+                      <ClassPictureExpandedView
+                        student={student}
+                        evidenceItems={evidenceItems}
+                        learningObservations={studentLearningObservations}
+                        teachingUnits={teachingUnits}
+                        rowNote={rowNote}
+                        cellNotes={cellNotes}
+                        unitNotes={unitNotes}
+                        learningObservationAreas={learningObservationAreas}
+                        language={language}
+                      />
+                    )}
                   </Box>
                 </Box>
               )}
@@ -1343,6 +1366,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
   const [hoveredRowNoteStudentId, setHoveredRowNoteStudentId] = useState('');
   const [rowNotesVisible, setRowNotesVisible] = useState(true);
   const [classPictureGridVersion, setClassPictureGridVersion] = useState('v1');
+  const [expandedViewMode, setExpandedViewMode] = useState('timeline');
   const [rowNotes, setRowNotes] = useState(() => getStoredNotes(rowNotesStorageKey));
   const [cellNotes, setCellNotes] = useState(() => getStoredNotes(cellNotesStorageKey));
   const [unitNotes, setUnitNotes] = useState(() => getStoredNotes(unitNotesStorageKey));
@@ -1462,6 +1486,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
     setUnitNotes({});
     setExpandedStudentId('');
     setExpandedUnitId('');
+    setExpandedViewMode('timeline');
     setHoveredStudentId('');
     setHoveredRowNoteStudentId('');
     setEditingRowNoteStudentId('');
@@ -1551,13 +1576,15 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
     return rows;
   }, [activeGroups, collapsedGroupIds, groupedViewActive, notGroupedStudents, students]);
 
-  function toggleStudent(studentId, unitId = '') {
-    if (expandedStudentId === studentId && expandedUnitId === unitId) {
+  function toggleStudent(studentId, unitId = '', viewMode = 'timeline') {
+    if (expandedStudentId === studentId && expandedUnitId === unitId && expandedViewMode === viewMode) {
       setExpandedStudentId('');
       setExpandedUnitId('');
+      setExpandedViewMode('timeline');
     } else {
       setExpandedStudentId(studentId);
       setExpandedUnitId(unitId);
+      setExpandedViewMode(viewMode);
     }
   }
 
@@ -1763,6 +1790,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
     evidenceItems,
     expandedStudentId,
     expandedUnitId,
+    expandedViewMode,
     groupedViewActive,
     handleDragEnd,
     handleDragStart,
