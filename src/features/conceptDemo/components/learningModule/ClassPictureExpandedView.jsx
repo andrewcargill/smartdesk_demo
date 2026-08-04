@@ -50,6 +50,10 @@ function getObservationY(value) {
   return 26;
 }
 
+function getLevelMark(level) {
+  return ['○', '◔', '◑', '●'][Math.max(0, (level?.order || 1) - 1)] || level?.label || '○';
+}
+
 function getMonthMarkers(range) {
   const markers = [];
   const cursor = new Date(`${range.start}T12:00:00`);
@@ -110,16 +114,28 @@ function buildTimelineData({
   cellNotes,
   unitNotes,
   learningObservationAreas,
+  skills,
+  levels,
   language,
 }) {
   const studentId = student?.id;
   const unitById = new Map((teachingUnits || []).map((unit) => [unit.id, unit]));
+  const skillById = new Map((skills || []).map((skill) => [skill.id, skill]));
+  const levelById = new Map((levels || []).map((level) => [level.id, level]));
   const observations = (evidenceItems || [])
     .filter((item) => item.type !== 'assessment' && item.studentId === studentId && item.date)
-    .map((item) => ({
-      ...item,
-      unitTitle: getLocalizedValue(unitById.get(item.teachingUnitId)?.title || unitById.get(item.teachingUnitId)?.label, language),
-    }));
+    .map((item) => {
+      const skill = skillById.get(item.skillId || item.capturePointId);
+      const level = levelById.get(item.levelId);
+
+      return {
+        ...item,
+        unitTitle: getLocalizedValue(unitById.get(item.teachingUnitId)?.title || unitById.get(item.teachingUnitId)?.label, language),
+        skillLabel: getLocalizedValue(skill?.label || skill?.title, language) || item.skillId || item.capturePointId || '',
+        levelLabel: getLocalizedValue(level?.label, language) || item.levelId || '',
+        levelMark: getLevelMark(level),
+      };
+    });
   const assessments = getAssessmentEvents(evidenceItems, studentId).filter((item) => item.date);
   const learningEvents = (learningObservations || [])
     .filter((item) => item.studentId === studentId && item.date)
@@ -197,6 +213,33 @@ function buildTimelineData({
   };
 }
 
+function getObservationClusters(observations) {
+  const clustersByKey = new Map();
+
+  (observations || []).forEach((observation) => {
+    const key = `${observation.teachingUnitId || 'unit'}:${observation.date}`;
+    const cluster = clustersByKey.get(key) || {
+      id: key,
+      date: observation.date,
+      unitTitle: observation.unitTitle,
+      items: [],
+    };
+
+    cluster.items.push(observation);
+    clustersByKey.set(key, cluster);
+  });
+
+  return [...clustersByKey.values()]
+    .map((cluster) => ({
+      ...cluster,
+      items: cluster.items.sort((first, second) => (
+        (first.skillLabel || '').localeCompare(second.skillLabel || '')
+        || (first.id || '').localeCompare(second.id || '')
+      )),
+    }))
+    .sort((first, second) => first.date.localeCompare(second.date));
+}
+
 function TimelineIcon({ type }) {
   if (type === 'assessment') {
     return <SquareIcon sx={{ color: purple, fontSize: 13, transform: 'rotate(45deg)' }} />;
@@ -254,6 +297,74 @@ function AssessmentTimelineItem({ item, range, language }) {
           {formatShortDate(item.date, language)}
         </Typography>
       </Stack>
+    </Box>
+  );
+}
+
+function LessonCaptureCluster({ cluster, range, language }) {
+  const visibleMarks = cluster.items.slice(0, 6);
+  const hiddenCount = Math.max(0, cluster.items.length - visibleMarks.length);
+
+  return (
+    <Box
+      sx={{
+        position: 'absolute',
+        left: `${getPosition(cluster.date, range)}%`,
+        top: 0,
+        width: 132,
+        maxWidth: 132,
+        transform: 'translateX(-8px)',
+      }}
+    >
+      <Tooltip
+        arrow
+        placement="top"
+        title={(
+          <Stack spacing={0.45}>
+            <Typography sx={{ color: '#fff', fontSize: 11.8, fontWeight: 850, lineHeight: 1.2 }}>
+              {cluster.unitTitle || formatShortDate(cluster.date, language)}
+            </Typography>
+            <Typography sx={{ color: 'rgba(255, 255, 255, 0.82)', fontSize: 11.2, lineHeight: 1.2 }}>
+              {formatShortDate(cluster.date, language)}
+            </Typography>
+            <Stack spacing={0.15}>
+              {cluster.items.map((item) => (
+                <Typography key={item.id} sx={{ color: 'rgba(255, 255, 255, 0.88)', fontSize: 11.2, lineHeight: 1.25 }}>
+                  {item.levelMark} {item.skillLabel}
+                </Typography>
+              ))}
+            </Stack>
+          </Stack>
+        )}
+      >
+        <Box sx={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0.35, cursor: 'default' }}>
+          <Typography sx={{ color: darkText, fontSize: 11.8, fontWeight: 850, lineHeight: 1.15, maxWidth: 120, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {cluster.unitTitle}
+          </Typography>
+          <Stack direction="row" spacing={0.22} alignItems="center" flexWrap="wrap" useFlexGap sx={{ maxWidth: 112 }}>
+            {visibleMarks.map((item) => (
+              <Typography
+                key={item.id}
+                component="span"
+                aria-label={`${item.skillLabel}: ${item.levelLabel}`}
+                sx={{
+                  color: purple,
+                  fontSize: 16,
+                  fontWeight: 900,
+                  lineHeight: 1,
+                }}
+              >
+                {item.levelMark}
+              </Typography>
+            ))}
+            {!!hiddenCount && (
+              <Typography component="span" sx={{ color: mutedText, fontSize: 10.8, fontWeight: 850, lineHeight: 1 }}>
+                +{hiddenCount}
+              </Typography>
+            )}
+          </Stack>
+        </Box>
+      </Tooltip>
     </Box>
   );
 }
@@ -423,6 +534,8 @@ export default function ClassPictureExpandedView({
   cellNotes,
   unitNotes,
   learningObservationAreas,
+  skills,
+  levels,
   language,
 }) {
   const timeline = buildTimelineData({
@@ -434,9 +547,12 @@ export default function ClassPictureExpandedView({
     cellNotes,
     unitNotes,
     learningObservationAreas,
+    skills,
+    levels,
     language,
   });
   const monthMarkers = getMonthMarkers(timeline.range);
+  const observationClusters = getObservationClusters(timeline.observations);
 
   return (
     <Box
@@ -503,16 +619,9 @@ export default function ClassPictureExpandedView({
           />
         </TimelineRow>
 
-        <TimelineRow label="Unit observations">
-          {timeline.observations.length ? timeline.observations.map((item) => (
-            <TimelineItem key={item.id} item={item} range={timeline.range}>
-              <Typography sx={{ color: darkText, fontSize: 12.2, fontWeight: 800, lineHeight: 1.25 }}>
-                {getLocalizedValue(item.note, language)}
-              </Typography>
-              <Typography sx={{ mt: 0.15, color: mutedText, fontSize: 11.4 }}>
-                {formatShortDate(item.date, language)}
-              </Typography>
-            </TimelineItem>
+        <TimelineRow label="Lesson capture">
+          {observationClusters.length ? observationClusters.map((cluster) => (
+            <LessonCaptureCluster key={cluster.id} cluster={cluster} range={timeline.range} language={language} />
           )) : <EmptyRow />}
         </TimelineRow>
 

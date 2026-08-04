@@ -564,6 +564,7 @@ function ClassPictureEvidenceGridV1({
   editingCellKey,
   editingRowNoteStudentId,
   editingUnitId,
+  allEvidenceItems,
   evidenceItems,
   expandedStudentId,
   expandedUnitId,
@@ -1299,13 +1300,15 @@ function ClassPictureEvidenceGridV1({
                     ) : (
                       <ClassPictureExpandedView
                         student={student}
-                        evidenceItems={evidenceItems}
+                        evidenceItems={allEvidenceItems || evidenceItems}
                         learningObservations={studentLearningObservations}
                         teachingUnits={teachingUnits}
                         rowNote={rowNote}
                         cellNotes={cellNotes}
                         unitNotes={unitNotes}
                         learningObservationAreas={learningObservationAreas}
+                        skills={skills}
+                        levels={levels}
                         language={language}
                       />
                     )}
@@ -1339,7 +1342,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
   const [storedAssessments, setStoredAssessments] = useState(() => readLearningModuleAssessmentResults(moduleId).assessments);
   const [localEvidencePayload, setLocalEvidencePayload] = useState(() => readLearningModuleEvidence(moduleId));
   const [localLearningObservationPayload, setLocalLearningObservationPayload] = useState(() => readLearningModuleLearningObservations(moduleId));
-  const evidenceItems = useMemo(() => {
+  const allEvidenceItems = useMemo(() => {
     const storedAssessmentItems = storedAssessments.map(normalizeLearningModuleAssessmentAsEvidence);
     const storedAssessmentIds = new Set(storedAssessmentItems.map((assessment) => assessment.id));
 
@@ -1348,8 +1351,11 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
       ...(localEvidencePayload.observations || []),
       ...(moduleConfig?.evidence?.items || [])
         .filter((item) => item?.type !== 'assessment' || !storedAssessmentIds.has(item.id)),
-    ].filter((item) => !activeLessonDate || !item.date || item.date <= activeLessonDate);
-  }, [activeLessonDate, localEvidencePayload, moduleConfig, storedAssessments]);
+    ];
+  }, [localEvidencePayload, moduleConfig, storedAssessments]);
+  const evidenceItems = useMemo(() => (
+    allEvidenceItems.filter((item) => !activeLessonDate || !item.date || item.date <= activeLessonDate)
+  ), [activeLessonDate, allEvidenceItems]);
   const learningObservations = useMemo(() => [
     ...(moduleConfig?.evidence?.learningObservations || []),
     ...groupLearningObservationRecords(localLearningObservationPayload.observations || []),
@@ -1787,6 +1793,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
     editingCellKey,
     editingRowNoteStudentId,
     editingUnitId,
+    allEvidenceItems,
     evidenceItems,
     expandedStudentId,
     expandedUnitId,

@@ -546,6 +546,48 @@ function buildEvidence(subjectId, curriculum) {
       }),
     };
   });
+  const englishEliasObservationClusters = subjectId === 'english'
+    ? [
+      ['2026-01-22', 'listening-reception', [
+        ['spoken-language-main-content-details', 'developing'],
+        ['text-main-content-details', 'emerging'],
+        ['source-selection-use', 'developing'],
+      ]],
+      ['2026-02-12', 'reading-reception', [
+        ['text-main-content-details', 'developing'],
+        ['source-selection-use', 'developing'],
+        ['oral-presentation-coherence', 'emerging'],
+      ]],
+      ['2026-03-12', 'speaking-production-interaction', [
+        ['source-selection-use', 'developing'],
+        ['oral-presentation-coherence', 'developing'],
+        ['written-presentation-coherence', 'secure'],
+      ]],
+      ['2026-04-16', 'writing-production-interaction', [
+        ['oral-presentation-coherence', 'secure'],
+        ['written-presentation-coherence', 'developing'],
+        ['interaction-purpose-audience-situation', 'developing'],
+      ]],
+      ['2026-05-14', 'listening-reception', [
+        ['spoken-language-main-content-details', 'secure'],
+        ['text-main-content-details', 'secure'],
+        ['source-selection-use', 'developing'],
+      ]],
+      ['2026-05-14', 'reading-reception', [
+        ['text-main-content-details', 'secure'],
+        ['source-selection-use', 'developing'],
+        ['oral-presentation-coherence', 'developing'],
+      ]],
+    ].flatMap(([date, teachingUnitId, captures], clusterIndex) => captures.map(([skillId, levelId], captureIndex) => ({
+      id: `english-8a-evidence-elias-extra-${clusterIndex + 1}-${captureIndex + 1}`,
+      type: 'observation',
+      studentId: 'elias-nilsson',
+      date,
+      teachingUnitId,
+      skillId,
+      levelId,
+    })))
+    : [];
   const learningObservations = students.flatMap((student) => {
     const profile = studentProfiles[student.id] || studentProfiles['william-dahl'];
     const windows = getLearningObservationWindows(subjectId, student, profile);
@@ -567,6 +609,7 @@ function buildEvidence(subjectId, curriculum) {
   return {
     items: [
       ...observations,
+      ...englishEliasObservationClusters,
       ...assessments,
     ],
     learningObservations,
