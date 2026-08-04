@@ -871,11 +871,6 @@ function UnitCaptureTrendGraph({ clusters, range, language, selectedUnitIds }) {
                   <Typography sx={{ color: darkText, fontSize: 12.1, fontWeight: 850, lineHeight: 1.12, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {track.skillLabel}
                   </Typography>
-                  {!!track.activityLabel && (
-                    <Typography sx={{ gridColumn: '1', mt: -0.7, color: purple, fontSize: 10.8, fontWeight: 820, lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {track.activityLabel}
-                    </Typography>
-                  )}
                   <Box sx={{ position: 'relative', width: '100%', height: 54 }}>
                     {levelReferenceMarks.map((level) => (
                       <Box
@@ -1151,7 +1146,7 @@ export default function ClassPictureExpandedView({
               <ButtonBase
                 key={date}
                 type="button"
-                onClick={() => setSelectedMonthDate(date)}
+                onClick={() => setSelectedMonthDate((currentDate) => (currentDate === date ? '' : date))}
                 sx={{
                   position: 'absolute',
                   left: `${getPosition(date, visibleRange)}%`,
