@@ -1,12 +1,13 @@
 import { class8AProfile, class8AStudents } from '../../../data/classes/class8AStudents.js';
 import { getSubjectDefinition } from '../../../data/subjectCatalogue.js';
 import { resolveLocalizedValue } from '../../../i18n/conceptDemoTranslations.js';
+import { musicLearningContexts } from './musicLearningContexts.js';
 import { physicalEducationLearningContexts } from './physicalEducationLearningContexts.js';
 
 const navigation = {
   defaultScreen: 'class-picture',
   items: [
-    { id: 'class-picture', label: { en: 'Class picture', sv: 'Klassbild' } },
+    { id: 'class-picture', label: { en: 'Class Overview', sv: 'Klass\u00f6versikt' } },
     { id: 'plan', label: { en: 'Plan', sv: 'Planering' } },
     { id: 'now', label: { en: 'Now', sv: 'Nu' } },
     { id: 'assessment', label: { en: 'Assessment', sv: 'Bed\u00f6mning' } },
@@ -324,6 +325,42 @@ const learningObservationWindows = {
   ],
 };
 
+const musicEliasObservationDates = [
+  '2026-01-15',
+  '2026-01-22',
+  '2026-01-29',
+  '2026-02-05',
+  '2026-02-12',
+  '2026-02-19',
+  '2026-03-05',
+  '2026-03-12',
+  '2026-03-19',
+  '2026-03-26',
+  '2026-04-09',
+  '2026-04-16',
+  '2026-04-23',
+  '2026-05-07',
+  '2026-05-21',
+];
+
+const musicEliasObservationPattern = [
+  { focus: '+', participation: '+', note: 'confident start with guitar' },
+  { independence: '+', note: 'practises chord changes without prompt' },
+  { focus: '+', participation: '+', note: 'secure guitar contribution in pair practice' },
+  { focus: '0', participation: '0', note: 'steady effort on drum pattern' },
+  { independence: '0', note: 'needs count-in for drum transitions' },
+  { focus: '0', note: 'keeps simple drum part with reminders' },
+  { participation: '+', independence: '+', note: 'strong band rehearsal contribution' },
+  { focus: '+', participation: '+', note: 'holds own part in ensemble' },
+  { independence: '+', note: 'adjusts volume and entry with confidence' },
+  { focus: '-', participation: '-', note: 'composition writing dip begins' },
+  { independence: '-', note: 'avoids committing musical idea to paper' },
+  { focus: '-', participation: '-', note: 'reluctant to show composition draft' },
+  { participation: '0', note: 'shares a reduced composition idea after support' },
+  { focus: '-', independence: '-', note: 'showcase preparation remains difficult' },
+  { participation: '0', note: 'shows short extract with structured support' },
+];
+
 const physicalEducationEliasObservationDates = [
   '2026-01-15',
   '2026-01-20',
@@ -482,6 +519,21 @@ function translateLearningObservationNote(note) {
     'more willing to ask for help': 'mer villig att be om hj\u00e4lp',
     'support plan showing small effect': 'st\u00f6dplanen visar liten effekt',
     'still needs structured next steps': 'beh\u00f6ver fortfarande strukturerade n\u00e4sta steg',
+    'confident start with guitar': 's\u00e4ker start med gitarr',
+    'practises chord changes without prompt': '\u00f6var ackordbyten utan p\u00e5minnelse',
+    'secure guitar contribution in pair practice': 's\u00e4kert gitarrbidrag i par\u00f6vning',
+    'steady effort on drum pattern': 'stabil anstr\u00e4ngning i trumkomp',
+    'needs count-in for drum transitions': 'beh\u00f6ver inr\u00e4kning vid trum\u00f6verg\u00e5ngar',
+    'keeps simple drum part with reminders': 'h\u00e5ller enkel trumst\u00e4mma med p\u00e5minnelser',
+    'strong band rehearsal contribution': 'starkt bidrag i bandrepetition',
+    'holds own part in ensemble': 'h\u00e5ller egen st\u00e4mma i ensemble',
+    'adjusts volume and entry with confidence': 'anpassar volym och insats med s\u00e4kerhet',
+    'composition writing dip begins': 'svacka i kompositionsskrivande inleds',
+    'avoids committing musical idea to paper': 'undviker att f\u00e4sta musikalisk id\u00e9 p\u00e5 papper',
+    'reluctant to show composition draft': 'tvekar att visa kompositionsutkast',
+    'shares a reduced composition idea after support': 'delar en avgr\u00e4nsad kompositionsid\u00e9 efter st\u00f6d',
+    'showcase preparation remains difficult': 'f\u00f6rberedelse inf\u00f6r visning \u00e4r fortsatt sv\u00e5r',
+    'shows short extract with structured support': 'visar kort utdrag med strukturerat st\u00f6d',
     'watching response after failed movement checkpoint': 'f\u00f6ljer upp respons efter ej godk\u00e4nd r\u00f6relsekontroll',
     'waits for adult confirmation before starting activity': 'v\u00e4ntar p\u00e5 vuxen bekr\u00e4ftelse innan aktivitet startas',
     'joins warm-up but avoids main task': 'deltar i uppv\u00e4rmning men undviker huvuduppgiften',
@@ -538,7 +590,18 @@ function buildPhysicalEducationEliasObservationWindows() {
   }));
 }
 
+function buildMusicEliasObservationWindows() {
+  return musicEliasObservationDates.map((date, index) => ({
+    date,
+    ...musicEliasObservationPattern[index % musicEliasObservationPattern.length],
+  }));
+}
+
 function getLearningObservationWindows(subjectId, student, profile) {
+  if (subjectId === 'music' && student.id === 'elias-nilsson') {
+    return buildMusicEliasObservationWindows();
+  }
+
   if (subjectId === 'physical-education' && student.id === 'elias-nilsson') {
     return buildPhysicalEducationEliasObservationWindows();
   }
@@ -684,7 +747,11 @@ function buildEvidence(subjectId, curriculum) {
       results: evidenceStudents.map((student) => {
         const profile = studentProfiles[student.id] || studentProfiles['william-dahl'];
         const absent = absentAssessments[student.id]?.includes(assessmentIndex) || false;
-        const score = absent ? null : (profile.assessmentScores[assessmentIndex] ?? 12);
+        const musicEliasScores = [17, 12, 16, 8, 9];
+        const profileScores = subjectId === 'music' && student.id === 'elias-nilsson'
+          ? musicEliasScores
+          : profile.assessmentScores;
+        const score = absent ? null : (profileScores[assessmentIndex] ?? 12);
         const percentage = score === null ? null : Math.round((score / 20) * 100);
 
         return {
@@ -902,6 +969,81 @@ function buildEvidence(subjectId, curriculum) {
       levelId,
     })))
     : [];
+  const musicEliasProjectTimeline = subjectId === 'music'
+    ? [
+      ['2026-01-15', 'guitar-performance', localized('Guitar performance', 'Gitarrspel'), 'performance-security', [
+        ['guitar-performance-technique', 'instrument-singing-technique', 'secure'],
+        ['guitar-performance-pulse-rhythm', 'pulse-rhythm', 'secure'],
+      ]],
+      ['2026-01-22', 'guitar-performance', localized('Guitar performance', 'Gitarrspel'), 'performance-security', [
+        ['guitar-performance-chord-changes', 'timing-continuity', 'secure'],
+        ['guitar-performance-own-part', 'own-part-security', 'advanced'],
+      ]],
+      ['2026-01-29', 'guitar-performance', localized('Guitar performance', 'Gitarrspel'), 'ensemble-adaptation', [
+        ['guitar-performance-adapts-to-group', 'dynamics-balance-adaptation', 'secure'],
+        ['guitar-performance-pulse-rhythm', 'pulse-rhythm', 'advanced', 'performance-security'],
+      ]],
+      ['2026-02-05', 'drum-performance', localized('Drum performance', 'Trumspel'), 'performance-security', [
+        ['drum-performance-coordination', 'instrument-singing-technique', 'developing'],
+        ['drum-performance-pulse-rhythm', 'pulse-rhythm', 'developing'],
+      ]],
+      ['2026-02-12', 'drum-performance', localized('Drum performance', 'Trumspel'), 'performance-security', [
+        ['drum-performance-continuity', 'own-part-security', 'developing'],
+        ['drum-performance-form', 'musical-form-adaptation', 'developing', 'ensemble-adaptation'],
+      ]],
+      ['2026-02-19', 'drum-performance', localized('Drum performance', 'Trumspel'), 'ensemble-adaptation', [
+        ['drum-performance-dynamics', 'dynamics-balance-adaptation', 'developing'],
+        ['drum-performance-pulse-rhythm', 'pulse-rhythm', 'secure', 'performance-security'],
+      ]],
+      ['2026-03-05', 'band-performance', localized('Band performance', 'Bandspel'), 'ensemble-adaptation', [
+        ['band-performance-pulse-rhythm', 'pulse-rhythm', 'secure', 'performance-security'],
+        ['band-performance-shared-tempo', 'shared-pulse-tempo-adaptation', 'secure'],
+      ]],
+      ['2026-03-12', 'band-performance', localized('Band performance', 'Bandspel'), 'performance-security', [
+        ['band-performance-own-part', 'own-part-security', 'advanced'],
+        ['band-performance-form-transitions', 'musical-form-adaptation', 'secure', 'ensemble-adaptation'],
+      ]],
+      ['2026-03-19', 'band-performance', localized('Band performance', 'Bandspel'), 'musical-expression', [
+        ['band-performance-dynamics-expression', 'dynamics-balance-adaptation', 'secure', 'ensemble-adaptation'],
+        ['band-performance-own-part', 'own-part-security', 'advanced', 'performance-security'],
+      ]],
+      ['2026-03-26', 'scary-music-composition', localized('Writing scary music', 'Skapa skr\u00e4ckmusik'), 'musical-expression', [
+        ['scary-music-communicates-idea', 'communicates-musical-idea', 'emerging'],
+        ['scary-music-musical-elements', 'uses-musical-building-blocks', 'developing'],
+      ]],
+      ['2026-04-09', 'scary-music-composition', localized('Writing scary music', 'Skapa skr\u00e4ckmusik'), 'composition-form', [
+        ['scary-music-creates-material', 'creates-musical-material', 'emerging'],
+        ['scary-music-organises-form', 'organises-functional-form', 'emerging'],
+      ]],
+      ['2026-04-16', 'scary-music-composition', localized('Writing scary music', 'Skapa skr\u00e4ckmusik'), 'composition-form', [
+        ['scary-music-revises', 'revises-composition', 'emerging'],
+        ['scary-music-communicates-idea', 'communicates-musical-idea', 'developing', 'musical-expression'],
+      ]],
+      ['2026-04-23', 'scary-music-composition', localized('Writing scary music', 'Skapa skr\u00e4ckmusik'), 'musical-expression', [
+        ['scary-music-musical-elements', 'uses-musical-building-blocks', 'developing'],
+        ['scary-music-organises-form', 'organises-functional-form', 'developing', 'composition-form'],
+      ]],
+      ['2026-05-07', 'scary-music-composition', localized('Writing scary music', 'Skapa skr\u00e4ckmusik'), 'composition-form', [
+        ['scary-music-creates-material', 'creates-musical-material', 'emerging'],
+        ['scary-music-revises', 'revises-composition', 'emerging'],
+      ]],
+      ['2026-05-21', 'scary-music-composition', localized('Writing scary music', 'Skapa skr\u00e4ckmusik'), 'characteristics-comparison', [
+        ['scary-music-musical-elements', 'uses-musical-building-blocks', 'developing', 'musical-expression'],
+        ['scary-music-communicates-idea', 'communicates-musical-idea', 'developing', 'musical-expression'],
+      ]],
+    ].flatMap(([date, contextId, contextLabel, teachingUnitId, captures], clusterIndex) => captures.map(([capturePointId, skillId, levelId, captureTeachingUnitId], captureIndex) => ({
+      id: `music-8a-evidence-elias-project-${clusterIndex + 1}-${captureIndex + 1}`,
+      type: 'observation',
+      studentId: 'elias-nilsson',
+      date,
+      teachingUnitId: captureTeachingUnitId || teachingUnitId,
+      skillId,
+      capturePointId,
+      contextId,
+      contextLabel,
+      levelId,
+    })))
+    : [];
   const learningObservations = evidenceStudents.flatMap((student) => {
     const profile = studentProfiles[student.id] || studentProfiles['william-dahl'];
     const windows = getLearningObservationWindows(subjectId, student, profile);
@@ -919,7 +1061,54 @@ function buildEvidence(subjectId, curriculum) {
       ),
     }));
   });
-  const timelineResponses = subjectId === 'physical-education'
+  const timelineResponses = subjectId === 'music'
+    ? [
+      {
+        id: 'music-8a-elias-timeline-response-1',
+        type: 'timeline-comment',
+        studentId: 'elias-nilsson',
+        date: '2026-01-22',
+        label: localized('Guitar strength', 'Styrka i gitarr'),
+        comment: localized(
+          'Use guitar as an anchor role in later ensemble work. He is secure when the part is practical and audible.',
+          'Anv\u00e4nd gitarr som ankarroll i senare ensemblearbete. Han \u00e4r s\u00e4ker n\u00e4r st\u00e4mman \u00e4r praktisk och h\u00f6rbar.',
+        ),
+      },
+      {
+        id: 'music-8a-elias-timeline-response-2',
+        type: 'timeline-comment',
+        studentId: 'elias-nilsson',
+        date: '2026-02-12',
+        label: localized('Drum routine', 'Trumrutin'),
+        comment: localized(
+          'Keep drums at a steady pattern level: count-in, repeat, then short transition practice.',
+          'H\u00e5ll trummor p\u00e5 stabil komp-niv\u00e5: inr\u00e4kning, repetition och kort \u00f6vning p\u00e5 \u00f6verg\u00e5ngar.',
+        ),
+      },
+      {
+        id: 'music-8a-elias-timeline-response-3',
+        type: 'timeline-comment',
+        studentId: 'elias-nilsson',
+        date: '2026-04-09',
+        label: localized('Composition support', 'Kompositionsst\u00f6d'),
+        comment: localized(
+          'Reduce the written demand first: let him record two sound ideas, then name the musical choice afterwards.',
+          'Minska skrivkravet f\u00f6rst: l\u00e5t honom spela in tv\u00e5 ljudid\u00e9er och s\u00e4tta ord p\u00e5 musikvalet efter\u00e5t.',
+        ),
+      },
+      {
+        id: 'music-8a-elias-timeline-response-4',
+        type: 'timeline-comment',
+        studentId: 'elias-nilsson',
+        date: '2026-05-07',
+        label: localized('Showcase scaffold', 'St\u00f6d inf\u00f6r visning'),
+        comment: localized(
+          'Offer a short extract or paired presentation. Keep the focus on the musical idea rather than extended written explanation.',
+          'Erbjud kort utdrag eller parvis presentation. H\u00e5ll fokus p\u00e5 den musikaliska id\u00e9n snarare \u00e4n l\u00e5ng skriftlig f\u00f6rklaring.',
+        ),
+      },
+    ]
+    : subjectId === 'physical-education'
     ? [
       {
         id: 'physical-education-8a-elias-timeline-response-1',
@@ -985,6 +1174,7 @@ function buildEvidence(subjectId, curriculum) {
       ...englishEliasObservationClusters,
       ...physicalEducationEliasObservationClusters,
       ...physicalEducationEliasActivityTimeline,
+      ...musicEliasProjectTimeline,
       ...assessments,
     ],
     learningObservations,
@@ -993,6 +1183,81 @@ function buildEvidence(subjectId, curriculum) {
 }
 
 function buildPlanning(subjectId, curriculum) {
+  if (subjectId === 'music') {
+    const contextById = new Map(musicLearningContexts.map((context) => [context.id, context]));
+    const projectBlocks = [
+      ['guitar-performance', 'jan-2026', '2026-01-12', '2026-01-30', 'completed', 'guitar-foundations', localized('Guitar foundations', 'Gitarrgrunder'), localized('Build a shared base in guitar technique, chord changes, pulse and individual part security.', 'Bygg en gemensam grund i gitarrteknik, ackordbyten, puls och s\u00e4kerhet i egen st\u00e4mma.')],
+      ['drum-performance', 'feb-2026', '2026-02-02', '2026-02-20', 'completed', 'drum-rhythm', localized('Drum patterns and pulse', 'Trumkomp och puls'), localized('Develop rhythmic security, continuity and ensemble timing through simple drum patterns.', 'Utveckla rytmisk s\u00e4kerhet, kontinuitet och tajming i ensemble genom enkla trumkomp.')],
+      ['band-performance', 'mar-2026', '2026-02-23', '2026-03-20', 'completed', 'band-ensemble', localized('Band performance: ensemble', 'Bandspel: ensemble'), localized('Bring guitar, drums and vocal or instrumental parts together with focus on balance, entries and musical form.', 'Samla gitarr, trummor och vokala eller instrumentala st\u00e4mmor med fokus p\u00e5 balans, insatser och musikalisk form.')],
+      ['scary-music-composition', 'apr-2026', '2026-03-23', '2026-04-24', 'current', 'scary-composition', localized('Writing scary music', 'Skapa skr\u00e4ckmusik'), localized('Compose short pieces that use sound, rhythm, harmony, dynamics and form to create suspense.', 'Komponera korta stycken som anv\u00e4nder klang, rytm, harmonik, dynamik och form f\u00f6r att skapa sp\u00e4nning.')],
+      ['scary-music-composition', 'may-2026', '2026-05-04', '2026-05-29', 'planned', 'composition-showcase', localized('Composition showcase and reflection', 'Kompositionsvisning och reflektion'), localized('Refine, share and discuss compositions using musical concepts and comparisons.', 'Bearbeta, visa och samtala om kompositioner med musikbegrepp och j\u00e4mf\u00f6relser.')],
+    ].map(([contextId, periodId, startDate, endDate, status, blockSlug, title, description]) => {
+      const context = contextById.get(contextId);
+      const curriculumAreaIds = [...new Set([
+        context?.primaryCurriculumAreaId,
+        ...(context?.possibleCurriculumAreaIds || []),
+        ...(context?.capturePoints || []).flatMap((point) => point.curriculumAreaIds || []),
+      ].filter(Boolean))];
+      const abilityIds = [...new Set((context?.capturePoints || [])
+        .map((point) => point.observationDimensionId)
+        .filter(Boolean))];
+
+      return {
+        id: `${subjectId}-8a-plan-${blockSlug}`,
+        subjectId,
+        classId: '8a',
+        title,
+        description,
+        teachingUnitId: context?.primaryCurriculumAreaId || curriculumAreaIds[0] || '',
+        sourceTemplateId: contextId,
+        templateId: contextId,
+        periodId,
+        startDate,
+        endDate,
+        status,
+        curriculumAreaIds,
+        evidenceTopicIds: curriculumAreaIds.map((areaId) => `${areaId}-observations`),
+        abilityIds,
+        blockType: 'teaching',
+        assessmentAnchor: null,
+        quickCaptureOptions: (context?.capturePoints || []).map((point) => ({
+          id: point.id,
+          label: point.label,
+        })),
+        groupAdaptations: [],
+        notes: null,
+        createdAt: '2026-01-08',
+        updatedAt: status === 'current' ? '2026-04-21' : endDate,
+        createdBy: 'teacher',
+      };
+    });
+
+    return {
+      periods: [
+        { id: 'jan-2026', label: localized('January', 'Januari'), startDate: '2026-01-08', endDate: '2026-01-31', order: 1 },
+        { id: 'feb-2026', label: localized('February', 'Februari'), startDate: '2026-02-01', endDate: '2026-02-28', order: 2 },
+        { id: 'mar-2026', label: localized('March', 'Mars'), startDate: '2026-03-01', endDate: '2026-03-31', order: 3 },
+        { id: 'apr-2026', label: localized('April', 'April'), startDate: '2026-04-01', endDate: '2026-04-30', order: 4 },
+        { id: 'may-2026', label: localized('May', 'Maj'), startDate: '2026-05-01', endDate: '2026-05-31', order: 5 },
+        { id: 'june-2026', label: localized('June', 'Juni'), startDate: '2026-06-01', endDate: '2026-06-19', order: 6 },
+      ],
+      blocks: projectBlocks,
+      tools: [
+        { id: 'blank-block', title: localized('Blank block', 'Tomt block'), blockType: 'teaching', description: '', curriculumAreaIds: [], evidenceTopicIds: [], abilityIds: [], quickCaptureOptions: [] },
+        { id: 'revision-consolidation', title: localized('Revision and consolidation', 'Repetition och bef\u00e4stande'), blockType: 'consolidation', description: localized('Create time to revisit and secure earlier learning.', 'Skapa tid f\u00f6r att repetera och bef\u00e4sta tidigare l\u00e4rande.'), curriculumAreaIds: [], evidenceTopicIds: [], abilityIds: [], quickCaptureOptions: [] },
+        { id: 'assessment-point', title: localized('Assessment point', 'Bed\u00f6mningspunkt'), blockType: 'assessment', description: localized('Add a planned assessment or checkpoint.', 'L\u00e4gg till en planerad bed\u00f6mning eller kontrollpunkt.'), curriculumAreaIds: [], evidenceTopicIds: [], abilityIds: [], quickCaptureOptions: [] },
+      ],
+      curriculumAreaTypeLabels: {
+        content: localized('Content', 'Inneh\u00e5ll'),
+        ability: localized('Skills', 'F\u00e4rdigheter'),
+      },
+      blockTypeLabels: {
+        teaching: localized('Projects', 'Projekt'),
+      },
+      curriculumNotes: [],
+    };
+  }
+
   if (subjectId === 'physical-education') {
     const contextById = new Map(physicalEducationLearningContexts.map((context) => [context.id, context]));
     const activityBlocks = [
@@ -1193,7 +1458,7 @@ export function buildSubject8AConfig({ subjectId, schedule } = {}) {
     navigation,
     screens: {
       'class-picture': {
-        title: localized('Class picture', 'Klassbild'),
+        title: localized('Class Overview', 'Klass\u00f6versikt'),
         description: localized(`Reusable class overview for ${subjectTitle.en} 8A.`, `\u00c5teranv\u00e4ndbar klass\u00f6versikt f\u00f6r ${subjectTitle.sv} 8A.`),
       },
       plan: {

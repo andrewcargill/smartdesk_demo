@@ -226,7 +226,7 @@ function buildTimelineData({
         skillLabel,
         activityLabel,
         activityCaptureLabel,
-        timelineLabel: activityCaptureLabel || skillLabel,
+        timelineLabel: skillLabel,
         levelLabel: getLocalizedValue(level?.label, language) || item.levelId || '',
         levelMark: getLevelMark(level),
         levelOrder: level?.order || 1,
@@ -330,7 +330,7 @@ function getObservationClusters(observations) {
     .map((cluster) => ({
       ...cluster,
       items: cluster.items.sort((first, second) => (
-        (first.timelineLabel || first.skillLabel || '').localeCompare(second.timelineLabel || second.skillLabel || '')
+        (first.skillLabel || first.timelineLabel || '').localeCompare(second.skillLabel || second.timelineLabel || '')
         || (first.id || '').localeCompare(second.id || '')
       )),
       activityTitle: [...new Set(cluster.items.map((item) => item.activityLabel).filter(Boolean))][0] || '',
@@ -436,7 +436,7 @@ function getCapturePointTracks(clusters, selectedUnitIds) {
         const track = tracksByKey.get(key) || {
           id: key,
           unitTitle: cluster.unitTitle,
-          skillLabel: item.timelineLabel || item.skillLabel,
+          skillLabel: item.skillLabel || item.timelineLabel,
           curriculumSkillLabel: item.skillLabel,
           activityLabel: item.activityLabel,
           points: [],
@@ -446,7 +446,7 @@ function getCapturePointTracks(clusters, selectedUnitIds) {
           id: item.id,
           date: item.date,
           unitTitle: cluster.unitTitle,
-          skillLabel: item.timelineLabel || item.skillLabel,
+          skillLabel: item.skillLabel || item.timelineLabel,
           curriculumSkillLabel: item.skillLabel,
           activityLabel: item.activityLabel,
           activityCaptureLabel: item.activityCaptureLabel,
@@ -688,7 +688,7 @@ function LessonCaptureCluster({ cluster, range, language, zoomed, onZoom }) {
                   </Typography>
                   {item.activityCaptureLabel && item.skillLabel ? (
                     <Typography sx={{ color: 'rgba(255, 255, 255, 0.66)', fontSize: 10.6, lineHeight: 1.2 }}>
-                      {item.skillLabel}
+                      {item.activityCaptureLabel}
                     </Typography>
                   ) : null}
                 </Box>
@@ -1038,7 +1038,7 @@ function UnitCaptureTrendGraph({ clusters, range, language, selectedUnitIds, act
                               </Typography>
                               {point.activityCaptureLabel && point.curriculumSkillLabel ? (
                                 <Typography sx={{ color: 'rgba(255, 255, 255, 0.66)', fontSize: 10.6, lineHeight: 1.2 }}>
-                                  {point.curriculumSkillLabel}
+                                  {point.activityCaptureLabel}
                                 </Typography>
                               ) : null}
                             </Stack>

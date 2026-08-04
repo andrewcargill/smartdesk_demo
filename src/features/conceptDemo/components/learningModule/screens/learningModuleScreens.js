@@ -6,7 +6,7 @@ import PlanScreen from './PlanScreen.jsx';
 export const learningModuleScreens = [
   {
     id: 'class-picture',
-    label: 'Class picture',
+    label: 'Class Overview',
     component: ClassPictureScreen,
   },
   {

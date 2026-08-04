@@ -1007,7 +1007,6 @@ function HomeScreenContent() {
           }}
         >
         <Box sx={{ position: 'relative', maxWidth: 1160, mx: 'auto' }}>
-          <LanguageToggle />
           <Stack spacing={1.1} alignItems="center" textAlign="center" sx={{ pt: { xs: 5, sm: 2 }, mb: { xs: 4, md: 2 } }}>
             {/* <Typography variant="h1" sx={{ fontSize: { xs: 36, sm: 48, md: 58 }, lineHeight: 1.04, color: darkText }}>
               Welcome back, Anna

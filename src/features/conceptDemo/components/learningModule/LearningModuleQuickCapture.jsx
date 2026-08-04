@@ -803,9 +803,14 @@ export default function LearningModuleQuickCapture({
           minWidth: 0,
         }}
       >
-        <Typography sx={{ px: 0.35, pb: { xs: 5.75, md: 6.75 }, color: darkText, fontSize: { xs: 17.5, sm: 19.5 }, lineHeight: 1.15, fontWeight: 880 }}>
-          Students
-        </Typography>
+        <Box sx={{ px: 0.35, pb: { xs: 1.15, md: 1.35 } }}>
+          <Typography sx={{ color: darkText, fontSize: { xs: 17.5, sm: 19.5 }, lineHeight: 1.15, fontWeight: 880 }}>
+            Students
+          </Typography>
+          <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 12.2, lineHeight: 1.15, fontWeight: 650 }}>
+            {t('learningModule.quickCapture.selectStudentBelow')}
+          </Typography>
+        </Box>
         <Stack
           spacing={0.7}
           sx={{

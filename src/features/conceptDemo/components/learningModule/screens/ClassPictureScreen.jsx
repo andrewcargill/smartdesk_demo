@@ -1947,7 +1947,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
                 setClassPictureGridVersion(nextVersion);
               }
             }}
-            aria-label="Class picture version"
+            aria-label="Class Overview version"
             sx={{
               p: 0.25,
               borderRadius: '999px',
@@ -1972,9 +1972,9 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
               },
             }}
           >
-            <ToggleButton value="v1" aria-label="Class picture V1">V1</ToggleButton>
-            <ToggleButton value="v2" aria-label="Class picture V2">V2</ToggleButton>
-            <ToggleButton value="v3" aria-label="Class picture V3">V3</ToggleButton>
+            <ToggleButton value="v1" aria-label="Class Overview V1">V1</ToggleButton>
+            <ToggleButton value="v2" aria-label="Class Overview V2">V2</ToggleButton>
+            <ToggleButton value="v3" aria-label="Class Overview V3">V3</ToggleButton>
           </ToggleButtonGroup>
           <Select
             value={activeGroupingSetId}

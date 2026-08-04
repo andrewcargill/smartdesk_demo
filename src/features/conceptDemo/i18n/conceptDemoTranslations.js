@@ -152,15 +152,15 @@ export const conceptDemoTranslations = {
         modesLabel: 'Subject workspace modes',
       },
       navigation: {
-        classPicture: 'Class picture',
+        classPicture: 'Class Overview',
         plan: 'Plan',
         now: 'Now',
         assessment: 'Assessment',
       },
       modes: {
         classPicture: {
-          ariaLabel: 'Class picture mode: viewing class and student progress',
-          tooltipTitle: 'Class picture',
+          ariaLabel: 'Class Overview mode: viewing class and student progress',
+          tooltipTitle: 'Class Overview',
           tooltipDetail: 'View the class and student progress.',
         },
         plan: {
@@ -190,16 +190,19 @@ export const conceptDemoTranslations = {
         independence: 'Independence',
         unitObservations: 'Unit observations',
       },
+      quickCapture: {
+        selectStudentBelow: 'Select a student below',
+      },
       classPicture: {
         noSavedDate: 'No saved date',
-        classPictureAria: '{{title}} class picture',
+        classPictureAria: '{{title}} Class Overview',
         assessmentAlerts: 'Assessment alerts',
         quickNotes: 'Quick notes',
         classList: 'Class list',
         focus: 'Focus',
         resetFocus: 'Reset focus',
-        resetGroupsAria: 'Reset class picture groups',
-        evidenceMapFocused: '{{title}} class picture focused by {{focus}}',
+        resetGroupsAria: 'Reset Class Overview groups',
+        evidenceMapFocused: '{{title}} Class Overview focused by {{focus}}',
         groupHeaderEditAria: '{{group}}. Double click to edit focus.',
         unassigned: 'Unassigned',
         doubleClickCreateFocus: 'Double click to create a focus',
@@ -564,15 +567,15 @@ export const conceptDemoTranslations = {
         modesLabel: '\u00c4mnesarbetsytans l\u00e4gen',
       },
       navigation: {
-        classPicture: 'Klassbild',
+        classPicture: 'Klass\u00f6versikt',
         plan: 'Planering',
         now: 'Nu',
         assessment: 'Bed\u00f6mning',
       },
       modes: {
         classPicture: {
-          ariaLabel: 'Klassbildsl\u00e4ge: visar klassens och elevernas progression',
-          tooltipTitle: 'Klassbild',
+          ariaLabel: 'Klass\u00f6versiktsl\u00e4ge: visar klassens och elevernas progression',
+          tooltipTitle: 'Klass\u00f6versikt',
           tooltipDetail: 'Visa klassen och elevernas progression.',
         },
         plan: {
@@ -602,16 +605,19 @@ export const conceptDemoTranslations = {
         independence: 'Sj\u00e4lvst\u00e4ndighet',
         unitObservations: 'Observationer f\u00f6r omr\u00e5det',
       },
+      quickCapture: {
+        selectStudentBelow: 'V\u00e4lj en elev nedan',
+      },
       classPicture: {
         noSavedDate: 'Inget sparat datum',
-        classPictureAria: 'Klassbild f\u00f6r {{title}}',
+        classPictureAria: 'Klass\u00f6versikt f\u00f6r {{title}}',
         assessmentAlerts: 'Bed\u00f6mningsvarningar',
         quickNotes: 'Snabbanteckningar',
         classList: 'Klasslista',
         focus: 'Fokus',
         resetFocus: '\u00c5terst\u00e4ll fokus',
         resetGroupsAria: '\u00c5terst\u00e4ll grupper i klassbilden',
-        evidenceMapFocused: 'Klassbild f\u00f6r {{title}} fokuserad p\u00e5 {{focus}}',
+        evidenceMapFocused: 'Klass\u00f6versikt f\u00f6r {{title}} fokuserad p\u00e5 {{focus}}',
         groupHeaderEditAria: '{{group}}. Dubbelklicka f\u00f6r att redigera fokus.',
         unassigned: 'Ej tilldelade',
         doubleClickCreateFocus: 'Dubbelklicka f\u00f6r att skapa ett fokus',

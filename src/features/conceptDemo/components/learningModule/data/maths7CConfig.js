@@ -22,7 +22,7 @@ export const maths7CConfig = {
   navigation: {
     defaultScreen: 'class-picture',
     items: [
-      { id: 'class-picture', label: { en: 'Class picture', sv: 'Klassbild' } },
+      { id: 'class-picture', label: { en: 'Class Overview', sv: 'Klass\u00f6versikt' } },
       { id: 'plan', label: { en: 'Plan', sv: 'Planering' } },
       { id: 'now', label: { en: 'Now', sv: 'Nu' } },
       { id: 'assessment', label: { en: 'Assessment', sv: 'Bed\u00f6mning' } },
