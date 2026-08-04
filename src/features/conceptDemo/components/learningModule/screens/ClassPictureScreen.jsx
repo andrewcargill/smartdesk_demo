@@ -12,7 +12,6 @@ import { useClassWorkingGroups } from '../../../hooks/useClassWorkingGroups.js';
 import { getActiveGroups } from '../../../utils/classGroupUtils.js';
 import { GroupDialog } from '../ClassWorkingGroups.jsx';
 import AssessmentResultsEntryModal from '../AssessmentResultsEntryModal.jsx';
-import StudentUnitInsightPanel from '../StudentUnitInsightPanel.jsx';
 import {
   LEARNING_MODULE_ASSESSMENT_RESULTS_STORAGE_EVENT,
   getLearningModuleAssessmentResultsStorageKey,
@@ -544,6 +543,22 @@ function getUngroupedStudentsForType(students, groups, typeId) {
   return (students || []).filter((student) => !groupedStudentIds.has(student.id));
 }
 
+function ClassPictureExpandedView() {
+  return (
+    <Box
+      sx={{
+        p: 2,
+        borderTop: '1px solid rgba(23, 21, 26, 0.08)',
+        bgcolor: '#fff',
+      }}
+    >
+      <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 760 }}>
+        new expanded view
+      </Typography>
+    </Box>
+  );
+}
+
 function ClassPictureEvidenceGridV1({
   activeGroupingSet,
   allowDrop,
@@ -918,29 +933,36 @@ function ClassPictureEvidenceGridV1({
                     </ButtonBase>
                   )}
                   <ButtonBase
+                    onClick={() => toggleStudent(student.id, '')}
+                    aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${student.displayName}`}
+                    aria-expanded={isExpanded}
+                    aria-controls={`student-insight-${student.id}`}
+                    sx={{
+                      width: 24,
+                      height: 28,
+                      flexShrink: 0,
+                      borderRadius: '8px',
+                      color: 'text.secondary',
+                      '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+                    }}
+                  >
+                    <KeyboardArrowDownIcon sx={{ color: 'text.secondary', fontSize: 18, transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
+                  </ButtonBase>
+                  <Box
                     data-smartdesk-hotspot={student.id === 'elias-nilsson' ? 'elias-student-row' : undefined}
                     data-smartdesk-student-id={student.id === 'elias-nilsson' ? student.id : undefined}
                     data-smartdesk-student-name={student.id === 'elias-nilsson' ? student.displayName : undefined}
                     data-smartdesk-subject-id={student.id === 'elias-nilsson' ? moduleConfig?.subjectId : undefined}
                     data-smartdesk-subject-title={student.id === 'elias-nilsson' ? subjectTitle : undefined}
-                    onClick={() => toggleStudent(student.id, '')}
-                    aria-expanded={isExpanded}
-                    aria-controls={`student-insight-${student.id}`}
                     sx={{
                       flex: '1 1 auto',
                       minWidth: 0,
-                      justifyContent: 'flex-start',
-                      gap: 0.45,
-                      textAlign: 'left',
-                      borderRadius: '8px',
-                      '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
                     }}
                   >
-                    <KeyboardArrowDownIcon sx={{ color: 'text.secondary', fontSize: 18, transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
                     <Typography sx={{ color: darkText, fontSize: isExpanded ? 18 : 13, fontWeight: isExpanded ? 920 : 820, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', transition: 'font-size 140ms ease, font-weight 140ms ease' }}>
                       {student.displayName}
                     </Typography>
-                  </ButtonBase>
+                  </Box>
                 </Box>
 
                 <Box
@@ -1262,37 +1284,8 @@ function ClassPictureEvidenceGridV1({
 
               {isExpanded && (
                 <Box role="row" sx={{ display: 'contents' }}>
-                    <Box role="cell" sx={{ gridColumn: `1 / span ${teachingUnits.length + 4}`, minWidth: 0 }}>
-                    {expandedUnitId && expandedUnitSummary ? (
-                      <StudentUnitInsightPanel
-                        student={student}
-                        unit={expandedUnit}
-                        summary={expandedUnitSummary}
-                        configuredFocuses={(expandedUnit?.skillIds || [])
-                          .map((skillId) => skills.find((skill) => skill.id === skillId))
-                          .filter(Boolean)}
-                        levels={levels}
-                        onClose={() => {
-                          setExpandedStudentId('');
-                          setExpandedUnitId('');
-                        }}
-                        onEditAssessment={openAssessmentEdit}
-                        language={language}
-                        t={t}
-                      />
-                    ) : (
-                      <StudentGlobalInsightPanel
-                        student={student}
-                        evidenceItems={evidenceItems}
-                        rowNote={rowNote}
-                        learningObservations={studentLearningObservations}
-                        subjectId={moduleConfig?.subjectId}
-                        subjectTitle={subjectTitle}
-                        learningObservationAreas={learningObservationAreas}
-                        language={language}
-                        t={t}
-                      />
-                    )}
+                  <Box id={`student-insight-${student.id}`} role="cell" sx={{ gridColumn: `1 / span ${teachingUnits.length + 4}`, minWidth: 0 }}>
+                    <ClassPictureExpandedView />
                   </Box>
                 </Box>
               )}
