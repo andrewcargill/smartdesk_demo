@@ -586,11 +586,11 @@ function EmptyRow() {
   return <Box sx={{ width: 24, height: 2, mt: 1, borderRadius: 999, bgcolor: 'rgba(23, 21, 26, 0.16)' }} />;
 }
 
-function SelectCaptureUnitPrompt() {
+function SelectClassContentPrompt() {
   return (
     <Box sx={{ py: 0.8 }}>
       <Typography sx={{ color: 'rgba(23, 21, 26, 0.42)', fontSize: 12.2, fontWeight: 760 }}>
-        Select one or more units to compare.
+        Select class content above to show related evidence.
       </Typography>
     </Box>
   );
@@ -885,14 +885,21 @@ export default function ClassPictureExpandedView({
   const visibleRange = selectedMonthDate ? getMonthRange(selectedMonthDate) : timeline.range;
   const visibleUnits = layoutUnitSpans(timeline.units.filter((unit) => isSpanInRange(unit.startDate, unit.endDate, visibleRange)));
   const visibleLearningEvents = timeline.learningEvents.filter((item) => isDateInRange(item.date, visibleRange));
-  const visibleObservationClusters = layoutObservationClusters(
+  const unitFilterActive = Boolean(selectedCaptureUnitIds.length);
+  const visibleObservationClustersForRange = layoutObservationClusters(
     getObservationClusters(timeline.observations).filter((cluster) => isDateInRange(cluster.date, visibleRange)),
   );
-  const captureUnitOptions = getCaptureUnitOptions(visibleObservationClusters, teachingUnits, language);
+  const visibleObservationClusters = unitFilterActive
+    ? visibleObservationClustersForRange.filter((cluster) => selectedCaptureUnitIds.includes(cluster.teachingUnitId))
+    : visibleObservationClustersForRange;
+  const captureUnitOptions = getCaptureUnitOptions(visibleObservationClustersForRange, teachingUnits, language);
   const allCaptureUnitIds = captureUnitOptions.map((unit) => unit.id);
   const visibleSelectedCaptureUnitIds = selectedCaptureUnitIds.filter((unitId) => allCaptureUnitIds.includes(unitId));
   const effectiveSelectedCaptureUnitIds = visibleSelectedCaptureUnitIds;
-  const visibleAssessments = timeline.assessments.filter((item) => isDateInRange(item.date, visibleRange));
+  const visibleAssessments = timeline.assessments.filter((item) => (
+    isDateInRange(item.date, visibleRange)
+    && (!unitFilterActive || selectedCaptureUnitIds.includes(item.teachingUnitId))
+  ));
   const visibleTeachingResponses = timeline.teachingResponses.filter((item) => isDateInRange(item.date, visibleRange));
   const zoomed = Boolean(selectedMonthDate);
   const classContentLaneCount = Math.max(1, ...visibleUnits.map((unit) => unit.lane + 1));
@@ -903,13 +910,13 @@ export default function ClassPictureExpandedView({
     ? Math.max(132, 72 + (lessonCaptureTrackCount * 55))
     : Math.max(70, 34 + (lessonCaptureLaneCount * (zoomed ? 48 : 36)));
 
-  function toggleCaptureUnit(unitId) {
-    setSelectedCaptureUnitIds((currentIds) => {
-      const currentSelection = currentIds.filter((id) => allCaptureUnitIds.includes(id));
-      return currentSelection.includes(unitId)
-        ? currentSelection.filter((id) => id !== unitId)
-        : [...currentSelection, unitId];
-    });
+  function toggleContentUnitFilter(unitId) {
+    setLessonCaptureExpanded(true);
+    setSelectedCaptureUnitIds((currentIds) => (
+      currentIds.includes(unitId)
+        ? currentIds.filter((id) => id !== unitId)
+        : [...currentIds, unitId]
+    ));
   }
 
   return (
@@ -977,26 +984,39 @@ export default function ClassPictureExpandedView({
             const clippedEnd = unit.endDate > visibleRange.end ? visibleRange.end : unit.endDate;
             const left = getPosition(clippedStart, visibleRange);
             const right = getPosition(clippedEnd, visibleRange);
+            const unitSelected = selectedCaptureUnitIds.includes(unit.id);
             return (
-              <Box
+              <ButtonBase
                 key={unit.id}
+                type="button"
+                aria-pressed={unitSelected}
+                onClick={() => toggleContentUnitFilter(unit.id)}
                 sx={{
                   position: 'absolute',
                   left: `${left}%`,
                   width: `${Math.max(right - left, 8)}%`,
                   top: unit.lane * 34,
+                  display: 'block',
                   minHeight: 25,
                   px: 0.65,
                   py: 0.45,
                   borderRadius: '7px',
-                  bgcolor: 'rgba(156, 40, 175, 0.06)',
-                  border: '1px solid rgba(156, 40, 175, 0.12)',
+                  textAlign: 'left',
+                  bgcolor: unitSelected ? 'rgba(156, 40, 175, 0.13)' : 'rgba(156, 40, 175, 0.06)',
+                  border: unitSelected ? `1px solid ${purple}` : '1px solid rgba(156, 40, 175, 0.12)',
+                  opacity: unitFilterActive && !unitSelected ? 0.36 : 1,
+                  transition: 'opacity 140ms ease, background-color 140ms ease, border-color 140ms ease',
+                  '&:hover': {
+                    opacity: 1,
+                    bgcolor: unitSelected ? 'rgba(156, 40, 175, 0.16)' : 'rgba(156, 40, 175, 0.09)',
+                  },
+                  '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
                 }}
               >
                 <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 850, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {unit.title}
                 </Typography>
-              </Box>
+              </ButtonBase>
             );
           }) : <EmptyRow />}
         </TimelineRow>
@@ -1010,84 +1030,61 @@ export default function ClassPictureExpandedView({
           />
         </TimelineRow>
 
-        <TimelineRow
-          label={(
-            <ButtonBase
-              type="button"
-              onClick={() => setLessonCaptureExpanded((isExpanded) => !isExpanded)}
-              aria-expanded={lessonCaptureExpanded}
-              sx={{
-                justifyContent: 'flex-start',
-                gap: 0.3,
-                color: mutedText,
-                borderRadius: '7px',
-                textAlign: 'left',
-                '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
-              }}
+        {unitFilterActive ? (
+          <>
+            <TimelineRow
+              label={(
+                <ButtonBase
+                  type="button"
+                  onClick={() => setLessonCaptureExpanded((isExpanded) => !isExpanded)}
+                  aria-expanded={lessonCaptureExpanded}
+                  sx={{
+                    justifyContent: 'flex-start',
+                    gap: 0.3,
+                    color: mutedText,
+                    borderRadius: '7px',
+                    textAlign: 'left',
+                    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                  }}
+                >
+                  <KeyboardArrowDownIcon sx={{ fontSize: 16, transform: lessonCaptureExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 140ms ease' }} />
+                  <Typography sx={{ color: 'inherit', fontSize: 12.2, fontWeight: 850, lineHeight: 1.2 }}>
+                    Lesson capture
+                  </Typography>
+                </ButtonBase>
+              )}
+              minHeight={lessonCaptureRowHeight}
             >
-              <KeyboardArrowDownIcon sx={{ fontSize: 16, transform: lessonCaptureExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 140ms ease' }} />
-              <Typography sx={{ color: 'inherit', fontSize: 12.2, fontWeight: 850, lineHeight: 1.2 }}>
-                Lesson capture
-              </Typography>
-            </ButtonBase>
-          )}
-          minHeight={lessonCaptureRowHeight}
-        >
-          {lessonCaptureExpanded ? (
-            <Stack spacing={1.05}>
-              <Stack direction="row" spacing={0.45} alignItems="center" flexWrap="wrap" useFlexGap>
-                {captureUnitOptions.map((unit) => {
-                  const selected = effectiveSelectedCaptureUnitIds.includes(unit.id);
-
-                  return (
-                    <ButtonBase
-                      key={unit.id}
-                      type="button"
-                      aria-pressed={selected}
-                      onClick={() => toggleCaptureUnit(unit.id)}
-                      sx={{
-                        px: 0.75,
-                        py: 0.35,
-                        borderRadius: '999px',
-                        border: selected ? `1px solid ${purple}` : '1px solid rgba(23, 21, 26, 0.12)',
-                        bgcolor: selected ? 'rgba(156, 40, 175, 0.08)' : '#fff',
-                        color: selected ? purple : mutedText,
-                        '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
-                      }}
-                    >
-                      <Typography sx={{ color: 'inherit', fontSize: 11.6, fontWeight: 850, lineHeight: 1.1 }}>
-                        {unit.title}
-                      </Typography>
-                    </ButtonBase>
-                  );
-                })}
-              </Stack>
-              {effectiveSelectedCaptureUnitIds.length ? (
+              {lessonCaptureExpanded ? (
                 <UnitCaptureTrendGraph
                   clusters={visibleObservationClusters}
                   range={visibleRange}
                   language={language}
                   selectedUnitIds={effectiveSelectedCaptureUnitIds}
                 />
-              ) : <SelectCaptureUnitPrompt />}
-            </Stack>
-          ) : visibleObservationClusters.length ? visibleObservationClusters.map((cluster) => (
-              <LessonCaptureCluster
-                key={cluster.id}
-                cluster={cluster}
-                range={visibleRange}
-                language={language}
-                zoomed={zoomed}
-                onZoom={setSelectedMonthDate}
-              />
-            )) : <EmptyRow />}
-        </TimelineRow>
+              ) : visibleObservationClusters.length ? visibleObservationClusters.map((cluster) => (
+                  <LessonCaptureCluster
+                    key={cluster.id}
+                    cluster={cluster}
+                    range={visibleRange}
+                    language={language}
+                    zoomed={zoomed}
+                    onZoom={setSelectedMonthDate}
+                  />
+                )) : <EmptyRow />}
+            </TimelineRow>
 
-        <TimelineRow label="Assessments">
-          {visibleAssessments.length ? visibleAssessments.map((item) => (
-            <AssessmentTimelineItem key={item.id} item={item} range={visibleRange} language={language} />
-          )) : <EmptyRow />}
-        </TimelineRow>
+            <TimelineRow label="Assessments">
+              {visibleAssessments.length ? visibleAssessments.map((item) => (
+                <AssessmentTimelineItem key={item.id} item={item} range={visibleRange} language={language} />
+              )) : <EmptyRow />}
+            </TimelineRow>
+          </>
+        ) : (
+          <TimelineRow label="Evidence">
+            <SelectClassContentPrompt />
+          </TimelineRow>
+        )}
 
         <TimelineRow label="Teaching response">
           {visibleTeachingResponses.length ? visibleTeachingResponses.map((item) => (
