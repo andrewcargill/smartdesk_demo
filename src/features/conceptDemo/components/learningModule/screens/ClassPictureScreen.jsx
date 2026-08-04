@@ -16,7 +16,7 @@ import { GroupDialog } from '../ClassWorkingGroups.jsx';
 import AssessmentResultsEntryModal from '../AssessmentResultsEntryModal.jsx';
 import ClassPictureExpandedView from '../ClassPictureExpandedView.jsx';
 import StudentUnitInsightPanel from '../StudentUnitInsightPanel.jsx';
-import { physicalEducationLearningContexts } from '../data/physicalEducationLearningContexts.js';
+import { getLearningContextsForSubject } from '../data/subjectLearningContexts.js';
 import {
   LEARNING_MODULE_ASSESSMENT_RESULTS_STORAGE_EVENT,
   getLearningModuleAssessmentResultsStorageKey,
@@ -581,6 +581,7 @@ function ClassPictureEvidenceGridV1({
   language,
   learningObservationAreas,
   learningObservations,
+  learningContexts,
   levels,
   moduleConfig,
   openAssessmentEdit,
@@ -1366,7 +1367,7 @@ function ClassPictureEvidenceGridV1({
                         summary={expandedUnitSummary}
                         unit={expandedUnit}
                         configuredFocuses={skills}
-                        learningContexts={moduleConfig?.subjectId === 'physical-education' ? physicalEducationLearningContexts : []}
+                        learningContexts={learningContexts}
                         levels={levels}
                         onClose={() => toggleStudent(student.id, expandedUnitId, 'unit')}
                         onEditAssessment={openAssessmentEdit}
@@ -1398,8 +1399,9 @@ function ClassPictureEvidenceGridV1({
                         learningObservationAreas={learningObservationAreas}
                         skills={skills}
                         levels={levels}
-                        learningContexts={moduleConfig?.subjectId === 'physical-education' ? physicalEducationLearningContexts : []}
+                        learningContexts={learningContexts}
                         seededTimelineResponses={moduleConfig?.evidence?.timelineResponses || []}
+                        timelineClassContextLabel={moduleConfig?.planning?.blockTypeLabels?.teaching || ''}
                         language={language}
                         t={t}
                       />
@@ -1455,6 +1457,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
   const skills = moduleConfig?.curriculum?.skills || [];
   const levels = moduleConfig?.curriculum?.observationLevels || [];
   const subjectTitle = moduleConfig?.subjectTitle || moduleConfig?.subjectId || 'Subject';
+  const learningContexts = getLearningContextsForSubject(moduleConfig?.subjectId);
   const rowNotesStorageKey = `${moduleConfig?.id || 'learning-module'}-row-notes`;
   const cellNotesStorageKey = `${moduleConfig?.id || 'learning-module'}-cell-notes`;
   const unitNotesStorageKey = `${moduleConfig?.id || 'learning-module'}-unit-notes`;
@@ -1899,6 +1902,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
     language,
     learningObservationAreas,
     learningObservations,
+    learningContexts,
     levels,
     moduleConfig,
     openAssessmentEdit,

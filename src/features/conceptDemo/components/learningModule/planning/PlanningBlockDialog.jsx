@@ -29,7 +29,7 @@ const darkText = '#17151a';
 const purple = '#9c28af';
 const palePurple = '#fbf5fd';
 
-const blockTypeOptionIds = ['holiday', 'teaching', 'revisit', 'assessment', 'consolidation'];
+const blockTypeOptionIds = ['teaching', 'revisit', 'assessment', 'consolidation'];
 const statusOptionIds = ['planned', 'current', 'completed'];
 
 function sortReferenceItems(items) {

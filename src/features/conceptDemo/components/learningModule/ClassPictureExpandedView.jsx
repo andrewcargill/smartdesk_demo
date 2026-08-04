@@ -98,6 +98,12 @@ function isSpanInRange(startDate, endDate, range) {
   return Boolean(startDate && endDate) && startDate <= range.end && endDate >= range.start;
 }
 
+function addDays(date, days) {
+  const nextDate = new Date(`${date}T12:00:00`);
+  nextDate.setDate(nextDate.getDate() + days);
+  return nextDate.toISOString().slice(0, 10);
+}
+
 function getMonthRange(date) {
   const start = new Date(`${date}T12:00:00`);
   const end = new Date(`${date}T12:00:00`);
@@ -494,6 +500,28 @@ function layoutObservationClusters(clusters) {
       lane,
     };
   });
+}
+
+function layoutActivityContextSpans(clusters) {
+  const laneEndDates = [];
+  const visualClearanceDays = 8;
+
+  return [...(clusters || [])]
+    .sort((first, second) => (
+      first.startDate.localeCompare(second.startDate)
+      || first.endDate.localeCompare(second.endDate)
+      || first.activityLabel.localeCompare(second.activityLabel)
+    ))
+    .map((cluster) => {
+      const lane = laneEndDates.findIndex((endDate) => endDate < cluster.startDate);
+      const assignedLane = lane === -1 ? laneEndDates.length : lane;
+      laneEndDates[assignedLane] = addDays(cluster.endDate, visualClearanceDays);
+
+      return {
+        ...cluster,
+        lane: assignedLane,
+      };
+    });
 }
 
 function layoutUnitSpans(units) {
@@ -1070,6 +1098,7 @@ export default function ClassPictureExpandedView({
   levels,
   learningContexts = [],
   seededTimelineResponses = [],
+  timelineClassContextLabel = '',
   language,
   t = fallbackT,
 }) {
@@ -1108,7 +1137,7 @@ export default function ClassPictureExpandedView({
   const visibleObservationClusters = unitFilterActive
     ? visibleObservationClustersForRange.filter((cluster) => selectedCaptureUnitIds.includes(cluster.teachingUnitId))
     : visibleObservationClustersForRange;
-  const visibleActivityContextClusters = layoutObservationClusters(
+  const visibleActivityContextClusters = layoutActivityContextSpans(
     getActivityContextClusters(timeline.observations).filter((cluster) => isDateInRange(cluster.date, visibleRange)),
   );
   const captureUnitOptions = getCaptureUnitOptions(visibleObservationClustersForRange, teachingUnits, language);
@@ -1490,7 +1519,7 @@ export default function ClassPictureExpandedView({
           ) : null}
 
           {visibleActivityContextClusters.length ? (
-            <TimelineRow label={t('learningModule.classPicture.timelineClassContext')} minHeight={activityContextRowHeight}>
+            <TimelineRow label={timelineClassContextLabel || t('learningModule.classPicture.timelineClassContext')} minHeight={activityContextRowHeight}>
               {visibleActivityContextClusters.map((cluster) => (
                 (() => {
                   const clippedStart = cluster.startDate < visibleRange.start ? visibleRange.start : cluster.startDate;

@@ -1,6 +1,7 @@
 import { class8AProfile, class8AStudents } from '../../../data/classes/class8AStudents.js';
 import { getSubjectDefinition } from '../../../data/subjectCatalogue.js';
 import { resolveLocalizedValue } from '../../../i18n/conceptDemoTranslations.js';
+import { physicalEducationLearningContexts } from './physicalEducationLearningContexts.js';
 
 const navigation = {
   defaultScreen: 'class-picture',
@@ -112,6 +113,64 @@ const subjectBlueprints = {
       ['Industrialisation', 'Industrialiseringen'],
       ['Democracy development', 'Demokratins utveckling'],
     ],
+  },
+  music: {
+    areas: [
+      ['performance-security', 'Singing and playing security', 'S\u00e5ng- och spels\u00e4kerhet'],
+      ['ensemble-adaptation', 'Musical ensemble and adaptation', 'Musikaliskt samspel och anpassning'],
+      ['musical-expression', 'Musical expression and interpretation', 'Musikaliskt uttryck och gestaltning'],
+      ['composition-form', 'Composition and musical form', 'Komposition och musikalisk form'],
+      ['characteristics-comparison', 'Musical characteristics and comparison', 'Musikaliska karakt\u00e4rsdrag och j\u00e4mf\u00f6relse'],
+      ['content-function-significance', 'Musical content, function and significance', 'Musikens inneh\u00e5ll, funktion och betydelse'],
+    ],
+    skills: [
+      ['pulse-rhythm', 'Pulse and rhythm', 'Puls och rytm'],
+      ['pitch-melodic-security', 'Pitch and melodic security', 'Tonh\u00f6jd och melodisk s\u00e4kerhet'],
+      ['instrument-singing-technique', 'Instrument or singing technique', 'Instrument- eller s\u00e5ngteknik'],
+      ['timing-continuity', 'Timing and continuity', 'Tajming och kontinuitet'],
+      ['own-part-security', 'Security in own part', 'S\u00e4kerhet i den egna st\u00e4mman'],
+      ['responsiveness', 'Responsiveness', 'Lyh\u00f6rdhet'],
+      ['shared-pulse-tempo-adaptation', 'Adaptation to shared pulse and tempo', 'Anpassning till gemensam puls och tempo'],
+      ['dynamics-balance-adaptation', 'Adaptation of dynamics and balance', 'Anpassning av dynamik och balans'],
+      ['musical-form-adaptation', 'Adaptation to musical form', 'Anpassning till musikalisk form'],
+      ['genre-character-adaptation', 'Adaptation to genre and character', 'Anpassning till genre och karakt\u00e4r'],
+      ['communicates-musical-idea', 'Communicates a musical idea', 'Kommunicerar en musikalisk id\u00e9'],
+      ['uses-musical-building-blocks', 'Uses musical building blocks', 'Anv\u00e4nder musikaliska byggstenar'],
+      ['expressive-musical-choices', 'Makes expressive musical choices', 'G\u00f6r uttrycksfulla musikaliska val'],
+      ['improvises-tests-ideas', 'Improvises and tests ideas', 'Improviserar och pr\u00f6var id\u00e9er'],
+      ['develops-expression', 'Processes and develops expression', 'Bearbetar och utvecklar uttrycket'],
+      ['creates-musical-material', 'Creates musical material', 'Skapar musikaliskt material'],
+      ['organises-functional-form', 'Organises material in a functional form', 'Organiserar material i en fungerande form'],
+      ['connects-musical-parts', 'Creates links between musical parts', 'Skapar samband mellan musikens delar'],
+      ['uses-style-features', 'Uses style-specific features', 'Anv\u00e4nder stiltypiska drag'],
+      ['revises-composition', 'Revises the composition', 'Bearbetar kompositionen'],
+      ['identifies-musical-characteristics', 'Identifies musical characteristics', 'Identifierar musikaliska karakt\u00e4rsdrag'],
+      ['identifies-instruments-vocal-expression', 'Identifies instruments and vocal expression', 'Identifierar instrument och vokala uttryck'],
+      ['uses-relevant-musical-concepts', 'Uses relevant musical concepts', 'Anv\u00e4nder relevanta musikbegrepp'],
+      ['compares-musical-examples', 'Compares musical examples', 'J\u00e4mf\u00f6r musikexempel'],
+      ['connects-characteristics-genre-period', 'Connects characteristics to genre or period', 'Kopplar karakt\u00e4rsdrag till genre eller tidsperiod'],
+      ['interprets-content-expression', 'Interprets musical content and expression', 'Tolkar musikens inneh\u00e5ll och uttryck'],
+      ['explains-musical-function', 'Explains musical function', 'F\u00f6rklarar musikens funktion'],
+      ['relates-music-identity-social-contexts', 'Relates music to identity and social contexts', 'Relaterar musik till identitet och sociala sammanhang'],
+      ['relates-music-cultural-historical-contexts', 'Relates music to cultural and historical contexts', 'Relaterar musik till kulturella och historiska sammanhang'],
+      ['reasons-significance-impact', 'Reasons about significance and impact', 'Resonerar om musikens betydelse och p\u00e5verkan'],
+    ],
+    unitTitles: [
+      ['Singing and playing security', 'S\u00e5ng- och spels\u00e4kerhet'],
+      ['Musical ensemble and adaptation', 'Musikaliskt samspel och anpassning'],
+      ['Musical expression and interpretation', 'Musikaliskt uttryck och gestaltning'],
+      ['Composition and musical form', 'Komposition och musikalisk form'],
+      ['Musical characteristics and comparison', 'Musikaliska karakt\u00e4rsdrag och j\u00e4mf\u00f6relse'],
+      ['Musical content, function and significance', 'Musikens inneh\u00e5ll, funktion och betydelse'],
+    ],
+    unitSkillIds: {
+      'performance-security': ['pulse-rhythm', 'pitch-melodic-security', 'instrument-singing-technique', 'timing-continuity', 'own-part-security'],
+      'ensemble-adaptation': ['responsiveness', 'shared-pulse-tempo-adaptation', 'dynamics-balance-adaptation', 'musical-form-adaptation', 'genre-character-adaptation'],
+      'musical-expression': ['communicates-musical-idea', 'uses-musical-building-blocks', 'expressive-musical-choices', 'improvises-tests-ideas', 'develops-expression'],
+      'composition-form': ['creates-musical-material', 'organises-functional-form', 'connects-musical-parts', 'uses-style-features', 'revises-composition'],
+      'characteristics-comparison': ['identifies-musical-characteristics', 'identifies-instruments-vocal-expression', 'uses-relevant-musical-concepts', 'compares-musical-examples', 'connects-characteristics-genre-period'],
+      'content-function-significance': ['interprets-content-expression', 'explains-musical-function', 'relates-music-identity-social-contexts', 'relates-music-cultural-historical-contexts', 'reasons-significance-impact'],
+    },
   },
   sloyd: {
     areas: [
@@ -934,6 +993,93 @@ function buildEvidence(subjectId, curriculum) {
 }
 
 function buildPlanning(subjectId, curriculum) {
+  if (subjectId === 'physical-education') {
+    const contextById = new Map(physicalEducationLearningContexts.map((context) => [context.id, context]));
+    const activityBlocks = [
+      ['football', 'jan-2026', '2026-01-12', '2026-01-30', 'completed', localized('Team play: football', 'Lagspel: fotboll'), localized('Start the term with movement, coordination and fair play evidence through small-sided games.', 'Starta terminen med underlag f\u00f6r r\u00f6relse, koordination och schysst spel genom sm\u00e5lagsspel.')],
+      ['orienteering', 'feb-2026', '2026-02-02', '2026-02-20', 'completed', localized('Outdoor navigation: orienteering', 'Friluftsliv: orientering'), localized('Use map routines, route choices and terrain adaptation as planned capture moments.', 'Anv\u00e4nd kartrutiner, v\u00e4gval och anpassning till terr\u00e4ng som planerade observationspunkter.')],
+      ['outdoor-cooking-campcraft', 'feb-2026', '2026-02-23', '2026-02-27', 'completed', localized('Outdoor cooking and campcraft', 'Matlagning ute och friluftsteknik'), localized('Short practical outdoor block for preparation, equipment safety and sustainable choices.', 'Kort praktiskt friluftsmoment f\u00f6r f\u00f6rberedelse, s\u00e4ker utrustningsanv\u00e4ndning och h\u00e5llbara val.')],
+      ['dance', 'mar-2026', '2026-03-02', '2026-03-20', 'completed', localized('Dance sequence', 'Danssekvens'), localized('Planned movement sequence block. Elias shows a dip here, followed by check-in and adjusted support.', 'Planerat moment med r\u00f6relsesekvens. Elias visar en svacka h\u00e4r, f\u00f6ljt av avst\u00e4mning och anpassat st\u00f6d.')],
+      ['high-jump', 'mar-2026', '2026-03-23', '2026-04-10', 'completed', localized('High jump technique', 'H\u00f6jdhoppsteknik'), localized('Recovery block after dance: short technical cues, repeated attempts and visible feedback.', '\u00c5terh\u00e4mtningsmoment efter dans: korta tekniska instruktioner, upprepade f\u00f6rs\u00f6k och synlig feedback.')],
+      ['fitness-programme', 'apr-2026', '2026-04-13', '2026-04-24', 'completed', localized('Fitness programme', 'Tr\u00e4ningsprogram'), localized('Students plan, carry out and evaluate a simple training programme.', 'Eleverna planerar, genomf\u00f6r och utv\u00e4rderar ett enkelt tr\u00e4ningsprogram.')],
+      ['swimming', 'may-2026', '2026-05-04', '2026-05-29', 'current', localized('Swimming and water safety', 'Simning och vattens\u00e4kerhet'), localized('Current block linking swimming technique, water safety and emergency response.', 'Aktuellt moment som kopplar simteknik, vattens\u00e4kerhet och agerande vid n\u00f6dsituationer.')],
+    ].map(([contextId, periodId, startDate, endDate, status, title, description], index) => {
+      const context = contextById.get(contextId);
+      const curriculumAreaIds = [...new Set([
+        context?.primaryCurriculumAreaId,
+        ...(context?.possibleCurriculumAreaIds || []),
+        ...(context?.capturePoints || []).flatMap((point) => point.curriculumAreaIds || []),
+      ].filter(Boolean))];
+      const abilityIds = [...new Set((context?.capturePoints || [])
+        .map((point) => point.observationDimensionId)
+        .filter(Boolean))];
+
+      return {
+        id: `${subjectId}-8a-plan-${contextId}`,
+        subjectId,
+        classId: '8a',
+        title,
+        description,
+        teachingUnitId: context?.primaryCurriculumAreaId || curriculumAreaIds[0] || '',
+        sourceTemplateId: contextId,
+        templateId: contextId,
+        periodId,
+        startDate,
+        endDate,
+        status,
+        curriculumAreaIds,
+        evidenceTopicIds: curriculumAreaIds.map((areaId) => `${areaId}-observations`),
+        abilityIds,
+        blockType: 'teaching',
+        assessmentAnchor: null,
+        quickCaptureOptions: (context?.capturePoints || []).map((point) => ({
+          id: point.id,
+          label: point.label,
+        })),
+        groupAdaptations: contextId === 'dance'
+          ? [
+            {
+              id: 'dance-elias-check-in',
+              workingGroupId: 'needs-check-in',
+              instruction: localized('Low-pressure paired rehearsal and clear entry point for Elias.', 'L\u00e5gpressad par\u00f6vning och tydlig startpunkt f\u00f6r Elias.'),
+            },
+          ]
+          : [],
+        notes: contextId === 'dance'
+          ? localized('Guardian contact handled outside SmartDesk; formal notes stay in Prorenata.', 'V\u00e5rdnadshavarkontakt hanteras utanf\u00f6r SmartDesk; formella anteckningar ligger i Prorenata.')
+          : null,
+        createdAt: '2026-01-08',
+        updatedAt: status === 'current' ? '2026-05-18' : endDate,
+        createdBy: 'teacher',
+      };
+    });
+
+    return {
+      periods: [
+        { id: 'jan-2026', label: localized('January', 'Januari'), startDate: '2026-01-08', endDate: '2026-01-31', order: 1 },
+        { id: 'feb-2026', label: localized('February', 'Februari'), startDate: '2026-02-01', endDate: '2026-02-28', order: 2 },
+        { id: 'mar-2026', label: localized('March', 'Mars'), startDate: '2026-03-01', endDate: '2026-03-31', order: 3 },
+        { id: 'apr-2026', label: localized('April', 'April'), startDate: '2026-04-01', endDate: '2026-04-30', order: 4 },
+        { id: 'may-2026', label: localized('May', 'Maj'), startDate: '2026-05-01', endDate: '2026-05-31', order: 5 },
+        { id: 'june-2026', label: localized('June', 'Juni'), startDate: '2026-06-01', endDate: '2026-06-19', order: 6 },
+      ],
+      blocks: activityBlocks,
+      tools: [
+        { id: 'blank-block', title: localized('Blank block', 'Tomt block'), blockType: 'teaching', description: '', curriculumAreaIds: [], evidenceTopicIds: [], abilityIds: [], quickCaptureOptions: [] },
+        { id: 'revision-consolidation', title: localized('Revision and consolidation', 'Repetition och bef\u00e4stande'), blockType: 'consolidation', description: localized('Create time to revisit and secure earlier learning.', 'Skapa tid f\u00f6r att repetera och bef\u00e4sta tidigare l\u00e4rande.'), curriculumAreaIds: [], evidenceTopicIds: [], abilityIds: [], quickCaptureOptions: [] },
+        { id: 'assessment-point', title: localized('Assessment point', 'Bed\u00f6mningspunkt'), blockType: 'assessment', description: localized('Add a planned assessment or checkpoint.', 'L\u00e4gg till en planerad bed\u00f6mning eller kontrollpunkt.'), curriculumAreaIds: [], evidenceTopicIds: [], abilityIds: [], quickCaptureOptions: [] },
+      ],
+      curriculumAreaTypeLabels: {
+        content: localized('Content', 'Inneh\u00e5ll'),
+        ability: localized('Skills', 'F\u00e4rdigheter'),
+      },
+      blockTypeLabels: {
+        teaching: localized('Activities', 'Aktiviteter'),
+      },
+      curriculumNotes: [],
+    };
+  }
+
   return {
     periods: [
       { id: 'jan-2026', label: localized('January', 'Januari'), startDate: '2026-01-08', endDate: '2026-01-31', order: 1 },

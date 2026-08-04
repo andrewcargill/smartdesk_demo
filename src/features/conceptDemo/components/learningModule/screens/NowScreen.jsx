@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
 import LearningModuleQuickCapture from '../LearningModuleQuickCapture.jsx';
-import { physicalEducationLearningContexts } from '../data/physicalEducationLearningContexts.js';
+import { getLearningContextsForSubject } from '../data/subjectLearningContexts.js';
 import {
   readLearningModuleEvidence,
   readLearningModuleLearningObservations,
@@ -16,7 +16,7 @@ export default function NowScreen({ moduleConfig }) {
     .sort((first, second) => (first.order || 0) - (second.order || 0));
   const skills = moduleConfig?.curriculum?.skills || [];
   const levels = moduleConfig?.curriculum?.observationLevels || [];
-  const learningContexts = moduleConfig?.subjectId === 'physical-education' ? physicalEducationLearningContexts : [];
+  const learningContexts = getLearningContextsForSubject(moduleConfig?.subjectId);
   const activeLesson = moduleConfig?.lessons?.current || moduleConfig?.lessons?.sequence?.[0] || null;
   const [selectedStudentId, setSelectedStudentId] = useState(students[0]?.id || '');
   const [localEvidencePayload, setLocalEvidencePayload] = useState(() => readLearningModuleEvidence(moduleId));

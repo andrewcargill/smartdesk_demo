@@ -486,6 +486,7 @@ export default function SubjectPlanningBoard({
   curriculumAreas,
   abilities = [],
   curriculumAreaTypeLabels,
+  blockTypeLabelOverrides = {},
   templates = [],
   teachingUnits = [],
   planningTools = [],
@@ -557,6 +558,18 @@ export default function SubjectPlanningBoard({
     () => (planningTools.length ? planningTools : templates.filter((template) => quickAddTemplateIds.has(template.id))),
     [planningTools, templates],
   );
+  const primaryQuickAddTemplates = useMemo(
+    () => quickAddTemplates.filter((template) => !template.advanced),
+    [quickAddTemplates],
+  );
+  const advancedQuickAddTemplates = useMemo(
+    () => quickAddTemplates.filter((template) => template.advanced),
+    [quickAddTemplates],
+  );
+  const quickAddTitle = primaryQuickAddTemplates.some((template) => template.activityContextId)
+    ? blockTypeLabelOverrides.teaching || t('learningModule.planView.quickAdd')
+    : t('learningModule.planView.quickAdd');
+  const showTemplateSearch = !primaryQuickAddTemplates.some((template) => template.activityContextId);
   const teachingTemplates = useMemo(
     () => (teachingUnits.length
       ? teachingUnits.map(createTemplateFromTeachingUnit)
@@ -584,11 +597,14 @@ export default function SubjectPlanningBoard({
   );
   const representedContentCount = representedCurriculumAreaIds.size;
   const representedAbilityCount = representedAbilityIds.size;
-  const blockTypeOrder = ['holiday', 'teaching', 'revisit', 'assessment', 'consolidation'];
-  const blockTypeLabels = useMemo(() => Object.fromEntries(blockTypeOrder.map((blockType) => [
-    blockType,
-    t(`learningModule.planView.blockTypes.${blockType}`) || fallbackBlockTypeLabels[blockType],
-  ])), [t]);
+  const blockTypeOrder = ['teaching', 'revisit', 'assessment', 'consolidation'];
+  const blockTypeLabels = useMemo(() => ({
+    ...Object.fromEntries(blockTypeOrder.map((blockType) => [
+      blockType,
+      t(`learningModule.planView.blockTypes.${blockType}`) || fallbackBlockTypeLabels[blockType],
+    ])),
+    ...blockTypeLabelOverrides,
+  }), [blockTypeLabelOverrides, t]);
   const quickAddDescriptions = useMemo(() => Object.fromEntries([...quickAddTemplateIds].map((templateId) => [
     templateId,
     t(`learningModule.planView.quickAddDescriptions.${templateId}`),
@@ -1270,9 +1286,9 @@ export default function SubjectPlanningBoard({
           )}
           <Stack spacing={1.35}>
             <Box>
-              <Typography sx={{ mb: 0.65, color: darkText, fontSize: 12.4, fontWeight: 880 }}>{t('learningModule.planView.quickAdd')}</Typography>
+              <Typography sx={{ mb: 0.65, color: darkText, fontSize: 12.4, fontWeight: 880 }}>{quickAddTitle}</Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 0.7 }}>
-                {quickAddTemplates.map((template) => (
+                {primaryQuickAddTemplates.map((template) => (
                   <Button
                     key={template.id}
                     onClick={() => addTemplate(template)}
@@ -1290,6 +1306,33 @@ export default function SubjectPlanningBoard({
               </Box>
             </Box>
 
+            {!!advancedQuickAddTemplates.length && (
+              <Box>
+                <Typography sx={{ mb: 0.65, color: 'text.secondary', fontSize: 12.4, fontWeight: 880 }}>
+                  Custom / advanced
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 0.7 }}>
+                  {advancedQuickAddTemplates.map((template) => (
+                    <Button
+                      key={template.id}
+                      onClick={() => addTemplate(template)}
+                      aria-label={`${t('learningModule.planView.addTemplateAria', { title: template.title })} ${quickAddDescriptions[template.id] || ''}`.trim()}
+                      sx={{ alignItems: 'flex-start', justifyContent: 'flex-start', textAlign: 'left', color: 'text.secondary', border: '1px solid rgba(23, 21, 26, 0.1)', borderRadius: '14px', px: 1, py: 0.85, minHeight: 64, bgcolor: '#fbfafc' }}
+                    >
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography sx={{ color: 'inherit', fontSize: 12.2, fontWeight: 850, lineHeight: 1.25 }}>{template.title}</Typography>
+                        <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 11.3, fontWeight: 650, lineHeight: 1.25 }}>
+                          {quickAddDescriptions[template.id] || template.description}
+                        </Typography>
+                      </Box>
+                    </Button>
+                  ))}
+                </Box>
+              </Box>
+            )}
+
+            {showTemplateSearch && (
+            <>
             <Box sx={{ borderTop: '1px solid rgba(23, 21, 26, 0.08)', pt: 1.15 }}>
               <Typography sx={{ mb: 0.55, color: darkText, fontSize: 12.4, fontWeight: 880 }}>{t('learningModule.planView.content')}</Typography>
               <Box sx={{ display: 'flex', gap: 0.55, overflowX: 'auto', pb: 0.2 }}>
@@ -1416,6 +1459,8 @@ export default function SubjectPlanningBoard({
                 </Box>
               )}
             </Box>
+            </>
+            )}
           </Stack>
         </DialogContent>
         <DialogActions>

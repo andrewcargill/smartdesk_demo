@@ -4,6 +4,7 @@ import SubjectPlanningBoard from '../planning/SubjectPlanningBoard.jsx';
 import { usePlanningCurriculumNotes } from '../../../hooks/usePlanningCurriculumNotes.js';
 import { useSubjectPlanning } from '../../../hooks/useSubjectPlanning.js';
 import { useConceptDemoLanguage } from '../../../ConceptDemoLanguageContext.jsx';
+import { getLearningContextsForSubject } from '../data/subjectLearningContexts.js';
 
 function normalizeTeachingUnit(unit) {
   const curriculumAreaIds = unit.curriculumAreaIds || [unit.curriculumAreaId].filter(Boolean);
@@ -40,8 +41,16 @@ function normalizePlanningBlock(block, moduleConfig) {
   };
 }
 
-function createPlanningTools(teachingUnits, configuredTools = []) {
-  const quickTools = configuredTools.length ? configuredTools : [
+function getLocalizedValue(value, language) {
+  if (value && typeof value === 'object') {
+    return value[language] || value.en || Object.values(value).find(Boolean) || '';
+  }
+
+  return value || '';
+}
+
+function getDefaultPlanningTools(markAdvanced = false) {
+  return [
     {
       id: 'blank-block',
       title: 'Blank block',
@@ -72,7 +81,11 @@ function createPlanningTools(teachingUnits, configuredTools = []) {
       abilityIds: [],
       quickCaptureOptions: [],
     },
-  ];
+  ].map((tool) => (markAdvanced ? { ...tool, advanced: true } : tool));
+}
+
+function createPlanningTools(teachingUnits, configuredTools = []) {
+  const quickTools = configuredTools.length ? configuredTools : getDefaultPlanningTools(false);
 
   return [
     ...quickTools,
@@ -92,15 +105,57 @@ function createPlanningTools(teachingUnits, configuredTools = []) {
   ];
 }
 
+function createActivityPlanningTools(learningContexts, language) {
+  const activityTools = (learningContexts || []).map((context) => {
+    const curriculumAreaIds = [...new Set([
+      context.primaryCurriculumAreaId,
+      ...(context.possibleCurriculumAreaIds || []),
+      ...(context.capturePoints || []).flatMap((point) => point.curriculumAreaIds || []),
+    ].filter(Boolean))];
+    const abilityIds = [...new Set((context.capturePoints || [])
+      .map((point) => point.observationDimensionId)
+      .filter(Boolean))];
+
+    return {
+      id: context.id,
+      templateId: context.id,
+      sourceTemplateId: context.id,
+      teachingUnitId: context.primaryCurriculumAreaId || curriculumAreaIds[0] || '',
+      title: getLocalizedValue(context.label, language),
+      blockType: 'teaching',
+      description: language === 'sv'
+        ? 'Aktivitet med kopplade observationspunkter.'
+        : 'Activity with linked observation points.',
+      curriculumAreaIds,
+      evidenceTopicIds: curriculumAreaIds.map((areaId) => `${areaId}-observations`),
+      abilityIds,
+      defaultAbilityIds: abilityIds,
+      quickCaptureOptions: (context.capturePoints || []).map((point) => ({
+        id: point.id,
+        label: getLocalizedValue(point.label, language),
+      })),
+      activityContextId: context.id,
+    };
+  });
+
+  return [
+    ...activityTools,
+    ...getDefaultPlanningTools(true),
+  ];
+}
+
 export default function PlanScreen({ moduleConfig, screenConfig }) {
-  const { t } = useConceptDemoLanguage();
+  const { language, t } = useConceptDemoLanguage();
   const planningConfig = moduleConfig?.planning || {};
   const periods = planningConfig.periods || [];
   const teachingUnits = (moduleConfig?.curriculum?.teachingUnits || []).map(normalizeTeachingUnit);
   const initialBlocks = (planningConfig.blocks || []).map((block) => normalizePlanningBlock(block, moduleConfig));
   const abilities = moduleConfig?.curriculum?.skills || [];
   const activeLesson = moduleConfig?.lessons?.current || moduleConfig?.lessons?.sequence?.[0] || null;
-  const planningTools = createPlanningTools(teachingUnits, planningConfig.tools || []);
+  const learningContexts = getLearningContextsForSubject(moduleConfig?.subjectId);
+  const planningTools = learningContexts.length
+    ? createActivityPlanningTools(learningContexts, language)
+    : createPlanningTools(teachingUnits, planningConfig.tools || []);
   const {
     blocks,
     createBlock,
@@ -159,6 +214,7 @@ export default function PlanScreen({ moduleConfig, screenConfig }) {
         content: 'Content',
         ability: 'Skills',
       }}
+      blockTypeLabelOverrides={planningConfig.blockTypeLabels || {}}
       referenceDate={activeLesson?.date || planningConfig.referenceDate}
       workingGroups={planningConfig.workingGroups || []}
       groupDefinitions={planningConfig.groupDefinitions || []}

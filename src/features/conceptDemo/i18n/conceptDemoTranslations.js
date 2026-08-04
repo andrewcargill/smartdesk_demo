@@ -29,6 +29,7 @@ export const conceptDemoTranslations = {
       swedish: 'Swedish',
       history: 'History',
       sloyd: 'Crafts',
+      music: 'Music',
     },
     home: {
       teacherWorkspace: 'Teacher workspace',
@@ -440,6 +441,7 @@ export const conceptDemoTranslations = {
       swedish: 'Svenska',
       history: 'Historia',
       sloyd: 'Sl\u00f6jd',
+      music: 'Musik',
     },
     home: {
       teacherWorkspace: 'L\u00e4rararbetsyta',
