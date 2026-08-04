@@ -266,6 +266,14 @@ const learningObservationWindows = {
 };
 
 const physicalEducationEliasObservationDates = [
+  '2026-01-15',
+  '2026-01-20',
+  '2026-01-22',
+  '2026-01-29',
+  '2026-02-05',
+  '2026-02-12',
+  '2026-02-19',
+  '2026-02-26',
   '2026-03-03',
   '2026-03-05',
   '2026-03-10',
@@ -284,27 +292,43 @@ const physicalEducationEliasObservationDates = [
   '2026-04-23',
   '2026-04-28',
   '2026-04-30',
+  '2026-05-07',
+  '2026-05-14',
+  '2026-05-21',
+  '2026-05-28',
 ];
 
 const physicalEducationEliasObservationPattern = [
-  { focus: '-', note: 'watching response after failed movement checkpoint' },
-  { independence: '-', note: 'waits for adult confirmation before starting activity' },
-  { participation: '0', note: 'joins warm-up but avoids main task' },
-  { focus: '0', note: 'focus improves with visual sequence' },
-  { participation: '+', note: 'works better with paired model' },
-  { independence: '0', note: 'starts first step independently' },
-  { focus: '+', note: 'sustained effort through practical circuit' },
-  { participation: '0', independence: '0', note: 'still checks before changing activity' },
-  { focus: '0', note: 'loses rhythm when task changes quickly' },
-  { participation: '+', note: 'takes part more fully in small-sided activity' },
-  { independence: '-', note: 'needs prompt to choose suitable intensity' },
-  { focus: '+', note: 'responds well to clear station routine' },
-  { independence: '0', note: 'uses feedback to adjust technique' },
-  { participation: '0', note: 'asks for help instead of withdrawing' },
-  { focus: '+', note: 'keeps attention across full lesson block' },
-  { independence: '+', note: 'prepares equipment and starts without prompt' },
-  { participation: '+', note: 'confident contribution in paired practice' },
-  { focus: '+', note: 'ready to return to normal observation rhythm' },
+  { focus: '0', participation: '+', note: 'positive start in team activity' },
+  { independence: '0', note: 'uses paired model before acting' },
+  { focus: '0', participation: '0', note: 'needs reminder during transition' },
+  { participation: '+', independence: '0', note: 'more active in small-sided play' },
+  { focus: '+', note: 'settled during outdoor preparation' },
+  { independence: '0', note: 'uses map routine with check-in' },
+  { focus: '+', participation: '+', note: 'strong practical outdoor contribution' },
+  { independence: '+', note: 'prepares equipment without prompt' },
+  { focus: '-', participation: '-', note: 'dance unit dip begins' },
+  { independence: '-', note: 'waits outside group task' },
+  { focus: '-', participation: '-', note: 'does not engage in sequence practice' },
+  { participation: '0', note: 'brief paired contribution after prompt' },
+  { focus: '-', independence: '-', note: 'guardian meeting workflow opened' },
+  { participation: '-', note: 'avoids performance rehearsal' },
+  { focus: '0', note: 'returns after agreed check-in routine' },
+  { participation: '0', independence: '0', note: 'first high jump attempt with support' },
+  { focus: '0', participation: '+', note: 'responds to clear technical cue' },
+  { independence: '0', note: 'asks for feedback before next attempt' },
+  { focus: '+', participation: '+', note: 'visible confidence in approach practice' },
+  { independence: '0', note: 'adjusts technique after feedback' },
+  { focus: '+', note: 'sustained effort through jump sequence' },
+  { participation: '+', independence: '+', note: 'works independently at station' },
+  { focus: '+', note: 'sets realistic training goal' },
+  { independence: '+', note: 'chooses suitable intensity with minimal prompt' },
+  { participation: '+', note: 'explains adjustment to partner' },
+  { focus: '+', independence: '+', note: 'ready to return to normal observation rhythm' },
+  { participation: '+', note: 'confident contribution in swimming warm-up' },
+  { focus: '+', independence: '0', note: 'checks routine before distance swim' },
+  { participation: '+', independence: '+', note: 'supports partner during water safety task' },
+  { focus: '+', independence: '+', note: 'sustains effort across full lesson block' },
 ];
 
 const levelProgressions = {
@@ -417,6 +441,32 @@ function translateLearningObservationNote(note) {
     'prepares equipment and starts without prompt': 'f\u00f6rbereder utrustning och startar utan p\u00e5minnelse',
     'confident contribution in paired practice': 's\u00e4kert bidrag i par\u00f6vning',
     'ready to return to normal observation rhythm': 'redo att \u00e5terg\u00e5 till normal observationsrytm',
+    'positive start in team activity': 'positiv start i lagaktivitet',
+    'uses paired model before acting': 'anv\u00e4nder parmodell innan handling',
+    'needs reminder during transition': 'beh\u00f6ver p\u00e5minnelse vid \u00f6verg\u00e5ng',
+    'more active in small-sided play': 'mer aktiv i mindre spel',
+    'settled during outdoor preparation': 'stabil under friluftsf\u00f6rberedelse',
+    'uses map routine with check-in': 'anv\u00e4nder kartrutin med avst\u00e4mning',
+    'strong practical outdoor contribution': 'starkt praktiskt bidrag utomhus',
+    'dance unit dip begins': 'svacka i dansmomentet inleds',
+    'waits outside group task': 'v\u00e4ntar utanf\u00f6r gruppuppgiften',
+    'does not engage in sequence practice': 'deltar inte i sekvens\u00f6vningen',
+    'guardian meeting workflow opened': 'arbetsfl\u00f6de f\u00f6r v\u00e5rdnadshavarm\u00f6te \u00f6ppnat',
+    'avoids performance rehearsal': 'undviker framtr\u00e4dande\u00f6vning',
+    'returns after agreed check-in routine': '\u00e5terkommer efter \u00f6verenskommen avst\u00e4mningsrutin',
+    'first high jump attempt with support': 'f\u00f6rsta h\u00f6jdhoppsf\u00f6rs\u00f6k med st\u00f6d',
+    'responds to clear technical cue': 'svarar p\u00e5 tydlig teknisk instruktion',
+    'asks for feedback before next attempt': 'ber om feedback inf\u00f6r n\u00e4sta f\u00f6rs\u00f6k',
+    'visible confidence in approach practice': 'synligt sj\u00e4lvf\u00f6rtroende i ansats\u00f6vning',
+    'sustained effort through jump sequence': 'h\u00e5ller i anstr\u00e4ngningen genom hoppsekvens',
+    'works independently at station': 'arbetar sj\u00e4lvst\u00e4ndigt vid station',
+    'sets realistic training goal': 's\u00e4tter realistiskt tr\u00e4ningsm\u00e5l',
+    'chooses suitable intensity with minimal prompt': 'v\u00e4ljer l\u00e4mplig intensitet med liten p\u00e5minnelse',
+    'explains adjustment to partner': 'f\u00f6rklarar justering f\u00f6r partner',
+    'confident contribution in swimming warm-up': 's\u00e4kert bidrag i simuppv\u00e4rmning',
+    'checks routine before distance swim': 'st\u00e4mmer av rutin f\u00f6re distanssimning',
+    'supports partner during water safety task': 'st\u00f6ttar partner under vattens\u00e4kerhetsuppgift',
+    'sustains effort across full lesson block': 'h\u00e5ller i anstr\u00e4ngningen under hela lektionspasset',
   };
 
   return translations[note] || note;
@@ -679,6 +729,120 @@ function buildEvidence(subjectId, curriculum) {
       levelId,
     })))
     : [];
+  const physicalEducationEliasActivityTimeline = subjectId === 'physical-education'
+    ? [
+      ['2026-01-15', 'football', localized('Football', 'Fotboll'), 'movement-adaption', [
+        ['football-ball-control', 'balance-body-control', 'developing'],
+        ['football-receive-pass', 'coordination', 'emerging'],
+      ]],
+      ['2026-01-20', 'football', localized('Football', 'Fotboll'), 'movement-adaption', [
+        ['football-timing', 'timing-rhythm', 'developing'],
+        ['football-positioning', 'adaptation-purpose-feedback', 'developing'],
+      ]],
+      ['2026-01-22', 'football', localized('Football', 'Fotboll'), 'movement-adaption', [
+        ['football-precision', 'precision-movement-control', 'developing'],
+        ['football-team-adjustment', 'adjusts-plan-when-needed', 'developing', 'planning-implementation'],
+      ]],
+      ['2026-01-29', 'football', localized('Football', 'Fotboll'), 'planning-implementation', [
+        ['football-team-play', 'carries-out-plan', 'developing'],
+        ['football-sportsmanship', 'adapts-actions-conditions', 'developing', 'safety-risk-management'],
+      ]],
+      ['2026-02-05', 'orienteering', localized('Orienteering', 'Orientering'), 'outdoor-activities-adaption', [
+        ['orienteering-orientates-map', 'navigation-orientation', 'developing'],
+        ['orienteering-relates-map-environment', 'navigation-orientation', 'emerging'],
+      ]],
+      ['2026-02-12', 'orienteering', localized('Orienteering', 'Orientering'), 'outdoor-activities-adaption', [
+        ['orienteering-orientates-map', 'navigation-orientation', 'developing'],
+        ['orienteering-selects-route', 'adaptation-environment-conditions', 'emerging'],
+      ]],
+      ['2026-02-19', 'orienteering', localized('Orienteering', 'Orientering'), 'outdoor-activities-adaption', [
+        ['orienteering-relates-map-environment', 'navigation-orientation', 'developing'],
+        ['orienteering-adapts-to-terrain', 'adaptation-purpose-feedback', 'developing', 'movement-adaption'],
+        ['orienteering-manages-outdoor-risk', 'identifies-risks', 'developing', 'safety-risk-management'],
+      ]],
+      ['2026-02-26', 'outdoor-cooking-campcraft', localized('Outdoor cooking and campcraft', 'Matlagning ute och friluftsteknik'), 'outdoor-activities-adaption', [
+        ['outdoor-cooking-campcraft-prepares-equipment', 'responsibility-preparedness', 'developing'],
+        ['outdoor-cooking-campcraft-sustainable-choices', 'sustainable-choices-outdoors', 'developing'],
+        ['outdoor-cooking-campcraft-uses-equipment-safely', 'uses-equipment-methods-safely', 'developing', 'safety-risk-management'],
+      ]],
+      ['2026-03-03', 'dance', localized('Dance', 'Dans'), 'movement-adaption', [
+        ['dance-moves-in-time', 'timing-rhythm', 'emerging'],
+        ['dance-controls-body-position', 'balance-body-control', 'developing'],
+      ]],
+      ['2026-03-05', 'dance', localized('Dance', 'Dans'), 'movement-adaption', [
+        ['dance-coordinates-sequence', 'coordination', 'emerging'],
+        ['dance-adapts-to-sequence', 'adaptation-purpose-feedback', 'emerging'],
+      ]],
+      ['2026-03-12', 'dance', localized('Dance', 'Dans'), 'movement-adaption', [
+        ['dance-moves-in-time', 'timing-rhythm', 'developing'],
+        ['dance-coordinates-sequence', 'coordination', 'developing'],
+      ]],
+      ['2026-03-17', 'dance', localized('Dance', 'Dans'), 'movement-adaption', [
+        ['dance-movement-precision', 'precision-movement-control', 'emerging'],
+        ['dance-adapts-to-sequence', 'adaptation-purpose-feedback', 'emerging'],
+      ]],
+      ['2026-03-19', 'dance', localized('Dance', 'Dans'), 'movement-adaption', [
+        ['dance-controls-body-position', 'balance-body-control', 'developing'],
+        ['dance-coordinates-sequence', 'coordination', 'developing'],
+      ]],
+      ['2026-03-26', 'high-jump', localized('High jump', 'H\u00f6jdhopp'), 'movement-adaption', [
+        ['high-jump-controlled-approach', 'timing-rhythm', 'developing'],
+        ['high-jump-body-control-landing', 'balance-body-control', 'developing'],
+      ]],
+      ['2026-03-31', 'high-jump', localized('High jump', 'H\u00f6jdhopp'), 'movement-adaption', [
+        ['high-jump-approach-takeoff', 'coordination', 'developing'],
+        ['high-jump-adjusts-technique', 'adaptation-purpose-feedback', 'developing'],
+      ]],
+      ['2026-04-02', 'high-jump', localized('High jump', 'H\u00f6jdhopp'), 'movement-adaption', [
+        ['high-jump-controlled-approach', 'timing-rhythm', 'secure'],
+        ['high-jump-body-control-landing', 'balance-body-control', 'developing'],
+      ]],
+      ['2026-04-09', 'high-jump', localized('High jump', 'H\u00f6jdhopp'), 'movement-adaption', [
+        ['high-jump-approach-takeoff', 'coordination', 'secure'],
+        ['high-jump-adjusts-technique', 'adaptation-purpose-feedback', 'secure'],
+      ]],
+      ['2026-04-16', 'fitness-programme', localized('Fitness programme', 'Tr\u00e4ningsprogram'), 'planning-implementation', [
+        ['fitness-programme-sets-goal', 'sets-appropriate-goal', 'secure'],
+        ['fitness-programme-selects-activities', 'selects-suitable-activities-methods', 'developing'],
+        ['fitness-programme-evaluates-adjusts', 'evaluates-choices-outcomes', 'developing', 'evaluation-health'],
+      ]],
+      ['2026-04-23', 'fitness-programme', localized('Fitness programme', 'Tr\u00e4ningsprogram'), 'planning-implementation', [
+        ['fitness-programme-creates-sequence', 'creates-workable-plan', 'secure'],
+        ['fitness-programme-carries-out-plan', 'carries-out-plan', 'secure'],
+      ]],
+      ['2026-04-30', 'high-jump', localized('High jump', 'H\u00f6jdhopp'), 'safety-risk-management', [
+        ['high-jump-adjusts-technique', 'adaptation-purpose-feedback', 'secure', 'movement-adaption'],
+        ['high-jump-uses-jump-area-safely', 'uses-equipment-methods-safely', 'secure'],
+      ]],
+      ['2026-05-07', 'swimming', localized('Swimming', 'Simning'), 'swimming-emergencies', [
+        ['swimming-controlled-action', 'swimming-technique-control', 'developing'],
+        ['swimming-breathing-coordination', 'coordination', 'developing', 'movement-adaption'],
+      ]],
+      ['2026-05-14', 'swimming', localized('Swimming', 'Simning'), 'swimming-emergencies', [
+        ['swimming-controlled-action', 'swimming-technique-control', 'secure'],
+        ['swimming-water-safety', 'water-safety', 'advanced'],
+      ]],
+      ['2026-05-21', 'swimming', localized('Swimming', 'Simning'), 'swimming-emergencies', [
+        ['swimming-water-emergency', 'emergency-action-water', 'secure'],
+        ['swimming-water-safety', 'water-safety', 'secure'],
+      ]],
+      ['2026-05-28', 'swimming', localized('Swimming', 'Simning'), 'movement-adaption', [
+        ['swimming-breathing-coordination', 'coordination', 'secure'],
+        ['swimming-adapts-technique', 'adaptation-purpose-feedback', 'secure'],
+      ]],
+    ].flatMap(([date, contextId, contextLabel, teachingUnitId, captures], clusterIndex) => captures.map(([capturePointId, skillId, levelId, captureTeachingUnitId], captureIndex) => ({
+      id: `physical-education-8a-evidence-elias-activity-${clusterIndex + 1}-${captureIndex + 1}`,
+      type: 'observation',
+      studentId: 'elias-nilsson',
+      date,
+      teachingUnitId: captureTeachingUnitId || teachingUnitId,
+      skillId,
+      capturePointId,
+      contextId,
+      contextLabel,
+      levelId,
+    })))
+    : [];
   const learningObservations = evidenceStudents.flatMap((student) => {
     const profile = studentProfiles[student.id] || studentProfiles['william-dahl'];
     const windows = getLearningObservationWindows(subjectId, student, profile);
@@ -713,6 +877,39 @@ function buildEvidence(subjectId, curriculum) {
         id: 'physical-education-8a-elias-timeline-response-2',
         type: 'timeline-comment',
         studentId: 'elias-nilsson',
+        date: '2026-03-05',
+        label: localized('Dance check-in', 'Dansavst\u00e4mning'),
+        comment: localized(
+          'Keep the next task low-pressure: paired rehearsal, clear entry point, no solo performance expectation.',
+          'H\u00e5ll n\u00e4sta uppgift l\u00e5gpressad: par\u00f6vning, tydlig startpunkt, inget krav p\u00e5 soloframtr\u00e4dande.',
+        ),
+      },
+      {
+        id: 'physical-education-8a-elias-timeline-response-3',
+        type: 'timeline-comment',
+        studentId: 'elias-nilsson',
+        date: '2026-03-17',
+        label: localized('Guardian contact', 'V\u00e5rdnadshavarkontakt'),
+        comment: localized(
+          'Agree a simple PE routine with home. Keep formal notes in Prorenata; SmartDesk only tracks the classroom follow-up.',
+          'Kom \u00f6verens om en enkel idrottsrutin med hemmet. Formella anteckningar i Prorenata; SmartDesk f\u00f6ljer endast lektionsuppf\u00f6ljningen.',
+        ),
+      },
+      {
+        id: 'physical-education-8a-elias-timeline-response-4',
+        type: 'timeline-comment',
+        studentId: 'elias-nilsson',
+        date: '2026-04-02',
+        label: localized('High jump response', 'Respons i h\u00f6jdhopp'),
+        comment: localized(
+          'Use short technical cues and immediate re-try. Confidence improves when feedback is concrete and visible.',
+          'Anv\u00e4nd korta tekniska instruktioner och direkt nytt f\u00f6rs\u00f6k. Sj\u00e4lvf\u00f6rtroendet st\u00e4rks n\u00e4r feedbacken \u00e4r konkret och synlig.',
+        ),
+      },
+      {
+        id: 'physical-education-8a-elias-timeline-response-5',
+        type: 'timeline-comment',
+        studentId: 'elias-nilsson',
         date: '2026-05-14',
         label: localized('Swimming check-in', 'Simavst\u00e4mning'),
         comment: localized(
@@ -728,6 +925,7 @@ function buildEvidence(subjectId, curriculum) {
       ...observations,
       ...englishEliasObservationClusters,
       ...physicalEducationEliasObservationClusters,
+      ...physicalEducationEliasActivityTimeline,
       ...assessments,
     ],
     learningObservations,

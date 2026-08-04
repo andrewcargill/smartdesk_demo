@@ -776,13 +776,10 @@ function LearningObservationGraph({ events, areas, range, language }) {
           <Box
             key={area.id}
             sx={{
-              display: 'grid',
-              gridTemplateColumns: '112px minmax(0, 1fr)',
-              gap: 1.1,
-              alignItems: 'center',
+              minWidth: 0,
             }}
           >
-            <Typography sx={{ color: darkText, fontSize: 12.2, fontWeight: 850, lineHeight: 1.15 }}>
+            <Typography sx={{ color: darkText, fontSize: 12.2, fontWeight: 850, lineHeight: 1.15, mb: 0.35 }}>
               {area.label}
             </Typography>
             <Box
@@ -915,13 +912,10 @@ function UnitCaptureTrendGraph({ clusters, range, language, selectedUnitIds }) {
                 <Box
                   key={track.id}
                   sx={{
-                    display: 'grid',
-                    gridTemplateColumns: '112px minmax(0, 1fr)',
-                    gap: 1.1,
-                    alignItems: 'center',
+                    minWidth: 0,
                   }}
                 >
-                  <Typography sx={{ color: darkText, fontSize: 12.1, fontWeight: 850, lineHeight: 1.12, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <Typography sx={{ color: darkText, fontSize: 12.1, fontWeight: 850, lineHeight: 1.12, mb: 0.35, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {track.skillLabel}
                   </Typography>
                   <Box sx={{ position: 'relative', width: '100%', height: 54 }}>
