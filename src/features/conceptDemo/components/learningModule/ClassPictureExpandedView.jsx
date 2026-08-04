@@ -52,6 +52,15 @@ function getPosition(date, range) {
   return Math.max(0, Math.min(100, ((current - start) / span) * 100));
 }
 
+function getDateFromPosition(position, range) {
+  const start = toDateValue(range.start);
+  const end = toDateValue(range.end);
+  const span = Math.max(end - start, 1);
+  const time = start + (Math.max(0, Math.min(100, position)) / 100) * span;
+
+  return new Date(time).toISOString().slice(0, 10);
+}
+
 function isDateInRange(date, range) {
   return Boolean(date) && date >= range.start && date <= range.end;
 }
@@ -907,6 +916,7 @@ export default function ClassPictureExpandedView({
   const [selectedMonthDate, setSelectedMonthDate] = useState('');
   const [lessonCaptureExpanded, setLessonCaptureExpanded] = useState(false);
   const [selectedCaptureUnitIds, setSelectedCaptureUnitIds] = useState([]);
+  const [hoverCursor, setHoverCursor] = useState(null);
   const timeline = buildTimelineData({
     student,
     evidenceItems,
@@ -958,8 +968,20 @@ export default function ClassPictureExpandedView({
     ));
   }
 
+  function updateHoverCursor(event) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = rect.width ? ((event.clientX - rect.left) / rect.width) * 100 : 0;
+    const position = Math.max(0, Math.min(100, x));
+
+    setHoverCursor({
+      position,
+      date: getDateFromPosition(position, visibleRange),
+    });
+  }
+
   return (
     <Box
+      onMouseLeave={() => setHoverCursor(null)}
       sx={{
         m: { xs: 1, sm: 1.25 },
         p: { xs: 1.25, sm: 1.55 },
@@ -992,7 +1014,10 @@ export default function ClassPictureExpandedView({
               </ButtonBase>
             ) : null}
           </Box>
-          <Box sx={{ position: 'relative', height: 28 }}>
+          <Box
+            onMouseMove={updateHoverCursor}
+            sx={{ position: 'relative', height: 28 }}
+          >
             {(zoomed ? getMonthMarkers(visibleRange) : monthMarkers).map((date) => (
               <ButtonBase
                 key={date}
@@ -1014,126 +1039,180 @@ export default function ClassPictureExpandedView({
                 </Typography>
               </ButtonBase>
             ))}
+            {hoverCursor ? (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  left: `${hoverCursor.position}%`,
+                  top: 18,
+                  px: 0.55,
+                  py: 0.25,
+                  borderRadius: '999px',
+                  bgcolor: purple,
+                  color: '#fff',
+                  transform: 'translateX(-50%)',
+                  pointerEvents: 'none',
+                  zIndex: 8,
+                  boxShadow: '0 6px 16px rgba(156, 40, 175, 0.16)',
+                }}
+              >
+                <Typography sx={{ color: 'inherit', fontSize: 10.8, fontWeight: 900, lineHeight: 1 }}>
+                  {formatShortDate(hoverCursor.date, language)}
+                </Typography>
+              </Box>
+            ) : null}
           </Box>
         </Box>
 
-        <TimelineRow label="Class content" minHeight={classContentRowHeight}>
-          {visibleUnits.length ? visibleUnits.map((unit) => {
-            const clippedStart = unit.startDate < visibleRange.start ? visibleRange.start : unit.startDate;
-            const clippedEnd = unit.endDate > visibleRange.end ? visibleRange.end : unit.endDate;
-            const left = getPosition(clippedStart, visibleRange);
-            const right = getPosition(clippedEnd, visibleRange);
-            const unitSelected = selectedCaptureUnitIds.includes(unit.id);
-            return (
-              <ButtonBase
-                key={unit.id}
-                type="button"
-                aria-pressed={unitSelected}
-                onClick={() => toggleContentUnitFilter(unit.id)}
-                sx={{
-                  position: 'absolute',
-                  left: `${left}%`,
-                  width: `${Math.max(right - left, 8)}%`,
-                  top: unit.lane * 34,
-                  display: 'block',
-                  minHeight: 25,
-                  px: 0.65,
-                  py: 0.45,
-                  borderRadius: '7px',
-                  textAlign: 'left',
-                  bgcolor: unitSelected ? 'rgba(156, 40, 175, 0.13)' : 'rgba(156, 40, 175, 0.06)',
-                  border: unitSelected ? `1px solid ${purple}` : '1px solid rgba(156, 40, 175, 0.12)',
-                  opacity: unitFilterActive && !unitSelected ? 0.36 : 1,
-                  transition: 'opacity 140ms ease, background-color 140ms ease, border-color 140ms ease',
-                  '&:hover': {
-                    opacity: 1,
-                    bgcolor: unitSelected ? 'rgba(156, 40, 175, 0.16)' : 'rgba(156, 40, 175, 0.09)',
-                  },
-                  '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
-                }}
-              >
-                <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 850, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {unit.title}
-                </Typography>
-              </ButtonBase>
-            );
-          }) : <EmptyRow />}
-        </TimelineRow>
-
-        <TimelineRow label="Learning observations">
-          <LearningObservationGraph
-            events={visibleLearningEvents}
-            areas={learningObservationAreas}
-            range={visibleRange}
-            language={language}
-          />
-        </TimelineRow>
-
-        {unitFilterActive ? (
-          <>
-            <TimelineRow
-              label={(
-                <ButtonBase
-                  type="button"
-                  onClick={() => setLessonCaptureExpanded((isExpanded) => !isExpanded)}
-                  aria-expanded={lessonCaptureExpanded}
+        <Box sx={{ position: 'relative' }}>
+          {hoverCursor ? (
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                display: 'grid',
+                gridTemplateColumns: '132px minmax(0, 1fr)',
+                gap: 1.2,
+                pointerEvents: 'none',
+                zIndex: 6,
+              }}
+            >
+              <Box />
+              <Box sx={{ position: 'relative' }}>
+                <Box
                   sx={{
-                    justifyContent: 'flex-start',
-                    gap: 0.3,
-                    color: mutedText,
+                    position: 'absolute',
+                    left: `${hoverCursor.position}%`,
+                    top: 0,
+                    bottom: 0,
+                    width: 2,
+                    borderRadius: '999px',
+                    bgcolor: 'rgba(156, 40, 175, 0.42)',
+                    transform: 'translateX(-50%)',
+                  }}
+                />
+              </Box>
+            </Box>
+          ) : null}
+
+          <TimelineRow label="Class content" minHeight={classContentRowHeight}>
+            {visibleUnits.length ? visibleUnits.map((unit) => {
+              const clippedStart = unit.startDate < visibleRange.start ? visibleRange.start : unit.startDate;
+              const clippedEnd = unit.endDate > visibleRange.end ? visibleRange.end : unit.endDate;
+              const left = getPosition(clippedStart, visibleRange);
+              const right = getPosition(clippedEnd, visibleRange);
+              const unitSelected = selectedCaptureUnitIds.includes(unit.id);
+              return (
+                <ButtonBase
+                  key={unit.id}
+                  type="button"
+                  aria-pressed={unitSelected}
+                  onClick={() => toggleContentUnitFilter(unit.id)}
+                  sx={{
+                    position: 'absolute',
+                    left: `${left}%`,
+                    width: `${Math.max(right - left, 8)}%`,
+                    top: unit.lane * 34,
+                    display: 'block',
+                    minHeight: 25,
+                    px: 0.65,
+                    py: 0.45,
                     borderRadius: '7px',
                     textAlign: 'left',
+                    bgcolor: unitSelected ? 'rgba(156, 40, 175, 0.13)' : 'rgba(156, 40, 175, 0.06)',
+                    border: unitSelected ? `1px solid ${purple}` : '1px solid rgba(156, 40, 175, 0.12)',
+                    opacity: unitFilterActive && !unitSelected ? 0.36 : 1,
+                    transition: 'opacity 140ms ease, background-color 140ms ease, border-color 140ms ease',
+                    '&:hover': {
+                      opacity: 1,
+                      bgcolor: unitSelected ? 'rgba(156, 40, 175, 0.16)' : 'rgba(156, 40, 175, 0.09)',
+                    },
                     '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
                   }}
                 >
-                  <KeyboardArrowDownIcon sx={{ fontSize: 16, transform: lessonCaptureExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 140ms ease' }} />
-                  <Typography sx={{ color: 'inherit', fontSize: 12.2, fontWeight: 850, lineHeight: 1.2 }}>
-                    Lesson capture
+                  <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 850, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {unit.title}
                   </Typography>
                 </ButtonBase>
-              )}
-              minHeight={lessonCaptureRowHeight}
-            >
-              {lessonCaptureExpanded ? (
-                <UnitCaptureTrendGraph
-                  clusters={visibleObservationClusters}
-                  range={visibleRange}
-                  language={language}
-                  selectedUnitIds={effectiveSelectedCaptureUnitIds}
-                />
-              ) : visibleObservationClusters.length ? visibleObservationClusters.map((cluster) => (
-                  <LessonCaptureCluster
-                    key={cluster.id}
-                    cluster={cluster}
+              );
+            }) : <EmptyRow />}
+          </TimelineRow>
+
+          <TimelineRow label="Learning observations">
+            <LearningObservationGraph
+              events={visibleLearningEvents}
+              areas={learningObservationAreas}
+              range={visibleRange}
+              language={language}
+            />
+          </TimelineRow>
+
+          {unitFilterActive ? (
+            <>
+              <TimelineRow
+                label={(
+                  <ButtonBase
+                    type="button"
+                    onClick={() => setLessonCaptureExpanded((isExpanded) => !isExpanded)}
+                    aria-expanded={lessonCaptureExpanded}
+                    sx={{
+                      justifyContent: 'flex-start',
+                      gap: 0.3,
+                      color: mutedText,
+                      borderRadius: '7px',
+                      textAlign: 'left',
+                      '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                    }}
+                  >
+                    <KeyboardArrowDownIcon sx={{ fontSize: 16, transform: lessonCaptureExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 140ms ease' }} />
+                    <Typography sx={{ color: 'inherit', fontSize: 12.2, fontWeight: 850, lineHeight: 1.2 }}>
+                      Lesson capture
+                    </Typography>
+                  </ButtonBase>
+                )}
+                minHeight={lessonCaptureRowHeight}
+              >
+                {lessonCaptureExpanded ? (
+                  <UnitCaptureTrendGraph
+                    clusters={visibleObservationClusters}
                     range={visibleRange}
                     language={language}
-                    zoomed={zoomed}
-                    onZoom={setSelectedMonthDate}
+                    selectedUnitIds={effectiveSelectedCaptureUnitIds}
                   />
+                ) : visibleObservationClusters.length ? visibleObservationClusters.map((cluster) => (
+                    <LessonCaptureCluster
+                      key={cluster.id}
+                      cluster={cluster}
+                      range={visibleRange}
+                      language={language}
+                      zoomed={zoomed}
+                      onZoom={setSelectedMonthDate}
+                    />
+                  )) : <EmptyRow />}
+              </TimelineRow>
+
+              <TimelineRow label="Assessments">
+                {visibleAssessments.length ? visibleAssessments.map((item) => (
+                  <AssessmentTimelineItem key={item.id} item={item} range={visibleRange} language={language} />
                 )) : <EmptyRow />}
+              </TimelineRow>
+            </>
+          ) : (
+            <TimelineRow label="Evidence">
+              <SelectClassContentPrompt />
             </TimelineRow>
+          )}
 
-            <TimelineRow label="Assessments">
-              {visibleAssessments.length ? visibleAssessments.map((item) => (
-                <AssessmentTimelineItem key={item.id} item={item} range={visibleRange} language={language} />
-              )) : <EmptyRow />}
-            </TimelineRow>
-          </>
-        ) : (
-          <TimelineRow label="Evidence">
-            <SelectClassContentPrompt />
+          <TimelineRow label="Teaching response">
+            {visibleTeachingResponses.length ? visibleTeachingResponses.map((item) => (
+              <TimelineItem key={item.id} item={item} range={visibleRange} type="response">
+                <Typography sx={{ color: darkText, fontSize: 12.2, fontWeight: 780, lineHeight: 1.25 }}>
+                  {item.text}
+                </Typography>
+              </TimelineItem>
+            )) : <EmptyRow />}
           </TimelineRow>
-        )}
-
-        <TimelineRow label="Teaching response">
-          {visibleTeachingResponses.length ? visibleTeachingResponses.map((item) => (
-            <TimelineItem key={item.id} item={item} range={visibleRange} type="response">
-              <Typography sx={{ color: darkText, fontSize: 12.2, fontWeight: 780, lineHeight: 1.25 }}>
-                {item.text}
-              </Typography>
-            </TimelineItem>
-          )) : <EmptyRow />}
-        </TimelineRow>
+        </Box>
       </Box>
     </Box>
   );
