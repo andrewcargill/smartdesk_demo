@@ -642,8 +642,11 @@ export default function ClassPictureExpandedView({
   return (
     <Box
       sx={{
-        p: 2,
+        m: { xs: 1, sm: 1.25 },
+        p: { xs: 1.25, sm: 1.55 },
         borderTop: '1px solid rgba(23, 21, 26, 0.08)',
+        border: `4px solid ${purple}`,
+        borderRadius: '18px',
         bgcolor: '#fff',
         overflowX: 'auto',
       }}
@@ -709,12 +712,17 @@ export default function ClassPictureExpandedView({
                   left: `${left}%`,
                   width: `${Math.max(right - left, 8)}%`,
                   top: unit.lane * 34,
+                  minHeight: 25,
+                  px: 0.65,
+                  py: 0.45,
+                  borderRadius: '7px',
+                  bgcolor: 'rgba(156, 40, 175, 0.06)',
+                  border: '1px solid rgba(156, 40, 175, 0.12)',
                 }}
               >
                 <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 850, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {unit.title}
                 </Typography>
-                <Box sx={{ mt: 0.45, height: 3, borderRadius: 999, bgcolor: 'rgba(156, 40, 175, 0.5)' }} />
               </Box>
             );
           }) : <EmptyRow />}

@@ -588,6 +588,54 @@ function buildEvidence(subjectId, curriculum) {
       levelId,
     })))
     : [];
+  const physicalEducationEliasObservationClusters = subjectId === 'physical-education'
+    ? [
+      ['2026-01-22', 'movement', [
+        ['coordination', 'developing'],
+        ['planning', 'emerging'],
+        ['evaluation', 'developing'],
+      ]],
+      ['2026-02-12', 'training', [
+        ['evaluation', 'developing'],
+        ['participation', 'secure'],
+      ]],
+      ['2026-02-12', 'health', [
+        ['planning', 'developing'],
+        ['evaluation', 'emerging'],
+      ]],
+      ['2026-03-12', 'movement', [
+        ['coordination', 'secure'],
+        ['planning', 'developing'],
+        ['evaluation', 'developing'],
+      ]],
+      ['2026-04-16', 'training', [
+        ['evaluation', 'secure'],
+        ['participation', 'secure'],
+      ]],
+      ['2026-04-16', 'health', [
+        ['planning', 'secure'],
+        ['evaluation', 'developing'],
+        ['participation', 'secure'],
+      ]],
+      ['2026-05-14', 'movement', [
+        ['coordination', 'secure'],
+        ['planning', 'secure'],
+        ['evaluation', 'secure'],
+      ]],
+      ['2026-05-14', 'training', [
+        ['evaluation', 'secure'],
+        ['participation', 'advanced'],
+      ]],
+    ].flatMap(([date, teachingUnitId, captures], clusterIndex) => captures.map(([skillId, levelId], captureIndex) => ({
+      id: `physical-education-8a-evidence-elias-extra-${clusterIndex + 1}-${captureIndex + 1}`,
+      type: 'observation',
+      studentId: 'elias-nilsson',
+      date,
+      teachingUnitId,
+      skillId,
+      levelId,
+    })))
+    : [];
   const learningObservations = students.flatMap((student) => {
     const profile = studentProfiles[student.id] || studentProfiles['william-dahl'];
     const windows = getLearningObservationWindows(subjectId, student, profile);
@@ -610,6 +658,7 @@ function buildEvidence(subjectId, curriculum) {
     items: [
       ...observations,
       ...englishEliasObservationClusters,
+      ...physicalEducationEliasObservationClusters,
       ...assessments,
     ],
     learningObservations,

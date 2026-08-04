@@ -855,6 +855,19 @@ function ClassPictureEvidenceGridV1({
           const groupId = row.groupId || '';
           const rowIndex = row.index || 0;
           const isExpanded = expandedStudentId === student.id;
+          const timelineViewOpen = expandedViewMode === 'timeline' && Boolean(expandedStudentId);
+          const isMutedByTimeline = timelineViewOpen && !isExpanded;
+          const timelineMuteCellSx = isMutedByTimeline
+            ? {
+              opacity: 0.28,
+              filter: 'grayscale(0.35)',
+              transition: 'opacity 160ms ease, filter 160ms ease, background-color 140ms ease, border-color 140ms ease',
+              '&:hover, &:focus-within': {
+                opacity: 0.72,
+                filter: 'grayscale(0.1)',
+              },
+            }
+            : {};
           const isHovered = hoveredStudentId === student.id;
           const isRowNoteHovered = hoveredRowNoteStudentId === student.id;
           const rowNote = rowNotes[student.id] || '';
@@ -897,7 +910,8 @@ function ClassPictureEvidenceGridV1({
                     borderBottom: isHovered ? '1px solid rgba(156, 40, 175, 0.22)' : '1px solid transparent',
                     bgcolor: draggedStudentId === student.id ? 'rgba(156, 40, 175, 0.08)' : isHovered ? 'rgba(156, 40, 175, 0.045)' : '#fff',
                     minWidth: 0,
-                    transition: 'background-color 140ms ease, border-color 140ms ease',
+                    transition: 'opacity 160ms ease, filter 160ms ease, background-color 140ms ease, border-color 140ms ease',
+                    ...timelineMuteCellSx,
                   }}
                 >
                   {groupedViewActive && (
@@ -969,7 +983,8 @@ function ClassPictureEvidenceGridV1({
                     borderTop: isHovered ? '1px solid rgba(156, 40, 175, 0.34)' : '1px solid rgba(23, 21, 26, 0.08)',
                     borderBottom: isHovered ? '1px solid rgba(156, 40, 175, 0.22)' : '1px solid transparent',
                     bgcolor: isHovered ? 'rgba(156, 40, 175, 0.045)' : '#fff',
-                    transition: 'background-color 140ms ease, border-color 140ms ease',
+                    transition: 'opacity 160ms ease, filter 160ms ease, background-color 140ms ease, border-color 140ms ease',
+                    ...timelineMuteCellSx,
                   }}
                 >
                   {alerts.map((alert) => (
@@ -1011,7 +1026,8 @@ function ClassPictureEvidenceGridV1({
                     borderBottom: isHovered ? '1px solid rgba(156, 40, 175, 0.22)' : '1px solid transparent',
                     bgcolor: isHovered ? 'rgba(156, 40, 175, 0.045)' : '#fff',
                     cursor: rowNotesVisible ? 'pointer' : 'default',
-                    transition: 'background-color 140ms ease, border-color 140ms ease',
+                    transition: 'opacity 160ms ease, filter 160ms ease, background-color 140ms ease, border-color 140ms ease',
+                    ...timelineMuteCellSx,
                   }}
                 >
                   {rowNotesVisible && isEditingRowNote ? (
@@ -1081,7 +1097,8 @@ function ClassPictureEvidenceGridV1({
                     borderBottom: isHovered ? '1px solid rgba(156, 40, 175, 0.22)' : '1px solid transparent',
                     borderLeft: '1px solid rgba(23, 21, 26, 0.055)',
                     bgcolor: isHovered ? 'rgba(156, 40, 175, 0.045)' : '#fff',
-                    transition: 'background-color 140ms ease, border-color 140ms ease',
+                    transition: 'opacity 160ms ease, filter 160ms ease, background-color 140ms ease, border-color 140ms ease',
+                    ...timelineMuteCellSx,
                   }}
                 >
                   {!!learningObservationCount ? (
@@ -1170,7 +1187,8 @@ function ClassPictureEvidenceGridV1({
                         bgcolor: isActiveUnitCell ? 'rgba(156, 40, 175, 0.095)' : isHovered ? 'rgba(156, 40, 175, 0.045)' : '#fff',
                         boxShadow: isActiveUnitCell ? 'inset 0 0 0 1px rgba(156, 40, 175, 0.22)' : 'none',
                         cursor: isEditingCell ? 'text' : 'pointer',
-                        transition: 'background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease',
+                        transition: 'opacity 160ms ease, filter 160ms ease, background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease',
+                        ...timelineMuteCellSx,
                         '&:hover, &:focus-within': {
                           bgcolor: 'rgba(156, 40, 175, 0.085)',
                           boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.16)',
