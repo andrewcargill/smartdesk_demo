@@ -5,6 +5,12 @@ import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
 import SquareIcon from '@mui/icons-material/Square';
 import { Box, ButtonBase, Stack, Tooltip, Typography } from '@mui/material';
 import AssessmentPieChart from './AssessmentPieChart.jsx';
+import {
+  addLearningModuleTimelineResponse,
+  removeLearningModuleTimelineResponse,
+  seedLearningModuleTimelineResponses,
+  updateLearningModuleTimelineResponse,
+} from './utils/learningModuleEvidenceStorage.js';
 
 const purple = '#9c28af';
 const darkText = '#17151a';
@@ -1044,6 +1050,7 @@ function UnitCaptureTrendGraph({ clusters, range, language, selectedUnitIds }) {
 }
 
 export default function ClassPictureExpandedView({
+  moduleId,
   student,
   evidenceItems,
   learningObservations,
@@ -1055,6 +1062,7 @@ export default function ClassPictureExpandedView({
   skills,
   levels,
   learningContexts = [],
+  seededTimelineResponses = [],
   language,
   t = fallbackT,
 }) {
@@ -1062,7 +1070,7 @@ export default function ClassPictureExpandedView({
   const [lessonCaptureExpanded, setLessonCaptureExpanded] = useState(false);
   const [selectedCaptureUnitIds, setSelectedCaptureUnitIds] = useState([]);
   const [hoverCursor, setHoverCursor] = useState(null);
-  const [timelineResponses, setTimelineResponses] = useState([]);
+  const [timelineResponsePayload, setTimelineResponsePayload] = useState(() => seedLearningModuleTimelineResponses(moduleId, seededTimelineResponses));
   const [responseDraft, setResponseDraft] = useState(null);
   const [activeResponseMenuId, setActiveResponseMenuId] = useState('');
   const timeline = buildTimelineData({
@@ -1103,7 +1111,7 @@ export default function ClassPictureExpandedView({
   ));
   const visibleTeachingResponses = [
     ...timeline.teachingResponses,
-    ...timelineResponses,
+    ...(timelineResponsePayload.responses || []).filter((item) => item.studentId === student?.id),
   ]
     .filter((item) => isDateInRange(item.date, visibleRange))
     .sort((first, second) => (first.date || '').localeCompare(second.date || ''));
@@ -1188,20 +1196,16 @@ export default function ClassPictureExpandedView({
       return;
     }
 
-    setTimelineResponses((currentResponses) => {
-      const response = {
-        id: responseDraft.id || `timeline-response-${responseDraft.date}-${Date.now()}`,
-        type: 'timeline-comment',
+    const outcome = responseDraft.id
+      ? updateLearningModuleTimelineResponse(moduleId, timelineResponsePayload, responseDraft.id, { label, comment })
+      : addLearningModuleTimelineResponse(moduleId, timelineResponsePayload, {
+        studentId: student.id,
         date: responseDraft.date,
         label,
         comment,
-        text: label && comment ? `${label}: ${comment}` : label || comment,
-      };
+      });
 
-      return responseDraft.id
-        ? currentResponses.map((item) => (item.id === responseDraft.id ? response : item))
-        : [...currentResponses, response];
-    });
+    setTimelineResponsePayload(outcome.payload);
     setResponseDraft(null);
   }
 
@@ -1211,13 +1215,14 @@ export default function ClassPictureExpandedView({
       mode,
       date: item.date,
       position: getPosition(item.date, visibleRange),
-      label: item.label || '',
-      comment: item.comment || '',
+      label: getLocalizedValue(item.label, language) || '',
+      comment: getLocalizedValue(item.comment, language) || '',
     });
   }
 
   function deleteTimelineResponse(responseId) {
-    setTimelineResponses((currentResponses) => currentResponses.filter((item) => item.id !== responseId));
+    const outcome = removeLearningModuleTimelineResponse(moduleId, timelineResponsePayload, responseId);
+    setTimelineResponsePayload(outcome.payload);
     setResponseDraft((draft) => (draft?.id === responseId ? null : draft));
     setActiveResponseMenuId('');
   }
@@ -1657,6 +1662,9 @@ export default function ClassPictureExpandedView({
 
               return itemsToRender.map((item, itemIndex) => {
                 const top = zoomed ? itemIndex * 34 : 0;
+                const responseLabel = getLocalizedValue(item.label, language);
+                const responseComment = getLocalizedValue(item.comment, language);
+                const responseHeader = responseLabel || responseComment || item.text || '';
 
                 return item.type === 'timeline-comment' ? (
                   <Box
@@ -1674,7 +1682,7 @@ export default function ClassPictureExpandedView({
                       <Box sx={{ position: 'relative', pt: 0.05, flexShrink: 0 }}>
                         <ButtonBase
                           type="button"
-                          aria-label={item.label || item.comment}
+                          aria-label={responseHeader}
                           aria-expanded={activeResponseMenuId === item.id}
                           onClick={() => setActiveResponseMenuId((currentId) => (currentId === item.id ? '' : item.id))}
                           sx={{
@@ -1771,7 +1779,7 @@ export default function ClassPictureExpandedView({
                         }}
                       >
                         <Typography sx={{ color: purple, fontSize: 11.6, fontWeight: 900, lineHeight: 1.15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {item.label || item.comment}
+                          {responseHeader}
                         </Typography>
                       </Box>
                     </Stack>

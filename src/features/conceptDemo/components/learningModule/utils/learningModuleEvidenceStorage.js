@@ -1,8 +1,10 @@
 export const LEARNING_MODULE_EVIDENCE_STORAGE_EVENT = 'smartdesk-learning-module-evidence-change';
 export const LEARNING_MODULE_LEARNING_OBSERVATIONS_STORAGE_EVENT = 'smartdesk-learning-module-learning-observations-change';
+export const LEARNING_MODULE_TIMELINE_RESPONSES_STORAGE_EVENT = 'smartdesk-learning-module-timeline-responses-change';
 
 const evidenceStorageVersion = 1;
 const learningObservationStorageVersion = 1;
+const timelineResponseStorageVersion = 1;
 
 function canUseLocalStorage() {
   return typeof window !== 'undefined' && Boolean(window.localStorage);
@@ -24,6 +26,26 @@ function normaliseText(value, maxLength = 100) {
   return String(value || '').replace(/\s+/g, ' ').trim().slice(0, maxLength);
 }
 
+function normaliseMaybeLocalizedText(value, maxLength = 100) {
+  if (value && typeof value === 'object') {
+    const entries = Object.entries(value)
+      .map(([language, text]) => [language, normaliseText(text, maxLength)])
+      .filter(([, text]) => text);
+
+    return entries.length ? Object.fromEntries(entries) : '';
+  }
+
+  return normaliseText(value, maxLength);
+}
+
+function getNormalisedTextValue(value) {
+  if (value && typeof value === 'object') {
+    return value.en || Object.values(value).find(Boolean) || '';
+  }
+
+  return value || '';
+}
+
 function warnStorageIssue(scope, message, error) {
   if (typeof console !== 'undefined') {
     console.warn(`[${scope}] ${message}`, error || '');
@@ -38,6 +60,10 @@ export function getLearningModuleLearningObservationsStorageKey(moduleId) {
   return `smartdesk_demo_${moduleId || 'learning-module'}_learning_observations`;
 }
 
+export function getLearningModuleTimelineResponsesStorageKey(moduleId) {
+  return `smartdesk_demo_${moduleId || 'learning-module'}_timeline_responses`;
+}
+
 function emptyEvidencePayload() {
   return {
     version: evidenceStorageVersion,
@@ -49,6 +75,13 @@ function emptyLearningObservationPayload() {
   return {
     version: learningObservationStorageVersion,
     observations: [],
+  };
+}
+
+function emptyTimelineResponsePayload() {
+  return {
+    version: timelineResponseStorageVersion,
+    responses: [],
   };
 }
 
@@ -221,6 +254,182 @@ export function removeLearningModuleObservation(moduleId, payload, id) {
   });
 
   return { ...result, removed: observations.length !== currentPayload.observations.length };
+}
+
+export function normalizeLearningModuleTimelineResponse(item) {
+  if (!item || typeof item !== 'object') {
+    return null;
+  }
+
+  const id = normaliseText(item.id, 140);
+  const studentId = normaliseText(item.studentId, 80);
+  const date = normaliseText(item.date, 20);
+  const label = normaliseMaybeLocalizedText(item.label, 80);
+  const comment = normaliseMaybeLocalizedText(item.comment || item.text, 240);
+  const labelText = getNormalisedTextValue(label);
+  const commentText = getNormalisedTextValue(comment);
+
+  if (!id || !studentId || !date || (!labelText && !commentText)) {
+    return null;
+  }
+
+  const timestamp = item.updatedAt || item.createdAt || getTimestamp(date);
+
+  return {
+    id,
+    type: 'timeline-comment',
+    studentId,
+    date,
+    label,
+    comment,
+    text: labelText && commentText ? `${labelText}: ${commentText}` : labelText || commentText,
+    source: item.source || 'teacher',
+    createdAt: item.createdAt || timestamp,
+    updatedAt: timestamp,
+  };
+}
+
+function normalizeTimelineResponseList(responses) {
+  const responsesById = new Map();
+
+  (Array.isArray(responses) ? responses : []).forEach((item) => {
+    const response = normalizeLearningModuleTimelineResponse(item);
+    if (response) {
+      responsesById.set(response.id, response);
+    }
+  });
+
+  return [...responsesById.values()].sort((first, second) => (
+    (second.updatedAt || second.createdAt || second.date).localeCompare(first.updatedAt || first.createdAt || first.date)
+  ));
+}
+
+export function normalizeLearningModuleTimelineResponsesPayload(payload) {
+  if (!payload || typeof payload !== 'object') {
+    return emptyTimelineResponsePayload();
+  }
+
+  return {
+    version: timelineResponseStorageVersion,
+    responses: normalizeTimelineResponseList(payload.responses),
+  };
+}
+
+export function readLearningModuleTimelineResponses(moduleId) {
+  if (!canUseLocalStorage()) {
+    return emptyTimelineResponsePayload();
+  }
+
+  try {
+    const value = window.localStorage.getItem(getLearningModuleTimelineResponsesStorageKey(moduleId));
+    return value ? normalizeLearningModuleTimelineResponsesPayload(JSON.parse(value)) : emptyTimelineResponsePayload();
+  } catch (error) {
+    warnStorageIssue('Learning module timeline responses', 'Could not read local timeline responses.', error);
+    return emptyTimelineResponsePayload();
+  }
+}
+
+export function writeLearningModuleTimelineResponses(moduleId, payload) {
+  const safePayload = normalizeLearningModuleTimelineResponsesPayload(payload);
+
+  if (!canUseLocalStorage()) {
+    return { payload: safePayload, persisted: false };
+  }
+
+  try {
+    window.localStorage.setItem(getLearningModuleTimelineResponsesStorageKey(moduleId), JSON.stringify(safePayload));
+    window.dispatchEvent(new CustomEvent(LEARNING_MODULE_TIMELINE_RESPONSES_STORAGE_EVENT, { detail: { moduleId } }));
+    return { payload: safePayload, persisted: true };
+  } catch (error) {
+    warnStorageIssue('Learning module timeline responses', 'Could not write local timeline responses.', error);
+    return { payload: safePayload, persisted: false };
+  }
+}
+
+export function seedLearningModuleTimelineResponses(moduleId, seededResponses = []) {
+  if (!canUseLocalStorage()) {
+    return normalizeLearningModuleTimelineResponsesPayload({ responses: seededResponses });
+  }
+
+  try {
+    const key = getLearningModuleTimelineResponsesStorageKey(moduleId);
+    const existingValue = window.localStorage.getItem(key);
+    if (existingValue) {
+      return normalizeLearningModuleTimelineResponsesPayload(JSON.parse(existingValue));
+    }
+
+    return writeLearningModuleTimelineResponses(moduleId, { responses: seededResponses }).payload;
+  } catch (error) {
+    warnStorageIssue('Learning module timeline responses', 'Could not seed local timeline responses.', error);
+    return normalizeLearningModuleTimelineResponsesPayload({ responses: seededResponses });
+  }
+}
+
+export function addLearningModuleTimelineResponse(moduleId, payload, responseInput) {
+  const currentPayload = normalizeLearningModuleTimelineResponsesPayload(payload);
+  const timestamp = new Date().toISOString();
+  const response = normalizeLearningModuleTimelineResponse({
+    id: createLocalId('local-timeline-response'),
+    source: 'teacher',
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    ...responseInput,
+  });
+
+  if (!response) {
+    return { payload: currentPayload, response: null, persisted: false };
+  }
+
+  const result = writeLearningModuleTimelineResponses(moduleId, {
+    ...currentPayload,
+    responses: [response, ...currentPayload.responses],
+  });
+
+  return { ...result, response };
+}
+
+export function updateLearningModuleTimelineResponse(moduleId, payload, id, changes) {
+  const currentPayload = normalizeLearningModuleTimelineResponsesPayload(payload);
+  let updatedResponse = null;
+  const responses = currentPayload.responses.map((response) => {
+    if (response.id !== id) {
+      return response;
+    }
+
+    updatedResponse = normalizeLearningModuleTimelineResponse({
+      ...response,
+      ...changes,
+      id: response.id,
+      studentId: response.studentId,
+      date: response.date,
+      createdAt: response.createdAt,
+      updatedAt: new Date().toISOString(),
+    });
+
+    return updatedResponse || response;
+  });
+
+  if (!updatedResponse) {
+    return { payload: currentPayload, response: null, persisted: false };
+  }
+
+  const result = writeLearningModuleTimelineResponses(moduleId, {
+    ...currentPayload,
+    responses,
+  });
+
+  return { ...result, response: updatedResponse };
+}
+
+export function removeLearningModuleTimelineResponse(moduleId, payload, id) {
+  const currentPayload = normalizeLearningModuleTimelineResponsesPayload(payload);
+  const responses = currentPayload.responses.filter((response) => response.id !== id);
+  const result = writeLearningModuleTimelineResponses(moduleId, {
+    ...currentPayload,
+    responses,
+  });
+
+  return { ...result, removed: responses.length !== currentPayload.responses.length };
 }
 
 function normalizeLearningChoiceId(value) {

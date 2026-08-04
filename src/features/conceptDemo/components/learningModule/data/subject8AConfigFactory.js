@@ -696,6 +696,32 @@ function buildEvidence(subjectId, curriculum) {
       ),
     }));
   });
+  const timelineResponses = subjectId === 'physical-education'
+    ? [
+      {
+        id: 'physical-education-8a-elias-timeline-response-1',
+        type: 'timeline-comment',
+        studentId: 'elias-nilsson',
+        date: '2026-02-12',
+        label: localized('Pair support', 'Parst\u00f6d'),
+        comment: localized(
+          'Use a confident partner for team-play decisions and pause briefly after the activity to name the choice made.',
+          'Anv\u00e4nd en trygg partner vid beslut i lagspel och pausa kort efter aktiviteten f\u00f6r att s\u00e4tta ord p\u00e5 valet.',
+        ),
+      },
+      {
+        id: 'physical-education-8a-elias-timeline-response-2',
+        type: 'timeline-comment',
+        studentId: 'elias-nilsson',
+        date: '2026-05-14',
+        label: localized('Swimming check-in', 'Simavst\u00e4mning'),
+        comment: localized(
+          'Revisit breathing rhythm before the next distance swim and confirm water-safety routines at the start.',
+          'Repetera andningsrytm f\u00f6re n\u00e4sta distanssimning och s\u00e4kerst\u00e4ll vattenrutiner i starten.',
+        ),
+      },
+    ]
+    : [];
 
   return {
     items: [
@@ -705,6 +731,7 @@ function buildEvidence(subjectId, curriculum) {
       ...assessments,
     ],
     learningObservations,
+    timelineResponses,
   };
 }
 

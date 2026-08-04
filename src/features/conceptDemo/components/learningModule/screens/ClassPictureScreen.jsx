@@ -1387,6 +1387,7 @@ function ClassPictureEvidenceGridV1({
                       />
                     ) : (
                       <ClassPictureExpandedView
+                        moduleId={moduleConfig?.id || 'learning-module'}
                         student={student}
                         evidenceItems={allEvidenceItems || evidenceItems}
                         learningObservations={studentLearningObservations}
@@ -1398,6 +1399,7 @@ function ClassPictureEvidenceGridV1({
                         skills={skills}
                         levels={levels}
                         learningContexts={moduleConfig?.subjectId === 'physical-education' ? physicalEducationLearningContexts : []}
+                        seededTimelineResponses={moduleConfig?.evidence?.timelineResponses || []}
                         language={language}
                         t={t}
                       />
