@@ -52,6 +52,7 @@ export default function SubjectWorkspaceContainer({
   activeMode,
   onModeChange,
   onBack,
+  headerActions = null,
   menuItems = [],
   children,
 }) {
@@ -98,9 +99,9 @@ export default function SubjectWorkspaceContainer({
                   height: 42,
                   flexShrink: 0,
                   color: '#17151a',
-                  border: '1px solid rgba(23, 21, 26, 0.12)',
-                  bgcolor: '#fff',
-                  '&:hover': { bgcolor: '#f8f6f9', borderColor: 'rgba(23, 21, 26, 0.18)' },
+                  border: '1px solid transparent',
+                  bgcolor: 'transparent',
+                  '&:hover': { bgcolor: 'rgba(23, 21, 26, 0.05)' },
                 }}
               >
                 <ArrowBackRoundedIcon />
@@ -125,6 +126,12 @@ export default function SubjectWorkspaceContainer({
                 </Typography>
               )}
             </Box>
+
+            {headerActions && (
+              <Box sx={{ display: { xs: 'none', sm: 'block' }, flexShrink: 0 }}>
+                {headerActions}
+              </Box>
+            )}
 
             {!!menuItems.length && (
               <>
@@ -163,98 +170,110 @@ export default function SubjectWorkspaceContainer({
             )}
           </Stack>
 
-          <Tabs
-            value={activeMode}
-            onChange={(_, nextMode) => onModeChange(nextMode)}
-            variant="scrollable"
-            scrollButtons="auto"
-            aria-label={t('learningModule.workspace.modesLabel')}
-            sx={{
-              mt: 1,
-              maxWidth: 620,
-              minHeight: 44,
-              border: '1px solid rgba(23, 21, 26, 0.1)',
-              borderRadius: '999px',
-              p: 0.4,
-              bgcolor: '#fff',
-              '& .MuiTab-root': {
-                minHeight: 36,
-                minWidth: 54,
-                px: 2,
-                borderRadius: '999px',
-                color: 'rgba(156, 40, 175, 0.4)',
-                textTransform: 'none',
-                fontWeight: 800,
-                border: '1px solid transparent',
-                transition: 'color 180ms ease',
-              },
-              '& .Mui-selected': {
-                color: purple,
-                bgcolor: 'transparent',
-                borderColor: 'transparent',
-                boxShadow: 'none',
-                transform: 'none',
-              },
-              '& .MuiTabs-indicator': {
-                display: 'none',
-              },
-            }}
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1}
+            alignItems={{ xs: 'stretch', sm: 'center' }}
+            sx={{ mt: 1, width: '100%' }}
           >
-            {modes.map((mode) => (
-              <Tab
-                key={mode.id}
-                value={mode.id}
-                icon={(
-                  <Tooltip
-                    title={(
-                      <Box>
-                        <Typography sx={{ fontSize: 12.8, fontWeight: 850, lineHeight: 1.2 }}>
-                          {t(`learningModule.modes.${mode.translationKey}.tooltipTitle`)}
-                        </Typography>
-                        <Typography sx={{ mt: 0.35, fontSize: 12.2, lineHeight: 1.35, color: 'rgba(23, 21, 26, 0.74)' }}>
-                          {t(`learningModule.modes.${mode.translationKey}.tooltipDetail`)}
-                        </Typography>
-                      </Box>
-                    )}
-                    arrow
-                    placement="bottom"
-                    enterDelay={560}
-                    leaveDelay={80}
-                    slotProps={{
-                      tooltip: {
-                        sx: {
-                          bgcolor: 'rgba(255, 255, 255, 0.98)',
-                          color: '#17151a',
-                          border: '1px solid rgba(23, 21, 26, 0.1)',
-                          borderRadius: '12px',
-                          boxShadow: '0 10px 26px rgba(23, 21, 26, 0.12)',
-                          px: 1.2,
-                          py: 0.9,
-                          maxWidth: 240,
-                        },
-                      },
-                      arrow: {
-                        sx: {
-                          color: 'rgba(255, 255, 255, 0.98)',
-                          '&:before': {
+            <Tabs
+              value={activeMode}
+              onChange={(_, nextMode) => onModeChange(nextMode)}
+              variant="scrollable"
+              scrollButtons="auto"
+              aria-label={t('learningModule.workspace.modesLabel')}
+              sx={{
+                maxWidth: 620,
+                flexShrink: 0,
+                minHeight: 44,
+                border: '1px solid rgba(23, 21, 26, 0.1)',
+                borderRadius: '999px',
+                p: 0.4,
+                bgcolor: '#fff',
+                '& .MuiTab-root': {
+                  minHeight: 36,
+                  minWidth: 54,
+                  px: 2,
+                  borderRadius: '999px',
+                  color: 'rgba(156, 40, 175, 0.4)',
+                  textTransform: 'none',
+                  fontWeight: 800,
+                  border: '1px solid transparent',
+                  transition: 'color 180ms ease',
+                },
+                '& .Mui-selected': {
+                  color: purple,
+                  bgcolor: 'transparent',
+                  borderColor: 'transparent',
+                  boxShadow: 'none',
+                  transform: 'none',
+                },
+                '& .MuiTabs-indicator': {
+                  display: 'none',
+                },
+              }}
+            >
+              {modes.map((mode) => (
+                <Tab
+                  key={mode.id}
+                  value={mode.id}
+                  icon={(
+                    <Tooltip
+                      title={(
+                        <Box>
+                          <Typography sx={{ fontSize: 12.8, fontWeight: 850, lineHeight: 1.2 }}>
+                            {t(`learningModule.modes.${mode.translationKey}.tooltipTitle`)}
+                          </Typography>
+                          <Typography sx={{ mt: 0.35, fontSize: 12.2, lineHeight: 1.35, color: 'rgba(23, 21, 26, 0.74)' }}>
+                            {t(`learningModule.modes.${mode.translationKey}.tooltipDetail`)}
+                          </Typography>
+                        </Box>
+                      )}
+                      arrow
+                      placement="bottom"
+                      enterDelay={560}
+                      leaveDelay={80}
+                      slotProps={{
+                        tooltip: {
+                          sx: {
+                            bgcolor: 'rgba(255, 255, 255, 0.98)',
+                            color: '#17151a',
                             border: '1px solid rgba(23, 21, 26, 0.1)',
+                            borderRadius: '12px',
+                            boxShadow: '0 10px 26px rgba(23, 21, 26, 0.12)',
+                            px: 1.2,
+                            py: 0.9,
+                            maxWidth: 240,
                           },
                         },
-                      },
-                    }}
-                  >
-                    <Box component="span" sx={{ display: 'inline-flex' }}>
-                      {mode.icon}
-                    </Box>
-                  </Tooltip>
-                )}
-                aria-label={t(`learningModule.modes.${mode.translationKey}.ariaLabel`)}
-                sx={{
-                  color: activeMode === mode.id ? `${purple} !important` : 'rgba(156, 40, 175, 0.4)',
-                }}
-              />
-            ))}
-          </Tabs>
+                        arrow: {
+                          sx: {
+                            color: 'rgba(255, 255, 255, 0.98)',
+                            '&:before': {
+                              border: '1px solid rgba(23, 21, 26, 0.1)',
+                            },
+                          },
+                        },
+                      }}
+                    >
+                      <Box component="span" sx={{ display: 'inline-flex' }}>
+                        {mode.icon}
+                      </Box>
+                    </Tooltip>
+                  )}
+                  aria-label={t(`learningModule.modes.${mode.translationKey}.ariaLabel`)}
+                  sx={{
+                    color: activeMode === mode.id ? `${purple} !important` : 'rgba(156, 40, 175, 0.4)',
+                  }}
+                />
+              ))}
+            </Tabs>
+          </Stack>
+          {headerActions && (
+            <Box sx={{ display: { xs: 'flex', sm: 'none' }, justifyContent: 'flex-end', mt: 1 }}>
+              {headerActions}
+            </Box>
+          )}
         </Box>
       </Box>
 

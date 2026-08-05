@@ -997,7 +997,11 @@ function HomeScreenContent() {
             sx={{
               position: 'absolute',
               top: { xs: -10, md: -7 },
-              right: { xs: -10, sm: -26, md: -54, lg: -230 },
+              right: {
+                xs: 0,
+                sm: 0,
+                md: 'calc((1160px - 100vw) / 2 + 32px)',
+              },
               width: 38,
               height: 38,
               color: darkText,

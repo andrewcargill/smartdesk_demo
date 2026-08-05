@@ -148,6 +148,7 @@ export const conceptDemoTranslations = {
       shell: {
         nextLesson: 'Next lesson',
         finalLesson: 'Final demo lesson',
+        lessonProgress: 'Lesson {{current}}/{{total}}',
         resetDemo: 'Reset demo',
       },
       workspace: {
@@ -568,6 +569,7 @@ export const conceptDemoTranslations = {
       shell: {
         nextLesson: 'N\u00e4sta lektion',
         finalLesson: 'Sista demolektionen',
+        lessonProgress: 'Lektion {{current}}/{{total}}',
         resetDemo: '\u00c5terst\u00e4ll demo',
       },
       workspace: {

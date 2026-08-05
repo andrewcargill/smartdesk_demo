@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import NotesIcon from '@mui/icons-material/Notes';
 import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
@@ -6,7 +6,9 @@ import SquareIcon from '@mui/icons-material/Square';
 import { Box, ButtonBase, Stack, Tooltip, Typography } from '@mui/material';
 import AssessmentPieChart from './AssessmentPieChart.jsx';
 import {
+  LEARNING_MODULE_TIMELINE_RESPONSES_STORAGE_EVENT,
   addLearningModuleTimelineResponse,
+  readLearningModuleTimelineResponses,
   removeLearningModuleTimelineResponse,
   seedLearningModuleTimelineResponses,
   updateLearningModuleTimelineResponse,
@@ -548,6 +550,8 @@ function layoutUnitSpans(units) {
 function groupTimelineItemsByPosition(items, range) {
   const proximityThreshold = 22;
   const groups = [];
+  const getItemPriority = (item) => (item.type === 'timeline-comment' ? 0 : 1);
+  const getItemUpdatedTime = (item) => item.updatedAt || item.createdAt || item.date || '';
 
   [...(items || [])]
     .sort((first, second) => (first.date || '').localeCompare(second.date || '') || String(first.id || '').localeCompare(String(second.id || '')))
@@ -574,8 +578,9 @@ function groupTimelineItemsByPosition(items, range) {
   return groups.map((group) => ({
     ...group,
     items: group.items.sort((first, second) => (
-      (first.date || '').localeCompare(second.date || '')
-      || (first.type === 'timeline-comment' ? 0 : 1) - (second.type === 'timeline-comment' ? 0 : 1)
+      getItemPriority(first) - getItemPriority(second)
+      || getItemUpdatedTime(second).localeCompare(getItemUpdatedTime(first))
+      || (first.date || '').localeCompare(second.date || '')
       || String(first.id || '').localeCompare(String(second.id || ''))
     )),
   }));
@@ -1112,6 +1117,29 @@ export default function ClassPictureExpandedView({
   const [timelineResponsePayload, setTimelineResponsePayload] = useState(() => seedLearningModuleTimelineResponses(moduleId, seededTimelineResponses));
   const [responseDraft, setResponseDraft] = useState(null);
   const [activeResponseMenuId, setActiveResponseMenuId] = useState('');
+
+  useEffect(() => {
+    setTimelineResponsePayload(seedLearningModuleTimelineResponses(moduleId, seededTimelineResponses));
+  }, [moduleId]);
+
+  useEffect(() => {
+    function handleTimelineResponsesStorage(event) {
+      if (event?.detail?.moduleId && event.detail.moduleId !== moduleId) {
+        return;
+      }
+
+      setTimelineResponsePayload(readLearningModuleTimelineResponses(moduleId));
+    }
+
+    window.addEventListener(LEARNING_MODULE_TIMELINE_RESPONSES_STORAGE_EVENT, handleTimelineResponsesStorage);
+    window.addEventListener('storage', handleTimelineResponsesStorage);
+
+    return () => {
+      window.removeEventListener(LEARNING_MODULE_TIMELINE_RESPONSES_STORAGE_EVENT, handleTimelineResponsesStorage);
+      window.removeEventListener('storage', handleTimelineResponsesStorage);
+    };
+  }, [moduleId]);
+
   const timeline = buildTimelineData({
     student,
     evidenceItems,
@@ -1126,8 +1154,14 @@ export default function ClassPictureExpandedView({
     learningContexts,
     language,
   });
-  const monthMarkers = getMonthMarkers(timeline.range);
-  const visibleRange = selectedMonthDate ? getMonthRange(selectedMonthDate) : timeline.range;
+  const studentTimelineResponses = (timelineResponsePayload.responses || []).filter((item) => item.studentId === student?.id);
+  const timelineRange = getDateRange([
+    { date: timeline.range.start },
+    { date: timeline.range.end },
+    ...studentTimelineResponses,
+  ]);
+  const monthMarkers = getMonthMarkers(timelineRange);
+  const visibleRange = selectedMonthDate ? getMonthRange(selectedMonthDate) : timelineRange;
   const visibleUnits = layoutUnitSpans(timeline.units.filter((unit) => isSpanInRange(unit.startDate, unit.endDate, visibleRange)));
   const visibleLearningEvents = timeline.learningEvents.filter((item) => isDateInRange(item.date, visibleRange));
   const unitFilterActive = Boolean(selectedCaptureUnitIds.length);
@@ -1150,7 +1184,7 @@ export default function ClassPictureExpandedView({
   ));
   const visibleTeachingResponses = [
     ...timeline.teachingResponses,
-    ...(timelineResponsePayload.responses || []).filter((item) => item.studentId === student?.id),
+    ...studentTimelineResponses,
   ]
     .filter((item) => isDateInRange(item.date, visibleRange))
     .sort((first, second) => (first.date || '').localeCompare(second.date || ''));

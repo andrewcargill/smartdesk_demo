@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
+import { Box, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import { useConceptDemoLanguage } from '../../ConceptDemoLanguageContext.jsx';
 import { resolveLocalizedValue } from '../../i18n/conceptDemoTranslations.js';
 import SubjectWorkspaceContainer from '../SubjectWorkspaceContainer.jsx';
@@ -19,6 +20,8 @@ import {
 const legacyScreenIds = {
   classPicture: 'class-picture',
 };
+
+const purple = '#9c28af';
 
 function normalizeScreenId(screenId) {
   return legacyScreenIds[screenId] || screenId;
@@ -248,21 +251,94 @@ export default function ReusableLearningModuleShell({ moduleData, onBack }) {
       activeMode={activeScreen}
       onModeChange={setActiveScreen}
       onBack={onBack}
-      menuItems={[
-        {
-          id: `${moduleViewModel.id}-next-lesson`,
-          label: canAdvanceLesson ? t('learningModule.shell.nextLesson') : t('learningModule.shell.finalLesson'),
-          icon: <SkipNextIcon fontSize="small" />,
-          disabled: !canAdvanceLesson,
-          onClick: advanceLesson,
-        },
-        {
-          id: `${moduleViewModel.id}-reset-demo`,
-          label: t('learningModule.shell.resetDemo'),
-          icon: <RestartAltIcon fontSize="small" />,
-          onClick: resetDemo,
-        },
-      ]}
+      headerActions={(
+        <Stack
+          direction="row"
+          spacing={0.9}
+          alignItems="center"
+          sx={{
+            alignSelf: { xs: 'flex-start', sm: 'center' },
+            pl: 1,
+pr: 1.4,
+            py: 0.55,
+            borderRadius: '999px',
+            border: '1px solid rgba(23, 21, 26, 0.1)',
+            bgcolor: '#fff',
+            height: 44,
+          }}
+        >
+          <Stack spacing={0.35} sx={{ minWidth: 82 }}>
+            <Typography sx={{ color: 'text.secondary', fontSize: 10.6, fontWeight: 780, lineHeight: 1 }}>
+              {t('learningModule.shell.lessonProgress', { current: Math.min(activeLessonIndex + 1, Math.max(lessonCount, 1)), total: Math.max(lessonCount, 1) })}
+            </Typography>
+            <Stack direction="row" spacing={0.35} aria-hidden="true">
+              {Array.from({ length: Math.max(lessonCount, 1) }).map((_, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    width: 18,
+                    height: 4,
+                    borderRadius: '999px',
+                    bgcolor: index <= activeLessonIndex ? purple : 'rgba(156, 40, 175, 0.16)',
+                  }}
+                />
+              ))}
+            </Stack>
+          </Stack>
+          <Tooltip title={canAdvanceLesson ? t('learningModule.shell.nextLesson') : t('learningModule.shell.finalLesson')}>
+            <Box component="span" sx={{ display: 'inline-flex' }}>
+              <IconButton
+                size="small"
+                aria-label={canAdvanceLesson ? t('learningModule.shell.nextLesson') : t('learningModule.shell.finalLesson')}
+                disabled={!canAdvanceLesson}
+                onClick={advanceLesson}
+                sx={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: '999px',
+                  bgcolor: 'rgba(156, 40, 175, 0.09)',
+                  color: purple,
+                  border: '1px solid rgba(156, 40, 175, 0.16)',
+                  '&:hover': {
+                    bgcolor: 'rgba(156, 40, 175, 0.13)',
+                    borderColor: 'rgba(156, 40, 175, 0.24)',
+                  },
+                  '&.Mui-disabled': {
+                    color: 'rgba(23, 21, 26, 0.38)',
+                    bgcolor: 'rgba(23, 21, 26, 0.07)',
+                    borderColor: 'rgba(23, 21, 26, 0.08)',
+                  },
+                }}
+              >
+                <SkipNextIcon sx={{ fontSize: 17 }} />
+              </IconButton>
+            </Box>
+          </Tooltip>
+          <Tooltip title={t('learningModule.shell.resetDemo')}>
+            <IconButton
+              size="small"
+              aria-label={t('learningModule.shell.resetDemo')}
+              onClick={resetDemo}
+              sx={{
+                width: 30,
+                height: 30,
+                borderRadius: '999px',
+                color: 'rgba(23, 21, 26, 0.56)',
+                border: '1px solid rgba(23, 21, 26, 0.1)',
+                bgcolor: '#fff',
+                '&:hover': {
+                  color: purple,
+                  bgcolor: 'rgba(156, 40, 175, 0.07)',
+                  borderColor: 'rgba(156, 40, 175, 0.18)',
+                },
+              }}
+            >
+              <RestartAltIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+      )}
+      menuItems={[]}
     >
       <ActiveScreen
         moduleConfig={moduleViewModel}
