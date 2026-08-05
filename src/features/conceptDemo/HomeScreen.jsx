@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
   Box,
   Button,
@@ -6,6 +7,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
+  Menu,
+  MenuItem,
   Paper,
   Stack,
   Switch,
@@ -475,54 +479,6 @@ function ConnectorLine({ line }) {
   );
 }
 
-function InsightPanel({ teacherName, subjectCount, nextTeachingEvent, controls, onOpenWeek, children, t }) {
-  const nextBlock = nextTeachingEvent
-    ? t('home.nextTeachingBlock', {
-      title: getSubjectTitle(nextTeachingEvent.subjectId, t, nextTeachingEvent.title),
-      className: nextTeachingEvent.className,
-      start: nextTeachingEvent.start,
-    })
-    : t('home.nextTeachingBlockReady');
-
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        position: 'relative',
-        zIndex: 5,
-        mt: { xs: 5, md: 2 },
-        mx: 'auto',
-        maxWidth: 860,
-        borderRadius: '22px',
-        border: '1px solid rgba(23, 21, 26, 0.1)',
-        boxShadow: '0 18px 54px rgba(23, 21, 26, 0.05)',
-        p: { xs: 2.5, sm: 3.5 },
-      }}
-    >
-      <Stack spacing={2.25}>
-        <Box>
-          <Typography variant="h2" sx={{ fontSize: { xs: 22, sm: 25 }, color: darkText }}>
-            {t('home.insightTitle')}
-          </Typography>
-          <Typography sx={{ mt: 1, maxWidth: 700, color: 'text.secondary', fontSize: 16.5, lineHeight: 1.65 }}>
-            {t('home.insightText', { teacherName, subjectCount, nextBlock })}
-          </Typography>
-        </Box>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
-          <Button variant="text" onClick={onOpenWeek} sx={{ color: purple }}>
-            {t('home.viewWeeklyPicture')}
-          </Button>
-          <Button variant="text" sx={{ color: purple }}>
-            {t('home.askSmartDesk')}
-          </Button>
-          {children}
-        </Stack>
-        {controls}
-      </Stack>
-    </Paper>
-  );
-}
-
 function SetupDialog({ open, onClose, initialSetup = false }) {
   const { language, languages, setLanguage, t } = useConceptDemoLanguage();
   const {
@@ -854,9 +810,12 @@ function HomeScreenContent() {
   const [smartDeskStoreOpen, setSmartDeskStoreOpen] = useState(false);
   const [smartDeskSurface, setSmartDeskSurface] = useState('floating');
   const [homeBackground, setHomeBackground] = useState('none');
+  const [homeMenuAnchor, setHomeMenuAnchor] = useState(null);
+  const [homeBackgroundDialogOpen, setHomeBackgroundDialogOpen] = useState(false);
   const selectedHomeBackground = homeBackgrounds[homeBackground];
   const mentorWorkspaceActive = activeWorkspace?.type === 'mentor';
   const subjectWorkspaceOpen = subjectWorkspaceActive || mentorWorkspaceActive;
+  const homeMenuOpen = Boolean(homeMenuAnchor);
 
   useEffect(() => {
     if (!subjectWorkspaceOpen || typeof document === 'undefined') {
@@ -945,9 +904,27 @@ function HomeScreenContent() {
     }
   }
 
+  function toggleSmartDeskSurface() {
+    const nextSurface = smartDeskSurface === 'floating' ? 'drawer' : 'floating';
+    setSmartDeskSurface(nextSurface);
+
+    if (nextSurface === 'floating') {
+      closeSmartDesk();
+    }
+  }
+
   function openSetup() {
     setSetupInitial(false);
     setSetupOpen(true);
+  }
+
+  function closeHomeMenu() {
+    setHomeMenuAnchor(null);
+  }
+
+  function runHomeMenuAction(action) {
+    closeHomeMenu();
+    action();
   }
 
   function closeSetup() {
@@ -1007,6 +984,99 @@ function HomeScreenContent() {
           }}
         >
         <Box sx={{ position: 'relative', maxWidth: 1160, mx: 'auto' }}>
+          <IconButton
+            aria-label={t('home.moreOptions')}
+            aria-controls={homeMenuOpen ? 'home-options-menu' : undefined}
+            aria-haspopup="menu"
+            aria-expanded={homeMenuOpen ? 'true' : undefined}
+            onClick={(event) => setHomeMenuAnchor(event.currentTarget)}
+            sx={{
+              position: 'absolute',
+              top: { xs: -10, md: -7 },
+              right: { xs: -10, sm: -26, md: -54, lg: -230 },
+              width: 38,
+              height: 38,
+              color: darkText,
+              // bgcolor: 'rgba(255, 255, 255, 0.76)',
+              // border: '1px solid rgba(23, 21, 26, 0.1)',
+              boxShadow: '0 10px 24px rgba(23, 21, 26, 0.08)',
+              '&:hover': {
+                bgcolor: '#fff',
+                color: purple,
+                borderColor: 'rgba(156, 40, 175, 0.22)',
+              },
+              '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+            }}
+          >
+            <MoreVertIcon fontSize="small" />
+          </IconButton>
+          <Menu
+            id="home-options-menu"
+            anchorEl={homeMenuAnchor}
+            open={homeMenuOpen}
+            onClose={closeHomeMenu}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            MenuListProps={{ 'aria-label': t('home.moreOptions') }}
+            slotProps={{
+              paper: {
+                sx: {
+                  mt: 0.6,
+                  minWidth: 192,
+                  borderRadius: '12px',
+                  border: '1px solid rgba(23, 21, 26, 0.1)',
+                  boxShadow: '0 18px 42px rgba(23, 21, 26, 0.14)',
+                },
+              },
+            }}
+          >
+            <MenuItem onClick={() => runHomeMenuAction(openSetup)}>
+              {t('home.setup.changeSubjects')}
+            </MenuItem>
+            <MenuItem onClick={() => runHomeMenuAction(() => setSmartDeskInfoOpen(true))}>
+              {t('home.whatIsSmartDesk')}
+            </MenuItem>
+            <MenuItem onClick={() => runHomeMenuAction(() => setSmartDeskStoreOpen(true))}>
+              {t('home.openSmartDeskStore')}
+            </MenuItem>
+            <MenuItem onClick={() => runHomeMenuAction(() => setHomeBackgroundDialogOpen(true))}>
+              {t('home.homeBackground')}
+            </MenuItem>
+            <MenuItem
+              onClick={toggleSmartDeskSurface}
+              sx={{ gap: 1.1, justifyContent: 'space-between', py: 1 }}
+            >
+              <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 760 }}>
+                SmartDesk
+              </Typography>
+              <Stack direction="row" spacing={0.65} alignItems="center">
+                <Typography sx={{ color: smartDeskSurface === 'drawer' ? darkText : 'text.secondary', fontSize: 12.2, fontWeight: 750 }}>
+                  {t('home.drawer')}
+                </Typography>
+                <Switch
+                  size="small"
+                  checked={smartDeskSurface === 'floating'}
+                  onChange={handleSmartDeskSurfaceChange}
+                  onClick={(event) => event.stopPropagation()}
+                  inputProps={{ 'aria-label': t('home.toggleSmartDeskSurface') }}
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: purple,
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      bgcolor: purple,
+                    },
+                  }}
+                />
+                <Typography sx={{ color: smartDeskSurface === 'floating' ? darkText : 'text.secondary', fontSize: 12.2, fontWeight: 750 }}>
+                  {t('home.floating')}
+                </Typography>
+              </Stack>
+            </MenuItem>
+            <MenuItem onClick={() => runHomeMenuAction(resetDemo)}>
+              {t('home.setup.resetDemo')}
+            </MenuItem>
+          </Menu>
           <Stack spacing={1.1} alignItems="center" textAlign="center" sx={{ pt: { xs: 5, sm: 2 }, mb: { xs: 4, md: 2 } }}>
             {/* <Typography variant="h1" sx={{ fontSize: { xs: 36, sm: 48, md: 58 }, lineHeight: 1.04, color: darkText }}>
               Welcome back, Anna
@@ -1017,40 +1087,6 @@ function HomeScreenContent() {
             <Typography sx={{ color: 'text.secondary', fontSize: 15.5 }}>
               {t('home.statusLine', { eventSummary: formatTeachingEvent(nextTeachingEvent, t) })}
             </Typography>
-            <Stack direction="row" spacing={0.8} alignItems="center" justifyContent="center" sx={{ mt: 0.5 }}>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={openSetup}
-                sx={{
-                  borderColor: 'rgba(23, 21, 26, 0.12)',
-                  color: darkText,
-                  borderRadius: '999px',
-                  textTransform: 'none',
-                  fontSize: 12.5,
-                  fontWeight: 760,
-                  '&:hover': { borderColor: 'rgba(156, 40, 175, 0.32)', bgcolor: '#fff' },
-                }}
-              >
-                {t('home.setup.changeSubjects')}
-              </Button>
-              <Button
-                variant="text"
-                size="small"
-                onClick={resetDemo}
-                aria-label={t('home.setup.resetDemoAria')}
-                sx={{
-                  color: 'text.secondary',
-                  borderRadius: '999px',
-                  textTransform: 'none',
-                  fontSize: 12.5,
-                  fontWeight: 760,
-                  '&:hover': { color: darkText, bgcolor: 'rgba(23, 21, 26, 0.04)' },
-                }}
-              >
-                {t('home.setup.resetDemo')}
-              </Button>
-            </Stack>
           </Stack>
 
           <Box
@@ -1094,91 +1130,6 @@ function HomeScreenContent() {
             </Box>
           </Box>
 
-          <InsightPanel
-            teacherName={teacherName}
-            subjectCount={subjectModules.length}
-            nextTeachingEvent={nextTeachingEvent}
-            onOpenWeek={openWeek}
-            t={t}
-            controls={(
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
-                <Typography sx={{ color: 'text.secondary', fontSize: 12.5, fontWeight: 750 }}>
-                  {t('home.homeBackground')}
-                </Typography>
-                <ToggleButtonGroup
-                  exclusive
-                  size="small"
-                  value={homeBackground}
-                  onChange={(event, nextBackground) => {
-                    if (nextBackground) {
-                      setHomeBackground(nextBackground);
-                    }
-                  }}
-                  aria-label={t('home.chooseHomeBackground')}
-                  sx={{
-                    '& .MuiToggleButton-root': {
-                      color: darkText,
-                      borderColor: 'rgba(23, 21, 26, 0.12)',
-                      px: 1.25,
-                      py: 0.45,
-                      fontSize: 12,
-                      fontWeight: 750,
-                      textTransform: 'none',
-                    },
-                    '& .Mui-selected': {
-                      color: purple,
-                      bgcolor: palePurple,
-                    },
-                    '& .Mui-selected:hover': {
-                      bgcolor: palePurple,
-                    },
-                  }}
-                >
-                  <ToggleButton value="none" aria-label={t('home.noHomeBackground')}>{t('home.noBackground')}</ToggleButton>
-                  <ToggleButton value="bg1" aria-label={t('home.useBackground', { number: 1 })}>{t('home.backgroundShort', { number: 1 })}</ToggleButton>
-                  <ToggleButton value="bg2" aria-label={t('home.useBackground', { number: 2 })}>{t('home.backgroundShort', { number: 2 })}</ToggleButton>
-                  <ToggleButton value="bg3" aria-label={t('home.useBackground', { number: 3 })}>{t('home.backgroundShort', { number: 3 })}</ToggleButton>
-                </ToggleButtonGroup>
-              </Stack>
-            )}
-          >
-            <Button
-              variant="text"
-              onClick={() => setSmartDeskInfoOpen(true)}
-              sx={{ color: purple }}
-            >
-              {t('home.whatIsSmartDesk')}
-            </Button>
-            <Button
-              variant="text"
-              onClick={() => setSmartDeskStoreOpen(true)}
-              sx={{ color: purple }}
-            >
-              {t('home.openSmartDeskStore')}
-            </Button>
-            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ pl: { sm: 0.5 } }}>
-              <Typography sx={{ color: smartDeskSurface === 'drawer' ? darkText : 'text.secondary', fontSize: 12.5, fontWeight: 750 }}>
-                {t('home.drawer')}
-              </Typography>
-              <Switch
-                size="small"
-                checked={smartDeskSurface === 'floating'}
-                onChange={handleSmartDeskSurfaceChange}
-                inputProps={{ 'aria-label': t('home.toggleSmartDeskSurface') }}
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: purple,
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    bgcolor: purple,
-                  },
-                }}
-              />
-              <Typography sx={{ color: smartDeskSurface === 'floating' ? darkText : 'text.secondary', fontSize: 12.5, fontWeight: 750 }}>
-                {t('home.floating')}
-              </Typography>
-            </Stack>
-          </InsightPanel>
         </Box>
         </Box>
       </Box>
@@ -1199,6 +1150,73 @@ function HomeScreenContent() {
       </FocusedWorkspace>
       <MyWeekModal open={weekOpen} onClose={closeWeek} onOpenClass={openMaths7A} schedule={schedule} />
       <NotebookModal open={notebookOpen} onClose={() => setNotebookOpen(false)} />
+      <Dialog
+        open={homeBackgroundDialogOpen}
+        onClose={() => setHomeBackgroundDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ color: darkText, fontSize: 20, fontWeight: 880 }}>
+          {t('home.homeBackground')}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={1.3} sx={{ pt: 0.5 }}>
+            <Typography sx={{ color: 'text.secondary', fontSize: 13, fontWeight: 650 }}>
+              {t('home.chooseHomeBackground')}
+            </Typography>
+            <ToggleButtonGroup
+              exclusive
+              fullWidth
+              size="small"
+              value={homeBackground}
+              onChange={(event, nextBackground) => {
+                if (nextBackground) {
+                  setHomeBackground(nextBackground);
+                }
+              }}
+              aria-label={t('home.chooseHomeBackground')}
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(4, minmax(0, 1fr))' },
+                gap: 0.75,
+                '& .MuiToggleButtonGroup-grouped': {
+                  m: '0 !important',
+                  border: '1px solid rgba(23, 21, 26, 0.12) !important',
+                  borderRadius: '10px !important',
+                },
+                '& .MuiToggleButton-root': {
+                  color: darkText,
+                  px: 1,
+                  py: 0.85,
+                  fontSize: 12,
+                  fontWeight: 780,
+                  textTransform: 'none',
+                },
+                '& .Mui-selected': {
+                  color: purple,
+                  bgcolor: palePurple,
+                },
+                '& .Mui-selected:hover': {
+                  bgcolor: palePurple,
+                },
+              }}
+            >
+              <ToggleButton value="none" aria-label={t('home.noHomeBackground')}>{t('home.noBackground')}</ToggleButton>
+              <ToggleButton value="bg1" aria-label={t('home.useBackground', { number: 1 })}>{t('home.backgroundShort', { number: 1 })}</ToggleButton>
+              <ToggleButton value="bg2" aria-label={t('home.useBackground', { number: 2 })}>{t('home.backgroundShort', { number: 2 })}</ToggleButton>
+              <ToggleButton value="bg3" aria-label={t('home.useBackground', { number: 3 })}>{t('home.backgroundShort', { number: 3 })}</ToggleButton>
+            </ToggleButtonGroup>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.2 }}>
+          <Button
+            onClick={() => setHomeBackgroundDialogOpen(false)}
+            sx={{ color: purple, textTransform: 'none', fontWeight: 760 }}
+          >
+            {t('common.close')}
+          </Button>
+        </DialogActions>
+      </Dialog>
       {smartDeskStoreOpen && (
         <Box
           role="presentation"
