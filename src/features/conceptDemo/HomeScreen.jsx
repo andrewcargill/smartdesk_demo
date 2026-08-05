@@ -736,7 +736,7 @@ function LanguageToggle() {
 }
 
 function HomeScreenContent() {
-  const { language, t } = useConceptDemoLanguage();
+  const { language, languages, setLanguage, t } = useConceptDemoLanguage();
   const { selectedSubjectIds } = useConceptDemoSubjects();
   const { teacherName } = useConceptDemoTeacher();
   const [activeWorkspace, setActiveWorkspace] = useState(null);
@@ -1041,6 +1041,51 @@ function HomeScreenContent() {
             </MenuItem>
             <MenuItem onClick={() => runHomeMenuAction(() => setHomeBackgroundDialogOpen(true))}>
               {t('home.homeBackground')}
+            </MenuItem>
+            <MenuItem
+              disableRipple
+              sx={{ gap: 1.1, justifyContent: 'space-between', py: 1, cursor: 'default' }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 760 }}>
+                {t('common.language')}
+              </Typography>
+              <ToggleButtonGroup
+                exclusive
+                size="small"
+                value={language}
+                onChange={(_, nextLanguage) => {
+                  if (nextLanguage) {
+                    setLanguage(nextLanguage);
+                  }
+                }}
+                aria-label={t('common.language')}
+                sx={{
+                  '& .MuiToggleButton-root': {
+                    minWidth: 38,
+                    px: 0.75,
+                    py: 0.25,
+                    color: darkText,
+                    borderColor: 'rgba(23, 21, 26, 0.12)',
+                    fontSize: 11.5,
+                    fontWeight: 820,
+                    lineHeight: 1.2,
+                  },
+                  '& .Mui-selected': {
+                    color: purple,
+                    bgcolor: palePurple,
+                  },
+                  '& .Mui-selected:hover': {
+                    bgcolor: palePurple,
+                  },
+                }}
+              >
+                {Object.values(languages).map((option) => (
+                  <ToggleButton key={option.code} value={option.code} aria-label={option.label}>
+                    {option.shortLabel}
+                  </ToggleButton>
+                ))}
+              </ToggleButtonGroup>
             </MenuItem>
             <MenuItem
               onClick={toggleSmartDeskSurface}

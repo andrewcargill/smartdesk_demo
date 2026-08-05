@@ -36,8 +36,8 @@ export const conceptDemoTranslations = {
       openAnnaWeek: "Open Anna's week",
       openTeacherWeek: "Open {{teacherName}}'s week",
       currentWeekday: 'Monday',
-      weekSummary: 'Monday \u00b7 3 lessons \u00b7 1 follow-up',
-      statusLine: 'V5 - Nothing pressing. {{eventSummary}}.',
+      weekSummary: 'Monday \u00b7 4 lessons \u00b7 1 follow-up',
+      statusLine: 'Nothing pressing. {{eventSummary}}.',
       teachingDayReady: 'Your teaching day is ready',
       teachingEventBegins: '{{title}} {{className}} begins at {{start}}',
       modules: {
