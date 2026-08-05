@@ -42,6 +42,8 @@ import bg1Image from './media/bg-1.jpg';
 import bg2Image from './media/bg-2.jpg';
 import bg3Image from './media/bg-3.jpg';
 import smartDeskImage from './media/smartdesk-image.png';
+import smartDeskObservationsImage from './media/smartdesk-observations.png';
+import smartDeskWorkflowImage from './media/smartdesk-workflow.png';
 
 const purple = '#9c28af';
 const palePurple = '#fbf5fd';
@@ -807,6 +809,8 @@ function HomeScreenContent() {
   const [selectedModule, setSelectedModule] = useState(modules[0]?.id || 'mentor');
   const [notebookOpen, setNotebookOpen] = useState(false);
   const [smartDeskInfoOpen, setSmartDeskInfoOpen] = useState(false);
+  const [smartDeskHowItWorksOpen, setSmartDeskHowItWorksOpen] = useState(false);
+  const [smartDeskWorkflowOpen, setSmartDeskWorkflowOpen] = useState(false);
   const [smartDeskStoreOpen, setSmartDeskStoreOpen] = useState(false);
   const [smartDeskSurface, setSmartDeskSurface] = useState('floating');
   const [homeBackground, setHomeBackground] = useState('none');
@@ -1035,6 +1039,12 @@ function HomeScreenContent() {
             </MenuItem>
             <MenuItem onClick={() => runHomeMenuAction(() => setSmartDeskInfoOpen(true))}>
               {t('home.whatIsSmartDesk')}
+            </MenuItem>
+            <MenuItem onClick={() => runHomeMenuAction(() => setSmartDeskHowItWorksOpen(true))}>
+              {t('home.howItWorks')}
+            </MenuItem>
+            <MenuItem onClick={() => runHomeMenuAction(() => setSmartDeskWorkflowOpen(true))}>
+              {t('home.workflow')}
             </MenuItem>
             <MenuItem onClick={() => runHomeMenuAction(() => setSmartDeskStoreOpen(true))}>
               {t('home.openSmartDeskStore')}
@@ -1349,6 +1359,114 @@ function HomeScreenContent() {
          
             <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2.5 }}>
               <Button variant="text" onClick={() => setSmartDeskInfoOpen(false)} sx={{ color: purple }}>
+                {t('common.close')}
+              </Button>
+            </Stack>
+          </Paper>
+        </Box>
+      )}
+      {smartDeskHowItWorksOpen && (
+        <Box
+          role="presentation"
+          onClick={() => setSmartDeskHowItWorksOpen(false)}
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1600,
+            display: 'grid',
+            placeItems: 'center',
+            bgcolor: 'rgba(23, 21, 26, 0.34)',
+            px: 2,
+          }}
+        >
+          <Paper
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="smartdesk-how-it-works-title"
+            elevation={0}
+            onClick={(event) => event.stopPropagation()}
+            sx={{
+              width: 'min(1180px, 100%)',
+              maxHeight: 'calc(100vh - 48px)',
+              overflowY: 'auto',
+              borderRadius: '18px',
+              border: '1px solid rgba(23, 21, 26, 0.12)',
+              boxShadow: '0 24px 70px rgba(23, 21, 26, 0.18)',
+              p: { xs: 2, sm: 2.5 },
+              bgcolor: '#fff',
+            }}
+          >
+            <Typography id="smartdesk-how-it-works-title" variant="h2" sx={{ color: darkText, fontSize: 24, fontWeight: 750 }}>
+              {t('home.howItWorks')}
+            </Typography>
+            <Box
+              component="img"
+              src={smartDeskObservationsImage}
+              alt={t('home.howItWorksImageAlt')}
+              sx={{
+                display: 'block',
+                width: '100%',
+                mt: 2,
+                borderRadius: '12px',
+                border: '1px solid rgba(23, 21, 26, 0.1)',
+              }}
+            />
+            <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2.5 }}>
+              <Button variant="text" onClick={() => setSmartDeskHowItWorksOpen(false)} sx={{ color: purple }}>
+                {t('common.close')}
+              </Button>
+            </Stack>
+          </Paper>
+        </Box>
+      )}
+      {smartDeskWorkflowOpen && (
+        <Box
+          role="presentation"
+          onClick={() => setSmartDeskWorkflowOpen(false)}
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1600,
+            display: 'grid',
+            placeItems: 'center',
+            bgcolor: 'rgba(23, 21, 26, 0.34)',
+            px: 2,
+          }}
+        >
+          <Paper
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="smartdesk-workflow-title"
+            elevation={0}
+            onClick={(event) => event.stopPropagation()}
+            sx={{
+              width: 'min(1180px, 100%)',
+              maxHeight: 'calc(100vh - 48px)',
+              overflowY: 'auto',
+              borderRadius: '18px',
+              border: '1px solid rgba(23, 21, 26, 0.12)',
+              boxShadow: '0 24px 70px rgba(23, 21, 26, 0.18)',
+              p: { xs: 2, sm: 2.5 },
+              bgcolor: '#fff',
+            }}
+          >
+            <Typography id="smartdesk-workflow-title" variant="h2" sx={{ color: darkText, fontSize: 24, fontWeight: 750 }}>
+              {t('home.workflow')}
+            </Typography>
+            <Box
+              component="img"
+              src={smartDeskWorkflowImage}
+              alt={t('home.workflowImageAlt')}
+              sx={{
+                display: 'block',
+                width: '100%',
+                mt: 2,
+                borderRadius: '12px',
+                border: '1px solid rgba(23, 21, 26, 0.1)',
+              }}
+            />
+            <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2.5 }}>
+              <Button variant="text" onClick={() => setSmartDeskWorkflowOpen(false)} sx={{ color: purple }}>
                 {t('common.close')}
               </Button>
             </Stack>
