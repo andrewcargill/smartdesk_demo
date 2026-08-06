@@ -5,6 +5,7 @@ import {
 } from '../../../data/mathsCurriculum.js';
 import { getSubjectDefinition } from '../../../data/subjectCatalogue.js';
 import { resolveLocalizedValue } from '../../../i18n/conceptDemoTranslations.js';
+import { mathsLearningContexts } from './mathsLearningContexts.js';
 import {
   musicCurriculumAreas,
   musicTeachingUnits,
@@ -954,6 +955,47 @@ function buildEvidence(subjectId, curriculum) {
       }),
     };
   });
+  const mathematicsEliasAssessments = subjectId === 'mathematics'
+    ? [
+      ['2026-01-16', 'number-sense', localized('Homework check: fractions and percentages', 'L\u00e4xkontroll: br\u00e5k och procent'), 12, 6, 9],
+      ['2026-01-23', 'number-sense', localized('Exit ticket: decimal-percent links', 'Exit ticket: decimal- och procentkopplingar'), 8, 4, 6],
+      ['2026-01-30', 'number-sense', localized('Short quiz: fractions, decimals and percentages', 'Kort quiz: br\u00e5k, decimaler och procent'), 20, 10, 15],
+      ['2026-02-06', 'algebra', localized('Homework check: algebraic expressions', 'L\u00e4xkontroll: algebraiska uttryck'), 10, 5, 6],
+      ['2026-02-13', 'algebra', localized('Lesson test: simplify expressions', 'Lektionstest: f\u00f6renkla uttryck'), 16, 8, 8],
+      ['2026-02-20', 'algebra', localized('Exit ticket: equation steps', 'Exit ticket: ekvationssteg'), 8, 4, 3],
+      ['2026-02-27', 'algebra', localized('Checkpoint: equations', 'Kontroll: ekvationer'), 20, 10, 8],
+      ['2026-03-06', 'algebra', localized('Re-check: equations with one transformation', 'Omkontroll: ekvationer med en omformning'), 12, 6, 7],
+      ['2026-03-13', 'algebra', localized('Lesson test: equation methods', 'Lektionstest: ekvationsmetoder'), 20, 10, 12],
+      ['2026-03-20', 'geometry', localized('Homework check: geometry vocabulary', 'L\u00e4xkontroll: geometribegrepp'), 10, 5, 7],
+      ['2026-03-27', 'geometry', localized('Practical checkpoint: construction and diagrams', 'Praktisk kontroll: konstruktion och diagram'), 18, 9, 12],
+      ['2026-04-10', 'geometry', localized('Lesson test: angle reasoning', 'Lektionstest: vinkelresonemang'), 20, 10, 15],
+      ['2026-04-17', 'geometry', localized('Investigation hand-in: scale and similarity', 'Inl\u00e4mning: skala och likformighet'), 16, 8, 12],
+      ['2026-04-24', 'probability-statistics', localized('Data handling checkpoint', 'Kontroll: statistik och data'), 20, 10, 13],
+      ['2026-05-01', 'probability-statistics', localized('Homework check: diagrams and averages', 'L\u00e4xkontroll: diagram och l\u00e4gesm\u00e5tt'), 12, 6, 8],
+      ['2026-05-08', 'relationships-change', localized('Exit ticket: coordinates and graphs', 'Exit ticket: koordinater och grafer'), 10, 5, 7],
+      ['2026-05-15', 'relationships-change', localized('Lesson test: proportionality and graphs', 'Lektionstest: proportionalitet och grafer'), 20, 10, 14],
+      ['2026-05-22', 'mathematical-abilities', localized('Reasoning task: explain a method', 'Resonemangsuppgift: f\u00f6rklara en metod'), 16, 8, 12],
+      ['2026-05-29', 'relationships-change', localized('Term checkpoint: functions and models', 'Terminskontroll: funktioner och modeller'), 24, 12, 17],
+    ].map(([date, teachingUnitId, title, max, pass, score], assessmentIndex) => ({
+      id: `mathematics-8a-elias-assessment-extra-${assessmentIndex + 1}`,
+      type: 'assessment',
+      title,
+      date,
+      teachingUnitId,
+      max,
+      pass,
+      results: [
+        {
+          studentId: 'elias-nilsson',
+          score,
+          percentage: Math.round((score / max) * 100),
+          passed: score >= pass,
+          absent: false,
+          warning: score < pass,
+        },
+      ],
+    }))
+    : [];
   const englishEliasObservationClusters = subjectId === 'english'
     ? [
       ['2026-01-22', 'listening-reception', [
@@ -1646,6 +1688,7 @@ function buildEvidence(subjectId, curriculum) {
       ...physicalEducationEliasObservationClusters,
       ...physicalEducationEliasActivityTimeline,
       ...musicEliasProjectTimeline,
+      ...mathematicsEliasAssessments,
       ...assessments,
     ],
     learningObservations,
@@ -1725,6 +1768,205 @@ function buildPlanning(subjectId, curriculum) {
       blockTypeLabels: {
         teaching: localized('Projects', 'Projekt'),
       },
+      curriculumNotes: [],
+    };
+  }
+
+  if (subjectId === 'mathematics') {
+    const contextById = new Map(mathsLearningContexts.map((context) => [context.id, context]));
+    const unitById = new Map((curriculum.teachingUnits || []).map((unit) => [unit.id, unit]));
+    const skillById = new Map((curriculum.skills || []).map((skill) => [skill.id, skill]));
+    const mathsBlocks = [
+      {
+        contextId: 'fractions-decimals-percentages',
+        periodId: 'jan-2026',
+        startDate: '2026-01-12',
+        endDate: '2026-01-30',
+        status: 'completed',
+        blockSlug: 'fractions-confidence',
+        title: localized('Fractions, decimals and percentages', 'Br\u00e5k, decimaler och procent'),
+        description: localized(
+          'Start with visual models and frequent homework checks. Elias builds confidence here and uses representations well.',
+          'Starta med visuella modeller och t\u00e4ta l\u00e4xkontroller. Elias bygger trygghet h\u00e4r och anv\u00e4nder representationer v\u00e4l.',
+        ),
+        assessmentAnchor: localized('Short quiz 30 Jan', 'Kort quiz 30 jan'),
+      },
+      {
+        contextId: 'equations',
+        periodId: 'feb-2026',
+        startDate: '2026-02-03',
+        endDate: '2026-02-27',
+        status: 'completed',
+        blockSlug: 'equations-dip',
+        title: localized('Equations: one step at a time', 'Ekvationer: ett steg i taget'),
+        description: localized(
+          'Plan for repeated lesson checks because Elias dips during equations. Keep transformations visible and verbalised.',
+          'Planera f\u00f6r upprepade lektionskontroller eftersom Elias f\u00e5r en svacka i ekvationer. H\u00e5ll omformningar synliga och uttalade.',
+        ),
+        assessmentAnchor: localized('Equation checkpoint 27 Feb', 'Ekvationskontroll 27 feb'),
+        groupAdaptations: [
+          {
+            id: 'maths-elias-equation-scaffold',
+            workingGroupId: 'needs-check-in',
+            instruction: localized('One transformation per line; pair with a student who verbalises each step.', 'En omformning per rad; para ihop med elev som s\u00e4ger varje steg.'),
+          },
+        ],
+        notes: localized(
+          'Watch for reduced independence during multi-step equations.',
+          'Var uppm\u00e4rksam p\u00e5 minskad sj\u00e4lvst\u00e4ndighet vid flerstegsekvationer.',
+        ),
+      },
+      {
+        contextId: 'equations',
+        periodId: 'mar-2026',
+        startDate: '2026-03-02',
+        endDate: '2026-03-13',
+        status: 'completed',
+        blockSlug: 'equations-recheck',
+        title: localized('Equations: re-check and method security', 'Ekvationer: omkontroll och metods\u00e4kerhet'),
+        description: localized(
+          'Short consolidation block after the dip: re-check equation methods before moving into geometry.',
+          'Kort bef\u00e4standemoment efter svackan: omkontrollera ekvationsmetoder innan geometri.',
+        ),
+        blockType: 'consolidation',
+        assessmentAnchor: localized('Lesson test 13 Mar', 'Lektionstest 13 mars'),
+      },
+      {
+        contextId: 'geometry-investigation',
+        periodId: 'mar-2026',
+        startDate: '2026-03-17',
+        endDate: '2026-04-17',
+        status: 'completed',
+        blockSlug: 'geometry-recovery',
+        title: localized('Geometry investigation', 'Geometrisk unders\u00f6kning'),
+        description: localized(
+          'Practical diagrams first, then reasoning sentences. Elias recovers strongly when the work is visual and concrete.',
+          'Praktiska diagram f\u00f6rst, sedan resonemangsmeningar. Elias h\u00e4mtar sig tydligt n\u00e4r arbetet \u00e4r visuellt och konkret.',
+        ),
+        assessmentAnchor: localized('Investigation hand-in 17 Apr', 'Inl\u00e4mning 17 apr'),
+      },
+      {
+        unitId: 'probability-statistics',
+        periodId: 'apr-2026',
+        startDate: '2026-04-21',
+        endDate: '2026-05-01',
+        status: 'completed',
+        blockSlug: 'data-handling',
+        title: localized('Statistics and data handling', 'Statistik och datahantering'),
+        description: localized(
+          'Bridge from diagrams into data: tables, averages, spread and interpretation with quick checks.',
+          'Bygg bro fr\u00e5n diagram till data: tabeller, l\u00e4gesm\u00e5tt, spridning och tolkning med snabba kontroller.',
+        ),
+        assessmentAnchor: localized('Data checkpoint 24 Apr', 'Datakontroll 24 apr'),
+      },
+      {
+        unitId: 'relationships-change',
+        periodId: 'may-2026',
+        startDate: '2026-05-05',
+        endDate: '2026-05-29',
+        status: 'current',
+        blockSlug: 'graphs-functions',
+        title: localized('Graphs, proportionality and functions', 'Grafer, proportionalitet och funktioner'),
+        description: localized(
+          'Use the successful geometry structure again: graph first, method second, explanation last.',
+          'Anv\u00e4nd den lyckade strukturen fr\u00e5n geometri igen: graf f\u00f6rst, metod sedan, f\u00f6rklaring sist.',
+        ),
+        assessmentAnchor: localized('Term checkpoint 29 May', 'Terminskontroll 29 maj'),
+      },
+      {
+        unitId: 'mathematical-abilities',
+        periodId: 'june-2026',
+        startDate: '2026-06-01',
+        endDate: '2026-06-12',
+        status: 'planned',
+        blockSlug: 'methods-reasoning-review',
+        title: localized('Methods and reasoning review', 'Repetition av metoder och resonemang'),
+        description: localized(
+          'Revisit method explanation, reasoning and communication using examples from the term.',
+          'Repetera metodf\u00f6rklaring, resonemang och kommunikation med exempel fr\u00e5n terminen.',
+        ),
+        blockType: 'consolidation',
+      },
+    ].map((block, index) => {
+      const context = block.contextId ? contextById.get(block.contextId) : null;
+      const unit = unitById.get(block.unitId || context?.primaryCurriculumAreaId) || curriculum.teachingUnits[index % curriculum.teachingUnits.length];
+      const curriculumAreaIds = [...new Set([
+        unit?.id,
+        unit?.curriculumAreaId,
+        context?.primaryCurriculumAreaId,
+        ...(context?.possibleCurriculumAreaIds || []),
+        ...(context?.capturePoints || []).flatMap((point) => point.curriculumAreaIds || []),
+      ].filter(Boolean))];
+      const abilityIds = [...new Set([
+        ...(context?.capturePoints || []).map((point) => point.observationDimensionId),
+        ...(unit?.skillIds || []).slice(0, 5),
+      ].filter(Boolean))];
+
+      return {
+        id: `${subjectId}-8a-plan-${block.blockSlug}`,
+        subjectId,
+        classId: '8a',
+        title: block.title,
+        description: block.description,
+        teachingUnitId: unit?.id || context?.primaryCurriculumAreaId || '',
+        sourceTemplateId: block.contextId || unit?.id || '',
+        templateId: block.contextId || unit?.id || '',
+        periodId: block.periodId,
+        startDate: block.startDate,
+        endDate: block.endDate,
+        status: block.status,
+        curriculumAreaIds,
+        evidenceTopicIds: curriculumAreaIds.map((areaId) => `${areaId}-observations`),
+        abilityIds,
+        blockType: block.blockType || 'teaching',
+        assessmentAnchor: block.assessmentAnchor || null,
+        quickCaptureOptions: context?.capturePoints?.length
+          ? context.capturePoints.map((point) => ({ id: point.id, label: point.label }))
+          : (unit?.skillIds || []).slice(0, 4).map((skillId) => {
+            const skill = skillById.get(skillId);
+            return { id: skillId, label: skill?.title || localized(skillId, skillId) };
+          }),
+        groupAdaptations: block.groupAdaptations || [],
+        notes: block.notes || null,
+        createdAt: '2026-01-08',
+        updatedAt: block.status === 'current' ? '2026-05-18' : block.endDate,
+        createdBy: 'teacher',
+      };
+    });
+
+    return {
+      periods: [
+        { id: 'jan-2026', label: localized('January', 'Januari'), startDate: '2026-01-08', endDate: '2026-01-31', order: 1 },
+        { id: 'feb-2026', label: localized('February', 'Februari'), startDate: '2026-02-01', endDate: '2026-02-28', order: 2 },
+        { id: 'mar-2026', label: localized('March', 'Mars'), startDate: '2026-03-01', endDate: '2026-03-31', order: 3 },
+        { id: 'apr-2026', label: localized('April', 'April'), startDate: '2026-04-01', endDate: '2026-04-30', order: 4 },
+        { id: 'may-2026', label: localized('May', 'Maj'), startDate: '2026-05-01', endDate: '2026-05-31', order: 5 },
+        { id: 'june-2026', label: localized('June', 'Juni'), startDate: '2026-06-01', endDate: '2026-06-19', order: 6 },
+      ],
+      blocks: mathsBlocks,
+      tools: [
+        ...mathsLearningContexts.map((context) => ({
+          id: context.id,
+          title: context.label,
+          blockType: 'teaching',
+          description: localized('Use this maths topic as a planned capture focus.', 'Anv\u00e4nd detta matematikomr\u00e5de som planerat observationsfokus.'),
+          curriculumAreaIds: [context.primaryCurriculumAreaId, ...(context.possibleCurriculumAreaIds || [])].filter(Boolean),
+          evidenceTopicIds: [context.primaryCurriculumAreaId, ...(context.possibleCurriculumAreaIds || [])].filter(Boolean).map((areaId) => `${areaId}-observations`),
+          abilityIds: (context.capturePoints || []).map((point) => point.observationDimensionId).filter(Boolean),
+          quickCaptureOptions: (context.capturePoints || []).map((point) => ({ id: point.id, label: point.label })),
+        })),
+        { id: 'blank-block', title: localized('Blank block', 'Tomt block'), blockType: 'teaching', description: '', curriculumAreaIds: [], evidenceTopicIds: [], abilityIds: [], quickCaptureOptions: [] },
+        { id: 'revision-consolidation', title: localized('Revision and consolidation', 'Repetition och bef\u00e4stande'), blockType: 'consolidation', description: localized('Create time to revisit and secure earlier learning.', 'Skapa tid f\u00f6r att repetera och bef\u00e4sta tidigare l\u00e4rande.'), curriculumAreaIds: [], evidenceTopicIds: [], abilityIds: [], quickCaptureOptions: [] },
+        { id: 'assessment-point', title: localized('Assessment point', 'Bed\u00f6mningspunkt'), blockType: 'assessment', description: localized('Add a planned assessment or checkpoint.', 'L\u00e4gg till en planerad bed\u00f6mning eller kontrollpunkt.'), curriculumAreaIds: [], evidenceTopicIds: [], abilityIds: [], quickCaptureOptions: [] },
+      ],
+      curriculumAreaTypeLabels: {
+        content: localized('Content', 'Inneh\u00e5ll'),
+        ability: localized('Skills', 'F\u00e4rdigheter'),
+      },
+      blockTypeLabels: {
+        teaching: localized('Teaching', 'Undervisning'),
+      },
+      storageVersion: 'maths-curriculum-v3-elias-term',
       curriculumNotes: [],
     };
   }

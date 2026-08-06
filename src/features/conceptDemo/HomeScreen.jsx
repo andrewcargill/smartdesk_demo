@@ -44,6 +44,7 @@ import bg3Image from './media/bg-3.jpg';
 import smartDeskImage from './media/smartdesk-image.png';
 import smartDeskObservationsImage from './media/smartdesk-observations.png';
 import smartDeskWorkflowImage from './media/smartdesk-workflow.png';
+import smartDeskLearningObservationsImage from './media/smartdesk_learningOb.png';
 
 const purple = '#9c28af';
 const palePurple = '#fbf5fd';
@@ -811,6 +812,7 @@ function HomeScreenContent() {
   const [smartDeskInfoOpen, setSmartDeskInfoOpen] = useState(false);
   const [smartDeskHowItWorksOpen, setSmartDeskHowItWorksOpen] = useState(false);
   const [smartDeskWorkflowOpen, setSmartDeskWorkflowOpen] = useState(false);
+  const [smartDeskLearningObservationsOpen, setSmartDeskLearningObservationsOpen] = useState(false);
   const [smartDeskStoreOpen, setSmartDeskStoreOpen] = useState(false);
   const [smartDeskSurface, setSmartDeskSurface] = useState('floating');
   const [homeBackground, setHomeBackground] = useState('none');
@@ -1049,6 +1051,9 @@ function HomeScreenContent() {
             </MenuItem>
             <MenuItem onClick={() => runHomeMenuAction(() => setSmartDeskWorkflowOpen(true))}>
               {t('home.workflow')}
+            </MenuItem>
+            <MenuItem onClick={() => runHomeMenuAction(() => setSmartDeskLearningObservationsOpen(true))}>
+              {t('home.learningObservations')}
             </MenuItem>
             <MenuItem onClick={() => runHomeMenuAction(() => setSmartDeskStoreOpen(true))}>
               {t('home.openSmartDeskStore')}
@@ -1471,6 +1476,60 @@ function HomeScreenContent() {
             />
             <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2.5 }}>
               <Button variant="text" onClick={() => setSmartDeskWorkflowOpen(false)} sx={{ color: purple }}>
+                {t('common.close')}
+              </Button>
+            </Stack>
+          </Paper>
+        </Box>
+      )}
+      {smartDeskLearningObservationsOpen && (
+        <Box
+          role="presentation"
+          onClick={() => setSmartDeskLearningObservationsOpen(false)}
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1600,
+            display: 'grid',
+            placeItems: 'center',
+            bgcolor: 'rgba(23, 21, 26, 0.34)',
+            px: 2,
+          }}
+        >
+          <Paper
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="smartdesk-learning-observations-title"
+            elevation={0}
+            onClick={(event) => event.stopPropagation()}
+            sx={{
+              width: 'min(1180px, 100%)',
+              maxHeight: 'calc(100vh - 48px)',
+              overflowY: 'auto',
+              borderRadius: '18px',
+              border: '1px solid rgba(23, 21, 26, 0.12)',
+              boxShadow: '0 24px 70px rgba(23, 21, 26, 0.18)',
+              p: { xs: 2, sm: 2.5 },
+              bgcolor: '#fff',
+            }}
+          >
+            <Typography id="smartdesk-learning-observations-title" variant="h2" sx={{ color: darkText, fontSize: 24, fontWeight: 750 }}>
+              {t('home.learningObservations')}
+            </Typography>
+            <Box
+              component="img"
+              src={smartDeskLearningObservationsImage}
+              alt={t('home.learningObservationsImageAlt')}
+              sx={{
+                display: 'block',
+                width: '100%',
+                mt: 2,
+                borderRadius: '12px',
+                border: '1px solid rgba(23, 21, 26, 0.1)',
+              }}
+            />
+            <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2.5 }}>
+              <Button variant="text" onClick={() => setSmartDeskLearningObservationsOpen(false)} sx={{ color: purple }}>
                 {t('common.close')}
               </Button>
             </Stack>

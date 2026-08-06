@@ -90,6 +90,7 @@ export const conceptDemoTranslations = {
       whatIsSmartDesk: 'What is SmartDesk?',
       howItWorks: 'How it works?',
       workflow: 'Workflow?',
+      learningObservations: 'Learning Observations?',
       openSmartDeskStore: 'Open SmartDeskStore',
       drawer: 'Drawer',
       floating: 'Floating',
@@ -99,6 +100,7 @@ export const conceptDemoTranslations = {
       smartDeskInfoImageAlt: 'SmartDesk concept overview',
       howItWorksImageAlt: 'SmartDesk observations workflow',
       workflowImageAlt: 'SmartDesk workflow overview',
+      learningObservationsImageAlt: 'SmartDesk learning observations overview',
       setup: {
         title: 'Set up this demo',
         description: 'Choose the demo language, teacher name and three teaching subjects.',
@@ -513,6 +515,7 @@ export const conceptDemoTranslations = {
       whatIsSmartDesk: 'Vad \u00e4r SmartDesk?',
       howItWorks: 'Hur fungerar det?',
       workflow: 'Arbetsfl\u00f6de?',
+      learningObservations: 'L\u00e4robservationer?',
       openSmartDeskStore: '\u00d6ppna SmartDeskStore',
       drawer: 'Panel',
       floating: 'Flytande',
@@ -522,6 +525,7 @@ export const conceptDemoTranslations = {
       smartDeskInfoImageAlt: '\u00d6versikt av SmartDesk-konceptet',
       howItWorksImageAlt: 'SmartDesk arbetsfl\u00f6de f\u00f6r observationer',
       workflowImageAlt: '\u00d6versikt av SmartDesk-arbetsfl\u00f6de',
+      learningObservationsImageAlt: '\u00d6versikt av SmartDesk l\u00e4robservationer',
       setup: {
         title: 'St\u00e4ll in demon',
         description: 'V\u00e4lj demospr\u00e5k, l\u00e4rarens namn och tre undervisnings\u00e4mnen.',
