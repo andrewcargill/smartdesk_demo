@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import NotesIcon from '@mui/icons-material/Notes';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
 import SquareIcon from '@mui/icons-material/Square';
-import { Box, ButtonBase, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, ButtonBase, Portal, Stack, Tooltip, Typography } from '@mui/material';
 import AssessmentPieChart from './AssessmentPieChart.jsx';
 import {
   LEARNING_MODULE_TIMELINE_RESPONSES_STORAGE_EVENT,
@@ -34,6 +36,8 @@ const timelineFallbackTranslations = {
   'learningModule.classPicture.timelineViewResponse': 'View',
   'learningModule.classPicture.timelineEditResponse': 'Edit',
   'learningModule.classPicture.timelineDeleteResponse': 'Delete',
+  'learningModule.classPicture.timelineExpandFullscreen': 'Expand timeline',
+  'learningModule.classPicture.timelineExitFullscreen': 'Exit fullscreen',
 };
 const levelReferenceMarks = [
   { order: 4, mark: '●', tint: 'rgba(156, 40, 175, 0.13)', color: 'rgba(156, 40, 175, 0.58)' },
@@ -1117,6 +1121,7 @@ export default function ClassPictureExpandedView({
   const [timelineResponsePayload, setTimelineResponsePayload] = useState(() => seedLearningModuleTimelineResponses(moduleId, seededTimelineResponses));
   const [responseDraft, setResponseDraft] = useState(null);
   const [activeResponseMenuId, setActiveResponseMenuId] = useState('');
+  const [isTimelineFullscreen, setIsTimelineFullscreen] = useState(false);
 
   useEffect(() => {
     setTimelineResponsePayload(seedLearningModuleTimelineResponses(moduleId, seededTimelineResponses));
@@ -1139,6 +1144,28 @@ export default function ClassPictureExpandedView({
       window.removeEventListener('storage', handleTimelineResponsesStorage);
     };
   }, [moduleId]);
+
+  useEffect(() => {
+    if (!isTimelineFullscreen || typeof document === 'undefined') {
+      return undefined;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        setIsTimelineFullscreen(false);
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isTimelineFullscreen]);
 
   const timeline = buildTimelineData({
     student,
@@ -1306,17 +1333,25 @@ export default function ClassPictureExpandedView({
   }
 
   return (
+    <Portal disablePortal={!isTimelineFullscreen}>
     <Box
       onMouseLeave={() => setHoverCursor(null)}
       sx={{
-        m: { xs: 1, sm: 1.25 },
-        p: { xs: 1.25, sm: 1.55 },
+        position: isTimelineFullscreen ? 'fixed' : 'relative',
+        inset: isTimelineFullscreen ? { xs: 8, sm: 14 } : 'auto',
+        zIndex: isTimelineFullscreen ? 1700 : 'auto',
+        m: isTimelineFullscreen ? 0 : { xs: 1, sm: 1.25 },
+        p: isTimelineFullscreen ? { xs: 1.1, sm: 1.35 } : { xs: 1.25, sm: 1.55 },
         borderTop: '1px solid rgba(23, 21, 26, 0.08)',
         border: `4px solid ${purple}`,
-        borderRadius: '18px',
+        borderRadius: isTimelineFullscreen ? '14px' : '18px',
         bgcolor: '#fff',
-        maxHeight: { xs: '72vh', sm: 'min(720px, 72vh)' },
+        maxHeight: isTimelineFullscreen ? 'none' : { xs: '72vh', sm: 'min(720px, 72vh)' },
+        height: isTimelineFullscreen ? 'auto' : 'auto',
         overflow: 'auto',
+        boxShadow: isTimelineFullscreen
+          ? '0 28px 80px rgba(23, 21, 26, 0.24)'
+          : 'none',
       }}
     >
       <Box sx={{ minWidth: 780 }}>
@@ -1332,24 +1367,45 @@ export default function ClassPictureExpandedView({
         >
         <Box sx={{ display: 'grid', gridTemplateColumns: '132px minmax(0, 1fr)', gap: 1.2, pb: 0.75 }}>
           <Box>
-            {zoomed ? (
-              <ButtonBase
-                type="button"
-                onClick={() => setSelectedMonthDate('')}
-                sx={{
-                  px: 0.65,
-                  py: 0.35,
-                  borderRadius: '7px',
-                  color: purple,
-                  bgcolor: 'rgba(156, 40, 175, 0.06)',
-                  '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
-                }}
-              >
-                <Typography sx={{ fontSize: 11.5, fontWeight: 880, lineHeight: 1 }}>
-                  {t('learningModule.classPicture.timelineOverview')}
-                </Typography>
-              </ButtonBase>
-            ) : null}
+            <Stack direction="row" spacing={0.45} alignItems="center">
+              <Tooltip title={isTimelineFullscreen ? t('learningModule.classPicture.timelineExitFullscreen') : t('learningModule.classPicture.timelineExpandFullscreen')}>
+                <ButtonBase
+                  type="button"
+                  aria-label={isTimelineFullscreen ? t('learningModule.classPicture.timelineExitFullscreen') : t('learningModule.classPicture.timelineExpandFullscreen')}
+                  aria-pressed={isTimelineFullscreen}
+                  onClick={() => setIsTimelineFullscreen((currentValue) => !currentValue)}
+                  sx={{
+                    width: 25,
+                    height: 25,
+                    borderRadius: '7px',
+                    color: purple,
+                    bgcolor: 'rgba(156, 40, 175, 0.06)',
+                    '&:hover': { bgcolor: 'rgba(156, 40, 175, 0.1)' },
+                    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                  }}
+                >
+                  {isTimelineFullscreen ? <CloseFullscreenIcon sx={{ fontSize: 15 }} /> : <OpenInFullIcon sx={{ fontSize: 14 }} />}
+                </ButtonBase>
+              </Tooltip>
+              {zoomed ? (
+                <ButtonBase
+                  type="button"
+                  onClick={() => setSelectedMonthDate('')}
+                  sx={{
+                    px: 0.65,
+                    py: 0.35,
+                    borderRadius: '7px',
+                    color: purple,
+                    bgcolor: 'rgba(156, 40, 175, 0.06)',
+                    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                  }}
+                >
+                  <Typography sx={{ fontSize: 11.5, fontWeight: 880, lineHeight: 1 }}>
+                    {t('learningModule.classPicture.timelineOverview')}
+                  </Typography>
+                </ButtonBase>
+              ) : null}
+            </Stack>
           </Box>
           <Box
             onMouseMove={updateHoverCursor}
@@ -2009,5 +2065,6 @@ export default function ClassPictureExpandedView({
         </Box>
       </Box>
     </Box>
+    </Portal>
   );
 }

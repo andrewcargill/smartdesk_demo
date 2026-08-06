@@ -304,6 +304,8 @@ export const conceptDemoTranslations = {
         timelineViewResponse: 'View',
         timelineEditResponse: 'Edit',
         timelineDeleteResponse: 'Delete',
+        timelineExpandFullscreen: 'Expand timeline',
+        timelineExitFullscreen: 'Exit fullscreen',
       },
       planView: {
         viewsLabel: 'Planning views',
@@ -725,6 +727,8 @@ export const conceptDemoTranslations = {
         timelineViewResponse: 'Visa',
         timelineEditResponse: 'Redigera',
         timelineDeleteResponse: 'Ta bort',
+        timelineExpandFullscreen: 'Expandera tidslinje',
+        timelineExitFullscreen: 'Avsluta helskärm',
       },
       planView: {
         viewsLabel: 'Planeringsvyer',
