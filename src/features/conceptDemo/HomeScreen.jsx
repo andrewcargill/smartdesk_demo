@@ -49,6 +49,12 @@ import smartDeskLearningObservationsImage from './media/smartdesk_learningOb.png
 const purple = '#9c28af';
 const palePurple = '#fbf5fd';
 const darkText = '#17151a';
+const smartDeskWelcomeImageModules = import.meta.glob('./media/smartdesk_*.png', { eager: true, query: '?url', import: 'default' });
+const smartDeskWelcomeFallbackImage = smartDeskWelcomeImageModules['./media/smartdesk_1.png'];
+const smartDeskWelcomeSlides = ['smartdesk_1.png', 'smartdesk_2.png', 'smartdesk_3.png'].map((filename, index) => ({
+  id: `welcome-${index + 1}`,
+  image: smartDeskWelcomeImageModules[`./media/${filename}`] || smartDeskWelcomeFallbackImage,
+}));
 const homeBackgrounds = {
   none: null,
   bg1: bg1Image,
@@ -813,6 +819,8 @@ function HomeScreenContent() {
   const [smartDeskHowItWorksOpen, setSmartDeskHowItWorksOpen] = useState(false);
   const [smartDeskWorkflowOpen, setSmartDeskWorkflowOpen] = useState(false);
   const [smartDeskLearningObservationsOpen, setSmartDeskLearningObservationsOpen] = useState(false);
+  const [smartDeskWelcomeOpen, setSmartDeskWelcomeOpen] = useState(false);
+  const [smartDeskWelcomeSlideIndex, setSmartDeskWelcomeSlideIndex] = useState(0);
   const [smartDeskStoreOpen, setSmartDeskStoreOpen] = useState(false);
   const [smartDeskSurface, setSmartDeskSurface] = useState('floating');
   const [homeBackground, setHomeBackground] = useState('none');
@@ -933,6 +941,11 @@ function HomeScreenContent() {
     action();
   }
 
+  function openSmartDeskWelcome() {
+    setSmartDeskWelcomeSlideIndex(0);
+    setSmartDeskWelcomeOpen(true);
+  }
+
   function closeSetup() {
     writeSetupCompleted();
     setSetupInitial(false);
@@ -1042,6 +1055,9 @@ function HomeScreenContent() {
           >
             <MenuItem onClick={() => runHomeMenuAction(openSetup)}>
               {t('home.setup.changeSubjects')}
+            </MenuItem>
+            <MenuItem onClick={() => runHomeMenuAction(openSmartDeskWelcome)}>
+              {t('home.welcome')}
             </MenuItem>
             <MenuItem onClick={() => runHomeMenuAction(() => setSmartDeskInfoOpen(true))}>
               {t('home.whatIsSmartDesk')}
@@ -1532,6 +1548,103 @@ function HomeScreenContent() {
               <Button variant="text" onClick={() => setSmartDeskLearningObservationsOpen(false)} sx={{ color: purple }}>
                 {t('common.close')}
               </Button>
+            </Stack>
+          </Paper>
+        </Box>
+      )}
+      {smartDeskWelcomeOpen && (
+        <Box
+          role="presentation"
+          onClick={() => setSmartDeskWelcomeOpen(false)}
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1600,
+            display: 'grid',
+            placeItems: 'center',
+            bgcolor: 'rgba(23, 21, 26, 0.34)',
+            px: 2,
+          }}
+        >
+          <Paper
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="smartdesk-welcome-title"
+            elevation={0}
+            onClick={(event) => event.stopPropagation()}
+            sx={{
+              width: 'min(1180px, 100%)',
+              maxHeight: 'calc(100vh - 48px)',
+              overflowY: 'auto',
+              borderRadius: '18px',
+              border: '1px solid rgba(23, 21, 26, 0.12)',
+              boxShadow: '0 24px 70px rgba(23, 21, 26, 0.18)',
+              p: { xs: 2, sm: 2.5 },
+              bgcolor: '#fff',
+            }}
+          >
+            <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+              <Typography id="smartdesk-welcome-title" variant="h2" sx={{ color: darkText, fontSize: 24, fontWeight: 750 }}>
+                {t('home.welcome')}
+              </Typography>
+              <Typography sx={{ color: 'text.secondary', fontSize: 12.5, fontWeight: 800 }}>
+                {t('home.welcomeSlideCount', { current: smartDeskWelcomeSlideIndex + 1, total: smartDeskWelcomeSlides.length })}
+              </Typography>
+            </Stack>
+            <Box
+              component="img"
+              src={smartDeskWelcomeSlides[smartDeskWelcomeSlideIndex]?.image}
+              alt={t('home.welcomeImageAlt', { number: smartDeskWelcomeSlideIndex + 1 })}
+              sx={{
+                display: 'block',
+                width: '100%',
+                mt: 2,
+                borderRadius: '12px',
+                border: '1px solid rgba(23, 21, 26, 0.1)',
+              }}
+            />
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 2.5 }}>
+              <Stack direction="row" spacing={0.65} aria-label={t('home.welcomeSlideIndicators')}>
+                {smartDeskWelcomeSlides.map((slide, index) => (
+                  <Box
+                    key={slide.id}
+                    component="button"
+                    type="button"
+                    aria-label={t('home.welcomeGoToSlide', { number: index + 1 })}
+                    onClick={() => setSmartDeskWelcomeSlideIndex(index)}
+                    sx={{
+                      width: index === smartDeskWelcomeSlideIndex ? 22 : 8,
+                      height: 8,
+                      borderRadius: '999px',
+                      border: 'none',
+                      bgcolor: index === smartDeskWelcomeSlideIndex ? purple : 'rgba(23, 21, 26, 0.18)',
+                      cursor: 'pointer',
+                      transition: 'width 140ms ease, background-color 140ms ease',
+                    }}
+                  />
+                ))}
+              </Stack>
+              <Stack direction="row" spacing={1}>
+                <Button variant="text" onClick={() => setSmartDeskWelcomeOpen(false)} sx={{ color: purple }}>
+                  {t('common.close')}
+                </Button>
+                <Button
+                  variant="outlined"
+                  disabled={smartDeskWelcomeSlideIndex === 0}
+                  onClick={() => setSmartDeskWelcomeSlideIndex((index) => Math.max(0, index - 1))}
+                  sx={{ borderColor: 'rgba(156, 40, 175, 0.35)', color: purple }}
+                >
+                  {t('common.back')}
+                </Button>
+                <Button
+                  variant="contained"
+                  disabled={smartDeskWelcomeSlideIndex === smartDeskWelcomeSlides.length - 1}
+                  onClick={() => setSmartDeskWelcomeSlideIndex((index) => Math.min(smartDeskWelcomeSlides.length - 1, index + 1))}
+                  sx={{ bgcolor: purple, '&:hover': { bgcolor: '#842194' } }}
+                >
+                  {t('common.next')}
+                </Button>
+              </Stack>
             </Stack>
           </Paper>
         </Box>
