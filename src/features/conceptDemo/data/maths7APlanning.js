@@ -59,7 +59,7 @@ export const maths7APlanning = {
       endDate: '2026-05-22',
       status: 'current',
       curriculumAreaIds: [
-        'numbers-and-calculation',
+        'number-sense',
       ],
       evidenceTopicIds: ['fractions', 'percentages'],
       abilityIds: ['methods', 'problem-solving'],
@@ -160,7 +160,7 @@ export const maths7APlanning = {
       endDate: '2026-05-22',
       status: 'planned',
       curriculumAreaIds: [
-        'numbers-and-calculation',
+        'number-sense',
       ],
       evidenceTopicIds: ['fractions', 'percentages'],
       abilityIds: ['methods'],

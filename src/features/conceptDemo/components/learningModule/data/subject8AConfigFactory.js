@@ -1,7 +1,19 @@
 import { class8AProfile, class8AStudents } from '../../../data/classes/class8AStudents.js';
+import {
+  mathsAbilities,
+  mathsCurriculumAreas,
+} from '../../../data/mathsCurriculum.js';
 import { getSubjectDefinition } from '../../../data/subjectCatalogue.js';
 import { resolveLocalizedValue } from '../../../i18n/conceptDemoTranslations.js';
+import {
+  musicCurriculumAreas,
+  musicTeachingUnits,
+} from './musicCurriculum.js';
 import { musicLearningContexts } from './musicLearningContexts.js';
+import {
+  physicalEducationCurriculumAreas,
+  physicalEducationTeachingUnits,
+} from './physicalEducationCurriculum.js';
 import { physicalEducationLearningContexts } from './physicalEducationLearningContexts.js';
 
 const navigation = {
@@ -37,25 +49,6 @@ const subjectBlueprints = {
       ['Reading', 'L\u00e4sa'],
       ['Speaking', 'Tala'],
       ['Writing', 'Skriva'],
-    ],
-  },
-  mathematics: {
-    areas: [
-      ['number', 'Number', 'Tal'],
-      ['algebra', 'Algebra', 'Algebra'],
-      ['geometry', 'Geometry', 'Geometri'],
-      ['problem-solving', 'Problem solving', 'Probleml\u00f6sning'],
-    ],
-    skills: [
-      ['methods', 'Methods', 'Metoder'],
-      ['reasoning', 'Reasoning', 'Resonemang'],
-      ['communication', 'Communication', 'Kommunikation'],
-      ['concepts', 'Concepts', 'Begrepp'],
-    ],
-    unitTitles: [
-      ['Fractions and percentages', 'Br\u00e5k och procent'],
-      ['Algebra patterns', 'Algebraiska m\u00f6nster'],
-      ['Geometry reasoning', 'Geometriska resonemang'],
     ],
   },
   science: {
@@ -361,6 +354,74 @@ const musicEliasObservationPattern = [
   { participation: '0', note: 'shows short extract with structured support' },
 ];
 
+const mathematicsEliasObservationDates = [
+  '2026-01-12',
+  '2026-01-15',
+  '2026-01-20',
+  '2026-01-22',
+  '2026-01-27',
+  '2026-01-29',
+  '2026-02-03',
+  '2026-02-10',
+  '2026-02-12',
+  '2026-02-17',
+  '2026-02-24',
+  '2026-02-26',
+  '2026-03-03',
+  '2026-03-10',
+  '2026-03-12',
+  '2026-03-17',
+  '2026-03-24',
+  '2026-03-26',
+  '2026-03-31',
+  '2026-04-07',
+  '2026-04-09',
+  '2026-04-14',
+  '2026-04-16',
+  '2026-04-21',
+  '2026-04-28',
+  '2026-05-05',
+  '2026-05-07',
+  '2026-05-12',
+  '2026-05-19',
+  '2026-05-21',
+  '2026-05-26',
+];
+
+const mathematicsEliasObservationPattern = [
+  { focus: '0', participation: '0', note: 'settles with fraction model' },
+  { participation: '+', note: 'explains fraction image to peer' },
+  { focus: '+', independence: '0', note: 'uses percentage bar accurately' },
+  { independence: '+', note: 'tries equivalent fractions without prompt' },
+  { focus: '+', note: 'checks answer reasonableness' },
+  { participation: '+', independence: '+', note: 'confident fraction method share' },
+  { focus: '0', note: 'starts algebra carefully' },
+  { focus: '-', independence: '0', note: 'simplification steps uncertain' },
+  { participation: '0', note: 'accepts paired equation rehearsal' },
+  { focus: '-', independence: '-', note: 'equation transformation dip' },
+  { participation: '-', note: 'avoids explaining equation step' },
+  { focus: '-', independence: '-', note: 'needs one-step equation scaffold' },
+  { focus: '0', note: 'recovers with worked example' },
+  { independence: '0', participation: '0', note: 'writes equation steps with checklist' },
+  { focus: '0', participation: '+', note: 'explains one equation step aloud' },
+  { participation: '+', note: 'engages with geometry investigation' },
+  { focus: '+', independence: '0', note: 'uses diagram before calculating' },
+  { participation: '+', independence: '+', note: 'tests geometry idea with partner' },
+  { focus: '+', note: 'geometry reasoning clearer' },
+  { independence: '+', note: 'starts construction independently' },
+  { participation: '+', focus: '+', note: 'strong diagram discussion' },
+  { independence: '+', note: 'uses feedback to refine explanation' },
+  { focus: '+', independence: '+', note: 'secure geometry follow-through' },
+  { focus: '0', note: 'data interpretation steady' },
+  { participation: '0', note: 'needs prompt to justify data conclusion' },
+  { focus: '0', independence: '0', note: 'graphs require careful setup' },
+  { participation: '+', note: 'connects graph to situation' },
+  { focus: '+', note: 'recognises proportional pattern' },
+  { independence: '0', note: 'function model still needs support' },
+  { participation: '+', focus: '+', note: 'communicates graph conclusion' },
+  { independence: '+', note: 'more confident choosing method' },
+];
+
 const physicalEducationEliasObservationDates = [
   '2026-01-15',
   '2026-01-20',
@@ -484,6 +545,113 @@ function getBlueprint(subjectId) {
   return subjectBlueprints[subjectId] || fallbackBlueprint;
 }
 
+function localizedFromCurriculumItem(item) {
+  if (item?.label && typeof item.label === 'object') {
+    return localized(resolveLocalizedValue(item.label, 'en', item.id), resolveLocalizedValue(item.label, 'sv', item.id));
+  }
+
+  return localized(item.labelEn || item.label || item.title || item.id, item.labelSv || item.officialTitleSv || item.label || item.title || item.id);
+}
+
+function buildMathsCurriculum() {
+  const mathsAreaTeachingUnits = mathsCurriculumAreas.map((area, index) => ({
+    id: area.id,
+    label: localizedFromCurriculumItem(area),
+    curriculumAreaIds: [area.id],
+    defaultAbilityIds: (area.observationDimensions || []).map((dimension) => dimension.id),
+    order: area.order || index + 1,
+  }));
+
+  return buildDedicatedCurriculum({
+    curriculumAreas: mathsCurriculumAreas,
+    teachingUnits: mathsAreaTeachingUnits,
+    skills: mathsAbilities,
+  });
+}
+
+function buildDedicatedCurriculum({ curriculumAreas, teachingUnits, skills }) {
+  const areas = curriculumAreas.map((area, index) => ({
+    id: area.id,
+    title: localizedFromCurriculumItem(area),
+    label: localizedFromCurriculumItem(area),
+    observationDimensions: (area.observationDimensions || []).map((dimension, dimensionIndex) => ({
+      id: dimension.id,
+      title: localizedFromCurriculumItem(dimension),
+      label: localizedFromCurriculumItem(dimension),
+      order: dimensionIndex + 1,
+    })),
+    order: area.order || index + 1,
+  }));
+  const dimensionsById = new Map(
+    areas.flatMap((area) => (area.observationDimensions || []).map((dimension) => [dimension.id, dimension])),
+  );
+  const skillSource = [...dimensionsById.values()];
+
+  (skills || []).forEach((skill) => {
+    if (!skill?.id || dimensionsById.has(skill.id)) {
+      return;
+    }
+
+    skillSource.push(skill);
+  });
+
+  const curriculumSkills = skillSource.map((skill, index) => ({
+    id: skill.id,
+    title: localizedFromCurriculumItem(skill),
+    label: localizedFromCurriculumItem(skill),
+    order: skill.order || index + 1,
+  }));
+  const unitList = teachingUnits.map((unit, index) => {
+    const primaryAreaId = unit.curriculumAreaIds?.[0] || areas[index % areas.length]?.id;
+    const linkedAreaDimensions = (unit.curriculumAreaIds || [primaryAreaId])
+      .flatMap((areaId) => areas.find((area) => area.id === areaId)?.observationDimensions || []);
+    const unitObservationDimensions = (unit.observationDimensions?.length ? unit.observationDimensions : linkedAreaDimensions)
+      .map((dimension) => ({
+        id: dimension.id,
+        title: localizedFromCurriculumItem(dimension),
+        label: localizedFromCurriculumItem(dimension),
+        order: dimension.order,
+      }));
+
+    return {
+      id: unit.id,
+      title: localizedFromCurriculumItem(unit),
+      label: localizedFromCurriculumItem(unit),
+      curriculumAreaId: primaryAreaId,
+      curriculumAreaIds: [...(unit.curriculumAreaIds || [primaryAreaId]).filter(Boolean)],
+      observationDimensions: unitObservationDimensions,
+      skillIds: [...(unit.defaultAbilityIds || unitObservationDimensions.map((dimension) => dimension.id) || curriculumSkills.map((skill) => skill.id)).filter(Boolean)],
+      order: unit.order || index + 1,
+    };
+  });
+
+  return {
+    areas,
+    skills: curriculumSkills,
+    observationLevels: [
+      { id: 'emerging', label: localized('Emerging', 'P\u00e5 v\u00e4g'), order: 1 },
+      { id: 'developing', label: localized('Developing', 'Utvecklas'), order: 2 },
+      { id: 'secure', label: localized('Secure', 'S\u00e4ker'), order: 3 },
+      { id: 'advanced', label: localized('Advanced', 'Avancerad'), order: 4 },
+    ],
+    teachingUnits: unitList,
+  };
+}
+
+function buildMusicCurriculum() {
+  return buildDedicatedCurriculum({
+    curriculumAreas: musicCurriculumAreas,
+    teachingUnits: musicTeachingUnits,
+  });
+}
+
+function buildPhysicalEducationCurriculum() {
+  return buildDedicatedCurriculum({
+    curriculumAreas: physicalEducationCurriculumAreas,
+    teachingUnits: physicalEducationTeachingUnits,
+  });
+}
+
 function translateLearningObservationNote(note) {
   const translations = {
     'confident peer discussion': 's\u00e4ker diskussion med klasskamrat',
@@ -597,9 +765,20 @@ function buildMusicEliasObservationWindows() {
   }));
 }
 
+function buildMathematicsEliasObservationWindows() {
+  return mathematicsEliasObservationDates.map((date, index) => ({
+    date,
+    ...mathematicsEliasObservationPattern[index % mathematicsEliasObservationPattern.length],
+  }));
+}
+
 function getLearningObservationWindows(subjectId, student, profile) {
   if (subjectId === 'music' && student.id === 'elias-nilsson') {
     return buildMusicEliasObservationWindows();
+  }
+
+  if (subjectId === 'mathematics' && student.id === 'elias-nilsson') {
+    return buildMathematicsEliasObservationWindows();
   }
 
   if (subjectId === 'physical-education' && student.id === 'elias-nilsson') {
@@ -610,6 +789,16 @@ function getLearningObservationWindows(subjectId, student, profile) {
 }
 
 function buildCurriculum(subjectId) {
+  if (subjectId === 'mathematics') {
+    return buildMathsCurriculum();
+  }
+  if (subjectId === 'music') {
+    return buildMusicCurriculum();
+  }
+  if (subjectId === 'physical-education') {
+    return buildPhysicalEducationCurriculum();
+  }
+
   const blueprint = getBlueprint(subjectId);
   const areas = blueprint.areas.map(([id, en, sv], index) => ({
     id,
@@ -804,6 +993,250 @@ function buildEvidence(subjectId, curriculum) {
       date,
       teachingUnitId,
       skillId,
+      levelId,
+    })))
+    : [];
+  const mathematicsEliasObservationClusters = subjectId === 'mathematics'
+    ? [
+      ['2026-01-15', 'number-sense', [
+        ['fractions-decimals-percentages', 'developing'],
+        ['calculations-number-strategies', 'developing'],
+        ['estimation-reasonableness', 'emerging'],
+      ]],
+      ['2026-01-29', 'number-sense', [
+        ['fractions-decimals-percentages', 'secure'],
+        ['calculations-number-strategies', 'developing'],
+        ['methods', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-02-12', 'algebra', [
+        ['algebraic-expressions', 'developing'],
+        ['simplification-rules', 'emerging'],
+        ['concepts', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-02-26', 'algebra', [
+        ['equations', 'emerging'],
+        ['algebraic-modelling', 'emerging'],
+        ['reasoning', 'emerging', 'mathematical-abilities'],
+      ]],
+      ['2026-03-12', 'algebra', [
+        ['equations', 'developing'],
+        ['simplification-rules', 'developing'],
+        ['methods', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-03-26', 'geometry', [
+        ['geometrical-concepts-properties', 'developing'],
+        ['construction-representation', 'developing'],
+        ['problem-solving', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-04-16', 'geometry', [
+        ['geometrical-relationships', 'secure'],
+        ['construction-representation', 'secure'],
+        ['reasoning', 'secure', 'mathematical-abilities'],
+      ]],
+      ['2026-05-07', 'relationships-change', [
+        ['coordinates-graphs-formulas', 'developing'],
+        ['relationships-between-quantities', 'secure'],
+        ['functions-models', 'developing'],
+      ]],
+      ['2026-05-21', 'mathematical-abilities', [
+        ['methods', 'secure'],
+        ['reasoning', 'secure'],
+        ['communication', 'developing'],
+      ]],
+      ['2026-01-12', 'number-sense', [
+        ['numbers-properties', 'developing'],
+        ['fractions-decimals-percentages', 'emerging'],
+        ['concepts', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-01-20', 'number-sense', [
+        ['fractions-decimals-percentages', 'developing'],
+        ['calculations-number-strategies', 'developing'],
+        ['problem-solving', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-01-27', 'number-sense', [
+        ['fractions-decimals-percentages', 'secure'],
+        ['estimation-reasonableness', 'developing'],
+        ['communication', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-02-03', 'algebra', [
+        ['algebraic-expressions', 'developing'],
+        ['patterns-generalisation', 'developing'],
+        ['concepts', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-02-10', 'algebra', [
+        ['simplification-rules', 'emerging'],
+        ['algebraic-expressions', 'developing'],
+        ['methods', 'emerging', 'mathematical-abilities'],
+      ]],
+      ['2026-02-17', 'algebra', [
+        ['equations', 'emerging'],
+        ['simplification-rules', 'developing'],
+        ['reasoning', 'emerging', 'mathematical-abilities'],
+      ]],
+      ['2026-02-24', 'algebra', [
+        ['equations', 'emerging'],
+        ['algebraic-modelling', 'emerging'],
+        ['communication', 'emerging', 'mathematical-abilities'],
+      ]],
+      ['2026-03-03', 'algebra', [
+        ['equations', 'developing'],
+        ['simplification-rules', 'developing'],
+        ['methods', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-03-10', 'algebra', [
+        ['equations', 'developing'],
+        ['algebraic-modelling', 'developing'],
+        ['reasoning', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-03-17', 'geometry', [
+        ['geometrical-concepts-properties', 'developing'],
+        ['construction-representation', 'developing'],
+        ['concepts', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-03-24', 'geometry', [
+        ['length-area-volume', 'developing'],
+        ['construction-representation', 'developing'],
+        ['problem-solving', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-03-31', 'geometry', [
+        ['geometrical-relationships', 'developing'],
+        ['scale-similarity', 'emerging'],
+        ['reasoning', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-04-07', 'geometry', [
+        ['geometrical-relationships', 'secure'],
+        ['construction-representation', 'secure'],
+        ['communication', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-04-14', 'geometry', [
+        ['scale-similarity', 'developing'],
+        ['geometrical-relationships', 'secure'],
+        ['reasoning', 'secure', 'mathematical-abilities'],
+      ]],
+      ['2026-04-21', 'probability-statistics', [
+        ['tables-diagrams-data', 'developing'],
+        ['measures-central-tendency', 'developing'],
+        ['concepts', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-04-28', 'probability-statistics', [
+        ['variation-distribution', 'developing'],
+        ['interpretation-evaluation-data', 'developing'],
+        ['reasoning', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-05-05', 'relationships-change', [
+        ['relationships-between-quantities', 'developing'],
+        ['coordinates-graphs-formulas', 'developing'],
+        ['methods', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-05-12', 'relationships-change', [
+        ['proportionality', 'developing'],
+        ['coordinates-graphs-formulas', 'developing'],
+        ['problem-solving', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-05-19', 'relationships-change', [
+        ['functions-models', 'developing'],
+        ['rate-of-change', 'emerging'],
+        ['communication', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-05-26', 'mathematical-abilities', [
+        ['methods', 'secure'],
+        ['reasoning', 'secure'],
+        ['communication', 'secure'],
+      ]],
+    ].flatMap(([date, teachingUnitId, captures], clusterIndex) => captures.map(([skillId, levelId, captureTeachingUnitId], captureIndex) => ({
+      id: `mathematics-8a-evidence-elias-extra-${clusterIndex + 1}-${captureIndex + 1}`,
+      type: 'observation',
+      studentId: 'elias-nilsson',
+      date,
+      teachingUnitId: captureTeachingUnitId || teachingUnitId,
+      skillId,
+      levelId,
+    })))
+    : [];
+  const mathematicsEliasActivityTimeline = subjectId === 'mathematics'
+    ? [
+      ['2026-01-15', 'fractions-decimals-percentages', localized('Fractions, decimals and percentages', 'Br\u00e5k, decimaler och procent'), 'number-sense', [
+        ['fractions-decimals-percentages-fractions-decimals-percentages', 'fractions-decimals-percentages', 'developing'],
+        ['fractions-decimals-percentages-concepts', 'concepts', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-01-22', 'fractions-decimals-percentages', localized('Fractions, decimals and percentages', 'Br\u00e5k, decimaler och procent'), 'number-sense', [
+        ['fractions-decimals-percentages-methods', 'methods', 'developing', 'mathematical-abilities'],
+        ['fractions-decimals-percentages-problem-solving', 'problem-solving', 'emerging', 'mathematical-abilities'],
+      ]],
+      ['2026-01-29', 'fractions-decimals-percentages', localized('Fractions, decimals and percentages', 'Br\u00e5k, decimaler och procent'), 'number-sense', [
+        ['fractions-decimals-percentages-fractions-decimals-percentages', 'fractions-decimals-percentages', 'secure'],
+        ['fractions-decimals-percentages-reasoning', 'reasoning', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-02-12', 'equations', localized('Equations', 'Ekvationer'), 'algebra', [
+        ['equations-equations', 'equations', 'emerging'],
+        ['equations-concepts', 'concepts', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-02-26', 'equations', localized('Equations', 'Ekvationer'), 'algebra', [
+        ['equations-methods', 'methods', 'emerging', 'mathematical-abilities'],
+        ['equations-reasoning', 'reasoning', 'emerging', 'mathematical-abilities'],
+      ]],
+      ['2026-03-12', 'equations', localized('Equations', 'Ekvationer'), 'algebra', [
+        ['equations-equations', 'equations', 'developing'],
+        ['equations-communication', 'communication', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-03-26', 'geometry-investigation', localized('Geometry investigation', 'Geometrisk unders\u00f6kning'), 'geometry', [
+        ['geometry-investigation-geometrical-concepts-properties', 'geometrical-concepts-properties', 'developing'],
+        ['geometry-investigation-problem-solving', 'problem-solving', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-04-09', 'geometry-investigation', localized('Geometry investigation', 'Geometrisk unders\u00f6kning'), 'geometry', [
+        ['geometry-investigation-geometrical-concepts-properties', 'geometrical-concepts-properties', 'secure'],
+        ['geometry-investigation-reasoning', 'reasoning', 'secure', 'mathematical-abilities'],
+      ]],
+      ['2026-04-16', 'geometry-investigation', localized('Geometry investigation', 'Geometrisk unders\u00f6kning'), 'geometry', [
+        ['geometry-investigation-communication', 'communication', 'developing', 'mathematical-abilities'],
+        ['geometry-investigation-reasoning', 'reasoning', 'secure', 'mathematical-abilities'],
+      ]],
+      ['2026-01-12', 'fractions-decimals-percentages', localized('Fractions, decimals and percentages', 'Br\u00e5k, decimaler och procent'), 'number-sense', [
+        ['fractions-decimals-percentages-fractions-decimals-percentages', 'fractions-decimals-percentages', 'emerging'],
+        ['fractions-decimals-percentages-concepts', 'concepts', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-01-20', 'fractions-decimals-percentages', localized('Fractions, decimals and percentages', 'Br\u00e5k, decimaler och procent'), 'number-sense', [
+        ['fractions-decimals-percentages-methods', 'methods', 'developing', 'mathematical-abilities'],
+        ['fractions-decimals-percentages-problem-solving', 'problem-solving', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-02-03', 'equations', localized('Equations', 'Ekvationer'), 'algebra', [
+        ['equations-concepts', 'concepts', 'developing', 'mathematical-abilities'],
+        ['equations-equations', 'equations', 'emerging'],
+      ]],
+      ['2026-02-17', 'equations', localized('Equations', 'Ekvationer'), 'algebra', [
+        ['equations-methods', 'methods', 'emerging', 'mathematical-abilities'],
+        ['equations-reasoning', 'reasoning', 'emerging', 'mathematical-abilities'],
+      ]],
+      ['2026-03-03', 'equations', localized('Equations', 'Ekvationer'), 'algebra', [
+        ['equations-equations', 'equations', 'developing'],
+        ['equations-methods', 'methods', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-03-10', 'equations', localized('Equations', 'Ekvationer'), 'algebra', [
+        ['equations-reasoning', 'reasoning', 'developing', 'mathematical-abilities'],
+        ['equations-communication', 'communication', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-03-17', 'geometry-investigation', localized('Geometry investigation', 'Geometrisk unders\u00f6kning'), 'geometry', [
+        ['geometry-investigation-geometrical-concepts-properties', 'geometrical-concepts-properties', 'developing'],
+        ['geometry-investigation-problem-solving', 'problem-solving', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-03-31', 'geometry-investigation', localized('Geometry investigation', 'Geometrisk unders\u00f6kning'), 'geometry', [
+        ['geometry-investigation-geometrical-concepts-properties', 'geometrical-concepts-properties', 'secure'],
+        ['geometry-investigation-communication', 'communication', 'developing', 'mathematical-abilities'],
+      ]],
+      ['2026-04-14', 'geometry-investigation', localized('Geometry investigation', 'Geometrisk unders\u00f6kning'), 'geometry', [
+        ['geometry-investigation-reasoning', 'reasoning', 'secure', 'mathematical-abilities'],
+        ['geometry-investigation-communication', 'communication', 'secure', 'mathematical-abilities'],
+      ]],
+    ].flatMap(([date, contextId, contextLabel, teachingUnitId, captures], clusterIndex) => captures.map(([capturePointId, skillId, levelId, captureTeachingUnitId], captureIndex) => ({
+      id: `mathematics-8a-evidence-elias-activity-${clusterIndex + 1}-${captureIndex + 1}`,
+      type: 'observation',
+      studentId: 'elias-nilsson',
+      date,
+      teachingUnitId: captureTeachingUnitId || teachingUnitId,
+      skillId,
+      capturePointId,
+      contextId,
+      contextLabel,
       levelId,
     })))
     : [];
@@ -1061,7 +1494,43 @@ function buildEvidence(subjectId, curriculum) {
       ),
     }));
   });
-  const timelineResponses = subjectId === 'music'
+  const timelineResponses = subjectId === 'mathematics'
+    ? [
+      {
+        id: 'mathematics-8a-elias-timeline-response-1',
+        type: 'timeline-comment',
+        studentId: 'elias-nilsson',
+        date: '2026-01-29',
+        label: localized('Fraction confidence', 'S\u00e4kerhet i br\u00e5k'),
+        comment: localized(
+          'Use visual fraction and percentage models as a bridge into equations. He explains more clearly when the representation stays visible.',
+          'Anv\u00e4nd visuella modeller f\u00f6r br\u00e5k och procent som bro in i ekvationer. Han f\u00f6rklarar tydligare n\u00e4r representationen finns kvar synligt.',
+        ),
+      },
+      {
+        id: 'mathematics-8a-elias-timeline-response-2',
+        type: 'timeline-comment',
+        studentId: 'elias-nilsson',
+        date: '2026-02-26',
+        label: localized('Equation dip', 'Svacka i ekvationer'),
+        comment: localized(
+          'Keep equation work to one transformation at a time. Pair him with a student who verbalises each step before writing.',
+          'H\u00e5ll ekvationsarbetet till en omformning i taget. Para ihop honom med en elev som s\u00e4ger varje steg innan det skrivs.',
+        ),
+      },
+      {
+        id: 'mathematics-8a-elias-timeline-response-3',
+        type: 'timeline-comment',
+        studentId: 'elias-nilsson',
+        date: '2026-04-09',
+        label: localized('Geometry response', 'Respons i geometri'),
+        comment: localized(
+          'Geometry investigation works well: practical diagram first, then reasoning sentence. Use this structure again for graphs.',
+          'Geometrisk unders\u00f6kning fungerar v\u00e4l: praktiskt diagram f\u00f6rst, sedan resonemangsmening. Anv\u00e4nd samma struktur igen f\u00f6r grafer.',
+        ),
+      },
+    ]
+    : subjectId === 'music'
     ? [
       {
         id: 'music-8a-elias-timeline-response-1',
@@ -1172,6 +1641,8 @@ function buildEvidence(subjectId, curriculum) {
     items: [
       ...observations,
       ...englishEliasObservationClusters,
+      ...mathematicsEliasObservationClusters,
+      ...mathematicsEliasActivityTimeline,
       ...physicalEducationEliasObservationClusters,
       ...physicalEducationEliasActivityTimeline,
       ...musicEliasProjectTimeline,
@@ -1358,10 +1829,10 @@ function buildPlanning(subjectId, curriculum) {
       ['jan-2026', '2026-01-12', '2026-01-30', 0, 'completed'],
       ['feb-2026', '2026-02-02', '2026-02-27', 1, 'completed'],
       ['mar-2026', '2026-03-02', '2026-03-27', 2, 'completed'],
-      ['apr-2026', '2026-04-07', '2026-04-30', 0, 'completed'],
-      ['may-2026', '2026-05-04', '2026-05-22', 1, 'current'],
-      ['june-2026', '2026-06-01', '2026-06-12', 2, 'planned'],
-    ].map(([periodId, startDate, endDate, unitIndex, status], index) => {
+      ['apr-2026', '2026-04-07', '2026-04-30', 3, 'completed'],
+      ['may-2026', '2026-05-04', '2026-05-22', 4, 'current'],
+      ['june-2026', '2026-06-01', '2026-06-12', 5, 'planned'],
+    ].slice(0, Math.max(1, curriculum.teachingUnits.length)).map(([periodId, startDate, endDate, unitIndex, status], index) => {
       const unit = curriculum.teachingUnits[unitIndex % curriculum.teachingUnits.length];
 
       return {
@@ -1404,6 +1875,7 @@ function buildPlanning(subjectId, curriculum) {
       content: localized('Content', 'Inneh\u00e5ll'),
       ability: localized('Skills', 'F\u00e4rdigheter'),
     },
+    storageVersion: subjectId === 'mathematics' ? 'maths-curriculum-v2' : '',
     curriculumNotes: [],
   };
 }
@@ -1431,9 +1903,11 @@ export function buildSubject8AConfig({ subjectId, schedule } = {}) {
   const curriculum = buildCurriculum(subjectId);
   const lessons = buildLessonSequence(subjectId, schedule, curriculum);
   const evidence = buildEvidence(subjectId, curriculum);
+  const configVersion = subjectId === 'mathematics' ? 'v2' : '';
+  const moduleId = [subjectId, '8a', configVersion].filter(Boolean).join('-');
 
   return {
-    id: `${subjectId}-8a`,
+    id: moduleId,
     subjectId,
     classId: '8a',
     title: {

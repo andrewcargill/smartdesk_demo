@@ -153,11 +153,16 @@ export default function LearningModuleQuickCapture({
   const activeLearningContextAreaIds = useMemo(() => new Set(
     (activeLearningContext?.capturePoints || []).flatMap((point) => point.curriculumAreaIds || []),
   ), [activeLearningContext]);
-  const selectableCaptureFocuses = useMemo(() => (
-    captureMode === 'activity' && activeLearningContext
+  const activityCaptureFocuses = useMemo(() => (
+    activeLearningContext
       ? captureFocuses.filter((unit) => activeLearningContextAreaIds.has(unit.id))
       : captureFocuses
-  ), [activeLearningContext, activeLearningContextAreaIds, captureFocuses, captureMode]);
+  ), [activeLearningContext, activeLearningContextAreaIds, captureFocuses]);
+  const selectableCaptureFocuses = useMemo(() => (
+    captureMode === 'activity'
+      ? activityCaptureFocuses
+      : captureFocuses
+  ), [activityCaptureFocuses, captureFocuses, captureMode]);
   const activeActivityCapturePoints = activeLearningContext
     ? (activeLearningContext.capturePoints || [])
       .map((point) => ({
@@ -395,6 +400,19 @@ export default function LearningModuleQuickCapture({
     setActiveUnitId(unit.id);
     setActiveTopicId(unit.topics[0]?.id || '');
     setRecentActionId('');
+  }
+
+  function chooseDirectCurriculum() {
+    setCaptureMode('direct');
+    const directUnit = captureFocuses.find((unit) => unit.id === activeLesson?.teachingUnitId)
+      || captureFocuses.find((unit) => unit.id === activeUnitId)
+      || captureFocuses[0];
+
+    if (directUnit) {
+      chooseUnit(directUnit);
+    } else {
+      setRecentActionId('');
+    }
   }
 
   function chooseLearningContext(context) {
@@ -926,8 +944,7 @@ export default function LearningModuleQuickCapture({
                       if (nextMode === 'activity' && (activeLearningContext || learningContexts[0])) {
                         chooseLearningContext(activeLearningContext || learningContexts[0]);
                       } else {
-                        setCaptureMode(nextMode);
-                        setRecentActionId('');
+                        chooseDirectCurriculum();
                       }
                     }}
                     sx={{

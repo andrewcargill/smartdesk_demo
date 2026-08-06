@@ -106,10 +106,10 @@ function uniqueIds(ids) {
   return Array.from(new Set((ids || []).filter(Boolean)));
 }
 
-export function useSubjectPlanning({ subjectId, classId, initialBlocks }) {
+export function useSubjectPlanning({ subjectId, classId, initialBlocks, storageVersion = '' }) {
   const storageKey = useMemo(
-    () => `smartdesk_demo_subject_planning_${subjectId}_${classId}`,
-    [subjectId, classId],
+    () => `smartdesk_demo_subject_planning_${subjectId}_${classId}${storageVersion ? `_${storageVersion}` : ''}`,
+    [subjectId, classId, storageVersion],
   );
 
   const [blocks, setBlocks] = useState(() => readSavedBlocks(storageKey, initialBlocks));

@@ -167,6 +167,7 @@ export default function PlanScreen({ moduleConfig, screenConfig }) {
     subjectId: moduleConfig?.subjectId || 'learning',
     classId: moduleConfig?.classId || moduleConfig?.id || 'module',
     initialBlocks,
+    storageVersion: planningConfig.storageVersion || '',
   });
   const {
     resetNotes: resetPlanningCurriculumNotes,

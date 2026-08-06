@@ -515,14 +515,18 @@ export default function StudentUnitInsightPanel({
     (summary?.observations || []).filter((item) => !panelUnit.id || item.teachingUnitId === panelUnit.id)
   ), [panelUnit.id, summary?.observations]);
   const configuredFocusesForUnit = useMemo(() => {
-    const unitSkillIds = new Set(panelUnit.skillIds || []);
+    if (panelUnit.observationDimensions?.length) {
+      return panelUnit.observationDimensions;
+    }
+
+    const unitSkillIds = new Set(panelUnit.skillIds || panelUnit.defaultAbilityIds || panelUnit.abilityIds || []);
 
     if (!unitSkillIds.size) {
       return configuredFocuses;
     }
 
     return configuredFocuses.filter((focus) => unitSkillIds.has(focus.id));
-  }, [configuredFocuses, panelUnit.skillIds]);
+  }, [configuredFocuses, panelUnit.abilityIds, panelUnit.defaultAbilityIds, panelUnit.observationDimensions, panelUnit.skillIds]);
   const observationFocusModel = useMemo(() => normaliseObservationFocuses({
     configuredFocuses: configuredFocusesForUnit,
     observations: unitObservations,
