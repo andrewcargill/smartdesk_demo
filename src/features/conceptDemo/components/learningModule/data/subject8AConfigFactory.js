@@ -2261,6 +2261,132 @@ function buildPlanning(subjectId, curriculum) {
     };
   }
 
+  if (subjectId === 'english') {
+    const englishActivityBlocks = [
+      {
+        slug: 'reading-text-work',
+        periodId: 'jan-2026',
+        startDate: '2026-01-12',
+        endDate: '2026-01-30',
+        status: 'completed',
+        title: localized('Reading / text work', 'L\u00e4sning / textarbete'),
+        description: localized(
+          'Students work with written English such as fiction, articles, extracts, instructions or other texts.',
+          'Eleverna arbetar med skriven engelska, till exempel sk\u00f6nlitteratur, artiklar, utdrag, instruktioner eller andra texter.',
+        ),
+        teachingUnitId: 'reading',
+        curriculumAreaIds: ['reading', 'interaction'],
+        abilityIds: ['reading-main-ideas', 'reading-details', 'reading-interpretation', 'reading-strategies', 'reading-text-types-context', 'interaction-responding-developing'],
+        quickCaptureSkillIds: ['reading-main-ideas', 'reading-details', 'reading-interpretation', 'reading-strategies'],
+      },
+      {
+        slug: 'writing-task',
+        periodId: 'feb-2026',
+        startDate: '2026-02-02',
+        endDate: '2026-02-20',
+        status: 'completed',
+        title: localized('Writing task', 'Skrivuppgift'),
+        description: localized(
+          'Students produce written English in any form chosen by the teacher.',
+          'Eleverna producerar skriven engelska i den form som l\u00e4raren v\u00e4ljer.',
+        ),
+        teachingUnitId: 'writing',
+        curriculumAreaIds: ['writing'],
+        abilityIds: ['writing-content-development', 'writing-structure-coherence', 'writing-vocabulary-variation', 'writing-grammar-accuracy', 'writing-purpose-audience-context', 'writing-revision'],
+        quickCaptureSkillIds: ['writing-content-development', 'writing-structure-coherence', 'writing-vocabulary-variation', 'writing-grammar-accuracy'],
+        createdAt: '2026-01-29',
+      },
+      {
+        slug: 'speaking-presentation',
+        periodId: 'mar-2026',
+        startDate: '2026-03-02',
+        endDate: '2026-03-20',
+        status: 'completed',
+        title: localized('Speaking / presentation', 'Tal / presentation'),
+        description: localized(
+          'Students communicate orally through presentations, explanations, recordings or other spoken tasks.',
+          'Eleverna kommunicerar muntligt genom presentationer, f\u00f6rklaringar, inspelningar eller andra muntliga uppgifter.',
+        ),
+        teachingUnitId: 'speaking',
+        curriculumAreaIds: ['speaking'],
+        abilityIds: ['speaking-content-development', 'speaking-clarity', 'speaking-fluency', 'speaking-vocabulary-variation', 'speaking-pronunciation', 'speaking-purpose-audience'],
+        quickCaptureSkillIds: ['speaking-clarity', 'speaking-fluency', 'speaking-vocabulary-variation', 'speaking-pronunciation'],
+        createdAt: '2026-02-26',
+      },
+      {
+        slug: 'discussion-interaction',
+        periodId: 'apr-2026',
+        startDate: '2026-04-13',
+        endDate: '2026-04-24',
+        status: 'completed',
+        title: localized('Discussion / interaction', 'Diskussion / interaktion'),
+        description: localized(
+          'Students communicate with others in pairs, groups or whole-class situations.',
+          'Eleverna kommunicerar med andra i par, grupper eller helklassituationer.',
+        ),
+        teachingUnitId: 'interaction',
+        curriculumAreaIds: ['interaction', 'speaking'],
+        abilityIds: ['interaction-participating', 'interaction-responding-developing', 'interaction-expressing-opinions', 'interaction-communication-strategies', 'interaction-adaptation', 'interaction-keeping-going'],
+        quickCaptureSkillIds: ['interaction-participating', 'interaction-responding-developing', 'interaction-expressing-opinions', 'interaction-communication-strategies'],
+        createdAt: '2026-04-08',
+      },
+    ];
+    const englishBlocks = englishActivityBlocks.map((block) => ({
+      id: `english-8a-plan-${block.slug}`,
+      subjectId,
+      classId: '8a',
+      title: block.title,
+      description: block.description,
+      teachingUnitId: block.teachingUnitId,
+      sourceTemplateId: block.slug,
+      templateId: block.slug,
+      periodId: block.periodId,
+      startDate: block.startDate,
+      endDate: block.endDate,
+      status: block.status,
+      curriculumAreaIds: block.curriculumAreaIds,
+      evidenceTopicIds: block.curriculumAreaIds.map((areaId) => `${areaId}-observations`),
+      abilityIds: block.abilityIds,
+      blockType: block.blockType || 'teaching',
+      assessmentAnchor: block.assessmentAnchor || null,
+      quickCaptureOptions: (block.quickCaptureSkillIds || block.abilityIds).map((skillId) => {
+        const skill = curriculum.skills.find((item) => item.id === skillId);
+        return { id: skillId, label: skill?.title || localized(skillId, skillId) };
+      }),
+      groupAdaptations: block.groupAdaptations || [],
+      notes: block.notes || null,
+      createdAt: block.createdAt || '2026-01-08',
+      updatedAt: block.updatedAt || (block.status === 'current' ? '2026-05-18' : block.endDate),
+      createdBy: 'teacher',
+    }));
+
+    return {
+      periods: [
+        { id: 'jan-2026', label: localized('January', 'Januari'), startDate: '2026-01-08', endDate: '2026-01-31', order: 1 },
+        { id: 'feb-2026', label: localized('February', 'Februari'), startDate: '2026-02-01', endDate: '2026-02-28', order: 2 },
+        { id: 'mar-2026', label: localized('March', 'Mars'), startDate: '2026-03-01', endDate: '2026-03-31', order: 3 },
+        { id: 'apr-2026', label: localized('April', 'April'), startDate: '2026-04-01', endDate: '2026-04-30', order: 4 },
+        { id: 'may-2026', label: localized('May', 'Maj'), startDate: '2026-05-01', endDate: '2026-05-31', order: 5 },
+        { id: 'june-2026', label: localized('June', 'Juni'), startDate: '2026-06-01', endDate: '2026-06-19', order: 6 },
+      ],
+      blocks: englishBlocks,
+      tools: [
+        { id: 'blank-block', title: localized('Blank block', 'Tomt block'), blockType: 'teaching', description: '', curriculumAreaIds: [], evidenceTopicIds: [], abilityIds: [], quickCaptureOptions: [] },
+        { id: 'revision-consolidation', title: localized('Revision and consolidation', 'Repetition och bef\u00e4stande'), blockType: 'consolidation', description: localized('Create time to revisit and secure earlier learning.', 'Skapa tid f\u00f6r att repetera och bef\u00e4sta tidigare l\u00e4rande.'), curriculumAreaIds: [], evidenceTopicIds: [], abilityIds: [], quickCaptureOptions: [] },
+        { id: 'assessment-point', title: localized('Assessment point', 'Bed\u00f6mningspunkt'), blockType: 'assessment', description: localized('Add a planned assessment or checkpoint.', 'L\u00e4gg till en planerad bed\u00f6mning eller kontrollpunkt.'), curriculumAreaIds: [], evidenceTopicIds: [], abilityIds: [], quickCaptureOptions: [] },
+      ],
+      curriculumAreaTypeLabels: {
+        content: localized('Content', 'Inneh\u00e5ll'),
+        ability: localized('Skills', 'F\u00e4rdigheter'),
+      },
+      blockTypeLabels: {
+        teaching: localized('Activities', 'Aktiviteter'),
+      },
+      storageVersion: 'english-activities-v1',
+      curriculumNotes: [],
+    };
+  }
+
   return {
     periods: [
       { id: 'jan-2026', label: localized('January', 'Januari'), startDate: '2026-01-08', endDate: '2026-01-31', order: 1 },
@@ -2322,9 +2448,7 @@ function buildPlanning(subjectId, curriculum) {
     },
     storageVersion: subjectId === 'mathematics'
       ? 'maths-curriculum-v2'
-      : subjectId === 'english'
-        ? 'english-framework-v1'
-        : '',
+      : '',
     curriculumNotes: [],
   };
 }
