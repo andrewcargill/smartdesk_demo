@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
-import { Box, ButtonBase, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, ButtonBase, IconButton, Paper, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material';
 import AssessmentPieChart, { getAssessmentPieHoverText } from './AssessmentPieChart.jsx';
 
 const purple = '#9c28af';
@@ -36,6 +36,13 @@ function fallbackT(key, values = {}) {
     'learningModule.classPicture.observations': 'Observations',
     'learningModule.classPicture.focusTrendOverTime': 'Focus trend over time',
     'learningModule.classPicture.observationFocus': 'Observation focus',
+    'learningModule.classPicture.focusSummary': 'Focus summary',
+    'learningModule.classPicture.latestLevel': 'Latest: {{level}}',
+    'learningModule.classPicture.lastObserved': 'Last: {{date}}',
+    'learningModule.classPicture.recorded': 'Recorded',
+    'learningModule.classPicture.noObservationYet': 'No observation yet',
+    'learningModule.classPicture.observationMeta': '{{focuses}} focuses represented · {{observations}} observations total · Last observed {{date}}',
+    'learningModule.classPicture.noObservedDate': 'not yet',
     'learningModule.classPicture.configuredFocusRepresented_one': '{{represented}}/{{total}} configured focus represented',
     'learningModule.classPicture.configuredFocusRepresented_other': '{{represented}}/{{total}} configured focuses represented',
     'learningModule.classPicture.otherObservationSummary_one': '{{count}} other observation',
@@ -104,6 +111,38 @@ function sortObservationsChronologically(items) {
     if (secondTime !== null) return 1;
     return String(first.id || '').localeCompare(String(second.id || ''));
   });
+}
+
+function getLatestObservation(items) {
+  const sorted = sortObservationsChronologically(items);
+  return sorted[sorted.length - 1] || null;
+}
+
+function getObservationTrendSymbol(items) {
+  const validItems = sortObservationsChronologically(items)
+    .filter((item) => item.levelOrder !== null && item.levelOrder !== undefined && item.timestamp !== null);
+
+  if (validItems.length < 2) {
+    return '→';
+  }
+
+  const firstTimestamp = validItems[0].timestamp;
+  const lastTimestamp = validItems[validItems.length - 1].timestamp;
+  const points = validItems.map((item, index) => ({
+    x: firstTimestamp === lastTimestamp
+      ? index
+      : (item.timestamp - firstTimestamp) / (lastTimestamp - firstTimestamp),
+    y: Number(item.levelOrder),
+  }));
+  const averageX = points.reduce((total, point) => total + point.x, 0) / points.length;
+  const averageY = points.reduce((total, point) => total + point.y, 0) / points.length;
+  const varianceX = points.reduce((total, point) => total + ((point.x - averageX) ** 2), 0);
+  const covariance = points.reduce((total, point) => total + ((point.x - averageX) * (point.y - averageY)), 0);
+  const slope = varianceX ? covariance / varianceX : 0;
+
+  if (slope >= 0.35) return '↗';
+  if (slope <= -0.35) return '↘';
+  return '→';
 }
 
 function getObservationNote(item) {
@@ -290,6 +329,72 @@ function ObservationFocusSelector({ options, activeId, onActiveIdChange, t = fal
               <Typography sx={{ color: 'text.secondary', fontSize: 11.4, fontWeight: 800, flexShrink: 0 }}>
                 {option.count}
               </Typography>
+            </Stack>
+          </ButtonBase>
+        );
+      })}
+    </Stack>
+  );
+}
+
+function ObservationFocusSummaryList({ options, activeId, onActiveIdChange, language = 'en', t = fallbackT }) {
+  if (!options.length) {
+    return (
+      <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
+        {t('learningModule.classPicture.noObservationFocuses')}
+      </Typography>
+    );
+  }
+
+  return (
+    <Stack spacing={0.75}>
+      {options.map((option) => {
+        const isActive = option.focusId === activeId;
+        const latestObservation = getLatestObservation(option.observations);
+        const latestLevel = latestObservation?.levelLabel || (option.count ? t('learningModule.classPicture.recorded') : '');
+        const trendSymbol = option.count ? getObservationTrendSymbol(option.observations) : '→';
+        const title = option.count
+          ? `${option.focusLabel} · ${option.count} obs · ${t('learningModule.classPicture.latestLevel', { level: latestLevel })} · ${t('learningModule.classPicture.lastObserved', { date: formatDemoDate(latestObservation?.date, language, t) })}`
+          : t('learningModule.classPicture.observationFocusNoObservation', { label: option.focusLabel });
+
+        return (
+          <ButtonBase
+            key={option.focusId}
+            onMouseEnter={() => onActiveIdChange(option.focusId)}
+            onFocus={() => onActiveIdChange(option.focusId)}
+            onClick={() => onActiveIdChange(option.focusId)}
+            title={title}
+            sx={{
+              width: '100%',
+              p: 0.85,
+              borderRadius: '10px',
+              justifyContent: 'flex-start',
+              textAlign: 'left',
+              bgcolor: isActive ? 'rgba(156, 40, 175, 0.06)' : 'transparent',
+              boxShadow: isActive ? 'inset 0 0 0 1px rgba(156, 40, 175, 0.24)' : 'inset 0 0 0 1px rgba(23, 21, 26, 0.07)',
+              transition: 'background-color 140ms ease, box-shadow 140ms ease',
+              '&:focus-visible': { boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.34), 0 0 0 3px rgba(156, 40, 175, 0.12)' },
+              '&:hover': { bgcolor: isActive ? 'rgba(156, 40, 175, 0.08)' : 'rgba(23, 21, 26, 0.035)' },
+            }}
+          >
+            <Stack spacing={0.35} sx={{ width: '100%', minWidth: 0 }}>
+              <Typography noWrap sx={{ color: option.count ? darkText : 'text.secondary', fontSize: 12.7, fontWeight: isActive ? 900 : 830, minWidth: 0 }}>
+                {option.focusLabel}
+              </Typography>
+              {option.count ? (
+                <>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 11.6, fontWeight: 760, lineHeight: 1.25 }}>
+                    {option.count} obs · {t('learningModule.classPicture.latestLevel', { level: latestLevel })} · {trendSymbol}
+                  </Typography>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 11.4, lineHeight: 1.2 }}>
+                    {t('learningModule.classPicture.lastObserved', { date: formatDemoDate(latestObservation?.date, language, t) })}
+                  </Typography>
+                </>
+              ) : (
+                <Typography sx={{ color: 'text.secondary', fontSize: 11.5, lineHeight: 1.25 }}>
+                  {t('learningModule.classPicture.noObservationYet')}
+                </Typography>
+              )}
             </Stack>
           </ButtonBase>
         );
@@ -539,6 +644,8 @@ export default function StudentUnitInsightPanel({
   const firstObservedFocusId = observationFocusOptions.find((option) => option.count > 0)?.focusId || observationFocusOptions[0]?.focusId || '';
   const [activeObservationFocusId, setActiveObservationFocusId] = useState(firstObservedFocusId);
   const [activeObservationRecordId, setActiveObservationRecordId] = useState('');
+  const [unitLayoutVersion, setUnitLayoutVersion] = useState('v1');
+  const unitLayoutV2 = unitLayoutVersion === 'v2';
 
   useEffect(() => {
     setActiveObservationFocusId(firstObservedFocusId);
@@ -551,6 +658,14 @@ export default function StudentUnitInsightPanel({
   const validLevelObservations = activeObservationFocus && !activeObservationFocus.isOther
     ? activeObservationFocus.observations.filter((item) => item.levelOrder !== null && item.timestamp !== null)
     : [];
+  const observationSummaryLatest = getLatestObservation(observationFocusOptions.flatMap((option) => option.observations || []));
+  const observationSummaryText = t('learningModule.classPicture.observationMeta', {
+    focuses: observationFocusModel.representedConfiguredFocusCount,
+    observations: observationFocusOptions.reduce((total, option) => total + option.count, 0),
+    date: observationSummaryLatest?.date
+      ? formatDemoDate(observationSummaryLatest.date, language, t)
+      : t('learningModule.classPicture.noObservedDate'),
+  });
 
   useEffect(() => {
     setActiveObservationRecordId('');
@@ -559,7 +674,17 @@ export default function StudentUnitInsightPanel({
   return (
     <Box sx={{ p: { xs: 1, sm: 1.25 }, bgcolor: '#fbfafc', borderTop: '1px solid rgba(23, 21, 26, 0.07)' }}>
       <Paper elevation={0} id={`student-unit-insight-${student.id}-${panelUnit.id}`} sx={{ p: { xs: 1.25, sm: 1.55 }, borderRadius: '18px', border: `6px solid ${purple}`, bgcolor: '#fff' }}>
-        <Stack spacing={1.35}>
+        <Stack
+          spacing={1.35}
+          sx={{
+            '& .LearningModuleUnitAssessmentPanel': {
+              order: unitLayoutV2 ? 3 : 2,
+            },
+            '& .LearningModuleUnitObservationPanel': {
+              order: unitLayoutV2 ? 2 : 3,
+            },
+          }}
+        >
           <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', alignItems: 'start', gap: 0.8 }}>
             <Box sx={{ minWidth: 0 }}>
               <Typography component="h2" sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>
@@ -569,25 +694,63 @@ export default function StudentUnitInsightPanel({
                 &nbsp;
               </Typography>
             </Box>
-            <IconButton
-              type="button"
-              aria-label={t('learningModule.classPicture.closeUnitView', { unit: panelUnit.label || panelUnit.title })}
-              onClick={onClose}
-              size="small"
-              sx={{
-                justifySelf: 'end',
-                color: 'rgba(23, 21, 26, 0.54)',
-                bgcolor: '#fff',
-                border: '1px solid rgba(23, 21, 26, 0.1)',
-                '&:hover': { color: purple, borderColor: 'rgba(156, 40, 175, 0.28)', bgcolor: 'rgba(156, 40, 175, 0.045)' },
-                '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
-              }}
-            >
-              <CloseIcon sx={{ fontSize: 17 }} />
-            </IconButton>
+            <Stack direction="row" spacing={0.7} alignItems="center" justifyContent="flex-end" sx={{ justifySelf: 'end' }}>
+              <ToggleButtonGroup
+                exclusive
+                size="small"
+                value={unitLayoutVersion}
+                onChange={(_, nextVersion) => {
+                  if (nextVersion) {
+                    setUnitLayoutVersion(nextVersion);
+                  }
+                }}
+                aria-label="Unit expanded view layout"
+                sx={{
+                  p: 0.2,
+                  borderRadius: '999px',
+                  bgcolor: 'rgba(23, 21, 26, 0.045)',
+                  '& .MuiToggleButtonGroup-grouped': {
+                    minWidth: 34,
+                    height: 28,
+                    px: 0.9,
+                    border: 0,
+                    borderRadius: '999px !important',
+                    color: 'text.secondary',
+                    fontSize: 11.5,
+                    fontWeight: 850,
+                    '&.Mui-selected': {
+                      color: purple,
+                      bgcolor: '#fff',
+                      boxShadow: '0 4px 12px rgba(23, 21, 26, 0.08)',
+                    },
+                    '&.Mui-selected:hover': {
+                      bgcolor: '#fff',
+                    },
+                  },
+                }}
+              >
+                <ToggleButton value="v1" aria-label="Unit expanded view V1">V1</ToggleButton>
+                <ToggleButton value="v2" aria-label="Unit expanded view V2">V2</ToggleButton>
+              </ToggleButtonGroup>
+              <IconButton
+                type="button"
+                aria-label={t('learningModule.classPicture.closeUnitView', { unit: panelUnit.label || panelUnit.title })}
+                onClick={onClose}
+                size="small"
+                sx={{
+                  color: 'rgba(23, 21, 26, 0.54)',
+                  bgcolor: '#fff',
+                  border: '1px solid rgba(23, 21, 26, 0.1)',
+                  '&:hover': { color: purple, borderColor: 'rgba(156, 40, 175, 0.28)', bgcolor: 'rgba(156, 40, 175, 0.045)' },
+                  '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                }}
+              >
+                <CloseIcon sx={{ fontSize: 17 }} />
+              </IconButton>
+            </Stack>
           </Box>
 
-          <Paper elevation={0} sx={{ p: 1.35, borderRadius: '14px', border: `1px solid ${purple}`, bgcolor: '#fff' }}>
+          <Paper className="LearningModuleUnitAssessmentPanel" elevation={0} sx={{ p: unitLayoutV2 ? 1.15 : 1.35, borderRadius: '14px', border: `1px solid ${unitLayoutV2 ? 'rgba(156, 40, 175, 0.28)' : purple}`, bgcolor: '#fff' }}>
             <Stack spacing={1.2}>
               <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="baseline">
                 <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 900 }}>{t('learningModule.classPicture.assessments')}</Typography>
@@ -641,24 +804,37 @@ export default function StudentUnitInsightPanel({
             </Stack>
           </Paper>
 
-          <Paper elevation={0} sx={{ p: 1.35, borderRadius: '14px', border: `1px solid ${purple}`, bgcolor: '#fff' }}>
+          <Paper className="LearningModuleUnitObservationPanel" elevation={0} sx={{ p: unitLayoutV2 ? 1.55 : 1.35, borderRadius: '14px', border: `1px solid ${purple}`, bgcolor: unitLayoutV2 ? 'rgba(156, 40, 175, 0.025)' : '#fff' }}>
             <Stack spacing={1.2}>
               <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="baseline">
                 <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 900 }}>{t('learningModule.classPicture.observations')}</Typography>
                 <Typography sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 720 }}>{t('learningModule.classPicture.focusTrendOverTime')}</Typography>
               </Stack>
+              {unitLayoutV2 && (
+                <Typography sx={{ mt: -0.55, color: 'text.secondary', fontSize: 12.1, fontWeight: 740 }}>
+                  {observationSummaryText}
+                </Typography>
+              )}
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(260px, 300px) minmax(0, 1fr) minmax(0, 1fr)' }, gap: 1.4, alignItems: 'start' }}>
                 <Paper elevation={0} sx={{ p: 1, borderRadius: '12px', border: '1px solid rgba(23, 21, 26, 0.07)', bgcolor: '#fff' }}>
                   <Stack spacing={0.85}>
-                    <Typography sx={{ color: darkText, fontSize: 12.8, fontWeight: 880 }}>{t('learningModule.classPicture.observationFocus')}</Typography>
-                    <ObservationFocusSelector options={observationFocusOptions} activeId={activeObservationFocus?.focusId || ''} onActiveIdChange={setActiveObservationFocusId} t={t} />
-                    <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
-                      {getCountLabel(t, 'learningModule.classPicture.configuredFocusRepresented', observationFocusModel.configuredFocusCount, {
-                        represented: observationFocusModel.representedConfiguredFocusCount,
-                        total: observationFocusModel.configuredFocusCount,
-                      })}
-                      {!!observationFocusModel.otherObservationCount && ` · ${getCountLabel(t, 'learningModule.classPicture.otherObservationSummary', observationFocusModel.otherObservationCount)}`}
+                    <Typography sx={{ color: darkText, fontSize: 12.8, fontWeight: 880 }}>
+                      {unitLayoutV2 ? t('learningModule.classPicture.focusSummary') : t('learningModule.classPicture.observationFocus')}
                     </Typography>
+                    {unitLayoutV2 ? (
+                      <ObservationFocusSummaryList options={observationFocusOptions} activeId={activeObservationFocus?.focusId || ''} onActiveIdChange={setActiveObservationFocusId} language={language} t={t} />
+                    ) : (
+                      <>
+                        <ObservationFocusSelector options={observationFocusOptions} activeId={activeObservationFocus?.focusId || ''} onActiveIdChange={setActiveObservationFocusId} t={t} />
+                        <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
+                          {getCountLabel(t, 'learningModule.classPicture.configuredFocusRepresented', observationFocusModel.configuredFocusCount, {
+                            represented: observationFocusModel.representedConfiguredFocusCount,
+                            total: observationFocusModel.configuredFocusCount,
+                          })}
+                          {!!observationFocusModel.otherObservationCount && ` · ${getCountLabel(t, 'learningModule.classPicture.otherObservationSummary', observationFocusModel.otherObservationCount)}`}
+                        </Typography>
+                      </>
+                    )}
                   </Stack>
                 </Paper>
                 <SelectedObservationFocusDetails focus={activeObservationFocus} validLevelObservations={validLevelObservations} activeRecordId={activeObservationRecordId} onActiveRecordChange={setActiveObservationRecordId} language={language} t={t} />
