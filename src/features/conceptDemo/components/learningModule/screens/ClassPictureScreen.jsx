@@ -1453,7 +1453,9 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
   const skills = moduleConfig?.curriculum?.skills || [];
   const levels = moduleConfig?.curriculum?.observationLevels || [];
   const subjectTitle = moduleConfig?.subjectTitle || moduleConfig?.subjectId || 'Subject';
-  const learningContexts = getLearningContextsForSubject(moduleConfig?.subjectId);
+  const learningContexts = moduleConfig?.learningContexts?.length
+    ? moduleConfig.learningContexts
+    : getLearningContextsForSubject(moduleConfig?.subjectId);
   const rowNotesStorageKey = `${moduleConfig?.id || 'learning-module'}-row-notes`;
   const cellNotesStorageKey = `${moduleConfig?.id || 'learning-module'}-cell-notes`;
   const unitNotesStorageKey = `${moduleConfig?.id || 'learning-module'}-unit-notes`;

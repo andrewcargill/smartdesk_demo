@@ -16,7 +16,9 @@ export default function NowScreen({ moduleConfig }) {
     .sort((first, second) => (first.order || 0) - (second.order || 0));
   const skills = moduleConfig?.curriculum?.skills || [];
   const levels = moduleConfig?.curriculum?.observationLevels || [];
-  const learningContexts = getLearningContextsForSubject(moduleConfig?.subjectId);
+  const learningContexts = moduleConfig?.learningContexts?.length
+    ? moduleConfig.learningContexts
+    : getLearningContextsForSubject(moduleConfig?.subjectId);
   const activeLesson = moduleConfig?.lessons?.current || moduleConfig?.lessons?.sequence?.[0] || null;
   const [selectedStudentId, setSelectedStudentId] = useState(students[0]?.id || '');
   const [localEvidencePayload, setLocalEvidencePayload] = useState(() => readLearningModuleEvidence(moduleId));

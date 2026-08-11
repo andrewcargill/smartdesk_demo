@@ -73,22 +73,61 @@ const subjectBlueprints = {
   },
   swedish: {
     areas: [
-      ['reading', 'Reading', 'L\u00e4sa'],
+      ['reading-comprehension', 'Reading and comprehension', 'L\u00e4sa och f\u00f6rst\u00e5'],
       ['writing', 'Writing', 'Skriva'],
-      ['speaking', 'Speaking', 'Tala'],
-      ['language', 'Language', 'Spr\u00e5k'],
+      ['speaking-conversation', 'Speaking and conversation', 'Tala och samtala'],
+      ['literature-text-analysis', 'Literature and text analysis', 'Litteratur och textanalys'],
+      ['information-search-source-criticism', 'Information search and source criticism', 'Informationss\u00f6kning och k\u00e4llkritik'],
+      ['language-usage', 'Language and usage', 'Spr\u00e5k och spr\u00e5kbruk'],
     ],
     skills: [
-      ['interpretation', 'Interpretation', 'Tolkning'],
-      ['structure', 'Structure', 'Struktur'],
-      ['argument', 'Argument', 'Argument'],
-      ['presentation', 'Presentation', 'Presentation'],
+      ['reading-fluency', 'Reading fluency', 'L\u00e4sflyt'],
+      ['reading-comprehension', 'Reading comprehension', 'L\u00e4sf\u00f6rst\u00e5else'],
+      ['summarising', 'Summarising', 'Sammanfatta'],
+      ['interpreting-content', 'Interpreting content', 'Tolka inneh\u00e5ll'],
+      ['reasoning-about-text', 'Reasoning about text', 'Resonera om text'],
+      ['writing-content', 'Content', 'Inneh\u00e5ll'],
+      ['writing-structure', 'Structure', 'Struktur'],
+      ['linguistic-variety-writing', 'Linguistic variety', 'Spr\u00e5klig variation'],
+      ['adaptation-text-type-purpose-recipient', 'Adapting to text type, purpose and recipient', 'Anpassning till texttyp, syfte och mottagare'],
+      ['language-correctness', 'Language correctness', 'Spr\u00e5kriktighet'],
+      ['participating-in-conversation', 'Participating in conversation', 'Delta i samtal'],
+      ['developing-conversation', 'Developing conversation', 'Utveckla samtal'],
+      ['expressing-opinions', 'Expressing opinions', 'Framf\u00f6ra \u00e5sikter'],
+      ['supporting-arguments', 'Supporting arguments', 'Underbygga argument'],
+      ['oral-presentation-adaptation', 'Oral presentation and adaptation', 'Muntlig framst\u00e4llning och anpassning'],
+      ['plot-content', 'Plot and content', 'Handling och inneh\u00e5ll'],
+      ['message-theme', 'Message and theme', 'Budskap och tema'],
+      ['interpretation-analysis', 'Interpretation and analysis', 'Tolkning och analys'],
+      ['literary-concepts', 'Literary concepts', 'Litter\u00e4ra begrepp'],
+      ['works-authors-contexts', 'Works, authors and contexts', 'Verk, f\u00f6rfattare och sammanhang'],
+      ['searching-information', 'Searching for information', 'S\u00f6ka information'],
+      ['selecting-relevant-sources', 'Selecting relevant sources', 'V\u00e4lja relevanta k\u00e4llor'],
+      ['processing-own-words', 'Processing with own wording', 'Bearbeta med egna formuleringar'],
+      ['quotation-source-reference', 'Quotation and source reference', 'Citat och k\u00e4llh\u00e4nvisning'],
+      ['credibility-relevance', 'Credibility and relevance', 'Trov\u00e4rdighet och relevans'],
+      ['language-structure', 'Language structure', 'Spr\u00e5kets struktur'],
+      ['words-concepts-linguistic-variety', 'Words, concepts and linguistic variety', 'Ord, begrepp och spr\u00e5klig variation'],
+      ['usage-in-contexts', 'Language usage in different contexts', 'Spr\u00e5kbruk i olika sammanhang'],
+      ['linguistic-variety-sweden', 'Linguistic variety in Sweden', 'Spr\u00e5klig variation i Sverige'],
+      ['nordic-languages-language-history', 'Swedish, Nordic languages and language history', 'Svenska och nordiska spr\u00e5k / spr\u00e5khistoria'],
     ],
     unitTitles: [
-      ['Reading strategies', 'L\u00e4sstrategier'],
-      ['Argument writing', 'Argumenterande text'],
-      ['Oral presentation', 'Muntlig presentation'],
+      ['Reading and comprehension', 'L\u00e4sa och f\u00f6rst\u00e5'],
+      ['Writing', 'Skriva'],
+      ['Speaking and conversation', 'Tala och samtala'],
+      ['Literature and text analysis', 'Litteratur och textanalys'],
+      ['Information search and source criticism', 'Informationss\u00f6kning och k\u00e4llkritik'],
+      ['Language and usage', 'Spr\u00e5k och spr\u00e5kbruk'],
     ],
+    unitSkillIds: {
+      'reading-comprehension': ['reading-fluency', 'reading-comprehension', 'summarising', 'interpreting-content', 'reasoning-about-text'],
+      writing: ['writing-content', 'writing-structure', 'linguistic-variety-writing', 'adaptation-text-type-purpose-recipient', 'language-correctness'],
+      'speaking-conversation': ['participating-in-conversation', 'developing-conversation', 'expressing-opinions', 'supporting-arguments', 'oral-presentation-adaptation'],
+      'literature-text-analysis': ['plot-content', 'message-theme', 'interpretation-analysis', 'literary-concepts', 'works-authors-contexts'],
+      'information-search-source-criticism': ['searching-information', 'selecting-relevant-sources', 'processing-own-words', 'quotation-source-reference', 'credibility-relevance'],
+      'language-usage': ['language-structure', 'words-concepts-linguistic-variety', 'usage-in-contexts', 'linguistic-variety-sweden', 'nordic-languages-language-history'],
+    },
   },
   history: {
     areas: [
@@ -2058,6 +2097,132 @@ function buildPlanning(subjectId, curriculum) {
     };
   }
 
+  if (subjectId === 'swedish') {
+    const swedishActivityBlocks = [
+      {
+        slug: 'reading-novel-discussion',
+        periodId: 'jan-2026',
+        startDate: '2026-01-12',
+        endDate: '2026-01-30',
+        status: 'completed',
+        title: localized('Novel reading and discussion', 'Romanl\u00e4sning och textsamtal'),
+        description: localized(
+          'Students read selected chapters, summarise key events and reason about character choices and themes.',
+          'Eleverna l\u00e4ser utvalda kapitel, sammanfattar viktiga h\u00e4ndelser och resonerar om karakt\u00e4rers val och teman.',
+        ),
+        teachingUnitId: 'reading-comprehension',
+        curriculumAreaIds: ['reading-comprehension', 'literature-text-analysis'],
+        abilityIds: ['reading-comprehension', 'summarising', 'interpreting-content', 'reasoning-about-text', 'message-theme'],
+        quickCaptureSkillIds: ['summarising', 'interpreting-content', 'reasoning-about-text'],
+      },
+      {
+        slug: 'argumentative-writing',
+        periodId: 'feb-2026',
+        startDate: '2026-02-02',
+        endDate: '2026-02-20',
+        status: 'completed',
+        title: localized('Argumentative writing', 'Argumenterande text'),
+        description: localized(
+          'Students write an argumentative text with a clear viewpoint, supporting arguments and adaptation to purpose and audience.',
+          'Eleverna skriver en argumenterande text med en tydlig st\u00e5ndpunkt, underbyggda argument och anpassning till syfte och mottagare.',
+        ),
+        teachingUnitId: 'writing',
+        curriculumAreaIds: ['writing', 'language-usage'],
+        abilityIds: ['writing-content', 'writing-structure', 'linguistic-variety-writing', 'adaptation-text-type-purpose-recipient', 'language-correctness', 'supporting-arguments'],
+        quickCaptureSkillIds: ['writing-structure', 'supporting-arguments', 'adaptation-text-type-purpose-recipient', 'language-correctness'],
+        createdAt: '2026-01-29',
+      },
+      {
+        slug: 'source-research-presentation',
+        periodId: 'mar-2026',
+        startDate: '2026-03-02',
+        endDate: '2026-03-20',
+        status: 'completed',
+        title: localized('Research and oral presentation', 'Informationss\u00f6kning och muntlig presentation'),
+        description: localized(
+          'Students research a chosen topic using several sources, evaluate the information and present their findings to the class.',
+          'Eleverna unders\u00f6ker ett valt \u00e4mne med hj\u00e4lp av flera k\u00e4llor, v\u00e4rderar informationen och presenterar sina resultat f\u00f6r klassen.',
+        ),
+        teachingUnitId: 'information-search-source-criticism',
+        curriculumAreaIds: ['information-search-source-criticism', 'speaking-conversation'],
+        abilityIds: ['searching-information', 'selecting-relevant-sources', 'processing-own-words', 'credibility-relevance', 'oral-presentation-adaptation'],
+        quickCaptureSkillIds: ['selecting-relevant-sources', 'credibility-relevance', 'processing-own-words', 'oral-presentation-adaptation'],
+        createdAt: '2026-02-26',
+      },
+      {
+        slug: 'class-debate',
+        periodId: 'apr-2026',
+        startDate: '2026-04-13',
+        endDate: '2026-04-24',
+        status: 'completed',
+        title: localized('Class debate', 'Klassdebatt'),
+        description: localized(
+          'Students prepare and take part in a structured debate, presenting viewpoints, responding to others and supporting their arguments.',
+          'Eleverna f\u00f6rbereder och deltar i en strukturerad debatt d\u00e4r de framf\u00f6r \u00e5sikter, bem\u00f6ter andra och underbygger sina argument.',
+        ),
+        teachingUnitId: 'speaking-conversation',
+        curriculumAreaIds: ['speaking-conversation', 'information-search-source-criticism'],
+        abilityIds: ['participating-in-conversation', 'developing-conversation', 'expressing-opinions', 'supporting-arguments', 'credibility-relevance'],
+        quickCaptureSkillIds: ['participating-in-conversation', 'developing-conversation', 'expressing-opinions', 'supporting-arguments'],
+        createdAt: '2026-04-08',
+      },
+    ];
+    const swedishBlocks = swedishActivityBlocks.map((block) => ({
+      id: `swedish-8a-plan-${block.slug}`,
+      subjectId,
+      classId: '8a',
+      title: block.title,
+      description: block.description,
+      teachingUnitId: block.teachingUnitId,
+      sourceTemplateId: block.slug,
+      templateId: block.slug,
+      periodId: block.periodId,
+      startDate: block.startDate,
+      endDate: block.endDate,
+      status: block.status,
+      curriculumAreaIds: block.curriculumAreaIds,
+      evidenceTopicIds: block.curriculumAreaIds.map((areaId) => `${areaId}-observations`),
+      abilityIds: block.abilityIds,
+      blockType: block.blockType || 'teaching',
+      assessmentAnchor: block.assessmentAnchor || null,
+      quickCaptureOptions: (block.quickCaptureSkillIds || block.abilityIds).map((skillId) => {
+        const skill = curriculum.skills.find((item) => item.id === skillId);
+        return { id: skillId, label: skill?.title || localized(skillId, skillId) };
+      }),
+      groupAdaptations: block.groupAdaptations || [],
+      notes: block.notes || null,
+      createdAt: block.createdAt || '2026-01-08',
+      updatedAt: block.updatedAt || (block.status === 'current' ? '2026-05-18' : block.endDate),
+      createdBy: 'teacher',
+    }));
+
+    return {
+      periods: [
+        { id: 'jan-2026', label: localized('January', 'Januari'), startDate: '2026-01-08', endDate: '2026-01-31', order: 1 },
+        { id: 'feb-2026', label: localized('February', 'Februari'), startDate: '2026-02-01', endDate: '2026-02-28', order: 2 },
+        { id: 'mar-2026', label: localized('March', 'Mars'), startDate: '2026-03-01', endDate: '2026-03-31', order: 3 },
+        { id: 'apr-2026', label: localized('April', 'April'), startDate: '2026-04-01', endDate: '2026-04-30', order: 4 },
+        { id: 'may-2026', label: localized('May', 'Maj'), startDate: '2026-05-01', endDate: '2026-05-31', order: 5 },
+        { id: 'june-2026', label: localized('June', 'Juni'), startDate: '2026-06-01', endDate: '2026-06-19', order: 6 },
+      ],
+      blocks: swedishBlocks,
+      tools: [
+        { id: 'blank-block', title: localized('Blank block', 'Tomt block'), blockType: 'teaching', description: '', curriculumAreaIds: [], evidenceTopicIds: [], abilityIds: [], quickCaptureOptions: [] },
+        { id: 'revision-consolidation', title: localized('Revision and consolidation', 'Repetition och bef\u00e4stande'), blockType: 'consolidation', description: localized('Create time to revisit and secure earlier learning.', 'Skapa tid f\u00f6r att repetera och bef\u00e4sta tidigare l\u00e4rande.'), curriculumAreaIds: [], evidenceTopicIds: [], abilityIds: [], quickCaptureOptions: [] },
+        { id: 'assessment-point', title: localized('Assessment point', 'Bed\u00f6mningspunkt'), blockType: 'assessment', description: localized('Add a planned assessment or checkpoint.', 'L\u00e4gg till en planerad bed\u00f6mning eller kontrollpunkt.'), curriculumAreaIds: [], evidenceTopicIds: [], abilityIds: [], quickCaptureOptions: [] },
+      ],
+      curriculumAreaTypeLabels: {
+        content: localized('Content', 'Inneh\u00e5ll'),
+        ability: localized('Skills', 'F\u00e4rdigheter'),
+      },
+      blockTypeLabels: {
+        teaching: localized('Activities', 'Aktiviteter'),
+      },
+      storageVersion: 'swedish-activities-v1',
+      curriculumNotes: [],
+    };
+  }
+
   return {
     periods: [
       { id: 'jan-2026', label: localized('January', 'Januari'), startDate: '2026-01-08', endDate: '2026-01-31', order: 1 },
@@ -2122,6 +2287,63 @@ function buildPlanning(subjectId, curriculum) {
   };
 }
 
+function buildLearningContextsFromPlanning(planning, curriculum) {
+  const unitsBySkillId = new Map();
+  (curriculum.teachingUnits || []).forEach((unit) => {
+    (unit.skillIds || []).forEach((skillId) => {
+      const units = unitsBySkillId.get(skillId) || [];
+      units.push(unit.id);
+      unitsBySkillId.set(skillId, units);
+    });
+  });
+
+  return (planning.blocks || [])
+    .filter((block) => block.blockType === 'teaching' && (block.quickCaptureOptions || []).length)
+    .map((block) => {
+      const contextId = block.templateId || block.sourceTemplateId || block.id;
+      const curriculumAreaIds = [...new Set([
+        block.teachingUnitId,
+        ...(block.curriculumAreaIds || []),
+      ].filter(Boolean))];
+
+      return {
+        id: contextId,
+        type: 'activity',
+        label: block.title,
+        primaryCurriculumAreaId: block.teachingUnitId || curriculumAreaIds[0] || '',
+        possibleCurriculumAreaIds: curriculumAreaIds,
+        capturePoints: (block.quickCaptureOptions || []).map((option) => {
+          const skillId = option.observationDimensionId || option.skillId || option.id;
+          const linkedUnitIds = (unitsBySkillId.get(skillId) || [])
+            .filter((unitId) => curriculumAreaIds.includes(unitId));
+
+          return {
+            id: `${contextId}-${option.id}`,
+            label: option.label,
+            observationDimensionId: skillId,
+            curriculumAreaIds: linkedUnitIds.length
+              ? linkedUnitIds
+              : [block.teachingUnitId || curriculumAreaIds[0]].filter(Boolean),
+          };
+        }),
+      };
+    });
+}
+
+function buildLearningContexts(subjectId, planning, curriculum) {
+  if (subjectId === 'mathematics') {
+    return mathsLearningContexts;
+  }
+  if (subjectId === 'music') {
+    return musicLearningContexts;
+  }
+  if (subjectId === 'physical-education') {
+    return physicalEducationLearningContexts;
+  }
+
+  return buildLearningContextsFromPlanning(planning, curriculum);
+}
+
 function normalizeStudentPreviousResults(subjectId) {
   return class8AStudents.map((student) => ({
     ...student,
@@ -2145,6 +2367,8 @@ export function buildSubject8AConfig({ subjectId, schedule } = {}) {
   const curriculum = buildCurriculum(subjectId);
   const lessons = buildLessonSequence(subjectId, schedule, curriculum);
   const evidence = buildEvidence(subjectId, curriculum);
+  const planning = buildPlanning(subjectId, curriculum);
+  const learningContexts = buildLearningContexts(subjectId, planning, curriculum);
   const configVersion = subjectId === 'mathematics' ? 'v2' : '';
   const moduleId = [subjectId, '8a', configVersion].filter(Boolean).join('-');
 
@@ -2170,7 +2394,8 @@ export function buildSubject8AConfig({ subjectId, schedule } = {}) {
       sequence: lessons,
     },
     evidence,
-    planning: buildPlanning(subjectId, curriculum),
+    planning,
+    learningContexts,
     navigation,
     screens: {
       'class-picture': {

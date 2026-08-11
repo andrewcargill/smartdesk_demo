@@ -152,7 +152,9 @@ export default function PlanScreen({ moduleConfig, screenConfig }) {
   const initialBlocks = (planningConfig.blocks || []).map((block) => normalizePlanningBlock(block, moduleConfig));
   const abilities = moduleConfig?.curriculum?.skills || [];
   const activeLesson = moduleConfig?.lessons?.current || moduleConfig?.lessons?.sequence?.[0] || null;
-  const learningContexts = getLearningContextsForSubject(moduleConfig?.subjectId);
+  const learningContexts = moduleConfig?.learningContexts?.length
+    ? moduleConfig.learningContexts
+    : getLearningContextsForSubject(moduleConfig?.subjectId);
   const planningTools = learningContexts.length
     ? createActivityPlanningTools(learningContexts, language)
     : createPlanningTools(teachingUnits, planningConfig.tools || []);

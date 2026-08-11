@@ -161,6 +161,7 @@ function createModuleViewModel(moduleData, language, t, { activeLessonIndex = 0,
     },
     evidence: localizeContent(moduleData?.evidence || {}, language),
     planning: localizeContent(moduleData?.planning || {}, language),
+    learningContexts: localizeContent(moduleData?.learningContexts || [], language),
     screens: localizeScreens(moduleData?.screens, language),
     navigation: {
       defaultScreen,
