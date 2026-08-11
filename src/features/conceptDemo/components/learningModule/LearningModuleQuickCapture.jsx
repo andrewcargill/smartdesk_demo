@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
-import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import {
   Box,
@@ -13,7 +12,6 @@ import {
   Paper,
   Select,
   Stack,
-  TextField,
   Typography,
 } from '@mui/material';
 import {
@@ -42,6 +40,14 @@ function formatDemoLessonDate(date) {
   }
 
   return new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(`${date}T12:00:00`));
+}
+
+function formatShortLessonDate(date) {
+  if (!date) {
+    return 'No date';
+  }
+
+  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(new Date(`${date}T12:00:00`));
 }
 
 function getLevelMark(level) {
@@ -118,6 +124,7 @@ export default function LearningModuleQuickCapture({
   levels,
   learningContexts = [],
   subjectId = '',
+  evidenceItems = [],
   selectedStudentId,
   localEvidencePayload,
   learningObservations = [],
@@ -179,6 +186,8 @@ export default function LearningModuleQuickCapture({
     : activeTopic?.capturePoints || [];
   const captureFocusById = useMemo(() => new Map(captureFocuses.map((unit) => [unit.id, unit])), [captureFocuses]);
   const skillById = useMemo(() => new Map((skills || []).map((skill) => [skill.id, skill])), [skills]);
+  const levelById = useMemo(() => new Map((levels || []).map((level) => [level.id, level])), [levels]);
+  const unitById = useMemo(() => new Map((teachingUnits || []).map((unit) => [unit.id, unit])), [teachingUnits]);
   const learningContextCapturePointById = useMemo(() => new Map(
     (learningContexts || []).flatMap((context) => (context.capturePoints || []).map((point) => [
       point.id,
@@ -189,6 +198,7 @@ export default function LearningModuleQuickCapture({
     ])),
   ), [language, learningContexts]);
   const localObservations = localEvidencePayload?.observations || [];
+  const seededObservations = useMemo(() => (evidenceItems || []).filter((item) => item.type !== 'assessment'), [evidenceItems]);
 
   useEffect(() => {
     if (!selectableCaptureFocuses.length || selectableCaptureFocuses.some((unit) => unit.id === activeUnitId)) {
@@ -213,6 +223,18 @@ export default function LearningModuleQuickCapture({
     () => visibleLocalObservations.filter((capture) => capture.studentId === selectedStudent?.id),
     [selectedStudent?.id, visibleLocalObservations],
   );
+  const visibleStudentObservationSummaryItems = useMemo(() => [
+    ...seededObservations,
+    ...visibleLocalObservations,
+  ]
+    .filter((observation) => observation.studentId === selectedStudent?.id && (!activeLesson?.date || observation.date <= activeLesson.date))
+    .sort((first, second) => (
+      (second.updatedAt || second.createdAt || second.date || '').localeCompare(first.updatedAt || first.createdAt || first.date || '')
+    )), [activeLesson?.date, seededObservations, selectedStudent?.id, visibleLocalObservations]);
+  const currentMonthObservationSummaryItems = useMemo(() => {
+    const activeMonth = activeLesson?.date?.slice(0, 7) || '';
+    return visibleStudentObservationSummaryItems.filter((observation) => observation.date?.slice(0, 7) === activeMonth);
+  }, [activeLesson?.date, visibleStudentObservationSummaryItems]);
   const visibleLearningObservations = useMemo(() => [
     ...flattenLearningObservationRecords(learningObservations),
     ...(localLearningObservationPayload?.observations || []),
@@ -524,10 +546,11 @@ export default function LearningModuleQuickCapture({
     <Paper
       elevation={0}
       sx={{
-        p: { xs: 0.75, sm: 0.85 },
-        borderRadius: '10px',
-        border: '1px solid transparent',
-        bgcolor: '#fff',
+        p: { xs: 0.95, sm: 1.1 },
+        borderRadius: '12px',
+        border: '1px solid rgba(156, 40, 175, 0.14)',
+        bgcolor: 'rgba(156, 40, 175, 0.025)',
+        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.72)',
       }}
     >
       <Stack spacing={{ xs: 0.8, sm: 0.95 }}>
@@ -606,69 +629,79 @@ export default function LearningModuleQuickCapture({
                   );
                 })}
                 <Box className="learnObservationRowCell" sx={{ minWidth: 0, py: 0.2, transition: 'background-color 140ms ease' }}>
-                  <TextField
-                    value={learnObservationNotes[item.id] || ''}
-                    onChange={(event) => updateLearnObservationNote(item.id, event.target.value)}
-                    onBlur={() => hideLearnObservationNoteField(item.id)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault();
-                        hideLearnObservationNoteField(item.id);
-                        event.currentTarget.blur();
-                      }
-                    }}
-                    placeholder="Optional short note"
-                    size="small"
-                    fullWidth
-                    inputRef={(input) => {
-                      learnObservationNoteInputRefs.current[item.id] = input;
-                    }}
-                    inputProps={{ maxLength: 100, 'aria-label': `${item.label} note` }}
-                    sx={{
-                      display: visibleLearnObservationNoteFields[item.id] ? 'block' : 'none',
-                      '& .MuiInputBase-root': { minHeight: 32, borderRadius: '999px', fontSize: 12.4, bgcolor: '#fff' },
-                      '& .MuiInputBase-input': { py: 0.55, px: 1.2 },
-                      '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(23, 21, 26, 0.14)' },
-                      '& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(23, 21, 26, 0.28)' },
-                      '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: purple, borderWidth: 1 },
-                    }}
-                  />
-                  {!visibleLearnObservationNoteFields[item.id] && !!learnObservationNotes[item.id] && (
+                  {visibleLearnObservationNoteFields[item.id] ? (
+                    <Box
+                      component="input"
+                      value={learnObservationNotes[item.id] || ''}
+                      maxLength={100}
+                      aria-label={`${item.label} note`}
+                      onChange={(event) => updateLearnObservationNote(item.id, event.target.value)}
+                      onBlur={() => hideLearnObservationNoteField(item.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          hideLearnObservationNoteField(item.id);
+                          event.currentTarget.blur();
+                        }
+                        if (event.key === 'Escape') {
+                          event.preventDefault();
+                          setVisibleLearnObservationNoteFields((currentFields) => ({
+                            ...currentFields,
+                            [item.id]: false,
+                          }));
+                          event.currentTarget.blur();
+                        }
+                      }}
+                      ref={(input) => {
+                        learnObservationNoteInputRefs.current[item.id] = input;
+                      }}
+                      sx={{
+                        width: '100%',
+                        height: 30,
+                        px: 0.65,
+                        border: `1px solid ${purple}`,
+                        borderRadius: '8px',
+                        color: darkText,
+                        bgcolor: '#fff',
+                        font: 'inherit',
+                        fontSize: 12.5,
+                        fontWeight: 760,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  ) : (
                     <ButtonBase
                       type="button"
-                      aria-label={`Edit ${item.label} note`}
+                      aria-label={learnObservationNotes[item.id] ? `Edit ${item.label} note` : `Add ${item.label} note`}
                       onClick={() => showLearnObservationNoteField(item.id)}
                       sx={{
-                        justifySelf: 'start',
+                        width: '100%',
                         minWidth: 0,
-                        maxWidth: '100%',
                         textAlign: 'left',
-                        borderRadius: '6px',
-                        '&:hover': { color: purple },
+                        justifyContent: 'flex-start',
+                        borderRadius: '8px',
                         '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
                       }}
                     >
-                      <Typography sx={{ color: 'text.secondary', fontSize: 12.4, fontWeight: 650, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {learnObservationNotes[item.id]}
-                      </Typography>
+                      <Box
+                        sx={{
+                          width: '100%',
+                          minHeight: 28,
+                          px: 0.7,
+                          display: 'flex',
+                          alignItems: 'center',
+                          borderRadius: '8px',
+                          bgcolor: 'rgba(156, 40, 175, 0.055)',
+                          transition: 'background-color 140ms ease',
+                          '.MuiButtonBase-root:hover &': { bgcolor: 'rgba(156, 40, 175, 0.13)' },
+                        }}
+                      >
+                        <Typography sx={{ color: learnObservationNotes[item.id] ? 'rgba(23, 21, 26, 0.58)' : 'rgba(23, 21, 26, 0.28)', fontSize: 12.2, fontWeight: learnObservationNotes[item.id] ? 720 : 640, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {learnObservationNotes[item.id] || t('learningModule.classPicture.optionalShortNote')}
+                        </Typography>
+                      </Box>
                     </ButtonBase>
-                  )}
-                  {!visibleLearnObservationNoteFields[item.id] && !learnObservationNotes[item.id] && (
-                    <IconButton
-                      type="button"
-                      aria-label={`Add ${item.label} note`}
-                      onClick={() => showLearnObservationNoteField(item.id)}
-                      sx={{
-                        justifySelf: 'start',
-                        width: 32,
-                        height: 32,
-                        color: 'text.secondary',
-                        '&:hover': { bgcolor: '#fff', color: purple },
-                        '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
-                      }}
-                    >
-                      <NoteAddIcon sx={{ fontSize: 17 }} />
-                    </IconButton>
                   )}
                 </Box>
               </Box>
@@ -796,11 +829,133 @@ export default function LearningModuleQuickCapture({
     </Paper>
   );
 
+  const latestSummaryObservation = visibleStudentObservationSummaryItems[0] || null;
+  const recentMonthSummaryObservations = currentMonthObservationSummaryItems.slice(0, 4);
+  const observationSummaryPanel = (
+    <Paper
+      elevation={0}
+      aria-label={`Observation summary for ${selectedStudent.displayName}`}
+      sx={{
+        p: { xs: 1, md: 1.15 },
+        borderRadius: '14px',
+        border: '1px solid rgba(23, 21, 26, 0.12)',
+        bgcolor: '#fff',
+        minWidth: 0,
+      }}
+    >
+      <Stack spacing={1}>
+        <Box>
+          <Typography sx={{ color: darkText, fontSize: { xs: 16, sm: 17.5 }, lineHeight: 1.15, fontWeight: 880 }}>
+            Observation summary
+          </Typography>
+          <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 12.2, lineHeight: 1.25, fontWeight: 650 }}>
+            {selectedStudent.displayName}
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.65 }}>
+          <Box sx={{ p: 0.75, borderRadius: '9px', bgcolor: 'rgba(156, 40, 175, 0.055)', border: '1px solid rgba(156, 40, 175, 0.12)', minWidth: 0 }}>
+            <Typography sx={{ color: 'text.secondary', fontSize: 11.3, fontWeight: 760, lineHeight: 1.15 }}>
+              This month
+            </Typography>
+            <Typography sx={{ mt: 0.2, color: darkText, fontSize: 19, fontWeight: 900, lineHeight: 1 }}>
+              {currentMonthObservationSummaryItems.length}
+            </Typography>
+          </Box>
+          <Box sx={{ p: 0.75, borderRadius: '9px', bgcolor: 'rgba(23, 21, 26, 0.035)', border: '1px solid rgba(23, 21, 26, 0.08)', minWidth: 0 }}>
+            <Typography sx={{ color: 'text.secondary', fontSize: 11.3, fontWeight: 760, lineHeight: 1.15 }}>
+              Total seen
+            </Typography>
+            <Typography sx={{ mt: 0.2, color: darkText, fontSize: 19, fontWeight: 900, lineHeight: 1 }}>
+              {visibleStudentObservationSummaryItems.length}
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box sx={{ p: 0.85, borderRadius: '10px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: 'rgba(23, 21, 26, 0.018)', minWidth: 0 }}>
+          <Typography sx={{ color: 'text.secondary', fontSize: 11.6, fontWeight: 790, lineHeight: 1.2 }}>
+            Last observation
+          </Typography>
+          {latestSummaryObservation ? (() => {
+            const capturePoint = learningContextCapturePointById.get(latestSummaryObservation.capturePointId)
+              || skillById.get(latestSummaryObservation.skillId || latestSummaryObservation.capturePointId);
+            const level = levelById.get(latestSummaryObservation.levelId);
+            const unit = unitById.get(latestSummaryObservation.teachingUnitId);
+            const pointLabel = getLocalizedValue(capturePoint?.label || capturePoint?.title, language) || latestSummaryObservation.skillId || 'Observation';
+            const levelLabel = getLocalizedValue(level?.label, language) || latestSummaryObservation.levelId || '';
+            const unitLabel = getLocalizedValue(latestSummaryObservation.contextLabel, language)
+              || getLocalizedValue(unit?.label || unit?.title, language)
+              || '';
+
+            return (
+              <Stack spacing={0.25} sx={{ mt: 0.45, minWidth: 0 }}>
+                <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 860, lineHeight: 1.22 }}>
+                  {pointLabel}
+                </Typography>
+                <Typography sx={{ color: purple, fontSize: 12.1, fontWeight: 850, lineHeight: 1.2 }}>
+                  {levelLabel}
+                </Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: 11.7, lineHeight: 1.25 }}>
+                  {formatShortLessonDate(latestSummaryObservation.date)}{unitLabel ? ` · ${unitLabel}` : ''}
+                </Typography>
+              </Stack>
+            );
+          })() : (
+            <Typography sx={{ mt: 0.45, color: 'text.secondary', fontSize: 12.4, lineHeight: 1.35 }}>
+              No observations yet.
+            </Typography>
+          )}
+        </Box>
+
+        <Box>
+          <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 860, lineHeight: 1.2 }}>
+            Recent this month
+          </Typography>
+          {recentMonthSummaryObservations.length ? (
+            <Stack component="ul" spacing={0.55} sx={{ m: 0, mt: 0.65, p: 0, listStyle: 'none' }}>
+              {recentMonthSummaryObservations.map((observation) => {
+                const capturePoint = learningContextCapturePointById.get(observation.capturePointId)
+                  || skillById.get(observation.skillId || observation.capturePointId);
+                const level = levelById.get(observation.levelId);
+                const pointLabel = getLocalizedValue(capturePoint?.label || capturePoint?.title, language) || observation.skillId || 'Observation';
+                const levelLabel = getLocalizedValue(level?.label, language) || observation.levelId || '';
+
+                return (
+                  <Box key={observation.id || `${observation.date}-${observation.skillId}-${observation.levelId}`} component="li" sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 0.65, alignItems: 'baseline', py: 0.45, borderBottom: '1px solid rgba(23, 21, 26, 0.07)' }}>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography sx={{ color: darkText, fontSize: 12.3, fontWeight: 800, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {pointLabel}
+                      </Typography>
+                      <Typography sx={{ color: 'text.secondary', fontSize: 11.4, lineHeight: 1.2 }}>
+                        {formatShortLessonDate(observation.date)}
+                      </Typography>
+                    </Box>
+                    <Typography sx={{ color: purple, fontSize: 11.8, fontWeight: 880, whiteSpace: 'nowrap' }}>
+                      {levelLabel}
+                    </Typography>
+                  </Box>
+                );
+              })}
+            </Stack>
+          ) : (
+            <Typography sx={{ mt: 0.55, color: 'text.secondary', fontSize: 12.4, lineHeight: 1.35 }}>
+              No observations this month.
+            </Typography>
+          )}
+        </Box>
+      </Stack>
+    </Paper>
+  );
+
   return (
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: '210px minmax(0, 1fr)' },
+        gridTemplateColumns: {
+          xs: 'minmax(0, 1fr)',
+          md: '190px minmax(0, 1fr)',
+          lg: '190px minmax(420px, 1fr) minmax(260px, 320px)',
+        },
         gap: { xs: 1.15, md: 1.6 },
         alignItems: 'start',
         minWidth: 0,
@@ -1157,6 +1312,9 @@ export default function LearningModuleQuickCapture({
           )}
         </Box>
       </Stack>
+      <Box sx={{ minWidth: 0, gridColumn: { xs: 'auto', md: '2 / 3', lg: 'auto' } }}>
+        {observationSummaryPanel}
+      </Box>
     </Box>
   );
 }

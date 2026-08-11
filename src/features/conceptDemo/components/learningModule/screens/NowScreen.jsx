@@ -56,6 +56,7 @@ export default function NowScreen({ moduleConfig }) {
           levels={levels}
           learningContexts={learningContexts}
           subjectId={moduleConfig?.subjectId}
+          evidenceItems={moduleConfig?.evidence?.items || []}
           selectedStudentId={selectedStudentId}
           localEvidencePayload={localEvidencePayload}
           learningObservations={moduleConfig?.evidence?.learningObservations || []}
