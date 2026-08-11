@@ -30,27 +30,65 @@ const navigation = {
 const subjectBlueprints = {
   english: {
     areas: [
-      ['listening-reception', 'Listening', 'Lyssna'],
-      ['reading-reception', 'Reading', 'L\u00e4sa'],
-      ['speaking-production-interaction', 'Speaking', 'Tala'],
-      ['writing-production-interaction', 'Writing', 'Skriva'],
+      ['listening', 'Listening', 'Lyssna'],
+      ['reading', 'Reading', 'L\u00e4sa'],
+      ['writing', 'Writing', 'Skriva'],
+      ['speaking', 'Speaking', 'Tala'],
+      ['interaction', 'Interaction', 'Interaktion'],
+      ['sources-context', 'Sources and context', 'K\u00e4llor och sammanhang'],
     ],
     skills: [
-      ['spoken-language-main-content-details', 'Understand main content and clear details in spoken English', 'F\u00f6rst\u00e5 huvudsakligt inneh\u00e5ll och tydliga detaljer i talad engelska'],
-      ['text-main-content-details', 'Understand main content and clear details in texts', 'F\u00f6rst\u00e5 huvudsakligt inneh\u00e5ll och tydliga detaljer i texter'],
-      ['source-selection-use', 'Select, evaluate and use spoken and written sources', 'V\u00e4lja, v\u00e4rdera och anv\u00e4nda muntliga och skriftliga k\u00e4llor'],
-      ['oral-presentation-coherence', 'Oral presentation: clarity and coherence', 'Muntlig framst\u00e4llning: tydlighet och sammanhang'],
-      ['written-presentation-coherence', 'Written presentation: clarity and coherence', 'Skriftlig framst\u00e4llning: tydlighet och sammanhang'],
-      ['interaction-purpose-audience-situation', 'Interaction adapted to purpose, audience and situation', 'Interaktion anpassad till syfte, mottagare och situation'],
-      ['communication-strategies', 'Strategies that support and improve communication', 'Strategier som underl\u00e4ttar och f\u00f6rb\u00e4ttrar kommunikationen'],
-      ['english-speaking-contexts', 'Discuss contexts and areas where English is used', 'Diskutera sammanhang och omr\u00e5den d\u00e4r engelska anv\u00e4nds'],
+      ['listening-main-ideas', 'Main ideas', 'Huvuddrag'],
+      ['listening-details', 'Details', 'Detaljer'],
+      ['listening-interpretation', 'Interpretation', 'Tolkning'],
+      ['listening-strategies', 'Listening strategies', 'Lyssningsstrategier'],
+      ['listening-language-variation', 'Language variation', 'Spr\u00e5klig variation'],
+      ['reading-main-ideas', 'Main ideas', 'Huvuddrag'],
+      ['reading-details', 'Details', 'Detaljer'],
+      ['reading-interpretation', 'Interpretation', 'Tolkning'],
+      ['reading-strategies', 'Reading strategies', 'L\u00e4sstrategier'],
+      ['reading-text-types-context', 'Text types and context', 'Texttyper och sammanhang'],
+      ['writing-content-development', 'Content and development', 'Inneh\u00e5ll och utveckling'],
+      ['writing-structure-coherence', 'Structure and coherence', 'Struktur och sammanhang'],
+      ['writing-vocabulary-variation', 'Vocabulary and variation', 'Ordf\u00f6rr\u00e5d och variation'],
+      ['writing-grammar-accuracy', 'Grammar and accuracy', 'Grammatik och korrekthet'],
+      ['writing-purpose-audience-context', 'Purpose, audience and context', 'Syfte, mottagare och sammanhang'],
+      ['writing-revision', 'Revision', 'Bearbetning'],
+      ['speaking-content-development', 'Content and development', 'Inneh\u00e5ll och utveckling'],
+      ['speaking-clarity', 'Clarity', 'Tydlighet'],
+      ['speaking-fluency', 'Fluency', 'Flyt'],
+      ['speaking-vocabulary-variation', 'Vocabulary and variation', 'Ordf\u00f6rr\u00e5d och variation'],
+      ['speaking-pronunciation', 'Pronunciation', 'Uttal'],
+      ['speaking-purpose-audience', 'Purpose and audience', 'Syfte och mottagare'],
+      ['interaction-participating', 'Participating', 'Delta'],
+      ['interaction-responding-developing', 'Responding and developing', 'Svara och utveckla'],
+      ['interaction-expressing-opinions', 'Expressing opinions', 'Framf\u00f6ra \u00e5sikter'],
+      ['interaction-communication-strategies', 'Communication strategies', 'Kommunikationsstrategier'],
+      ['interaction-adaptation', 'Adaptation', 'Anpassning'],
+      ['interaction-keeping-going', 'Keeping interaction going', 'H\u00e5lla interaktionen ig\u00e5ng'],
+      ['sources-finding-information', 'Finding information', 'S\u00f6ka information'],
+      ['sources-selecting-information', 'Selecting information', 'V\u00e4lja information'],
+      ['sources-evaluating-content', 'Evaluating sources and content', 'V\u00e4rdera k\u00e4llor och inneh\u00e5ll'],
+      ['sources-using-source-material', 'Using source material', 'Anv\u00e4nda k\u00e4llmaterial'],
+      ['sources-culture-society', 'Culture and society', 'Kultur och samh\u00e4lle'],
+      ['sources-discussing-comparing-contexts', 'Discussing and comparing contexts', 'Diskutera och j\u00e4mf\u00f6ra sammanhang'],
     ],
     unitTitles: [
       ['Listening', 'Lyssna'],
       ['Reading', 'L\u00e4sa'],
-      ['Speaking', 'Tala'],
       ['Writing', 'Skriva'],
+      ['Speaking', 'Tala'],
+      ['Interaction', 'Interaktion'],
+      ['Sources and context', 'K\u00e4llor och sammanhang'],
     ],
+    unitSkillIds: {
+      listening: ['listening-main-ideas', 'listening-details', 'listening-interpretation', 'listening-strategies', 'listening-language-variation'],
+      reading: ['reading-main-ideas', 'reading-details', 'reading-interpretation', 'reading-strategies', 'reading-text-types-context'],
+      writing: ['writing-content-development', 'writing-structure-coherence', 'writing-vocabulary-variation', 'writing-grammar-accuracy', 'writing-purpose-audience-context', 'writing-revision'],
+      speaking: ['speaking-content-development', 'speaking-clarity', 'speaking-fluency', 'speaking-vocabulary-variation', 'speaking-pronunciation', 'speaking-purpose-audience'],
+      interaction: ['interaction-participating', 'interaction-responding-developing', 'interaction-expressing-opinions', 'interaction-communication-strategies', 'interaction-adaptation', 'interaction-keeping-going'],
+      'sources-context': ['sources-finding-information', 'sources-selecting-information', 'sources-evaluating-content', 'sources-using-source-material', 'sources-culture-society', 'sources-discussing-comparing-contexts'],
+    },
   },
   science: {
     areas: [
@@ -1037,35 +1075,35 @@ function buildEvidence(subjectId, curriculum) {
     : [];
   const englishEliasObservationClusters = subjectId === 'english'
     ? [
-      ['2026-01-22', 'listening-reception', [
-        ['spoken-language-main-content-details', 'developing'],
-        ['text-main-content-details', 'emerging'],
-        ['source-selection-use', 'developing'],
+      ['2026-01-22', 'listening', [
+        ['listening-main-ideas', 'developing'],
+        ['listening-details', 'emerging'],
+        ['listening-strategies', 'developing'],
       ]],
-      ['2026-02-12', 'reading-reception', [
-        ['text-main-content-details', 'developing'],
-        ['source-selection-use', 'developing'],
-        ['oral-presentation-coherence', 'emerging'],
+      ['2026-02-12', 'reading', [
+        ['reading-main-ideas', 'developing'],
+        ['reading-details', 'developing'],
+        ['reading-interpretation', 'emerging'],
       ]],
-      ['2026-03-12', 'speaking-production-interaction', [
-        ['source-selection-use', 'developing'],
-        ['oral-presentation-coherence', 'developing'],
-        ['written-presentation-coherence', 'secure'],
+      ['2026-03-12', 'speaking', [
+        ['speaking-content-development', 'developing'],
+        ['speaking-clarity', 'developing'],
+        ['speaking-fluency', 'secure'],
       ]],
-      ['2026-04-16', 'writing-production-interaction', [
-        ['oral-presentation-coherence', 'secure'],
-        ['written-presentation-coherence', 'developing'],
-        ['interaction-purpose-audience-situation', 'developing'],
+      ['2026-04-16', 'writing', [
+        ['writing-content-development', 'secure'],
+        ['writing-structure-coherence', 'developing'],
+        ['writing-purpose-audience-context', 'developing'],
       ]],
-      ['2026-05-14', 'listening-reception', [
-        ['spoken-language-main-content-details', 'secure'],
-        ['text-main-content-details', 'secure'],
-        ['source-selection-use', 'developing'],
+      ['2026-05-14', 'listening', [
+        ['listening-main-ideas', 'secure'],
+        ['listening-details', 'secure'],
+        ['listening-language-variation', 'developing'],
       ]],
-      ['2026-05-14', 'reading-reception', [
-        ['text-main-content-details', 'secure'],
-        ['source-selection-use', 'developing'],
-        ['oral-presentation-coherence', 'developing'],
+      ['2026-05-14', 'reading', [
+        ['reading-main-ideas', 'secure'],
+        ['reading-interpretation', 'developing'],
+        ['reading-text-types-context', 'developing'],
       ]],
     ].flatMap(([date, teachingUnitId, captures], clusterIndex) => captures.map(([skillId, levelId], captureIndex) => ({
       id: `english-8a-evidence-elias-extra-${clusterIndex + 1}-${captureIndex + 1}`,
@@ -2282,7 +2320,11 @@ function buildPlanning(subjectId, curriculum) {
       content: localized('Content', 'Inneh\u00e5ll'),
       ability: localized('Skills', 'F\u00e4rdigheter'),
     },
-    storageVersion: subjectId === 'mathematics' ? 'maths-curriculum-v2' : '',
+    storageVersion: subjectId === 'mathematics'
+      ? 'maths-curriculum-v2'
+      : subjectId === 'english'
+        ? 'english-framework-v1'
+        : '',
     curriculumNotes: [],
   };
 }
