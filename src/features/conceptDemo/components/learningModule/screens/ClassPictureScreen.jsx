@@ -7,7 +7,7 @@ import NotesIcon from '@mui/icons-material/Notes';
 import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import TimelineIcon from '@mui/icons-material/Timeline';
-import { Box, ButtonBase, IconButton, MenuItem, Paper, Select, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material';
+import { Box, ButtonBase, IconButton, MenuItem, Paper, Select, Stack, Tooltip, Typography } from '@mui/material';
 import { useConceptDemoLanguage } from '../../../ConceptDemoLanguageContext.jsx';
 import { classGroupDefinitions } from '../../../data/classGroupDefinitions.js';
 import { useClassWorkingGroups } from '../../../hooks/useClassWorkingGroups.js';
@@ -1421,10 +1421,6 @@ function ClassPictureEvidenceGridV2(props) {
   return <ClassPictureEvidenceGridV1 {...props} comparisonVariant="v2" />;
 }
 
-function ClassPictureEvidenceGridV3(props) {
-  return <ClassPictureEvidenceGridV1 {...props} comparisonVariant="v3" />;
-}
-
 export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
   const { language, t } = useConceptDemoLanguage();
   const learningObservationAreas = useMemo(() => getLearningObservationAreas(t), [t]);
@@ -1466,7 +1462,6 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
   const [hoveredStudentId, setHoveredStudentId] = useState('');
   const [hoveredRowNoteStudentId, setHoveredRowNoteStudentId] = useState('');
   const [rowNotesVisible, setRowNotesVisible] = useState(true);
-  const [classPictureGridVersion, setClassPictureGridVersion] = useState('v1');
   const [expandedViewMode, setExpandedViewMode] = useState('timeline');
   const [rowNotes, setRowNotes] = useState(() => getStoredNotes(rowNotesStorageKey));
   const [cellNotes, setCellNotes] = useState(() => getStoredNotes(cellNotesStorageKey));
@@ -1938,44 +1933,6 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
     <Stack spacing={2.25} sx={{ minWidth: 0 }}>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'auto' }, gap: 1.2, alignItems: 'start', justifyContent: 'end' }}>
         <Stack direction="row" spacing={0.7} alignItems="center" sx={{ justifySelf: { xs: 'stretch', lg: 'end' }, alignSelf: 'start', flexWrap: 'wrap' }}>
-          <ToggleButtonGroup
-            exclusive
-            size="small"
-            value={classPictureGridVersion}
-            onChange={(_, nextVersion) => {
-              if (nextVersion) {
-                setClassPictureGridVersion(nextVersion);
-              }
-            }}
-            aria-label="Class Overview version"
-            sx={{
-              p: 0.25,
-              borderRadius: '999px',
-              bgcolor: 'rgba(23, 21, 26, 0.045)',
-              '& .MuiToggleButtonGroup-grouped': {
-                minWidth: 38,
-                height: 30,
-                px: 1.1,
-                border: 0,
-                borderRadius: '999px !important',
-                color: 'text.secondary',
-                fontSize: 12,
-                fontWeight: 850,
-                '&.Mui-selected': {
-                  color: purple,
-                  bgcolor: '#fff',
-                  boxShadow: '0 4px 12px rgba(23, 21, 26, 0.08)',
-                },
-                '&.Mui-selected:hover': {
-                  bgcolor: '#fff',
-                },
-              },
-            }}
-          >
-            <ToggleButton value="v1" aria-label="Class Overview V1">V1</ToggleButton>
-            <ToggleButton value="v2" aria-label="Class Overview V2">V2</ToggleButton>
-            <ToggleButton value="v3" aria-label="Class Overview V3">V3</ToggleButton>
-          </ToggleButtonGroup>
           <Select
             value={activeGroupingSetId}
             onChange={(event) => {
@@ -2021,15 +1978,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
       <Box aria-live="polite" sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
         {moveAnnouncement}
       </Box>
-      {classPictureGridVersion === 'v1' && (
-        <ClassPictureEvidenceGridV1 {...classPictureGridProps} />
-      )}
-      {classPictureGridVersion === 'v2' && (
-        <ClassPictureEvidenceGridV2 {...classPictureGridProps} />
-      )}
-      {classPictureGridVersion === 'v3' && (
-        <ClassPictureEvidenceGridV3 {...classPictureGridProps} />
-      )}
+      <ClassPictureEvidenceGridV2 {...classPictureGridProps} />
       <GroupDialog
         open={groupDialogOpen}
         mode={groupDialogMode}
