@@ -500,6 +500,130 @@ const mathematicsEliasObservationPattern = [
   { independence: '+', note: 'more confident choosing method' },
 ];
 
+const englishEliasObservationDates = [
+  '2026-01-13',
+  '2026-01-15',
+  '2026-01-20',
+  '2026-01-22',
+  '2026-01-27',
+  '2026-01-29',
+  '2026-02-03',
+  '2026-02-05',
+  '2026-02-10',
+  '2026-02-12',
+  '2026-02-17',
+  '2026-02-19',
+  '2026-03-03',
+  '2026-03-05',
+  '2026-03-10',
+  '2026-03-12',
+  '2026-03-17',
+  '2026-03-19',
+  '2026-04-14',
+  '2026-04-16',
+  '2026-04-21',
+  '2026-04-23',
+  '2026-04-28',
+  '2026-04-30',
+  '2026-05-05',
+  '2026-05-07',
+  '2026-05-12',
+  '2026-05-14',
+];
+
+const englishEliasObservationPattern = [
+  { focus: '0', participation: '0', note: 'settles with text preview' },
+  { independence: '-', note: 'needs vocabulary support before reading' },
+  { participation: '+', note: 'shares a simple inference with partner' },
+  { focus: '0', independence: '0', note: 'uses reading strategy when prompted' },
+  { focus: '+', note: 'tracks details more carefully' },
+  { participation: '+', independence: '0', note: 'summarises paragraph with scaffold' },
+  { focus: '0', note: 'starts writing plan with support' },
+  { independence: '-', note: 'grammar choices need checking' },
+  { participation: '0', focus: '0', note: 'accepts model sentence revision' },
+  { independence: '0', note: 'uses feedback to improve structure' },
+  { focus: '+', note: 'edits spelling with checklist' },
+  { participation: '+', note: 'reads draft sentence aloud to peer' },
+  { focus: '0', independence: '0', note: 'prepares oral notes carefully' },
+  { participation: '0', note: 'speaks briefly after rehearsal' },
+  { focus: '+', participation: '0', note: 'uses key vocabulary in presentation' },
+  { independence: '0', note: 'checks pronunciation before recording' },
+  { participation: '+', note: 'answers one follow-up question' },
+  { focus: '+', independence: '0', note: 'presentation confidence improving' },
+  { focus: '0', participation: '+', note: 'joins paired discussion quickly' },
+  { independence: '0', note: 'uses prompt card to respond' },
+  { participation: '+', note: 'builds on classmate idea' },
+  { focus: '+', note: 'keeps discussion thread' },
+  { independence: '0', participation: '+', note: 'expresses opinion with reason' },
+  { focus: '+', independence: '0', note: 'uses strategy to ask for clarification' },
+  { participation: '+', note: 'discussion contribution more sustained' },
+  { focus: '+', independence: '+', note: 'starts task without reminder' },
+  { participation: '+', independence: '+', note: 'supports pair interaction' },
+  { focus: '+', note: 'ready for more independent text work' },
+];
+
+const swedishEliasObservationDates = [
+  '2026-01-13',
+  '2026-01-15',
+  '2026-01-20',
+  '2026-01-22',
+  '2026-01-27',
+  '2026-01-29',
+  '2026-02-03',
+  '2026-02-05',
+  '2026-02-10',
+  '2026-02-12',
+  '2026-02-17',
+  '2026-02-19',
+  '2026-03-03',
+  '2026-03-05',
+  '2026-03-10',
+  '2026-03-12',
+  '2026-03-17',
+  '2026-03-19',
+  '2026-04-14',
+  '2026-04-16',
+  '2026-04-21',
+  '2026-04-23',
+  '2026-04-28',
+  '2026-04-30',
+  '2026-05-05',
+  '2026-05-07',
+  '2026-05-12',
+  '2026-05-14',
+];
+
+const swedishEliasObservationPattern = [
+  { focus: '0', participation: '0', note: 'starts novel reading with support' },
+  { independence: '-', note: 'needs help finding key events' },
+  { participation: '+', note: 'shares interpretation in pair' },
+  { focus: '0', independence: '0', note: 'uses summary frame' },
+  { focus: '+', note: 'tracks theme more clearly' },
+  { participation: '+', independence: '0', note: 'explains character choice with scaffold' },
+  { focus: '0', note: 'plans argumentative text with prompts' },
+  { independence: '-', note: 'needs support choosing evidence' },
+  { participation: '0', focus: '0', note: 'revises argument after model' },
+  { independence: '0', note: 'checks structure with writing frame' },
+  { focus: '+', note: 'uses spelling routine carefully' },
+  { participation: '+', note: 'reads argument sentence to peer' },
+  { focus: '0', independence: '0', note: 'searches sources with checklist' },
+  { participation: '0', note: 'asks for source check' },
+  { focus: '+', participation: '0', note: 'selects more relevant source' },
+  { independence: '0', note: 'rewrites source content in own words' },
+  { participation: '+', note: 'presents finding with notes' },
+  { focus: '+', independence: '0', note: 'source confidence improving' },
+  { focus: '0', participation: '+', note: 'joins debate preparation quickly' },
+  { independence: '0', note: 'uses argument card to respond' },
+  { participation: '+', note: 'builds on another viewpoint' },
+  { focus: '+', note: 'keeps debate thread' },
+  { independence: '0', participation: '+', note: 'states opinion with support' },
+  { focus: '+', independence: '0', note: 'uses counterargument prompt' },
+  { participation: '+', note: 'debate contribution more sustained' },
+  { focus: '+', independence: '+', note: 'starts preparation without reminder' },
+  { participation: '+', independence: '+', note: 'supports pair rehearsal' },
+  { focus: '+', note: 'ready for more independent text analysis' },
+];
+
 const physicalEducationEliasObservationDates = [
   '2026-01-15',
   '2026-01-20',
@@ -765,6 +889,61 @@ function translateLearningObservationNote(note) {
     'more willing to ask for help': 'mer villig att be om hj\u00e4lp',
     'support plan showing small effect': 'st\u00f6dplanen visar liten effekt',
     'still needs structured next steps': 'beh\u00f6ver fortfarande strukturerade n\u00e4sta steg',
+    'settles with text preview': 'kommer in i arbetet med text\u00f6verblick',
+    'needs vocabulary support before reading': 'beh\u00f6ver ordf\u00f6rr\u00e5dsst\u00f6d f\u00f6re l\u00e4sning',
+    'shares a simple inference with partner': 'delar en enkel inferens med partner',
+    'uses reading strategy when prompted': 'anv\u00e4nder l\u00e4sstrategi vid p\u00e5minnelse',
+    'tracks details more carefully': 'f\u00f6ljer detaljer mer noggrant',
+    'summarises paragraph with scaffold': 'sammanfattar stycke med st\u00f6dmall',
+    'starts writing plan with support': 'p\u00e5b\u00f6rjar skrivplan med st\u00f6d',
+    'grammar choices need checking': 'grammatiska val beh\u00f6ver kontrolleras',
+    'accepts model sentence revision': 'tar emot modell f\u00f6r meningsbearbetning',
+    'uses feedback to improve structure': 'anv\u00e4nder feedback f\u00f6r att f\u00f6rb\u00e4ttra struktur',
+    'edits spelling with checklist': 'bearbetar stavning med checklista',
+    'reads draft sentence aloud to peer': 'l\u00e4ser utkastmening h\u00f6gt f\u00f6r kamrat',
+    'prepares oral notes carefully': 'f\u00f6rbereder muntliga st\u00f6dord noggrant',
+    'speaks briefly after rehearsal': 'talar kort efter repetition',
+    'uses key vocabulary in presentation': 'anv\u00e4nder centralt ordf\u00f6rr\u00e5d i presentation',
+    'checks pronunciation before recording': 'kontrollerar uttal f\u00f6re inspelning',
+    'answers one follow-up question': 'svarar p\u00e5 en f\u00f6ljdfr\u00e5ga',
+    'presentation confidence improving': 'presentationssj\u00e4lvf\u00f6rtroendet utvecklas',
+    'joins paired discussion quickly': 'kommer snabbt in i pardiskussion',
+    'uses prompt card to respond': 'anv\u00e4nder st\u00f6dkort f\u00f6r att svara',
+    'builds on classmate idea': 'bygger vidare p\u00e5 klasskamrats id\u00e9',
+    'keeps discussion thread': 'h\u00e5ller kvar diskussionstr\u00e5den',
+    'expresses opinion with reason': 'uttrycker \u00e5sikt med sk\u00e4l',
+    'uses strategy to ask for clarification': 'anv\u00e4nder strategi f\u00f6r att be om f\u00f6rtydligande',
+    'discussion contribution more sustained': 'diskussionsbidraget blir mer uth\u00e5lligt',
+    'starts task without reminder': 'startar uppgiften utan p\u00e5minnelse',
+    'supports pair interaction': 'st\u00f6ttar parinteraktion',
+    'ready for more independent text work': 'redo f\u00f6r mer sj\u00e4lvst\u00e4ndigt textarbete',
+    'starts novel reading with support': 'p\u00e5b\u00f6rjar romanl\u00e4sning med st\u00f6d',
+    'needs help finding key events': 'beh\u00f6ver hj\u00e4lp att hitta centrala h\u00e4ndelser',
+    'shares interpretation in pair': 'delar tolkning i par',
+    'uses summary frame': 'anv\u00e4nder sammanfattningsmall',
+    'tracks theme more clearly': 'f\u00f6ljer tema tydligare',
+    'explains character choice with scaffold': 'f\u00f6rklarar karakt\u00e4rsval med st\u00f6dstruktur',
+    'plans argumentative text with prompts': 'planerar argumenterande text med st\u00f6dfr\u00e5gor',
+    'needs support choosing evidence': 'beh\u00f6ver st\u00f6d att v\u00e4lja bel\u00e4gg',
+    'revises argument after model': 'bearbetar argument efter modell',
+    'checks structure with writing frame': 'kontrollerar struktur med skrivram',
+    'uses spelling routine carefully': 'anv\u00e4nder stavningsrutin noggrant',
+    'reads argument sentence to peer': 'l\u00e4ser argumentmening f\u00f6r kamrat',
+    'searches sources with checklist': 's\u00f6ker k\u00e4llor med checklista',
+    'asks for source check': 'ber om k\u00e4llkontroll',
+    'selects more relevant source': 'v\u00e4ljer en mer relevant k\u00e4lla',
+    'rewrites source content in own words': 'omformulerar k\u00e4llinneh\u00e5ll med egna ord',
+    'presents finding with notes': 'presenterar resultat med st\u00f6danteckningar',
+    'source confidence improving': 's\u00e4kerheten i k\u00e4llarbete utvecklas',
+    'joins debate preparation quickly': 'kommer snabbt in i debattf\u00f6rberedelse',
+    'uses argument card to respond': 'anv\u00e4nder argumentkort f\u00f6r att svara',
+    'builds on another viewpoint': 'bygger vidare p\u00e5 ett annat perspektiv',
+    'keeps debate thread': 'h\u00e5ller kvar debattens tr\u00e5d',
+    'states opinion with support': 'formulerar \u00e5sikt med st\u00f6d',
+    'uses counterargument prompt': 'anv\u00e4nder st\u00f6d f\u00f6r motargument',
+    'debate contribution more sustained': 'debattbidraget blir mer uth\u00e5lligt',
+    'supports pair rehearsal': 'st\u00f6ttar parrepetition',
+    'ready for more independent text analysis': 'redo f\u00f6r mer sj\u00e4lvst\u00e4ndig textanalys',
     'confident start with guitar': 's\u00e4ker start med gitarr',
     'practises chord changes without prompt': '\u00f6var ackordbyten utan p\u00e5minnelse',
     'secure guitar contribution in pair practice': 's\u00e4kert gitarrbidrag i par\u00f6vning',
@@ -850,7 +1029,29 @@ function buildMathematicsEliasObservationWindows() {
   }));
 }
 
+function buildEnglishEliasObservationWindows() {
+  return englishEliasObservationDates.map((date, index) => ({
+    date,
+    ...englishEliasObservationPattern[index % englishEliasObservationPattern.length],
+  }));
+}
+
+function buildSwedishEliasObservationWindows() {
+  return swedishEliasObservationDates.map((date, index) => ({
+    date,
+    ...swedishEliasObservationPattern[index % swedishEliasObservationPattern.length],
+  }));
+}
+
 function getLearningObservationWindows(subjectId, student, profile) {
+  if (subjectId === 'english' && student.id === 'elias-nilsson') {
+    return buildEnglishEliasObservationWindows();
+  }
+
+  if (subjectId === 'swedish' && student.id === 'elias-nilsson') {
+    return buildSwedishEliasObservationWindows();
+  }
+
   if (subjectId === 'music' && student.id === 'elias-nilsson') {
     return buildMusicEliasObservationWindows();
   }
@@ -1073,6 +1274,84 @@ function buildEvidence(subjectId, curriculum) {
       ],
     }))
     : [];
+  const englishEliasHomeworkAssessments = subjectId === 'english'
+    ? [
+      ['2026-01-16', 'writing', localized('Homework: spelling patterns', 'L\u00e4xa: stavningsm\u00f6nster'), 10, 5, 4],
+      ['2026-01-23', 'reading', localized('Homework: vocabulary from text', 'L\u00e4xa: ord fr\u00e5n text'), 10, 5, 5],
+      ['2026-01-30', 'writing', localized('Homework: sentence punctuation', 'L\u00e4xa: meningsskiljetecken'), 10, 5, 5],
+      ['2026-02-06', 'writing', localized('Homework: verb forms', 'L\u00e4xa: verbformer'), 10, 5, 6],
+      ['2026-02-13', 'writing', localized('Homework: paragraph connectors', 'L\u00e4xa: styckesbindning'), 10, 5, 5],
+      ['2026-02-20', 'writing', localized('Homework: grammar and spelling check', 'L\u00e4xa: grammatik- och stavningskontroll'), 10, 5, 6],
+      ['2026-02-27', 'writing', localized('Short test: writing accuracy', 'Kort test: skriftlig korrekthet'), 20, 10, 11],
+      ['2026-03-06', 'speaking', localized('Homework: pronunciation practice', 'L\u00e4xa: uttals\u00f6vning'), 10, 5, 6],
+      ['2026-03-13', 'writing', localized('Homework: word order', 'L\u00e4xa: ordf\u00f6ljd'), 10, 5, 6],
+      ['2026-03-20', 'speaking', localized('Short test: oral preparation notes', 'Kort test: muntliga st\u00f6dord'), 12, 6, 8],
+      ['2026-03-27', 'speaking', localized('Presentation checkpoint', 'Presentationskontroll'), 20, 10, 13],
+      ['2026-04-10', 'interaction', localized('Homework: opinion phrases', 'L\u00e4xa: fraser f\u00f6r \u00e5sikter'), 10, 5, 6],
+      ['2026-04-17', 'interaction', localized('Homework: response phrases', 'L\u00e4xa: svarsfraser'), 10, 5, 7],
+      ['2026-04-24', 'interaction', localized('Discussion checkpoint', 'Diskussionskontroll'), 16, 8, 10],
+      ['2026-05-01', 'writing', localized('Homework: spelling review', 'L\u00e4xa: stavningsrepetition'), 10, 5, 7],
+      ['2026-05-08', 'interaction', localized('Homework: discussion repair strategies', 'L\u00e4xa: strategier f\u00f6r att reparera samtal'), 10, 5, 7],
+      ['2026-05-15', 'interaction', localized('Term checkpoint: interaction', 'Terminskontroll: interaktion'), 20, 10, 14],
+    ].map(([date, teachingUnitId, title, max, pass, score], assessmentIndex) => ({
+      id: `english-8a-elias-homework-${assessmentIndex + 1}`,
+      type: 'assessment',
+      title,
+      date,
+      teachingUnitId,
+      max,
+      pass,
+      results: [
+        {
+          studentId: 'elias-nilsson',
+          score,
+          percentage: Math.round((score / max) * 100),
+          passed: score >= pass,
+          absent: false,
+          warning: score < pass,
+        },
+      ],
+    }))
+    : [];
+  const swedishEliasHomeworkAssessments = subjectId === 'swedish'
+    ? [
+      ['2026-01-16', 'language-usage', localized('Homework: spelling patterns', 'L\u00e4xa: stavningsm\u00f6nster'), 10, 5, 4],
+      ['2026-01-23', 'reading-comprehension', localized('Homework: vocabulary from novel', 'L\u00e4xa: ord fr\u00e5n romanen'), 10, 5, 5],
+      ['2026-01-30', 'language-usage', localized('Homework: punctuation', 'L\u00e4xa: skiljetecken'), 10, 5, 5],
+      ['2026-02-06', 'language-usage', localized('Homework: word classes', 'L\u00e4xa: ordklasser'), 10, 5, 6],
+      ['2026-02-13', 'writing', localized('Homework: paragraph structure', 'L\u00e4xa: styckestruktur'), 10, 5, 5],
+      ['2026-02-20', 'language-usage', localized('Homework: spelling and grammar check', 'L\u00e4xa: stavnings- och grammatikkontroll'), 10, 5, 6],
+      ['2026-02-27', 'writing', localized('Short test: argumentative writing', 'Kort test: argumenterande skrivande'), 20, 10, 11],
+      ['2026-03-06', 'information-search-source-criticism', localized('Homework: source notes', 'L\u00e4xa: k\u00e4llanteckningar'), 10, 5, 6],
+      ['2026-03-13', 'language-usage', localized('Homework: sentence variation', 'L\u00e4xa: meningsvariation'), 10, 5, 6],
+      ['2026-03-20', 'information-search-source-criticism', localized('Short test: source credibility', 'Kort test: k\u00e4llors trov\u00e4rdighet'), 12, 6, 8],
+      ['2026-03-27', 'speaking-conversation', localized('Presentation checkpoint', 'Presentationskontroll'), 20, 10, 13],
+      ['2026-04-10', 'speaking-conversation', localized('Homework: debate phrases', 'L\u00e4xa: debattfraser'), 10, 5, 6],
+      ['2026-04-17', 'speaking-conversation', localized('Homework: counterarguments', 'L\u00e4xa: motargument'), 10, 5, 7],
+      ['2026-04-24', 'speaking-conversation', localized('Debate checkpoint', 'Debattkontroll'), 16, 8, 10],
+      ['2026-05-01', 'language-usage', localized('Homework: spelling review', 'L\u00e4xa: stavningsrepetition'), 10, 5, 7],
+      ['2026-05-08', 'speaking-conversation', localized('Homework: developing responses', 'L\u00e4xa: utveckla svar'), 10, 5, 7],
+      ['2026-05-15', 'speaking-conversation', localized('Term checkpoint: oral reasoning', 'Terminskontroll: muntligt resonemang'), 20, 10, 14],
+    ].map(([date, teachingUnitId, title, max, pass, score], assessmentIndex) => ({
+      id: `swedish-8a-elias-homework-${assessmentIndex + 1}`,
+      type: 'assessment',
+      title,
+      date,
+      teachingUnitId,
+      max,
+      pass,
+      results: [
+        {
+          studentId: 'elias-nilsson',
+          score,
+          percentage: Math.round((score / max) * 100),
+          passed: score >= pass,
+          absent: false,
+          warning: score < pass,
+        },
+      ],
+    }))
+    : [];
   const englishEliasObservationClusters = subjectId === 'english'
     ? [
       ['2026-01-22', 'listening', [
@@ -1112,6 +1391,100 @@ function buildEvidence(subjectId, curriculum) {
       date,
       teachingUnitId,
       skillId,
+      levelId,
+    })))
+    : [];
+  const englishEliasActivityTimeline = subjectId === 'english'
+    ? [
+      ['2026-01-15', 'reading-text-work', localized('Reading / text work', 'L\u00e4sning / textarbete'), 'reading', [
+        ['reading-text-work-reading-main-ideas', 'reading-main-ideas', 'developing'],
+        ['reading-text-work-reading-details', 'reading-details', 'emerging'],
+      ]],
+      ['2026-01-29', 'reading-text-work', localized('Reading / text work', 'L\u00e4sning / textarbete'), 'reading', [
+        ['reading-text-work-reading-interpretation', 'reading-interpretation', 'developing'],
+        ['reading-text-work-reading-strategies', 'reading-strategies', 'developing'],
+      ]],
+      ['2026-02-05', 'writing-task', localized('Writing task', 'Skrivuppgift'), 'writing', [
+        ['writing-task-writing-content-development', 'writing-content-development', 'developing'],
+        ['writing-task-writing-structure-coherence', 'writing-structure-coherence', 'emerging'],
+      ]],
+      ['2026-02-19', 'writing-task', localized('Writing task', 'Skrivuppgift'), 'writing', [
+        ['writing-task-writing-vocabulary-variation', 'writing-vocabulary-variation', 'developing'],
+        ['writing-task-writing-grammar-accuracy', 'writing-grammar-accuracy', 'developing'],
+      ]],
+      ['2026-03-05', 'speaking-presentation', localized('Speaking / presentation', 'Tal / presentation'), 'speaking', [
+        ['speaking-presentation-speaking-clarity', 'speaking-clarity', 'developing'],
+        ['speaking-presentation-speaking-fluency', 'speaking-fluency', 'developing'],
+      ]],
+      ['2026-03-19', 'speaking-presentation', localized('Speaking / presentation', 'Tal / presentation'), 'speaking', [
+        ['speaking-presentation-speaking-vocabulary-variation', 'speaking-vocabulary-variation', 'secure'],
+        ['speaking-presentation-speaking-pronunciation', 'speaking-pronunciation', 'developing'],
+      ]],
+      ['2026-04-16', 'discussion-interaction', localized('Discussion / interaction', 'Diskussion / interaktion'), 'interaction', [
+        ['discussion-interaction-interaction-participating', 'interaction-participating', 'developing'],
+        ['discussion-interaction-interaction-responding-developing', 'interaction-responding-developing', 'developing'],
+      ]],
+      ['2026-05-07', 'discussion-interaction', localized('Discussion / interaction', 'Diskussion / interaktion'), 'interaction', [
+        ['discussion-interaction-interaction-expressing-opinions', 'interaction-expressing-opinions', 'secure'],
+        ['discussion-interaction-interaction-communication-strategies', 'interaction-communication-strategies', 'developing'],
+      ]],
+    ].flatMap(([date, contextId, contextLabel, teachingUnitId, captures], clusterIndex) => captures.map(([capturePointId, skillId, levelId], captureIndex) => ({
+      id: `english-8a-evidence-elias-activity-${clusterIndex + 1}-${captureIndex + 1}`,
+      type: 'observation',
+      studentId: 'elias-nilsson',
+      date,
+      teachingUnitId,
+      skillId,
+      capturePointId,
+      contextId,
+      contextLabel,
+      levelId,
+    })))
+    : [];
+  const swedishEliasActivityTimeline = subjectId === 'swedish'
+    ? [
+      ['2026-01-15', 'reading-novel-discussion', localized('Novel reading and discussion', 'Romanl\u00e4sning och textsamtal'), 'reading-comprehension', [
+        ['reading-novel-discussion-summarising', 'summarising', 'developing'],
+        ['reading-novel-discussion-interpreting-content', 'interpreting-content', 'emerging'],
+      ]],
+      ['2026-01-29', 'reading-novel-discussion', localized('Novel reading and discussion', 'Romanl\u00e4sning och textsamtal'), 'reading-comprehension', [
+        ['reading-novel-discussion-reasoning-about-text', 'reasoning-about-text', 'developing'],
+        ['reading-novel-discussion-message-theme', 'message-theme', 'developing', 'literature-text-analysis'],
+      ]],
+      ['2026-02-05', 'argumentative-writing', localized('Argumentative writing', 'Argumenterande text'), 'writing', [
+        ['argumentative-writing-writing-structure', 'writing-structure', 'developing'],
+        ['argumentative-writing-supporting-arguments', 'supporting-arguments', 'emerging', 'speaking-conversation'],
+      ]],
+      ['2026-02-19', 'argumentative-writing', localized('Argumentative writing', 'Argumenterande text'), 'writing', [
+        ['argumentative-writing-adaptation-text-type-purpose-recipient', 'adaptation-text-type-purpose-recipient', 'developing'],
+        ['argumentative-writing-language-correctness', 'language-correctness', 'developing'],
+      ]],
+      ['2026-03-05', 'source-research-presentation', localized('Research and oral presentation', 'Informationss\u00f6kning och muntlig presentation'), 'information-search-source-criticism', [
+        ['source-research-presentation-selecting-relevant-sources', 'selecting-relevant-sources', 'developing'],
+        ['source-research-presentation-credibility-relevance', 'credibility-relevance', 'developing'],
+      ]],
+      ['2026-03-19', 'source-research-presentation', localized('Research and oral presentation', 'Informationss\u00f6kning och muntlig presentation'), 'information-search-source-criticism', [
+        ['source-research-presentation-processing-own-words', 'processing-own-words', 'secure'],
+        ['source-research-presentation-oral-presentation-adaptation', 'oral-presentation-adaptation', 'developing', 'speaking-conversation'],
+      ]],
+      ['2026-04-16', 'class-debate', localized('Class debate', 'Klassdebatt'), 'speaking-conversation', [
+        ['class-debate-participating-in-conversation', 'participating-in-conversation', 'developing'],
+        ['class-debate-developing-conversation', 'developing-conversation', 'developing'],
+      ]],
+      ['2026-05-07', 'class-debate', localized('Class debate', 'Klassdebatt'), 'speaking-conversation', [
+        ['class-debate-expressing-opinions', 'expressing-opinions', 'secure'],
+        ['class-debate-supporting-arguments', 'supporting-arguments', 'developing'],
+      ]],
+    ].flatMap(([date, contextId, contextLabel, teachingUnitId, captures], clusterIndex) => captures.map(([capturePointId, skillId, levelId, captureTeachingUnitId], captureIndex) => ({
+      id: `swedish-8a-evidence-elias-activity-${clusterIndex + 1}-${captureIndex + 1}`,
+      type: 'observation',
+      studentId: 'elias-nilsson',
+      date,
+      teachingUnitId: captureTeachingUnitId || teachingUnitId,
+      skillId,
+      capturePointId,
+      contextId,
+      contextLabel,
       levelId,
     })))
     : [];
@@ -1760,12 +2133,16 @@ function buildEvidence(subjectId, curriculum) {
     items: [
       ...observations,
       ...englishEliasObservationClusters,
+      ...englishEliasActivityTimeline,
+      ...swedishEliasActivityTimeline,
       ...mathematicsEliasObservationClusters,
       ...mathematicsEliasActivityTimeline,
       ...physicalEducationEliasObservationClusters,
       ...physicalEducationEliasActivityTimeline,
       ...musicEliasProjectTimeline,
       ...mathematicsEliasAssessments,
+      ...englishEliasHomeworkAssessments,
+      ...swedishEliasHomeworkAssessments,
       ...assessments,
     ],
     learningObservations,
@@ -2191,8 +2568,8 @@ function buildPlanning(subjectId, curriculum) {
         slug: 'class-debate',
         periodId: 'apr-2026',
         startDate: '2026-04-13',
-        endDate: '2026-04-24',
-        status: 'completed',
+        endDate: '2026-05-15',
+        status: 'current',
         title: localized('Class debate', 'Klassdebatt'),
         description: localized(
           'Students prepare and take part in a structured debate, presenting viewpoints, responding to others and supporting their arguments.',
@@ -2256,7 +2633,7 @@ function buildPlanning(subjectId, curriculum) {
       blockTypeLabels: {
         teaching: localized('Activities', 'Aktiviteter'),
       },
-      storageVersion: 'swedish-activities-v1',
+      storageVersion: 'swedish-activities-v2',
       curriculumNotes: [],
     };
   }
@@ -2317,8 +2694,8 @@ function buildPlanning(subjectId, curriculum) {
         slug: 'discussion-interaction',
         periodId: 'apr-2026',
         startDate: '2026-04-13',
-        endDate: '2026-04-24',
-        status: 'completed',
+        endDate: '2026-05-15',
+        status: 'current',
         title: localized('Discussion / interaction', 'Diskussion / interaktion'),
         description: localized(
           'Students communicate with others in pairs, groups or whole-class situations.',
@@ -2382,7 +2759,7 @@ function buildPlanning(subjectId, curriculum) {
       blockTypeLabels: {
         teaching: localized('Activities', 'Aktiviteter'),
       },
-      storageVersion: 'english-activities-v1',
+      storageVersion: 'english-activities-v2',
       curriculumNotes: [],
     };
   }
