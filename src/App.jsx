@@ -22,8 +22,10 @@ import PETeacherAssessment from './components/PETeacherAssessment.jsx';
 import StudentEssayHelper from './components/StudentEssayHelper.jsx';
 import TeacherDashboard from './components/TeacherDashboard.jsx';
 import HomeScreen from './features/conceptDemo/HomeScreen.jsx';
+import RichDataIntro from './features/richDataIntro/RichDataIntro.jsx';
+import SmartDeskTextExamples from './SmartDeskTextExamples.jsx';
 
-const views = new Set(['home', 'student', 'teacher', 'maths', 'music', 'pe', 'concept-demo']);
+const views = new Set(['home', 'student', 'teacher', 'maths', 'music', 'pe', 'rich-data-intro', 'concept-demo', 'examples']);
 
 const starterLog = [
   {
@@ -50,7 +52,9 @@ const starterLog = [
 ];
 
 export default function App() {
-  const initialView = typeof window === 'undefined' ? 'home' : window.location.hash.replace('#', '');
+  const initialView = typeof window === 'undefined'
+    ? 'home'
+    : window.location.hash.replace('#', '') || window.location.pathname.split('/').filter(Boolean).at(-1) || '';
   const [view, setView] = useState(views.has(initialView) ? initialView : 'home');
   const [assignment, setAssignment] = useState('');
   const [idea, setIdea] = useState('');
@@ -77,6 +81,10 @@ export default function App() {
 
   if (view === 'concept-demo') {
     return <HomeScreen />;
+  }
+
+  if (view === 'examples') {
+    return <SmartDeskTextExamples />;
   }
 
   return (
@@ -146,6 +154,7 @@ export default function App() {
         )}
 
         {view === 'home' && <Home onNavigate={navigate} />}
+        {view === 'rich-data-intro' && <RichDataIntro onOpenDemo={() => navigate('concept-demo')} />}
         {view === 'student' && (
           <StudentEssayHelper
             assignment={assignment}

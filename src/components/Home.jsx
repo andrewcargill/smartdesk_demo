@@ -1,4 +1,5 @@
 import { Box, ButtonBase, Paper, Stack, Typography } from '@mui/material';
+import ArticleIcon from '@mui/icons-material/Article';
 import CalculateIcon from '@mui/icons-material/Calculate';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
@@ -7,7 +8,8 @@ import SchoolIcon from '@mui/icons-material/School';
 import WorkspacesIcon from '@mui/icons-material/Workspaces';
 
 const routes = [
-  { id: 'concept-demo', label: 'Anna SmartDesk Home', icon: <WorkspacesIcon /> },
+  { id: 'rich-data-intro', label: 'SmartDesk Rich Data', icon: <WorkspacesIcon />, purple: true },
+  { id: 'examples', label: 'SmartDesk Grading Assistant', icon: <ArticleIcon />, purple: true },
   { id: 'student', label: 'Student Essay Helper', icon: <MenuBookIcon /> },
   { id: 'teacher', label: 'Teacher Dashboard', icon: <SchoolIcon /> },
   { id: 'maths', label: 'Maths Module', icon: <CalculateIcon /> },
@@ -31,12 +33,11 @@ export default function Home({ onNavigate }) {
         <Typography variant="overline" color="primary" fontWeight={850}>
           School support prototypes
         </Typography>
-        <Typography variant="h1" sx={{ maxWidth: 720, fontSize: { xs: 46, sm: 64, md: 92 }, lineHeight: 0.95 }}>
-          Learning Helper Lab
+        <Typography variant="h1" sx={{ maxWidth: 720, color: '#9c28af', fontSize: { xs: 46, sm: 64, md: 92 }, lineHeight: 0.95 }}>
+          SmartDesk Learning Lab
         </Typography>
         <Typography color="text.secondary" sx={{ maxWidth: 620, mt: 2.5, fontSize: 20, lineHeight: 1.6 }}>
-          Explore small classroom tools for guided student support and teacher-owned evidence capture.
-          Each prototype is mocked locally so the workflow can be tested before any backend or AI is added.
+          ongoing explorations and experiments
         </Typography>
       </Box>
 
@@ -57,8 +58,12 @@ export default function Home({ onNavigate }) {
                 '&:hover': { borderColor: 'primary.main', bgcolor: '#fbf5fd' },
               }}
             >
-              {route.icon}
-              <span>{route.label}</span>
+              <Box sx={{ color: route.purple ? '#9c28af' : 'inherit', display: 'inline-flex' }}>
+                {route.icon}
+              </Box>
+              <Box component="span" sx={{ color: route.purple ? '#9c28af' : 'inherit' }}>
+                {route.label}
+              </Box>
             </Paper>
           </ButtonBase>
         ))}
