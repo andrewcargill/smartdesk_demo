@@ -8,13 +8,10 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material';
+import ArticleIcon from '@mui/icons-material/Article';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CalculateIcon from '@mui/icons-material/Calculate';
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import HomeIcon from '@mui/icons-material/Home';
-import MenuBookIcon from '@mui/icons-material/MenuBook';
-import MusicNoteIcon from '@mui/icons-material/MusicNote';
-import SchoolIcon from '@mui/icons-material/School';
+import WorkspacesIcon from '@mui/icons-material/Workspaces';
 import Home from './components/Home.jsx';
 import MathsModule from './components/MathsModule.jsx';
 import MusicTeacherAssessment from './components/MusicTeacherAssessment.jsx';
@@ -98,49 +95,25 @@ export default function App() {
         <Toolbar sx={{ gap: 2, justifyContent: 'space-between', flexWrap: 'wrap', py: 1 }}>
           <Button color="inherit" startIcon={<HomeIcon />} onClick={() => navigate('home')} aria-label="Go to home">
             <Typography component="span" fontWeight={850}>
-              Learning Helper
+              SmartDesk AB
             </Typography>
           </Button>
           <Stack component="nav" direction="row" spacing={1} aria-label="Primary" sx={{ flexWrap: 'wrap' }}>
             <Button
-              variant={view === 'student' ? 'contained' : 'text'}
-              color={view === 'student' ? 'primary' : 'inherit'}
-              startIcon={<MenuBookIcon />}
-              onClick={() => navigate('student')}
+              variant={view === 'rich-data-intro' || view === 'concept-demo' ? 'contained' : 'text'}
+              color={view === 'rich-data-intro' || view === 'concept-demo' ? 'primary' : 'inherit'}
+              startIcon={<WorkspacesIcon />}
+              onClick={() => navigate('rich-data-intro')}
             >
-              Student
+              Rich Data
             </Button>
             <Button
-              variant={view === 'teacher' ? 'contained' : 'text'}
-              color={view === 'teacher' ? 'primary' : 'inherit'}
-              startIcon={<SchoolIcon />}
-              onClick={() => navigate('teacher')}
+              variant={view === 'examples' ? 'contained' : 'text'}
+              color={view === 'examples' ? 'primary' : 'inherit'}
+              startIcon={<ArticleIcon />}
+              onClick={() => navigate('examples')}
             >
-              Teacher
-            </Button>
-            <Button
-              variant={view === 'maths' ? 'contained' : 'text'}
-              color={view === 'maths' ? 'primary' : 'inherit'}
-              startIcon={<CalculateIcon />}
-              onClick={() => navigate('maths')}
-            >
-              Maths
-            </Button>
-            <Button
-              variant={view === 'music' ? 'contained' : 'text'}
-              color={view === 'music' ? 'primary' : 'inherit'}
-              startIcon={<MusicNoteIcon />}
-              onClick={() => navigate('music')}
-            >
-              Music
-            </Button>
-            <Button
-              variant={view === 'pe' ? 'contained' : 'text'}
-              color={view === 'pe' ? 'primary' : 'inherit'}
-              startIcon={<FitnessCenterIcon />}
-              onClick={() => navigate('pe')}
-            >
-              PE
+              Grading Assistant
             </Button>
           </Stack>
         </Toolbar>

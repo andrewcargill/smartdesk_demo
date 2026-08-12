@@ -1,15 +1,20 @@
-import { Box, ButtonBase, Paper, Stack, Typography } from '@mui/material';
+import { useState } from 'react';
+import { Box, Button, ButtonBase, Collapse, Paper, Stack, Typography } from '@mui/material';
 import ArticleIcon from '@mui/icons-material/Article';
 import CalculateIcon from '@mui/icons-material/Calculate';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import SchoolIcon from '@mui/icons-material/School';
 import WorkspacesIcon from '@mui/icons-material/Workspaces';
 
-const routes = [
+const primaryRoutes = [
   { id: 'rich-data-intro', label: 'SmartDesk Rich Data', icon: <WorkspacesIcon />, purple: true },
   { id: 'examples', label: 'SmartDesk Grading Assistant', icon: <ArticleIcon />, purple: true },
+];
+
+const secondaryRoutes = [
   { id: 'student', label: 'Student Essay Helper', icon: <MenuBookIcon /> },
   { id: 'teacher', label: 'Teacher Dashboard', icon: <SchoolIcon /> },
   { id: 'maths', label: 'Maths Module', icon: <CalculateIcon /> },
@@ -18,6 +23,8 @@ const routes = [
 ];
 
 export default function Home({ onNavigate }) {
+  const [otherOpen, setOtherOpen] = useState(false);
+
   return (
     <Box
       component="section"
@@ -42,7 +49,7 @@ export default function Home({ onNavigate }) {
       </Box>
 
       <Stack spacing={1.5} aria-label="Choose a view">
-        {routes.map((route) => (
+        {primaryRoutes.map((route) => (
           <ButtonBase key={route.id} onClick={() => onNavigate(route.id)} sx={{ display: 'block', textAlign: 'left', borderRadius: 2 }}>
             <Paper
               variant="outlined"
@@ -67,6 +74,63 @@ export default function Home({ onNavigate }) {
             </Paper>
           </ButtonBase>
         ))}
+
+        <Box>
+          <Button
+            type="button"
+            onClick={() => setOtherOpen((current) => !current)}
+            endIcon={(
+              <ExpandMoreIcon
+                sx={{
+                  transform: otherOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 160ms ease',
+                }}
+              />
+            )}
+            sx={{
+              mt: 0.5,
+              color: 'text.secondary',
+              textTransform: 'none',
+              fontWeight: 820,
+              px: 0.5,
+              '&:hover': { bgcolor: 'rgba(23, 21, 26, 0.04)' },
+            }}
+          >
+            Other prototypes
+          </Button>
+
+          <Collapse in={otherOpen} timeout={180} unmountOnExit>
+            <Stack spacing={1} sx={{ mt: 1 }}>
+              {secondaryRoutes.map((route) => (
+                <ButtonBase key={route.id} onClick={() => onNavigate(route.id)} sx={{ display: 'block', textAlign: 'left', borderRadius: 2 }}>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      minHeight: 68,
+                      p: 1.5,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.25,
+                      color: 'text.secondary',
+                      fontWeight: 780,
+                      fontSize: 15,
+                      bgcolor: 'rgba(255, 255, 255, 0.72)',
+                      transition: 'border-color 160ms ease, background-color 160ms ease, color 160ms ease',
+                      '&:hover': { borderColor: 'rgba(156, 40, 175, 0.32)', bgcolor: '#fbf5fd', color: '#17151a' },
+                    }}
+                  >
+                    <Box sx={{ display: 'inline-flex' }}>
+                      {route.icon}
+                    </Box>
+                    <Box component="span">
+                      {route.label}
+                    </Box>
+                  </Paper>
+                </ButtonBase>
+              ))}
+            </Stack>
+          </Collapse>
+        </Box>
       </Stack>
     </Box>
   );
