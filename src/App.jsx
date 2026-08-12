@@ -19,10 +19,11 @@ import PETeacherAssessment from './components/PETeacherAssessment.jsx';
 import StudentEssayHelper from './components/StudentEssayHelper.jsx';
 import TeacherDashboard from './components/TeacherDashboard.jsx';
 import HomeScreen from './features/conceptDemo/HomeScreen.jsx';
+import PhoneKeeperDemo from './features/phoneKeeper/PhoneKeeperDemo.jsx';
 import RichDataIntro from './features/richDataIntro/RichDataIntro.jsx';
 import SmartDeskTextExamples from './SmartDeskTextExamples.jsx';
 
-const views = new Set(['home', 'student', 'teacher', 'maths', 'music', 'pe', 'rich-data-intro', 'concept-demo', 'examples']);
+const views = new Set(['home', 'student', 'teacher', 'maths', 'music', 'pe', 'rich-data-intro', 'concept-demo', 'examples', 'phone-keeper']);
 
 const starterLog = [
   {
@@ -82,6 +83,10 @@ export default function App() {
 
   if (view === 'examples') {
     return <SmartDeskTextExamples />;
+  }
+
+  if (view === 'phone-keeper') {
+    return <PhoneKeeperDemo />;
   }
 
   return (

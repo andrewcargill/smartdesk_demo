@@ -6,12 +6,14 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
+import PhoneIphoneIcon from '@mui/icons-material/PhoneIphone';
 import SchoolIcon from '@mui/icons-material/School';
 import WorkspacesIcon from '@mui/icons-material/Workspaces';
 
 const primaryRoutes = [
   { id: 'rich-data-intro', label: 'SmartDesk Rich Data', icon: <WorkspacesIcon />, purple: true },
   { id: 'examples', label: 'SmartDesk Grading Assistant', icon: <ArticleIcon />, purple: true },
+  { id: 'phone-keeper', label: 'Phone Keeper', icon: <PhoneIphoneIcon />, purple: true },
 ];
 
 const secondaryRoutes = [
