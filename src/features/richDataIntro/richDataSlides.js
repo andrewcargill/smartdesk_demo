@@ -1,57 +1,96 @@
+import richData1Image from '../../media/rich_data1.png';
+import richData2Image from '../../media/rich_data2.png';
+import richData3Image from '../../media/rich_data3.png';
+import richData4Image from '../../media/rich_data4.png';
+import richData5Image from '../../media/rich_data5.png';
+import richData6Image from '../../media/rich_data6.png';
+
 export const richDataSlides = [
   {
     id: 'overview',
     eyebrow: 'Slide 1',
     title: 'SmartDesk Rich Data',
-    body: 'Placeholder text for introducing the demo and the central idea behind richer classroom data.',
+    image: richData1Image,
+    imageAlt: 'SmartDesk Rich Data overview visual',
+    body: 'Imagine if you could store all those observations you see in your lessons.',
     points: [
-      'Placeholder point about the purpose of the demo.',
-      'Placeholder point about teacher workflow.',
-      'Placeholder point about student evidence over time.',
+      'Yes, that student is doing well in this skill...',
+      'Oh no, that student is struggling with this skill...',
+      'I need to plan a follow-up activity for this group...',
     ],
   },
   {
     id: 'learning-picture',
     eyebrow: 'Slide 2',
     title: 'A clearer learning picture',
-    body: 'Placeholder text describing how evidence, observations, planning and assessment can be brought together.',
+    image: richData2Image,
+    imageAlt: 'A visual summary of connected learning evidence',
+    body: 'Then use that information to build a clearer picture of learning across your subject.',
     points: [
-      'Placeholder point about subject evidence.',
-      'Placeholder point about trends and observations.',
-      'Placeholder point about planning context.',
+      'See that pattern of strengths and weaknesses across the class.',
+      'Grading becomes easy with a clear picture of learning.',
+      'Plan follow-up activities for the class.',
     ],
   },
   {
     id: 'teacher-workflow',
     eyebrow: 'Slide 3',
-    title: 'Built around teacher workflow',
-    body: 'Placeholder text for explaining how the demo supports everyday teacher decisions without adding noise.',
+    title: 'Sharing and collaboration',
+    image: richData3Image,
+    imageAlt: 'Teachers reviewing rich classroom data together',
+    body: 'SmartDesk Rich Data is made for sharing and collaboration. Teachers can quickly scan learning evidence, identify students who need attention, and plan practical follow-up activities.',
     points: [
-      'Placeholder point about quick scanning.',
-      'Placeholder point about selected students.',
-      'Placeholder point about practical follow-up.',
+      'Quickly scan learning evidence for the class.',
+      'Identify students who need attention.',
+      'Plan practical follow-up activities.',
     ],
   },
   {
-    id: 'subject-data',
+    id: 'ai-assistant-2',
     eyebrow: 'Slide 4',
-    title: 'Subject data in one structure',
-    body: 'Placeholder text about using a shared subject data model across maths, English, Swedish, music and PE.',
-    points: [
-      'Placeholder point about categories and subcategories.',
-      'Placeholder point about activities and planning blocks.',
-      'Placeholder point about reusable configuration.',
-    ],
-  },
-  {
-    id: 'open-demo',
-    eyebrow: 'Slide 5',
-    title: 'Open the demo',
-    body: 'Placeholder text for setting expectations before opening the live SmartDesk Rich Data demo.',
+    image: richData6Image,
+    imageAlt: 'Teacher with students',
+    title: 'Transparency and trust',
+    body: 'Help students and parents understand the learning picture, and build trust in your grading and professional decisions with clear evidence of observations.',
     points: [
       'Placeholder point about what to click first.',
       'Placeholder point about which student or subject to inspect.',
       'Placeholder point about what the viewer should notice.',
+    ],
+  },
+  {
+    id: 'subject-data',
+    eyebrow: 'Slide 5',
+    title: 'Zero data set up.',
+    image: richData4Image,
+    imageAlt: 'Structured subject data represented visually',
+    body: 'Keep the data local and secure. Bring your current cloud data together in one structured platform.',
+    points: [
+      'Keep your data local and secure.',
+      'Bring your cloud data together in one structure.',
+      'Use the structured data to make better decisions for your students.',
+    ],
+  },
+  {
+    id: 'ai-assistant',
+    eyebrow: 'Slide 6',
+    image: richData5Image,
+    imageAlt: 'AI assistant helping teachers with grading and planning',
+    title: 'SmartDesk AI assistant',
+    body: 'Let us assist you with all those small tasks that take up your time and energy.',
+    points: [
+      'Discuss and plan.',
+      'Get insights about your classes and students.',
+      'Remove the burden of all those small tasks that take up your time and energy.',
+    ],
+  },
+  {
+    id: 'open-demo',
+    eyebrow: 'Slide 7',
+    title: 'Experience the demo',
+    body: 'The future begins now. Explore the demo to see how SmartDesk Rich Data can help students, teachers, schools and parents.',
+    points: [
+    
     ],
   },
 ];

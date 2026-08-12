@@ -4,19 +4,23 @@ const darkText = '#17151a';
 const purple = '#9c28af';
 
 export default function RichDataSlide({ slide, index, total }) {
+  const eyebrow = slide.eyebrow?.startsWith('Slide ') ? `Slide ${index + 1}` : slide.eyebrow;
+
   return (
     <Box
       sx={{
-        minHeight: { xs: 430, md: 500 },
+        minHeight: { xs: 520, md: 640 },
         display: 'grid',
         alignContent: 'space-between',
         gap: 3,
       }}
     >
       <Stack spacing={1.5}>
-        <Typography sx={{ color: purple, fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0 }}>
-          {slide.eyebrow} of {total}
-        </Typography>
+        {!!eyebrow && (
+          <Typography sx={{ color: purple, fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0 }}>
+            {eyebrow} of {total}
+          </Typography>
+        )}
         <Typography component="h1" sx={{ color: darkText, fontSize: { xs: 36, md: 56 }, fontWeight: 900, lineHeight: 1.02 }}>
           {slide.title}
         </Typography>
@@ -24,6 +28,23 @@ export default function RichDataSlide({ slide, index, total }) {
           {slide.body}
         </Typography>
       </Stack>
+
+      {slide.image && (
+        <Box
+          component="img"
+          src={slide.image}
+          alt={slide.imageAlt || ''}
+          sx={{
+            width: '100%',
+            height: { xs: 300, sm: 380, md: 460 },
+            objectFit: 'cover',
+            objectPosition: 'center',
+            borderRadius: '12px',
+            border: '1px solid rgba(23, 21, 26, 0.09)',
+            display: 'block',
+          }}
+        />
+      )}
 
       <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none', display: 'grid', gap: 1 }}>
         {slide.points.map((point) => (

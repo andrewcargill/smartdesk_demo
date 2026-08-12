@@ -87,6 +87,7 @@ export default function RichDataIntro({ onOpenDemo }) {
                       onClick={() => setActiveIndex(index)}
                       sx={{
                         justifyContent: 'flex-start',
+                        textAlign: 'left',
                         minHeight: 42,
                         borderRadius: '8px',
                         color: isActive ? purple : darkText,
@@ -97,7 +98,9 @@ export default function RichDataIntro({ onOpenDemo }) {
                         '&:hover': { bgcolor: isActive ? 'rgba(156, 40, 175, 0.11)' : 'rgba(23, 21, 26, 0.045)' },
                       }}
                     >
-                      {index + 1}. {slide.title}
+                      <Box component="span" sx={{ display: 'block', width: '100%', lineHeight: 1.25 }}>
+                        {index + 1}. {slide.title}
+                      </Box>
                     </Button>
                   );
                 })}
@@ -138,23 +141,6 @@ export default function RichDataIntro({ onOpenDemo }) {
                   <ArrowForwardIcon />
                 </IconButton>
               </Stack>
-
-              <Button
-                type="button"
-                onClick={onOpenDemo}
-                variant="contained"
-                endIcon={<PlayArrowIcon />}
-                sx={{
-                  bgcolor: purple,
-                  borderRadius: '8px',
-                  boxShadow: 'none',
-                  textTransform: 'none',
-                  fontWeight: 900,
-                  '&:hover': { bgcolor: '#842194', boxShadow: 'none' },
-                }}
-              >
-                Open demo
-              </Button>
             </Stack>
           </Box>
         </Box>
