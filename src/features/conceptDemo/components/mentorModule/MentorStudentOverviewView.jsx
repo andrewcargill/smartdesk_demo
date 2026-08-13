@@ -13,6 +13,7 @@ export default function MentorStudentOverviewView({
   onSupportUpdate,
   onTeachingInfoChange,
   onAddCheckIn,
+  onAddSubjectCheckIn,
 }) {
   const nextFollowUp = picture.followUps.find((item) => !item.completed);
 
@@ -28,6 +29,7 @@ export default function MentorStudentOverviewView({
         setSelectedSubjectId={setSelectedSubjectId}
         selectedSubjectConfig={selectedSubjectConfig}
         selectedSubjectFacts={selectedSubjectFacts}
+        onAddSubjectCheckIn={onAddSubjectCheckIn}
       />
       <MentorFollowUpView picture={picture} />
     </>

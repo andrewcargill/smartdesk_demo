@@ -4,8 +4,10 @@ import MentorFollowUpView, { NextFollowUpCard } from './MentorFollowUpView.jsx';
 import MentorStudentOverviewView from './MentorStudentOverviewView.jsx';
 import MentorSubjectsView from './MentorSubjectsView.jsx';
 import MentorSupportView, { MentorSupportActions } from './MentorSupportView.jsx';
+import MentorTimelineView from './MentorTimelineView.jsx';
 
 export default function MentorExpandedCellPanel({
+  student,
   picture,
   activeCell,
   subjectConfigs,
@@ -16,6 +18,7 @@ export default function MentorExpandedCellPanel({
   onSupportUpdate,
   onTeachingInfoChange,
   onAddCheckIn,
+  onAddSubjectCheckIn,
   setSnackbarMessage,
 }) {
   const nextFollowUp = picture.followUps.find((item) => !item.completed);
@@ -39,6 +42,14 @@ export default function MentorExpandedCellPanel({
             </Box>
           )}
 
+          {activeCell === 'timeline' && (
+            <MentorTimelineView
+              student={student}
+              picture={picture}
+              subjectConfigs={subjectConfigs}
+            />
+          )}
+
           {activeCell === 'student' && (
             <MentorStudentOverviewView
               picture={picture}
@@ -50,6 +61,7 @@ export default function MentorExpandedCellPanel({
               onSupportUpdate={onSupportUpdate}
               onTeachingInfoChange={onTeachingInfoChange}
               onAddCheckIn={onAddCheckIn}
+              onAddSubjectCheckIn={onAddSubjectCheckIn}
             />
           )}
 
@@ -67,6 +79,7 @@ export default function MentorExpandedCellPanel({
               setSelectedSubjectId={setSelectedSubjectId}
               selectedSubjectConfig={selectedSubjectConfig}
               selectedSubjectFacts={selectedSubjectFacts}
+              onAddSubjectCheckIn={onAddSubjectCheckIn}
             />
           )}
 

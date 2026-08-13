@@ -3,7 +3,7 @@ import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import SendIcon from '@mui/icons-material/Send';
 import { useEffect, useMemo, useState } from 'react';
-import { Box, Button, ButtonBase, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, ButtonBase, Collapse, Paper, Stack, TextField, Typography } from '@mui/material';
 import { border, darkText, formatDate, getStatusMeta, purple, statusOptions } from './mentorModuleShared.jsx';
 
 export function MentorSupportActions({ picture, setSnackbarMessage }) {
@@ -54,6 +54,7 @@ function formatUpdatedDate(item) {
 
 export function SharedTeachingInfoView({ picture, onTeachingInfoChange }) {
   const [draftMessage, setDraftMessage] = useState('');
+  const [pastOpen, setPastOpen] = useState(false);
   const { current, past } = useMemo(() => splitTeachingMessages(picture.teachingInfo), [picture.teachingInfo]);
 
   function createMessage() {
@@ -121,19 +122,27 @@ export function SharedTeachingInfoView({ picture, onTeachingInfoChange }) {
         </Box>
 
         <Box>
-          <Typography sx={{ color: 'text.secondary', fontSize: 11.7, fontWeight: 820 }}>Past messages</Typography>
-          {past.length ? (
-            <Stack component="ul" spacing={0.45} sx={{ m: 0, mt: 0.55, p: 0, listStyle: 'none' }}>
-              {past.map((item) => (
-                <Box key={item.id} component="li" sx={{ p: 0.7, borderRadius: '8px', bgcolor: 'rgba(23, 21, 26, 0.018)', border: '1px solid rgba(23, 21, 26, 0.06)' }}>
-                  <Typography sx={{ color: darkText, fontSize: 12.2, fontWeight: 760, lineHeight: 1.3 }}>{item.text}</Typography>
-                  <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 11.2 }}>{formatUpdatedDate(item)}</Typography>
-                </Box>
-              ))}
-            </Stack>
-          ) : (
-            <Typography sx={{ mt: 0.45, color: 'text.secondary', fontSize: 12.2 }}>No past messages yet.</Typography>
-          )}
+          <ButtonBase
+            type="button"
+            onClick={() => setPastOpen((open) => !open)}
+            sx={{ color: 'text.secondary', fontSize: 11.7, fontWeight: 820, borderRadius: '6px', justifyContent: 'flex-start', '&:hover': { color: purple } }}
+          >
+            {pastOpen ? 'Hide' : 'Show'} past messages ({past.length})
+          </ButtonBase>
+          <Collapse in={pastOpen} timeout={160} unmountOnExit>
+            {past.length ? (
+              <Stack component="ul" spacing={0.45} sx={{ m: 0, mt: 0.55, p: 0, listStyle: 'none' }}>
+                {past.map((item) => (
+                  <Box key={item.id} component="li" sx={{ p: 0.7, borderRadius: '8px', bgcolor: 'rgba(23, 21, 26, 0.018)', border: '1px solid rgba(23, 21, 26, 0.06)' }}>
+                    <Typography sx={{ color: darkText, fontSize: 12.2, fontWeight: 760, lineHeight: 1.3 }}>{item.text}</Typography>
+                    <Typography sx={{ mt: 0.2, color: 'text.secondary', fontSize: 11.2 }}>{formatUpdatedDate(item)}</Typography>
+                  </Box>
+                ))}
+              </Stack>
+            ) : (
+              <Typography sx={{ mt: 0.45, color: 'text.secondary', fontSize: 12.2 }}>No past messages yet.</Typography>
+            )}
+          </Collapse>
         </Box>
       </Stack>
     </Paper>
@@ -200,6 +209,7 @@ export function SupportSummaryView({ picture, onSupportUpdate }) {
   const [pendingStatus, setPendingStatus] = useState('');
   const [draftComment, setDraftComment] = useState('');
   const [commentTouched, setCommentTouched] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const supportHistory = picture.supportHistory || [];
   const commentRequired = Boolean(pendingStatus);
   const showCommentError = commentRequired && commentTouched && !draftComment.trim();
@@ -274,14 +284,22 @@ export function SupportSummaryView({ picture, onSupportUpdate }) {
           )}
         </Box>
         <Box>
-          <Typography sx={{ color: 'text.secondary', fontSize: 11.7, fontWeight: 820 }}>Status history</Typography>
-          {supportHistory.length ? (
-            <Stack component="ul" spacing={0.45} sx={{ m: 0, mt: 0.55, p: 0, listStyle: 'none' }}>
-              {supportHistory.map((item) => <SupportHistoryItem key={item.id} item={item} />)}
-            </Stack>
-          ) : (
-            <Typography sx={{ mt: 0.45, color: 'text.secondary', fontSize: 12.2 }}>No support updates yet.</Typography>
-          )}
+          <ButtonBase
+            type="button"
+            onClick={() => setHistoryOpen((open) => !open)}
+            sx={{ color: 'text.secondary', fontSize: 11.7, fontWeight: 820, borderRadius: '6px', justifyContent: 'flex-start', '&:hover': { color: purple } }}
+          >
+            {historyOpen ? 'Hide' : 'Show'} status history ({supportHistory.length})
+          </ButtonBase>
+          <Collapse in={historyOpen} timeout={160} unmountOnExit>
+            {supportHistory.length ? (
+              <Stack component="ul" spacing={0.45} sx={{ m: 0, mt: 0.55, p: 0, listStyle: 'none' }}>
+                {supportHistory.map((item) => <SupportHistoryItem key={item.id} item={item} />)}
+              </Stack>
+            ) : (
+              <Typography sx={{ mt: 0.45, color: 'text.secondary', fontSize: 12.2 }}>No support updates yet.</Typography>
+            )}
+          </Collapse>
         </Box>
         <ProrenataCard picture={picture} />
       </Stack>

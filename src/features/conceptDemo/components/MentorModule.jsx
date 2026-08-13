@@ -59,6 +59,11 @@ function getStudentMentorPicture(studentId, overrides = {}) {
       ...(mentorSeed[studentId]?.subjectStatuses || {}),
       ...(overrides[studentId]?.subjectStatuses || {}),
     },
+    subjectCheckIns: {
+      ...fallbackMentorPicture.subjectCheckIns,
+      ...(mentorSeed[studentId]?.subjectCheckIns || {}),
+      ...(overrides[studentId]?.subjectCheckIns || {}),
+    },
   };
 }
 
@@ -126,12 +131,13 @@ function StudentOverviewRow({ student, picture, subjectConfigs, selectedCell, on
     >
       <ButtonBase
         type="button"
-        aria-label={`${selected ? 'Collapse' : 'Expand'} ${student.displayName}`}
-        aria-expanded={selected}
-        onClick={() => onSelectCell(student.id, selectedCell || 'student')}
+        aria-label={`${selectedCell === 'timeline' ? 'Collapse' : 'Expand'} ${student.displayName} timeline`}
+        aria-expanded={selectedCell === 'timeline'}
+        aria-pressed={selectedCell === 'timeline'}
+        onClick={() => onSelectCell(student.id, 'timeline')}
         sx={{ display: { xs: 'none', md: 'inline-flex' }, alignItems: 'center', justifyContent: 'center', width: 24, height: 28, borderRadius: '8px', '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 } }}
       >
-        <KeyboardArrowDownIcon sx={{ color: 'text.secondary', fontSize: 18, transform: selected ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
+        <KeyboardArrowDownIcon sx={{ color: 'text.secondary', fontSize: 18, transform: selectedCell === 'timeline' ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
       </ButtonBase>
       <ButtonBase
         type="button"
@@ -189,6 +195,7 @@ export default function MentorModule() {
   const [overrides, setOverrides] = useState(() => readStoredMentorPicture());
   const [expandedCell, setExpandedCell] = useState({ studentId: '', cellId: '' });
   const [selectedSubjectId, setSelectedSubjectId] = useState('english');
+  const [activeFilter, setActiveFilter] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const subjectConfigs = useMemo(() => subjectIds.reduce((configs, subjectId) => {
     configs[subjectId] = buildSubject8AConfig({ subjectId });
@@ -206,6 +213,28 @@ export default function MentorModule() {
   const redMentorCount = students.filter((student) => pictures[student.id].mentorStatus === 'red').length;
   const activeSupportCount = students.filter((student) => pictures[student.id].supportStatus !== 'green').length;
   const upcomingFollowUpCount = students.reduce((total, student) => total + (pictures[student.id].followUps || []).filter((item) => !item.completed).length, 0);
+  const summaryFilters = [
+    {
+      id: 'redMentor',
+      label: 'Red mentor status',
+      value: redMentorCount,
+      matches: (student) => pictures[student.id].mentorStatus === 'red',
+    },
+    {
+      id: 'activeSupport',
+      label: 'Active support',
+      value: activeSupportCount,
+      matches: (student) => pictures[student.id].supportStatus !== 'green',
+    },
+    {
+      id: 'upcomingFollowUps',
+      label: 'Upcoming follow-ups',
+      value: upcomingFollowUpCount,
+      matches: (student) => (pictures[student.id].followUps || []).some((item) => !item.completed),
+    },
+  ];
+  const currentFilter = summaryFilters.find((filter) => filter.id === activeFilter);
+  const filteredStudents = currentFilter ? students.filter(currentFilter.matches) : students;
 
   function toggleExpandedCell(studentId, cellId) {
     setExpandedCell((current) => (
@@ -269,6 +298,31 @@ export default function MentorModule() {
     setSnackbarMessage('Check-in added.');
   }
 
+  function addSubjectCheckIn(studentId, subjectId, status, comment = '') {
+    const picture = getStudentMentorPicture(studentId, overrides);
+    const subjectCheckIns = picture.subjectCheckIns || {};
+    const nextCheckIn = {
+      id: `subject-check-in-${Date.now()}`,
+      date: todayIso(),
+      status,
+      comment,
+    };
+    const nextOverrides = {
+      ...overrides,
+      [studentId]: {
+        ...(overrides[studentId] || {}),
+        subjectCheckIns: {
+          ...subjectCheckIns,
+          ...(overrides[studentId]?.subjectCheckIns || {}),
+          [subjectId]: [...(subjectCheckIns[subjectId] || []), nextCheckIn],
+        },
+      },
+    };
+    setOverrides(nextOverrides);
+    writeStoredMentorPicture(nextOverrides);
+    setSnackbarMessage('Subject check-in added.');
+  }
+
   return (
     <>
       <Box sx={{ minHeight: '100%', bgcolor: '#f8f7f9', px: { xs: 1.5, sm: 2.5, md: 4 }, py: { xs: 1.5, sm: 2.5 } }}>
@@ -285,24 +339,49 @@ export default function MentorModule() {
           </Stack>
 
           <Box sx={{ mt: 2, display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' }, gap: 1 }}>
-            {[
-              ['Red mentor status', redMentorCount],
-              ['Active support', activeSupportCount],
-              ['Upcoming follow-ups', upcomingFollowUpCount],
-            ].map(([label, value]) => (
-              <Paper key={label} elevation={0} sx={{ p: 1.25, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff' }}>
+            {summaryFilters.map(({ id, label, value }) => {
+              const selected = activeFilter === id;
+              return (
+              <Paper
+                key={id}
+                component={ButtonBase}
+                type="button"
+                elevation={0}
+                onClick={() => setActiveFilter((current) => (current === id ? '' : id))}
+                aria-pressed={selected}
+                sx={{
+                  display: 'block',
+                  width: '100%',
+                  p: 1.25,
+                  borderRadius: '8px',
+                  border: '1px solid',
+                  borderColor: selected ? 'rgba(156, 40, 175, 0.36)' : border,
+                  bgcolor: selected ? 'rgba(156, 40, 175, 0.045)' : '#fff',
+                  textAlign: 'left',
+                  '&:hover': { bgcolor: selected ? 'rgba(156, 40, 175, 0.065)' : 'rgba(23, 21, 26, 0.025)' },
+                  '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                }}
+              >
                 <Typography sx={{ color: darkText, fontSize: 22, fontWeight: 900, lineHeight: 1 }}>{value}</Typography>
-                <Typography sx={{ mt: 0.35, color: 'text.secondary', fontSize: 12.3, fontWeight: 760 }}>{label}</Typography>
+                <Typography sx={{ mt: 0.35, color: selected ? purple : 'text.secondary', fontSize: 12.3, fontWeight: 800 }}>{label}</Typography>
               </Paper>
-            ))}
+              );
+            })}
           </Box>
 
           <Box sx={{ mt: 1.25 }}>
             <Paper elevation={0} sx={{ p: 1, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff', minWidth: 0 }}>
-              <Stack direction="row" spacing={0.8} alignItems="baseline" justifyContent="space-between" sx={{ px: 0.2, pb: 0.7 }}>
-                <Typography sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>
-                  Mentor overview
-                </Typography>
+              <Stack direction="row" spacing={0.8} alignItems="center" justifyContent="space-between" sx={{ px: 0.2, pb: 0.7 }}>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>
+                    Mentor overview
+                  </Typography>
+                  {currentFilter && (
+                    <Typography sx={{ mt: 0.15, color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>
+                      Showing {filteredStudents.length} students with {currentFilter.label.toLowerCase()}
+                    </Typography>
+                  )}
+                </Box>
                 <Typography sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>
                   Teacher-set signals
                 </Typography>
@@ -313,7 +392,7 @@ export default function MentorModule() {
                 ))}
               </Box>
               <Stack spacing={0.35}>
-                {students.map((student) => {
+                {filteredStudents.map((student) => {
                   const activeCellId = student.id === expandedCell.studentId ? expandedCell.cellId : '';
                   const isSelected = Boolean(activeCellId);
                   return (
@@ -338,6 +417,7 @@ export default function MentorModule() {
                           onSupportUpdate={(status, comment) => updateSupportStatus(student.id, status, comment)}
                           onTeachingInfoChange={(teachingInfo) => updateTeachingInfo(student.id, teachingInfo)}
                           onAddCheckIn={(status, comment) => addCheckIn(student.id, status, comment)}
+                          onAddSubjectCheckIn={(subjectId, status, comment) => addSubjectCheckIn(student.id, subjectId, status, comment)}
                           setSnackbarMessage={setSnackbarMessage}
                         />
                       </Collapse>
