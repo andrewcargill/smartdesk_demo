@@ -1,13 +1,10 @@
 import { useMemo, useState } from 'react';
-import EventAvailableIcon from '@mui/icons-material/EventAvailable';
-import FolderOpenIcon from '@mui/icons-material/FolderOpen';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import {
   Alert,
   Box,
-  Button,
   ButtonBase,
-  Chip,
+  Collapse,
   Paper,
   Snackbar,
   Stack,
@@ -15,19 +12,20 @@ import {
 } from '@mui/material';
 import { class8AStudents } from '../data/classes/class8AStudents.js';
 import { buildSubject8AConfig } from './learningModule/data/subject8AConfigFactory.js';
-
-const purple = '#9c28af';
-const darkText = '#17151a';
-const border = 'rgba(23, 21, 26, 0.1)';
+import MentorExpandedCellPanel from './mentorModule/MentorExpandedCellPanel.jsx';
+import {
+  border,
+  darkText,
+  formatDate,
+  getLocalizedValue,
+  getStatusMeta,
+  getWeekOrDate,
+  purple,
+  StatusDot,
+  subjectIds,
+} from './mentorModule/mentorModuleShared.jsx';
 
 const mentorStorageKey = 'smartdesk_demo_mentor_8a_picture';
-const subjectIds = ['english', 'mathematics', 'swedish', 'physical-education', 'music'];
-
-const statusOptions = {
-  green: { label: 'Green', color: '#2f7d50', bg: 'rgba(47, 125, 80, 0.1)', border: 'rgba(47, 125, 80, 0.24)' },
-  orange: { label: 'Orange', color: '#b85c00', bg: 'rgba(184, 92, 0, 0.11)', border: 'rgba(184, 92, 0, 0.26)' },
-  red: { label: 'Red', color: '#b42318', bg: 'rgba(180, 35, 24, 0.1)', border: 'rgba(180, 35, 24, 0.24)' },
-};
 
 const mentorSeed = {
   'elias-nilsson': {
@@ -127,23 +125,6 @@ function writeStoredMentorPicture(value) {
   window.localStorage.setItem(mentorStorageKey, JSON.stringify(value));
 }
 
-function getLocalizedValue(value) {
-  if (value && typeof value === 'object') {
-    return value.en || Object.values(value)[0] || '';
-  }
-
-  return value || '';
-}
-
-function formatDate(date) {
-  if (!date) return '';
-  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(new Date(`${date}T12:00:00`));
-}
-
-function getWeekOrDate(item) {
-  return item.week || formatDate(item.date);
-}
-
 function getStudentMentorPicture(studentId, overrides = {}) {
   return {
     ...fallbackMentorPicture,
@@ -155,105 +136,6 @@ function getStudentMentorPicture(studentId, overrides = {}) {
       ...(overrides[studentId]?.subjectStatuses || {}),
     },
   };
-}
-
-function getStatusMeta(status) {
-  return statusOptions[status] || statusOptions.green;
-}
-
-function StatusDot({ status, size = 12, title = '' }) {
-  const meta = getStatusMeta(status);
-  return (
-    <Box
-      component="span"
-      title={title || meta.label}
-      sx={{
-        width: size,
-        height: size,
-        borderRadius: '50%',
-        bgcolor: meta.color,
-        boxShadow: `0 0 0 3px ${meta.bg}`,
-        flexShrink: 0,
-      }}
-    />
-  );
-}
-
-function StatusControl({ label, value, onChange }) {
-  return (
-    <Box>
-      <Typography sx={{ color: 'text.secondary', fontSize: 11.7, fontWeight: 780, lineHeight: 1.2 }}>
-        {label}
-      </Typography>
-      <Stack direction="row" spacing={0.45} sx={{ mt: 0.55 }}>
-        {Object.entries(statusOptions).map(([status, meta]) => {
-          const selected = value === status;
-          return (
-            <ButtonBase
-              key={status}
-              type="button"
-              aria-pressed={selected}
-              onClick={() => onChange(status)}
-              sx={{
-                minWidth: 34,
-                height: 28,
-                px: 0.7,
-                borderRadius: '999px',
-                border: '1px solid',
-                borderColor: selected ? meta.border : 'rgba(23, 21, 26, 0.11)',
-                bgcolor: selected ? meta.bg : '#fff',
-                color: selected ? meta.color : 'text.secondary',
-                fontSize: 11.3,
-                fontWeight: 850,
-                '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
-              }}
-            >
-              {meta.label}
-            </ButtonBase>
-          );
-        })}
-      </Stack>
-    </Box>
-  );
-}
-
-function CheckInTimeline({ checkIns }) {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May'];
-  const start = new Date('2026-01-01T12:00:00').getTime();
-  const end = new Date('2026-05-31T12:00:00').getTime();
-
-  return (
-    <Box sx={{ position: 'relative', height: 76, px: 0.4 }}>
-      <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(${months.length}, 1fr)`, color: 'text.secondary', fontSize: 11.2, fontWeight: 760 }}>
-        {months.map((month) => <Box key={month}>{month}</Box>)}
-      </Box>
-      <Box sx={{ position: 'absolute', left: 4, right: 4, top: 45, height: 1 }}>
-        <Box sx={{ width: '100%', borderTop: '1px solid rgba(23, 21, 26, 0.16)' }} />
-      </Box>
-      {(checkIns || []).map((checkIn) => {
-        const time = new Date(`${checkIn.date}T12:00:00`).getTime();
-        const left = Math.max(2, Math.min(98, ((time - start) / (end - start)) * 100));
-        return (
-          <Box
-            key={checkIn.id}
-            title={`${formatDate(checkIn.date)} · Check-in${checkIn.comment ? ` · ${checkIn.comment}` : ''}`}
-            sx={{
-              position: 'absolute',
-              left: `${left}%`,
-              top: 34,
-              width: 16,
-              height: 16,
-              borderRadius: '50%',
-              border: `2px solid ${purple}`,
-              bgcolor: '#fff',
-              transform: 'translateX(-50%)',
-              boxShadow: '0 0 0 3px rgba(156, 40, 175, 0.08)',
-            }}
-          />
-        );
-      })}
-    </Box>
-  );
 }
 
 function getSubjectFacts(config, studentId) {
@@ -282,122 +164,106 @@ function getSubjectFacts(config, studentId) {
   };
 }
 
-function StudentOverviewRow({ student, picture, subjectConfigs, selected, onSelect }) {
+function StudentOverviewRow({ student, picture, subjectConfigs, selectedCell, onSelectCell }) {
   const latestCheckIn = [...(picture.checkIns || [])].sort((first, second) => second.date.localeCompare(first.date))[0];
   const nextFollowUp = (picture.followUps || []).find((item) => !item.completed);
+  const selected = Boolean(selectedCell);
+  const cellButtonSx = {
+    minHeight: 34,
+    justifyContent: 'flex-start',
+    textAlign: 'left',
+    borderRadius: '8px',
+    px: 0.45,
+    py: 0.35,
+    '&:hover': { bgcolor: 'rgba(156, 40, 175, 0.045)' },
+    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+  };
 
   return (
-    <ButtonBase
-      type="button"
-      aria-pressed={selected}
-      onClick={() => onSelect(student.id)}
+    <Box
       sx={{
         width: '100%',
         display: 'grid',
         gridTemplateColumns: {
           xs: '1fr',
-          md: 'minmax(150px, 0.95fr) 78px 78px minmax(120px, 0.8fr) minmax(132px, 0.8fr) minmax(98px, 0.58fr)',
+          md: '24px minmax(190px, 1.15fr) 104px minmax(180px, 0.9fr) minmax(170px, 0.95fr) minmax(128px, 0.65fr)',
         },
-        gap: { xs: 0.6, md: 1 },
+        gap: { xs: 0.6, md: 0.85 },
         alignItems: 'center',
         textAlign: 'left',
-        p: 0.95,
+        px: 1,
+        py: 0.85,
         borderRadius: '8px',
         border: '1px solid',
         borderColor: selected ? 'rgba(156, 40, 175, 0.32)' : 'rgba(23, 21, 26, 0.08)',
         bgcolor: selected ? 'rgba(156, 40, 175, 0.045)' : '#fff',
         '&:hover': { bgcolor: selected ? 'rgba(156, 40, 175, 0.06)' : 'rgba(23, 21, 26, 0.025)' },
-        '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
       }}
     >
-      <Box sx={{ minWidth: 0 }}>
-        <Typography sx={{ color: darkText, fontSize: 13.4, fontWeight: 880, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <ButtonBase
+        type="button"
+        aria-label={`${selected ? 'Collapse' : 'Expand'} ${student.displayName}`}
+        aria-expanded={selected}
+        onClick={() => onSelectCell(student.id, selectedCell || 'student')}
+        sx={{ display: { xs: 'none', md: 'inline-flex' }, alignItems: 'center', justifyContent: 'center', width: 24, height: 28, borderRadius: '8px', '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 } }}
+      >
+        <KeyboardArrowDownIcon sx={{ color: 'text.secondary', fontSize: 18, transform: selected ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
+      </ButtonBase>
+      <ButtonBase
+        type="button"
+        aria-pressed={selectedCell === 'student'}
+        onClick={() => onSelectCell(student.id, 'student')}
+        sx={{ ...cellButtonSx, minWidth: 0 }}
+      >
+        <Box sx={{ minWidth: 0 }}>
+        <Typography sx={{ color: darkText, fontSize: selected ? 18 : 13, fontWeight: selected ? 920 : 820, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', transition: 'font-size 140ms ease, font-weight 140ms ease' }}>
           {student.displayName}
         </Typography>
-        <Typography sx={{ color: 'text.secondary', fontSize: 11.7, fontWeight: 700 }}>
+        <Typography sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 700 }}>
           8A
         </Typography>
-      </Box>
-      <Stack direction="row" spacing={0.6} alignItems="center">
-        <StatusDot status={picture.mentorStatus} />
-        <Typography sx={{ color: 'text.secondary', fontSize: 12.1, fontWeight: 760 }}>{getStatusMeta(picture.mentorStatus).label}</Typography>
-      </Stack>
-      <Stack direction="row" spacing={0.6} alignItems="center">
-        <StatusDot status={picture.supportStatus} />
-        <Typography sx={{ color: 'text.secondary', fontSize: 12.1, fontWeight: 760 }}>{getStatusMeta(picture.supportStatus).label}</Typography>
-      </Stack>
-      <Stack direction="row" spacing={0.38} alignItems="center">
-        {(picture.checkIns || []).slice(-3).map((checkIn) => (
-          <Box key={checkIn.id} title={`${formatDate(checkIn.date)} · Check-in`} sx={{ width: 10, height: 10, borderRadius: '50%', border: '1.5px solid rgba(156, 40, 175, 0.72)', bgcolor: '#fff' }} />
-        ))}
-        <Typography sx={{ pl: 0.25, color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>
-          {latestCheckIn ? formatDate(latestCheckIn.date) : 'None'}
-        </Typography>
-      </Stack>
-      <Stack direction="row" spacing={0.65} alignItems="center">
-        {subjectIds.map((subjectId) => (
-          <StatusDot
-            key={subjectId}
-            size={10}
-            status={picture.subjectStatuses[subjectId]}
-            title={`${getLocalizedValue(subjectConfigs[subjectId]?.subjectTitle)}: ${getStatusMeta(picture.subjectStatuses[subjectId]).label}`}
-          />
-        ))}
-      </Stack>
-      <Typography sx={{ color: nextFollowUp ? darkText : 'text.secondary', fontSize: 12.2, fontWeight: nextFollowUp ? 820 : 680, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {nextFollowUp ? getWeekOrDate(nextFollowUp) : '-'}
-      </Typography>
-    </ButtonBase>
-  );
-}
-
-function SubjectDetail({ subjectId, config, status, facts }) {
-  return (
-    <Paper elevation={0} sx={{ p: 1, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff' }}>
-      <Stack spacing={0.75}>
-        <Stack direction="row" spacing={0.6} alignItems="center" justifyContent="space-between">
-          <Typography sx={{ color: darkText, fontSize: 13.3, fontWeight: 900 }}>
-            {getLocalizedValue(config.subjectTitle)}
-          </Typography>
-          <Chip
-            size="small"
-            label={getStatusMeta(status).label}
-            sx={{ height: 22, bgcolor: getStatusMeta(status).bg, color: getStatusMeta(status).color, border: `1px solid ${getStatusMeta(status).border}`, fontSize: 11.2, fontWeight: 850 }}
-          />
+        </Box>
+      </ButtonBase>
+      <ButtonBase type="button" aria-pressed={selectedCell === 'support'} onClick={() => onSelectCell(student.id, 'support')} sx={cellButtonSx}>
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <StatusDot status={picture.supportStatus} size={10} />
+          <Typography sx={{ color: 'text.secondary', fontSize: 11.8, fontWeight: 750 }}>{getStatusMeta(picture.supportStatus).label}</Typography>
         </Stack>
-        <Box>
-          <Typography sx={{ color: 'text.secondary', fontSize: 11.6, fontWeight: 780 }}>Recent observations</Typography>
-          {(facts.observations || []).slice(0, 2).map((item) => (
-            <Typography key={item.id} sx={{ mt: 0.25, color: darkText, fontSize: 12.1, lineHeight: 1.25 }}>
-              {formatDate(item.date)} · {getLocalizedValue(item.contextLabel) || item.evidenceTopicId || item.skillId}
-            </Typography>
+      </ButtonBase>
+      <ButtonBase type="button" aria-pressed={selectedCell === 'checkIns'} onClick={() => onSelectCell(student.id, 'checkIns')} sx={cellButtonSx}>
+        <Stack direction="row" spacing={0.35} alignItems="center">
+          {(picture.checkIns || []).slice(-3).map((checkIn) => (
+            <Box key={checkIn.id} title={`${formatDate(checkIn.date)} · Check-in`} sx={{ width: 10, height: 10, borderRadius: '50%', border: '1.5px solid rgba(156, 40, 175, 0.72)', bgcolor: '#fff' }} />
           ))}
-          {!facts.observations.length && <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 12.1 }}>No recent observations</Typography>}
-        </Box>
-        <Box>
-          <Typography sx={{ color: 'text.secondary', fontSize: 11.6, fontWeight: 780 }}>Recent assessment</Typography>
-          {facts.assessments[0] ? (
-            <Typography sx={{ mt: 0.25, color: darkText, fontSize: 12.1, lineHeight: 1.25 }}>
-              {facts.assessments[0].title}{Number.isFinite(Number(facts.assessments[0].percentage)) ? ` · ${facts.assessments[0].percentage}%` : ''}
-            </Typography>
-          ) : (
-            <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 12.1 }}>No recent assessment</Typography>
-          )}
-        </Box>
-        <Box>
-          <Typography sx={{ color: 'text.secondary', fontSize: 11.6, fontWeight: 780 }}>Current activity</Typography>
-          <Typography sx={{ mt: 0.25, color: darkText, fontSize: 12.1, lineHeight: 1.25 }}>
-            {getLocalizedValue(facts.currentActivity?.title) || getLocalizedValue(config.lessons?.current?.focus) || subjectId}
+          <Typography sx={{ pl: 0.25, color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>
+            {latestCheckIn ? formatDate(latestCheckIn.date) : 'None'}
           </Typography>
-        </Box>
-      </Stack>
-    </Paper>
+        </Stack>
+      </ButtonBase>
+      <ButtonBase type="button" aria-pressed={selectedCell === 'subjects'} onClick={() => onSelectCell(student.id, 'subjects')} sx={cellButtonSx}>
+        <Stack direction="row" spacing={0.55} alignItems="center">
+          {subjectIds.map((subjectId) => (
+            <StatusDot
+              key={subjectId}
+              size={10}
+              status={picture.subjectStatuses[subjectId]}
+              title={`${getLocalizedValue(subjectConfigs[subjectId]?.subjectTitle)}: ${getStatusMeta(picture.subjectStatuses[subjectId]).label}`}
+            />
+          ))}
+        </Stack>
+      </ButtonBase>
+      <ButtonBase type="button" aria-pressed={selectedCell === 'followUp'} onClick={() => onSelectCell(student.id, 'followUp')} sx={cellButtonSx}>
+        <Typography sx={{ color: nextFollowUp ? darkText : 'text.secondary', fontSize: 11.8, fontWeight: nextFollowUp ? 820 : 680, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {nextFollowUp ? getWeekOrDate(nextFollowUp) : '-'}
+        </Typography>
+      </ButtonBase>
+    </Box>
   );
 }
 
 export default function MentorModule() {
   const [overrides, setOverrides] = useState(() => readStoredMentorPicture());
-  const [selectedStudentId, setSelectedStudentId] = useState(class8AStudents[0]?.id || '');
+  const [expandedCell, setExpandedCell] = useState({ studentId: '', cellId: '' });
   const [selectedSubjectId, setSelectedSubjectId] = useState('english');
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const subjectConfigs = useMemo(() => subjectIds.reduce((configs, subjectId) => {
@@ -405,7 +271,7 @@ export default function MentorModule() {
     return configs;
   }, {}), []);
   const students = class8AStudents;
-  const selectedStudent = students.find((student) => student.id === selectedStudentId) || students[0];
+  const selectedStudent = students.find((student) => student.id === expandedCell.studentId) || students[0];
   const selectedPicture = getStudentMentorPicture(selectedStudent?.id, overrides);
   const selectedSubjectConfig = subjectConfigs[selectedSubjectId] || subjectConfigs.english;
   const selectedSubjectFacts = getSubjectFacts(selectedSubjectConfig, selectedStudent?.id);
@@ -417,17 +283,38 @@ export default function MentorModule() {
   const activeSupportCount = students.filter((student) => pictures[student.id].supportStatus !== 'green').length;
   const upcomingFollowUpCount = students.reduce((total, student) => total + (pictures[student.id].followUps || []).filter((item) => !item.completed).length, 0);
 
-  function updateSelectedStatus(field, status) {
+  function toggleExpandedCell(studentId, cellId) {
+    setExpandedCell((current) => (
+      current.studentId === studentId && current.cellId === cellId
+        ? { studentId: '', cellId: '' }
+        : { studentId, cellId }
+    ));
+  }
+
+  function updateStudentStatus(studentId, field, status) {
     const nextOverrides = {
       ...overrides,
-      [selectedStudent.id]: {
-        ...(overrides[selectedStudent.id] || {}),
+      [studentId]: {
+        ...(overrides[studentId] || {}),
         [field]: status,
       },
     };
     setOverrides(nextOverrides);
     writeStoredMentorPicture(nextOverrides);
     setSnackbarMessage('Mentor picture updated.');
+  }
+
+  function updateTeachingInfo(studentId, teachingInfo) {
+    const nextOverrides = {
+      ...overrides,
+      [studentId]: {
+        ...(overrides[studentId] || {}),
+        teachingInfo,
+      },
+    };
+    setOverrides(nextOverrides);
+    writeStoredMentorPicture(nextOverrides);
+    setSnackbarMessage('Teacher message updated.');
   }
 
   return (
@@ -458,162 +345,54 @@ export default function MentorModule() {
             ))}
           </Box>
 
-          <Box sx={{ mt: 1.35, display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1.35fr) minmax(380px, 0.75fr)' }, gap: 1.25, alignItems: 'start' }}>
-            <Paper elevation={0} sx={{ p: 1.15, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff', minWidth: 0 }}>
-              <Stack direction="row" spacing={0.8} alignItems="baseline" justifyContent="space-between" sx={{ px: 0.2, pb: 0.8 }}>
-                <Typography sx={{ color: darkText, fontSize: 16, fontWeight: 900 }}>
+          <Box sx={{ mt: 1.25 }}>
+            <Paper elevation={0} sx={{ p: 1, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff', minWidth: 0 }}>
+              <Stack direction="row" spacing={0.8} alignItems="baseline" justifyContent="space-between" sx={{ px: 0.2, pb: 0.7 }}>
+                <Typography sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>
                   Mentor overview
                 </Typography>
-                <Typography sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 720 }}>
+                <Typography sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>
                   Teacher-set signals
                 </Typography>
               </Stack>
-              <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: 'minmax(150px, 0.95fr) 78px 78px minmax(120px, 0.8fr) minmax(132px, 0.8fr) minmax(98px, 0.58fr)', gap: 1, px: 0.95, pb: 0.45 }}>
-                {['Student', 'Status', 'Support', 'Recent check-ins', 'Subjects', 'Follow-up'].map((label) => (
+              <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: '24px minmax(190px, 1.15fr) 104px minmax(180px, 0.9fr) minmax(170px, 0.95fr) minmax(128px, 0.65fr)', gap: 0.85, px: 1, pb: 0.45 }}>
+                {['', 'Student', 'Support', 'Recent check-ins', 'Subjects', 'Follow-up'].map((label) => (
                   <Typography key={label} sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 860 }}>{label}</Typography>
                 ))}
               </Box>
               <Stack spacing={0.35}>
-                {students.map((student) => (
-                  <StudentOverviewRow
-                    key={student.id}
-                    student={student}
-                    picture={pictures[student.id]}
-                    subjectConfigs={subjectConfigs}
-                    selected={student.id === selectedStudent.id}
-                    onSelect={setSelectedStudentId}
-                  />
-                ))}
+                {students.map((student) => {
+                  const activeCellId = student.id === expandedCell.studentId ? expandedCell.cellId : '';
+                  const isSelected = Boolean(activeCellId);
+                  return (
+                    <Box key={student.id}>
+                      <StudentOverviewRow
+                        student={student}
+                        picture={pictures[student.id]}
+                        subjectConfigs={subjectConfigs}
+                        selectedCell={activeCellId}
+                        onSelectCell={toggleExpandedCell}
+                      />
+                      <Collapse in={isSelected} timeout={180} unmountOnExit>
+                        <MentorExpandedCellPanel
+                          student={student}
+                          picture={selectedPicture}
+                          activeCell={activeCellId}
+                          subjectConfigs={subjectConfigs}
+                          selectedSubjectId={selectedSubjectId}
+                          setSelectedSubjectId={setSelectedSubjectId}
+                          selectedSubjectConfig={selectedSubjectConfig}
+                          selectedSubjectFacts={selectedSubjectFacts}
+                          onStatusChange={(field, status) => updateStudentStatus(student.id, field, status)}
+                          onTeachingInfoChange={(teachingInfo) => updateTeachingInfo(student.id, teachingInfo)}
+                          setSnackbarMessage={setSnackbarMessage}
+                        />
+                      </Collapse>
+                    </Box>
+                  );
+                })}
               </Stack>
             </Paper>
-
-            <Stack spacing={0} sx={{ minWidth: 0, bgcolor: '#fff' }}>
-              <Paper elevation={0} sx={{ p: 1.25, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff' }}>
-                <Stack spacing={1}>
-                  <Stack direction="row" spacing={0.65} flexWrap="wrap" useFlexGap justifyContent="flex-start">
-                    <Button size="small" startIcon={<FolderOpenIcon />} variant="outlined" onClick={() => setSnackbarMessage('Demo only - open the student Drive folder.')} sx={{ color: purple, borderColor: 'rgba(156, 40, 175, 0.24)', borderRadius: '8px', textTransform: 'none' }}>
-                      Open Drive folder
-                    </Button>
-                    <Button size="small" endIcon={<OpenInNewIcon />} variant="outlined" onClick={() => setSnackbarMessage('Demo only - open Prorenata for official records.')} sx={{ color: selectedPicture.prorenata ? purple : 'text.secondary', borderColor: 'rgba(23, 21, 26, 0.14)', borderRadius: '8px', textTransform: 'none' }}>
-                      Open Prorenata
-                    </Button>
-                  </Stack>
-                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 0.8 }}>
-                    <Box sx={{ p: 0.85, borderRadius: '8px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: 'rgba(23, 21, 26, 0.02)' }}>
-                      <Typography sx={{ color: 'text.secondary', fontSize: 11.7, fontWeight: 780 }}>Prorenata</Typography>
-                      <Typography sx={{ mt: 0.45, color: selectedPicture.prorenata ? purple : 'text.secondary', fontSize: 12.6, fontWeight: 850, lineHeight: 1.25 }}>
-                        {selectedPicture.prorenata ? selectedPicture.prorenata.status : 'No ongoing process indicated'}
-                      </Typography>
-                      {selectedPicture.prorenata?.updated && (
-                        <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 11.7, lineHeight: 1.25 }}>
-                          Updated {formatDate(selectedPicture.prorenata.updated)}
-                        </Typography>
-                      )}
-                    </Box>
-                    <Box sx={{ p: 0.85, borderRadius: '8px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: 'rgba(23, 21, 26, 0.02)' }}>
-                      <Typography sx={{ color: 'text.secondary', fontSize: 11.7, fontWeight: 780 }}>Next follow-up</Typography>
-                      {selectedPicture.followUps.find((item) => !item.completed) ? (
-                        <>
-                          <Typography sx={{ mt: 0.45, color: darkText, fontSize: 12.6, fontWeight: 850, lineHeight: 1.25 }}>
-                            {selectedPicture.followUps.find((item) => !item.completed).label}
-                          </Typography>
-                          <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 11.7, lineHeight: 1.25 }}>
-                            {getWeekOrDate(selectedPicture.followUps.find((item) => !item.completed))}
-                          </Typography>
-                        </>
-                      ) : (
-                        <Typography sx={{ mt: 0.45, color: 'text.secondary', fontSize: 12.6, fontWeight: 760, lineHeight: 1.25 }}>
-                          None planned
-                        </Typography>
-                      )}
-                    </Box>
-                  </Box>
-                </Stack>
-              </Paper>
-
-              <Paper elevation={0} sx={{ mt: 1.25, p: 1.25, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff' }}>
-                <Typography sx={{ color: darkText, fontSize: 15.2, fontWeight: 900 }}>Check-ins</Typography>
-                <CheckInTimeline checkIns={selectedPicture.checkIns} />
-              </Paper>
-
-              <Paper elevation={0} sx={{ mt: 1.25, p: 1.25, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff' }}>
-                <Typography sx={{ color: darkText, fontSize: 15.2, fontWeight: 900 }}>Subjects</Typography>
-                <Stack direction="row" spacing={0.55} flexWrap="wrap" useFlexGap sx={{ mt: 0.8 }}>
-                  {subjectIds.map((subjectId) => {
-                    const config = subjectConfigs[subjectId];
-                    const status = selectedPicture.subjectStatuses[subjectId];
-                    const selected = selectedSubjectId === subjectId;
-                    return (
-                      <ButtonBase
-                        key={subjectId}
-                        type="button"
-                        onClick={() => setSelectedSubjectId(subjectId)}
-                        sx={{
-                          px: 0.75,
-                          py: 0.55,
-                          borderRadius: '999px',
-                          border: '1px solid',
-                          borderColor: selected ? getStatusMeta(status).border : 'rgba(23, 21, 26, 0.12)',
-                          bgcolor: selected ? getStatusMeta(status).bg : '#fff',
-                          color: selected ? getStatusMeta(status).color : darkText,
-                          '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
-                        }}
-                      >
-                        <Stack direction="row" spacing={0.45} alignItems="center">
-                          <StatusDot status={status} size={9} />
-                          <Typography sx={{ color: 'inherit', fontSize: 12.1, fontWeight: 850 }}>{getLocalizedValue(config.subjectTitle)}</Typography>
-                        </Stack>
-                      </ButtonBase>
-                    );
-                  })}
-                </Stack>
-                <Box sx={{ mt: 0.9 }}>
-                  <SubjectDetail
-                    subjectId={selectedSubjectId}
-                    config={selectedSubjectConfig}
-                    status={selectedPicture.subjectStatuses[selectedSubjectId]}
-                    facts={selectedSubjectFacts}
-                  />
-                </Box>
-              </Paper>
-
-              <Box sx={{ mt: 1.25, display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) minmax(0, 1fr)' }, gap: 1 }}>
-                <Paper elevation={0} sx={{ p: 1.25, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff' }}>
-                  <Typography sx={{ color: darkText, fontSize: 15.2, fontWeight: 900 }}>Shared teaching information</Typography>
-                  {selectedPicture.teachingInfo.length ? (
-                    <Stack component="ul" spacing={0.55} sx={{ m: 0, mt: 0.8, p: 0, listStyle: 'none' }}>
-                      {selectedPicture.teachingInfo.map((item) => (
-                        <Box key={item.id} component="li" sx={{ p: 0.75, borderRadius: '8px', bgcolor: 'rgba(23, 21, 26, 0.025)', border: '1px solid rgba(23, 21, 26, 0.07)' }}>
-                          <Typography sx={{ color: darkText, fontSize: 12.5, fontWeight: 820, lineHeight: 1.25 }}>{item.text}</Typography>
-                          <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 11.4 }}>Review {formatDate(item.reviewDate)}</Typography>
-                        </Box>
-                      ))}
-                    </Stack>
-                  ) : (
-                    <Typography sx={{ mt: 0.8, color: 'text.secondary', fontSize: 12.5 }}>No shared teaching information.</Typography>
-                  )}
-                </Paper>
-
-                <Paper elevation={0} sx={{ p: 1.25, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff' }}>
-                  <Stack direction="row" spacing={0.55} alignItems="center">
-                    <EventAvailableIcon sx={{ color: purple, fontSize: 18 }} />
-                    <Typography sx={{ color: darkText, fontSize: 15.2, fontWeight: 900 }}>Upcoming</Typography>
-                  </Stack>
-                  {selectedPicture.followUps.length ? (
-                    <Stack component="ul" spacing={0.55} sx={{ m: 0, mt: 0.8, p: 0, listStyle: 'none' }}>
-                      {selectedPicture.followUps.map((item) => (
-                        <Box key={item.id} component="li" sx={{ display: 'grid', gridTemplateColumns: '72px minmax(0, 1fr)', gap: 0.65, py: 0.55, borderBottom: '1px solid rgba(23, 21, 26, 0.07)' }}>
-                          <Typography sx={{ color: 'text.secondary', fontSize: 11.8, fontWeight: 780 }}>{getWeekOrDate(item)}</Typography>
-                          <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 820 }}>{item.label}{item.completed ? ' · Completed' : ''}</Typography>
-                        </Box>
-                      ))}
-                    </Stack>
-                  ) : (
-                    <Typography sx={{ mt: 0.8, color: 'text.secondary', fontSize: 12.5 }}>No upcoming follow-up.</Typography>
-                  )}
-                </Paper>
-              </Box>
-            </Stack>
           </Box>
         </Box>
       </Box>
