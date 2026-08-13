@@ -81,10 +81,6 @@ export default function App() {
     return <HomeScreen />;
   }
 
-  if (view === 'examples') {
-    return <SmartDeskTextExamples />;
-  }
-
   if (view === 'phone-keeper') {
     return <PhoneKeeperDemo />;
   }
@@ -133,6 +129,7 @@ export default function App() {
 
         {view === 'home' && <Home onNavigate={navigate} />}
         {view === 'rich-data-intro' && <RichDataIntro onOpenDemo={() => navigate('concept-demo')} />}
+        {view === 'examples' && <SmartDeskTextExamples />}
         {view === 'student' && (
           <StudentEssayHelper
             assignment={assignment}

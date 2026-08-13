@@ -946,6 +946,14 @@ function HomeScreenContent() {
     setSmartDeskWelcomeOpen(true);
   }
 
+  function openSmartDeskHome() {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.location.assign(`${window.location.pathname}${window.location.search}`);
+  }
+
   function closeSetup() {
     writeSetupCompleted();
     setSetupInitial(false);
@@ -1053,6 +1061,9 @@ function HomeScreenContent() {
               },
             }}
           >
+            <MenuItem onClick={() => runHomeMenuAction(openSmartDeskHome)}>
+              {t('home.smartDeskHome')}
+            </MenuItem>
             <MenuItem onClick={() => runHomeMenuAction(openSetup)}>
               {t('home.setup.changeSubjects')}
             </MenuItem>

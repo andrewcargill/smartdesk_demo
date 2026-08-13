@@ -13,10 +13,10 @@ import WorkspacesIcon from '@mui/icons-material/Workspaces';
 const primaryRoutes = [
   { id: 'rich-data-intro', label: 'SmartDesk Rich Data', icon: <WorkspacesIcon />, purple: true },
   { id: 'examples', label: 'SmartDesk Grading Assistant', icon: <ArticleIcon />, purple: true },
-  { id: 'phone-keeper', label: 'Phone Keeper', icon: <PhoneIphoneIcon />, purple: true },
 ];
 
 const secondaryRoutes = [
+  { id: 'phone-keeper', label: 'Phone Keeper', icon: <PhoneIphoneIcon /> },
   { id: 'student', label: 'Student Essay Helper', icon: <MenuBookIcon /> },
   { id: 'teacher', label: 'Teacher Dashboard', icon: <SchoolIcon /> },
   { id: 'maths', label: 'Maths Module', icon: <CalculateIcon /> },

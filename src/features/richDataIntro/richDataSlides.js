@@ -1,9 +1,9 @@
-import richData1Image from '../../media/rich_data1.png';
-import richData2Image from '../../media/rich_data2.png';
-import richData3Image from '../../media/rich_data3.png';
-import richData4Image from '../../media/rich_data4.png';
-import richData5Image from '../../media/rich_data5.png';
-import richData6Image from '../../media/rich_data6.png';
+import richData1Image from '../../media/smartdesk1.webp';
+import richData2Image from '../../media/smartdesk2.webp';
+import richData3Image from '../../media/smartdesk3.webp';
+import richData4Image from '../../media/smartdesk4.webp';
+import richData5Image from '../../media/smartdesk5.webp';
+import richData6Image from '../../media/smartdesk6.webp';
 
 export const richDataSlides = [
   {
@@ -48,7 +48,7 @@ export const richDataSlides = [
   {
     id: 'ai-assistant-2',
     eyebrow: 'Slide 4',
-    image: richData6Image,
+    image: richData4Image,
     imageAlt: 'Teacher with students',
     title: 'Transparency and trust',
     body: 'Help students and parents understand the learning picture, and build trust in your grading and professional decisions with clear evidence of observations.',
@@ -62,7 +62,7 @@ export const richDataSlides = [
     id: 'subject-data',
     eyebrow: 'Slide 5',
     title: 'Zero data set up.',
-    image: richData4Image,
+    image: richData5Image,
     imageAlt: 'Structured subject data represented visually',
     body: 'Keep the data local and secure. Bring your current cloud data together in one structured platform.',
     points: [
@@ -74,7 +74,7 @@ export const richDataSlides = [
   {
     id: 'ai-assistant',
     eyebrow: 'Slide 6',
-    image: richData5Image,
+    image: richData6Image,
     imageAlt: 'AI assistant helping teachers with grading and planning',
     title: 'SmartDesk AI assistant',
     body: 'Let us assist you with all those small tasks that take up your time and energy.',
