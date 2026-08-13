@@ -54,9 +54,11 @@ export function StatusDot({ status, size = 12, title = '' }) {
 export function StatusControl({ label, value, onChange }) {
   return (
     <Box>
-      <Typography sx={{ color: 'text.secondary', fontSize: 11.7, fontWeight: 780, lineHeight: 1.2 }}>
-        {label}
-      </Typography>
+      {label && (
+        <Typography sx={{ color: 'text.secondary', fontSize: 11.7, fontWeight: 780, lineHeight: 1.2 }}>
+          {label}
+        </Typography>
+      )}
       <Stack direction="row" spacing={0.45} sx={{ mt: 0.55 }}>
         {Object.entries(statusOptions).map(([status, meta]) => {
           const selected = value === status;

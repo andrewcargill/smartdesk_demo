@@ -1,21 +1,11 @@
-import { Box, Paper, Stack, Typography } from '@mui/material';
-import { darkText } from './mentorModuleShared.jsx';
+import { Box, Paper, Stack } from '@mui/material';
 import MentorCheckInsView from './MentorCheckInsView.jsx';
 import MentorFollowUpView, { NextFollowUpCard } from './MentorFollowUpView.jsx';
 import MentorStudentOverviewView from './MentorStudentOverviewView.jsx';
 import MentorSubjectsView from './MentorSubjectsView.jsx';
 import MentorSupportView, { MentorSupportActions } from './MentorSupportView.jsx';
 
-function getPanelTitle(activeCell) {
-  if (activeCell === 'student') return 'Student overview';
-  if (activeCell === 'support') return 'Support information';
-  if (activeCell === 'checkIns') return 'Check-ins';
-  if (activeCell === 'subjects') return 'Subject signals';
-  return 'Follow-up';
-}
-
 export default function MentorExpandedCellPanel({
-  student,
   picture,
   activeCell,
   subjectConfigs,
@@ -23,8 +13,9 @@ export default function MentorExpandedCellPanel({
   setSelectedSubjectId,
   selectedSubjectConfig,
   selectedSubjectFacts,
-  onStatusChange,
+  onSupportUpdate,
   onTeachingInfoChange,
+  onAddCheckIn,
   setSnackbarMessage,
 }) {
   const nextFollowUp = picture.followUps.find((item) => !item.completed);
@@ -42,17 +33,11 @@ export default function MentorExpandedCellPanel({
         }}
       >
         <Stack spacing={1}>
-          <Stack direction="row" spacing={0.8} alignItems="baseline" justifyContent="space-between" flexWrap="wrap" useFlexGap>
-            <Box>
-              <Typography sx={{ color: darkText, fontSize: 16, fontWeight: 930 }}>
-                {student.displayName}
-              </Typography>
-              <Typography sx={{ color: 'text.secondary', fontSize: 11.7, fontWeight: 760 }}>
-                {getPanelTitle(activeCell)}
-              </Typography>
+          {showActions && (
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <MentorSupportActions picture={picture} setSnackbarMessage={setSnackbarMessage} />
             </Box>
-            {showActions && <MentorSupportActions picture={picture} setSnackbarMessage={setSnackbarMessage} />}
-          </Stack>
+          )}
 
           {activeCell === 'student' && (
             <MentorStudentOverviewView
@@ -62,16 +47,17 @@ export default function MentorExpandedCellPanel({
               setSelectedSubjectId={setSelectedSubjectId}
               selectedSubjectConfig={selectedSubjectConfig}
               selectedSubjectFacts={selectedSubjectFacts}
-              onStatusChange={onStatusChange}
+              onSupportUpdate={onSupportUpdate}
               onTeachingInfoChange={onTeachingInfoChange}
+              onAddCheckIn={onAddCheckIn}
             />
           )}
 
           {activeCell === 'support' && (
-            <MentorSupportView picture={picture} onStatusChange={onStatusChange} onTeachingInfoChange={onTeachingInfoChange} />
+            <MentorSupportView picture={picture} onSupportUpdate={onSupportUpdate} onTeachingInfoChange={onTeachingInfoChange} />
           )}
 
-          {activeCell === 'checkIns' && <MentorCheckInsView picture={picture} />}
+          {activeCell === 'checkIns' && <MentorCheckInsView picture={picture} onAddCheckIn={onAddCheckIn} />}
 
           {activeCell === 'subjects' && (
             <MentorSubjectsView

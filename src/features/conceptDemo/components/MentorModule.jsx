@@ -12,6 +12,8 @@ import {
 } from '@mui/material';
 import { class8AStudents } from '../data/classes/class8AStudents.js';
 import { buildSubject8AConfig } from './learningModule/data/subject8AConfigFactory.js';
+import { fallbackMentorPicture, mentorSeed } from './mentorModule/data/mentor8AData.js';
+import { CheckInStatusIcon, getCheckInStatusMeta } from './mentorModule/mentorCheckInStatus.jsx';
 import MentorExpandedCellPanel from './mentorModule/MentorExpandedCellPanel.jsx';
 import {
   border,
@@ -27,88 +29,6 @@ import {
 
 const mentorStorageKey = 'smartdesk_demo_mentor_8a_picture';
 
-const mentorSeed = {
-  'elias-nilsson': {
-    mentorStatus: 'green',
-    supportStatus: 'orange',
-    prorenata: { status: 'Ongoing', updated: '2026-05-14' },
-    checkIns: [
-      { id: 'elias-check-1', date: '2026-01-22', comment: 'Settled start to term.' },
-      { id: 'elias-check-2', date: '2026-02-12', comment: '' },
-      { id: 'elias-check-3', date: '2026-03-12', comment: 'Review routines next month.' },
-      { id: 'elias-check-4', date: '2026-04-16', comment: '' },
-      { id: 'elias-check-5', date: '2026-05-14', comment: 'Follow up next week.' },
-    ],
-    subjectStatuses: { english: 'green', mathematics: 'orange', swedish: 'green', 'physical-education': 'green', music: 'orange' },
-    teachingInfo: [
-      { id: 'elias-teach-1', text: 'Written instructions recommended', reviewDate: '2026-05-31' },
-      { id: 'elias-teach-2', text: 'Short movement breaks okay', reviewDate: '2026-05-31' },
-      { id: 'elias-teach-3', text: 'Monitor during week 21', reviewDate: '2026-05-24' },
-    ],
-    followUps: [
-      { id: 'elias-follow-1', date: '2026-05-21', label: 'Mentor meeting', completed: false },
-      { id: 'elias-follow-2', date: '2026-05-24', label: 'Call home', completed: false },
-    ],
-  },
-  'freya-wilson': {
-    mentorStatus: 'orange',
-    supportStatus: 'orange',
-    prorenata: null,
-    checkIns: [
-      { id: 'freya-check-1', date: '2026-01-29', comment: '' },
-      { id: 'freya-check-2', date: '2026-03-05', comment: '' },
-      { id: 'freya-check-3', date: '2026-04-23', comment: 'Agree light follow-up.' },
-    ],
-    subjectStatuses: { english: 'orange', mathematics: 'green', swedish: 'green', 'physical-education': 'green', music: 'green' },
-    teachingInfo: [
-      { id: 'freya-teach-1', text: 'Prefer written + verbal instructions', reviewDate: '2026-06-07' },
-    ],
-    followUps: [{ id: 'freya-follow-1', week: 'Week 21', label: 'General follow-up', completed: false }],
-  },
-  'omar-hassan': {
-    mentorStatus: 'green',
-    supportStatus: 'green',
-    prorenata: null,
-    checkIns: [
-      { id: 'omar-check-1', date: '2026-02-05', comment: '' },
-      { id: 'omar-check-2', date: '2026-04-09', comment: '' },
-      { id: 'omar-check-3', date: '2026-05-07', comment: '' },
-    ],
-    subjectStatuses: { english: 'green', mathematics: 'green', swedish: 'green', 'physical-education': 'green', music: 'green' },
-    teachingInfo: [{ id: 'omar-teach-1', text: 'Check understanding before independent work', reviewDate: '2026-06-14' }],
-    followUps: [],
-  },
-  'noor-ahmed': {
-    mentorStatus: 'red',
-    supportStatus: 'orange',
-    prorenata: { status: 'Ongoing', updated: '2026-05-10' },
-    checkIns: [
-      { id: 'noor-check-1', date: '2026-01-18', comment: '' },
-      { id: 'noor-check-2', date: '2026-02-26', comment: '' },
-      { id: 'noor-check-3', date: '2026-04-30', comment: 'Team meeting planned.' },
-    ],
-    subjectStatuses: { english: 'orange', mathematics: 'orange', swedish: 'green', 'physical-education': 'green', music: 'green' },
-    teachingInfo: [
-      { id: 'noor-teach-1', text: 'Monitor participation over the next week', reviewDate: '2026-05-24' },
-      { id: 'noor-teach-2', text: 'Seat near clear board sightline', reviewDate: '2026-05-31' },
-    ],
-    followUps: [{ id: 'noor-follow-1', date: '2026-05-22', label: 'Teaching team meeting', completed: false }],
-  },
-};
-
-const fallbackMentorPicture = {
-  mentorStatus: 'green',
-  supportStatus: 'green',
-  prorenata: null,
-  checkIns: [
-    { id: 'check-1', date: '2026-02-12', comment: '' },
-    { id: 'check-2', date: '2026-04-16', comment: '' },
-  ],
-  subjectStatuses: { english: 'green', mathematics: 'green', swedish: 'green', 'physical-education': 'green', music: 'green' },
-  teachingInfo: [],
-  followUps: [],
-};
-
 function readStoredMentorPicture() {
   if (typeof window === 'undefined') return {};
 
@@ -123,6 +43,10 @@ function readStoredMentorPicture() {
 function writeStoredMentorPicture(value) {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(mentorStorageKey, JSON.stringify(value));
+}
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
 }
 
 function getStudentMentorPicture(studentId, overrides = {}) {
@@ -233,7 +157,7 @@ function StudentOverviewRow({ student, picture, subjectConfigs, selectedCell, on
       <ButtonBase type="button" aria-pressed={selectedCell === 'checkIns'} onClick={() => onSelectCell(student.id, 'checkIns')} sx={cellButtonSx}>
         <Stack direction="row" spacing={0.35} alignItems="center">
           {(picture.checkIns || []).slice(-3).map((checkIn) => (
-            <Box key={checkIn.id} title={`${formatDate(checkIn.date)} · Check-in`} sx={{ width: 10, height: 10, borderRadius: '50%', border: '1.5px solid rgba(156, 40, 175, 0.72)', bgcolor: '#fff' }} />
+            <CheckInStatusIcon key={checkIn.id} status={checkIn.status} size={14} title={`${formatDate(checkIn.date)} · ${getCheckInStatusMeta(checkIn.status).label}`} />
           ))}
           <Typography sx={{ pl: 0.25, color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>
             {latestCheckIn ? formatDate(latestCheckIn.date) : 'None'}
@@ -291,17 +215,25 @@ export default function MentorModule() {
     ));
   }
 
-  function updateStudentStatus(studentId, field, status) {
+  function updateSupportStatus(studentId, status, comment) {
+    const picture = getStudentMentorPicture(studentId, overrides);
+    const historyItem = {
+      id: `support-history-${Date.now()}`,
+      status,
+      comment,
+      date: todayIso(),
+    };
     const nextOverrides = {
       ...overrides,
       [studentId]: {
         ...(overrides[studentId] || {}),
-        [field]: status,
+        supportStatus: status,
+        supportHistory: [historyItem, ...(picture.supportHistory || [])],
       },
     };
     setOverrides(nextOverrides);
     writeStoredMentorPicture(nextOverrides);
-    setSnackbarMessage('Mentor picture updated.');
+    setSnackbarMessage('Support status updated.');
   }
 
   function updateTeachingInfo(studentId, teachingInfo) {
@@ -315,6 +247,26 @@ export default function MentorModule() {
     setOverrides(nextOverrides);
     writeStoredMentorPicture(nextOverrides);
     setSnackbarMessage('Teacher message updated.');
+  }
+
+  function addCheckIn(studentId, status, comment = '') {
+    const picture = getStudentMentorPicture(studentId, overrides);
+    const nextCheckIn = {
+      id: `check-in-${Date.now()}`,
+      date: todayIso(),
+      status,
+      comment,
+    };
+    const nextOverrides = {
+      ...overrides,
+      [studentId]: {
+        ...(overrides[studentId] || {}),
+        checkIns: [...(picture.checkIns || []), nextCheckIn],
+      },
+    };
+    setOverrides(nextOverrides);
+    writeStoredMentorPicture(nextOverrides);
+    setSnackbarMessage('Check-in added.');
   }
 
   return (
@@ -383,8 +335,9 @@ export default function MentorModule() {
                           setSelectedSubjectId={setSelectedSubjectId}
                           selectedSubjectConfig={selectedSubjectConfig}
                           selectedSubjectFacts={selectedSubjectFacts}
-                          onStatusChange={(field, status) => updateStudentStatus(student.id, field, status)}
+                          onSupportUpdate={(status, comment) => updateSupportStatus(student.id, status, comment)}
                           onTeachingInfoChange={(teachingInfo) => updateTeachingInfo(student.id, teachingInfo)}
+                          onAddCheckIn={(status, comment) => addCheckIn(student.id, status, comment)}
                           setSnackbarMessage={setSnackbarMessage}
                         />
                       </Collapse>
