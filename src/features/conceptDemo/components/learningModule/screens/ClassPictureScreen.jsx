@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import GroupsIcon from '@mui/icons-material/Groups';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -7,7 +8,7 @@ import NotesIcon from '@mui/icons-material/Notes';
 import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import TimelineIcon from '@mui/icons-material/Timeline';
-import { Box, ButtonBase, IconButton, MenuItem, Paper, Select, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, ButtonBase, Dialog, DialogContent, IconButton, MenuItem, Paper, Select, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import { useConceptDemoLanguage } from '../../../ConceptDemoLanguageContext.jsx';
 import { classGroupDefinitions } from '../../../data/classGroupDefinitions.js';
 import { useClassWorkingGroups } from '../../../hooks/useClassWorkingGroups.js';
@@ -37,6 +38,35 @@ const purple = '#9c28af';
 const darkText = '#17151a';
 const border = 'rgba(23, 21, 26, 0.1)';
 const absentOrange = '#b85c00';
+
+function getClassViewStorageKey(moduleId) {
+  return `smartdesk_demo_learning_class_views_${moduleId}`;
+}
+
+function readStoredClassViews(moduleId) {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const value = window.localStorage.getItem(getClassViewStorageKey(moduleId));
+    const views = value ? JSON.parse(value) : [];
+    return Array.isArray(views) ? views.filter((view) => view?.id && view?.label) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeStoredClassViews(moduleId, views) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(getClassViewStorageKey(moduleId), JSON.stringify(views));
+}
+
+function slugifyClassViewTitle(value) {
+  return String(value || 'view')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
 
 const learningObservationChoices = [
   { id: '-', label: '-' },
@@ -1475,6 +1505,9 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
   const [editingUnitId, setEditingUnitId] = useState('');
   const [draftUnitNote, setDraftUnitNote] = useState('');
   const [activeGroupingSetId, setActiveGroupingSetId] = useState('none');
+  const [customClassViews, setCustomClassViews] = useState(() => readStoredClassViews(moduleId));
+  const [addClassViewOpen, setAddClassViewOpen] = useState(false);
+  const [newClassViewTitle, setNewClassViewTitle] = useState('');
   const [collapsedGroupIds, setCollapsedGroupIds] = useState([]);
   const [draggedStudentId, setDraggedStudentId] = useState('');
   const [dragTargetId, setDragTargetId] = useState('');
@@ -1500,7 +1533,10 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
     initialGroups: moduleConfig?.classData?.workingGroups || [],
   });
   const handledResetTokenRef = useRef(moduleConfig?.demoResetToken || 0);
-  const groupDefinitions = moduleConfig?.classData?.groupDefinitions || classGroupDefinitions;
+  const groupDefinitions = [
+    ...(moduleConfig?.classData?.groupDefinitions || classGroupDefinitions),
+    ...customClassViews,
+  ];
   const activeGroupingSet = groupDefinitions.find((definition) => definition.id === activeGroupingSetId) || null;
   const groupedViewActive = activeGroupingSetId !== 'none';
   const activeGroups = useMemo(
@@ -1594,6 +1630,8 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
     setEditingUnitId('');
     setDraftUnitNote('');
     setActiveGroupingSetId('none');
+    setAddClassViewOpen(false);
+    setNewClassViewTitle('');
     setCollapsedGroupIds([]);
     setDraggedStudentId('');
     setDragTargetId('');
@@ -1692,6 +1730,51 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
         ? currentIds.filter((id) => id !== groupId)
         : [...currentIds, groupId]
     ));
+  }
+
+  function changeClassView(value) {
+    if (value === 'add-new-view') {
+      setAddClassViewOpen(true);
+      return;
+    }
+
+    setActiveGroupingSetId(value);
+    setCollapsedGroupIds([]);
+  }
+
+  function closeAddClassViewDialog() {
+    setAddClassViewOpen(false);
+    setNewClassViewTitle('');
+  }
+
+  function addClassView() {
+    const title = newClassViewTitle.trim();
+    if (!title) return;
+
+    const id = `custom-view-${slugifyClassViewTitle(title)}-${Date.now().toString(36)}`;
+    const nextView = {
+      id,
+      label: title,
+      description: '',
+      allowMultiplePerStudent: true,
+      custom: true,
+    };
+    const nextViews = [...customClassViews, nextView];
+    setCustomClassViews(nextViews);
+    writeStoredClassViews(moduleId, nextViews);
+    setActiveGroupingSetId(id);
+    setCollapsedGroupIds([]);
+    closeAddClassViewDialog();
+  }
+
+  function deleteClassView(viewId) {
+    const nextViews = customClassViews.filter((view) => view.id !== viewId);
+    setCustomClassViews(nextViews);
+    writeStoredClassViews(moduleId, nextViews);
+    if (activeGroupingSetId === viewId) {
+      setActiveGroupingSetId('none');
+      setCollapsedGroupIds([]);
+    }
   }
 
   function openCreateGroupDialog() {
@@ -1937,10 +2020,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
         <Stack direction="row" spacing={0.7} alignItems="center" sx={{ justifySelf: { xs: 'stretch', lg: 'end' }, alignSelf: 'start', flexWrap: 'wrap' }}>
           <Select
             value={activeGroupingSetId}
-            onChange={(event) => {
-              setActiveGroupingSetId(event.target.value);
-              setCollapsedGroupIds([]);
-            }}
+            onChange={(event) => changeClassView(event.target.value)}
             size="small"
             inputProps={{ 'aria-label': t('learningModule.classPicture.focus') }}
             sx={{
@@ -1967,8 +2047,33 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
           >
             <MenuItem value="none">{t('learningModule.classPicture.classList')}</MenuItem>
             {groupDefinitions.map((definition, index) => (
-              <MenuItem key={definition.id} value={definition.id}>{index + 1}</MenuItem>
+              <MenuItem key={definition.id} value={definition.id}>
+                {definition.custom ? (
+                  <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" sx={{ width: '100%', minWidth: 180 }}>
+                    <Typography sx={{ minWidth: 0, flex: '1 1 auto', color: 'inherit', fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {definition.label}
+                    </Typography>
+                    <IconButton
+                      size="small"
+                      aria-label={`Delete ${definition.label}`}
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                      }}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        deleteClassView(definition.id);
+                      }}
+                      sx={{ ml: 'auto', mr: -0.5, flexShrink: 0, color: 'text.secondary', '&:hover': { color: '#b42318', bgcolor: 'rgba(180, 35, 24, 0.08)' } }}
+                    >
+                      <DeleteOutlineIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Stack>
+                ) : index + 1}
+              </MenuItem>
             ))}
+            <MenuItem value="add-new-view">+ Add new view</MenuItem>
           </Select>
           <Tooltip title={t('learningModule.classPicture.resetFocus')}>
             <IconButton aria-label={t('learningModule.classPicture.resetGroupsAria')} onClick={resetGroups} size="small" sx={{ color: 'text.secondary' }}>
@@ -1998,6 +2103,53 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
           moveStudentToUngrouped(group?.typeId || activeGroupingSetId, studentId);
         }}
       />
+      <Dialog open={addClassViewOpen} onClose={closeAddClassViewDialog} PaperProps={{ sx: { borderRadius: '8px', width: 340 } }}>
+        <DialogContent sx={{ p: 1.25 }}>
+          <Typography sx={{ color: darkText, fontSize: 15.2, fontWeight: 900 }}>Add view</Typography>
+          <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 12.1, lineHeight: 1.35 }}>
+            Create a new class overview list.
+          </Typography>
+          <TextField
+            autoFocus
+            label="View title"
+            value={newClassViewTitle}
+            onChange={(event) => setNewClassViewTitle(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') addClassView();
+            }}
+            size="small"
+            fullWidth
+            sx={{ mt: 1 }}
+          />
+          <Stack direction="row" spacing={0.65} justifyContent="flex-end" sx={{ mt: 1 }}>
+            <ButtonBase
+              type="button"
+              onClick={closeAddClassViewDialog}
+              sx={{ px: 0.85, py: 0.45, borderRadius: '8px', color: 'text.secondary', fontSize: 12, fontWeight: 850, '&:hover': { bgcolor: 'rgba(23, 21, 26, 0.035)' } }}
+            >
+              Cancel
+            </ButtonBase>
+            <ButtonBase
+              type="button"
+              onClick={addClassView}
+              disabled={!newClassViewTitle.trim()}
+              sx={{
+                px: 0.9,
+                py: 0.45,
+                borderRadius: '8px',
+                bgcolor: purple,
+                color: '#fff',
+                fontSize: 12,
+                fontWeight: 880,
+                opacity: newClassViewTitle.trim() ? 1 : 0.45,
+                '&:hover': { bgcolor: purple },
+              }}
+            >
+              Add
+            </ButtonBase>
+          </Stack>
+        </DialogContent>
+      </Dialog>
       <AssessmentResultsEntryModal
         assessment={{ id: 'enter-results', title: t('learningModule.classPicture.assessmentFallback') }}
         storedAssessment={assessmentEditModal.storedAssessment}

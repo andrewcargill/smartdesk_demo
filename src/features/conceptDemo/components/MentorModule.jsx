@@ -1,19 +1,13 @@
 import { useMemo, useState } from 'react';
-import AddIcon from '@mui/icons-material/Add';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import {
   Alert,
   Box,
   ButtonBase,
   Collapse,
-  Dialog,
-  DialogContent,
-  MenuItem,
   Paper,
-  Select,
   Snackbar,
   Stack,
-  TextField,
   Typography,
 } from '@mui/material';
 import { class8AStudents } from '../data/classes/class8AStudents.js';
@@ -34,7 +28,6 @@ import {
 } from './mentorModule/mentorModuleShared.jsx';
 
 const mentorStorageKey = 'smartdesk_demo_mentor_8a_picture';
-const mentorViewsStorageKey = 'smartdesk_demo_mentor_8a_views';
 
 function readStoredMentorPicture() {
   if (typeof window === 'undefined') return {};
@@ -50,23 +43,6 @@ function readStoredMentorPicture() {
 function writeStoredMentorPicture(value) {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(mentorStorageKey, JSON.stringify(value));
-}
-
-function readStoredMentorViews() {
-  if (typeof window === 'undefined') return [];
-
-  try {
-    const value = window.localStorage.getItem(mentorViewsStorageKey);
-    const views = value ? JSON.parse(value) : [];
-    return Array.isArray(views) ? views : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeStoredMentorViews(value) {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(mentorViewsStorageKey, JSON.stringify(value));
 }
 
 function todayIso() {
@@ -220,10 +196,6 @@ export default function MentorModule() {
   const [expandedCell, setExpandedCell] = useState({ studentId: '', cellId: '' });
   const [selectedSubjectId, setSelectedSubjectId] = useState('english');
   const [activeFilter, setActiveFilter] = useState('');
-  const [customViews, setCustomViews] = useState(() => readStoredMentorViews());
-  const [activeCustomViewId, setActiveCustomViewId] = useState('');
-  const [addViewOpen, setAddViewOpen] = useState(false);
-  const [newViewTitle, setNewViewTitle] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const subjectConfigs = useMemo(() => subjectIds.reduce((configs, subjectId) => {
     configs[subjectId] = buildSubject8AConfig({ subjectId });
@@ -263,7 +235,6 @@ export default function MentorModule() {
   ];
   const currentFilter = summaryFilters.find((filter) => filter.id === activeFilter);
   const filteredStudents = currentFilter ? students.filter(currentFilter.matches) : students;
-  const selectedViewValue = activeCustomViewId ? `custom:${activeCustomViewId}` : (activeFilter || 'none');
 
   function toggleExpandedCell(studentId, cellId) {
     setExpandedCell((current) => (
@@ -271,56 +242,6 @@ export default function MentorModule() {
         ? { studentId: '', cellId: '' }
         : { studentId, cellId }
     ));
-  }
-
-  function changeView(value) {
-    if (value === 'add-new') {
-      setAddViewOpen(true);
-      return;
-    }
-
-    setExpandedCell({ studentId: '', cellId: '' });
-
-    if (value === 'none') {
-      setActiveFilter('');
-      setActiveCustomViewId('');
-      return;
-    }
-
-    if (value.startsWith('custom:')) {
-      const viewId = value.replace('custom:', '');
-      const view = customViews.find((item) => item.id === viewId);
-      setActiveFilter(view?.filterId || '');
-      setActiveCustomViewId(viewId);
-      return;
-    }
-
-    setActiveFilter(value);
-    setActiveCustomViewId('');
-  }
-
-  function closeAddViewDialog() {
-    setAddViewOpen(false);
-    setNewViewTitle('');
-  }
-
-  function addCustomView() {
-    const title = newViewTitle.trim();
-    if (!title) return;
-
-    const nextView = {
-      id: `mentor-view-${Date.now()}`,
-      title,
-      filterId: activeFilter,
-      createdAt: todayIso(),
-    };
-    const nextViews = [...customViews, nextView];
-    setCustomViews(nextViews);
-    writeStoredMentorViews(nextViews);
-    setActiveCustomViewId(nextView.id);
-    setExpandedCell({ studentId: '', cellId: '' });
-    closeAddViewDialog();
-    setSnackbarMessage('View saved.');
   }
 
   function updateSupportStatus(studentId, status, comment) {
@@ -427,7 +348,6 @@ export default function MentorModule() {
                 type="button"
                 elevation={0}
                 onClick={() => setActiveFilter((current) => (current === id ? '' : id))}
-                onMouseDown={() => setActiveCustomViewId('')}
                 aria-pressed={selected}
                 sx={{
                   display: 'block',
@@ -465,64 +385,6 @@ export default function MentorModule() {
                 <Typography sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>
                   Teacher-set signals
                 </Typography>
-              </Stack>
-              <Stack direction="row" spacing={0.7} alignItems="center" justifyContent="flex-end" sx={{ px: 0.2, pb: 0.7, flexWrap: 'wrap' }}>
-                <Select
-                  value={selectedViewValue}
-                  onChange={(event) => changeView(event.target.value)}
-                  size="small"
-                  inputProps={{ 'aria-label': 'Mentor overview view' }}
-                  sx={{
-                    minWidth: { xs: 190, sm: 230 },
-                    borderRadius: '999px',
-                    color: selectedViewValue !== 'none' ? purple : 'text.secondary',
-                    fontSize: 13,
-                    fontWeight: 760,
-                    '& .MuiSelect-select': {
-                      py: 0.75,
-                      pl: 1.8,
-                      pr: 4,
-                    },
-                    '& fieldset': {
-                      borderColor: selectedViewValue !== 'none' ? 'rgba(156, 40, 175, 0.28)' : 'rgba(23, 21, 26, 0.12)',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'rgba(156, 40, 175, 0.28) !important',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'rgba(156, 40, 175, 0.38) !important',
-                    },
-                  }}
-                >
-                  <MenuItem value="none">Class list</MenuItem>
-                  {summaryFilters.map((filter) => (
-                    <MenuItem key={filter.id} value={filter.id}>{filter.label}</MenuItem>
-                  ))}
-                  {customViews.map((view) => (
-                    <MenuItem key={view.id} value={`custom:${view.id}`}>{view.title}</MenuItem>
-                  ))}
-                  <MenuItem value="add-new">+ Add new view</MenuItem>
-                </Select>
-                <ButtonBase
-                  type="button"
-                  onClick={() => setAddViewOpen(true)}
-                  sx={{
-                    height: 34,
-                    px: 0.9,
-                    borderRadius: '999px',
-                    border: '1px solid rgba(156, 40, 175, 0.22)',
-                    color: purple,
-                    bgcolor: 'rgba(156, 40, 175, 0.045)',
-                    fontSize: 12.3,
-                    fontWeight: 860,
-                    gap: 0.45,
-                    '&:hover': { bgcolor: 'rgba(156, 40, 175, 0.075)' },
-                    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
-                  }}
-                >
-                  <AddIcon sx={{ fontSize: 16 }} />
-                  Add view
-                </ButtonBase>
               </Stack>
               <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: '24px minmax(190px, 1.15fr) 104px minmax(180px, 0.9fr) minmax(170px, 0.95fr) minmax(128px, 0.65fr)', gap: 0.85, px: 1, pb: 0.45 }}>
                 {['', 'Student', 'Support', 'Recent check-ins', 'Subjects', 'Follow-up'].map((label) => (
@@ -578,53 +440,6 @@ export default function MentorModule() {
           {snackbarMessage}
         </Alert>
       </Snackbar>
-      <Dialog open={addViewOpen} onClose={closeAddViewDialog} PaperProps={{ sx: { borderRadius: '8px', width: 340 } }}>
-        <DialogContent sx={{ p: 1.25 }}>
-          <Typography sx={{ color: darkText, fontSize: 15.2, fontWeight: 900 }}>Add view</Typography>
-          <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 12.1, lineHeight: 1.35 }}>
-            Save the current mentor list as a view.
-          </Typography>
-          <TextField
-            autoFocus
-            label="View title"
-            value={newViewTitle}
-            onChange={(event) => setNewViewTitle(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') addCustomView();
-            }}
-            size="small"
-            fullWidth
-            sx={{ mt: 1 }}
-          />
-          <Stack direction="row" spacing={0.65} justifyContent="flex-end" sx={{ mt: 1 }}>
-            <ButtonBase
-              type="button"
-              onClick={closeAddViewDialog}
-              sx={{ px: 0.85, py: 0.45, borderRadius: '8px', color: 'text.secondary', fontSize: 12, fontWeight: 850, '&:hover': { bgcolor: 'rgba(23, 21, 26, 0.035)' } }}
-            >
-              Cancel
-            </ButtonBase>
-            <ButtonBase
-              type="button"
-              onClick={addCustomView}
-              disabled={!newViewTitle.trim()}
-              sx={{
-                px: 0.9,
-                py: 0.45,
-                borderRadius: '8px',
-                bgcolor: purple,
-                color: '#fff',
-                fontSize: 12,
-                fontWeight: 880,
-                opacity: newViewTitle.trim() ? 1 : 0.45,
-                '&:hover': { bgcolor: purple },
-              }}
-            >
-              Add
-            </ButtonBase>
-          </Stack>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
