@@ -3,6 +3,7 @@ import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import GroupsIcon from '@mui/icons-material/Groups';
+import GridViewIcon from '@mui/icons-material/GridView';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import NotesIcon from '@mui/icons-material/Notes';
 import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
@@ -16,6 +17,7 @@ import { getActiveGroups } from '../../../utils/classGroupUtils.js';
 import { GroupDialog } from '../ClassWorkingGroups.jsx';
 import AssessmentResultsEntryModal from '../AssessmentResultsEntryModal.jsx';
 import ClassPictureExpandedView from '../ClassPictureExpandedView.jsx';
+import StudentEvidenceHeatmap from '../StudentEvidenceHeatmap.jsx';
 import StudentUnitInsightPanel from '../StudentUnitInsightPanel.jsx';
 import { getLearningContextsForSubject } from '../data/subjectLearningContexts.js';
 import {
@@ -589,6 +591,7 @@ function ClassPictureEvidenceGridV1({
   classPictureRows,
   collapsedGroupIds,
   comparisonVariant = 'v1',
+  curriculumAreas,
   draftCellNote,
   draftRowNote,
   draftUnitNote,
@@ -642,6 +645,7 @@ function ClassPictureEvidenceGridV1({
   toggleStudent,
   unitNotes,
 }) {
+  const [studentOverviewView, setStudentOverviewView] = useState('timeline');
   const v2 = comparisonVariant === 'v2';
   const v3 = comparisonVariant === 'v3';
   const v2UnitColumnFlex = 3 / Math.max(teachingUnits.length, 1);
@@ -1417,24 +1421,76 @@ function ClassPictureEvidenceGridV1({
                         t={t}
                       />
                     ) : (
-                      <ClassPictureExpandedView
-                        moduleId={moduleConfig?.id || 'learning-module'}
-                        student={student}
-                        evidenceItems={allEvidenceItems || evidenceItems}
-                        learningObservations={studentLearningObservations}
-                        teachingUnits={teachingUnits}
-                        rowNote={rowNote}
-                        cellNotes={cellNotes}
-                        unitNotes={unitNotes}
-                        learningObservationAreas={learningObservationAreas}
-                        skills={skills}
-                        levels={levels}
-                        learningContexts={learningContexts}
-                        seededTimelineResponses={moduleConfig?.evidence?.timelineResponses || []}
-                        timelineClassContextLabel={moduleConfig?.planning?.blockTypeLabels?.teaching || ''}
-                        language={language}
-                        t={t}
-                      />
+                      <Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', px: { xs: 1, sm: 1.25 }, pt: { xs: 1, sm: 1.15 }, pb: 0.1 }}>
+                          <Stack direction="row" spacing={0.45} alignItems="center">
+                            {[
+                              { id: 'timeline', label: 'Timeline', Icon: TimelineIcon },
+                              { id: 'heatmap', label: 'Heatmap', Icon: GridViewIcon },
+                            ].map((option) => {
+                              const selected = studentOverviewView === option.id;
+                              const Icon = option.Icon;
+                              return (
+                                <ButtonBase
+                                  key={option.id}
+                                  type="button"
+                                  aria-pressed={selected}
+                                  onClick={() => setStudentOverviewView(option.id)}
+                                  sx={{
+                                    minHeight: 28,
+                                    px: 0.75,
+                                    borderRadius: '999px',
+                                    border: '1px solid',
+                                    borderColor: selected ? 'rgba(156, 40, 175, 0.24)' : 'rgba(23, 21, 26, 0.095)',
+                                    bgcolor: selected ? 'rgba(156, 40, 175, 0.06)' : '#fff',
+                                    color: selected ? darkText : 'text.secondary',
+                                    fontSize: 11.4,
+                                    fontWeight: selected ? 880 : 780,
+                                    gap: 0.35,
+                                    '&:hover': { bgcolor: selected ? 'rgba(156, 40, 175, 0.075)' : 'rgba(23, 21, 26, 0.026)' },
+                                    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                                  }}
+                                >
+                                  <Icon sx={{ fontSize: 14 }} />
+                                  {option.label}
+                                </ButtonBase>
+                              );
+                            })}
+                          </Stack>
+                        </Box>
+                        {studentOverviewView === 'heatmap' ? (
+                          <StudentEvidenceHeatmap
+                            student={student}
+                            evidenceItems={allEvidenceItems || evidenceItems}
+                            learningObservations={studentLearningObservations}
+                            learningObservationAreas={learningObservationAreas}
+                            curriculumAreas={curriculumAreas}
+                            teachingUnits={teachingUnits}
+                            skills={skills}
+                            levels={levels}
+                            language={language}
+                          />
+                        ) : (
+                          <ClassPictureExpandedView
+                            moduleId={moduleConfig?.id || 'learning-module'}
+                            student={student}
+                            evidenceItems={allEvidenceItems || evidenceItems}
+                            learningObservations={studentLearningObservations}
+                            teachingUnits={teachingUnits}
+                            rowNote={rowNote}
+                            cellNotes={cellNotes}
+                            unitNotes={unitNotes}
+                            learningObservationAreas={learningObservationAreas}
+                            skills={skills}
+                            levels={levels}
+                            learningContexts={learningContexts}
+                            seededTimelineResponses={moduleConfig?.evidence?.timelineResponses || []}
+                            timelineClassContextLabel={moduleConfig?.planning?.blockTypeLabels?.teaching || ''}
+                            language={language}
+                            t={t}
+                          />
+                        )}
+                      </Box>
                     )}
                   </Box>
                 </Box>
@@ -1456,6 +1512,8 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
   const learningObservationAreas = useMemo(() => getLearningObservationAreas(t), [t]);
   const students = moduleConfig?.classData?.students || [];
   const teachingUnits = [...(moduleConfig?.curriculum?.teachingUnits || [])]
+    .sort((first, second) => (first.order || 0) - (second.order || 0));
+  const curriculumAreas = [...(moduleConfig?.curriculum?.areas || [])]
     .sort((first, second) => (first.order || 0) - (second.order || 0));
   const moduleId = moduleConfig?.id || 'learning-module';
   const activeLessonDate = moduleConfig?.lessons?.current?.date || '';
@@ -1980,6 +2038,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
     hoveredRowNoteStudentId,
     hoveredStudentId,
     language,
+    curriculumAreas,
     learningObservationAreas,
     learningObservations,
     learningContexts,
