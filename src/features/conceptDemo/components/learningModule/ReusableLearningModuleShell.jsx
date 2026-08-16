@@ -161,7 +161,6 @@ function createModuleViewModel(moduleData, language, t, { activeLessonIndex = 0,
     },
     evidence: localizeContent(moduleData?.evidence || {}, language),
     planning: localizeContent(moduleData?.planning || {}, language),
-    learningContexts: localizeContent(moduleData?.learningContexts || [], language),
     screens: localizeScreens(moduleData?.screens, language),
     navigation: {
       defaultScreen,
@@ -259,8 +258,7 @@ export default function ReusableLearningModuleShell({ moduleData, onBack }) {
           alignItems="center"
           sx={{
             alignSelf: { xs: 'flex-start', sm: 'center' },
-            pl: 1,
-pr: 1.4,
+            px: 1,
             py: 0.55,
             borderRadius: '999px',
             border: '1px solid rgba(23, 21, 26, 0.1)',

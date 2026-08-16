@@ -4,7 +4,7 @@ import MentorFollowUpView, { NextFollowUpCard } from './MentorFollowUpView.jsx';
 import MentorStudentOverviewView from './MentorStudentOverviewView.jsx';
 import MentorSubjectsView from './MentorSubjectsView.jsx';
 import MentorSupportView, { MentorSupportActions } from './MentorSupportView.jsx';
-import MentorTimelineView from './MentorTimelineView.jsx';
+import MentorTimelineHeatmapView from './MentorTimelineHeatmapView.jsx';
 
 export default function MentorExpandedCellPanel({
   student,
@@ -43,7 +43,7 @@ export default function MentorExpandedCellPanel({
           )}
 
           {activeCell === 'timeline' && (
-            <MentorTimelineView
+            <MentorTimelineHeatmapView
               student={student}
               picture={picture}
               subjectConfigs={subjectConfigs}
