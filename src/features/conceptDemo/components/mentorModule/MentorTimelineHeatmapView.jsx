@@ -1,8 +1,15 @@
 import { Fragment, useState } from 'react';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
 import { Box, ButtonBase, Collapse, Paper, Stack, Tooltip, Typography } from '@mui/material';
-import { getCheckInStatusMeta } from './mentorCheckInStatus.jsx';
+import { CheckInStatusIcon, getCheckInStatusMeta } from './mentorCheckInStatus.jsx';
 import { border, darkText, formatDate, getLocalizedValue, purple, subjectIds } from './mentorModuleShared.jsx';
+
+const signalRows = [
+  { status: 'positive', top: 18 },
+  { status: 'neutral', top: 44 },
+  { status: 'negative', top: 70 },
+];
 
 const observationDimensions = [
   { id: 'focus', label: 'Focus' },
@@ -20,6 +27,11 @@ function normalizeSignal(status) {
   if (status === '0') return 'neutral';
   if (status === '-') return 'negative';
   return status || 'neutral';
+}
+
+function getSignalY(status) {
+  const row = signalRows.find((item) => item.status === normalizeSignal(status)) || signalRows[1];
+  return row.top;
 }
 
 function getObservationNote(item) {
@@ -299,6 +311,104 @@ function HeatmapRow({ row, weeks }) {
   );
 }
 
+function TimelinePoint({ event, left, top }) {
+  return (
+    <Tooltip
+      arrow
+      placement="top"
+      title={(
+        <Box>
+          <Typography sx={{ color: 'inherit', fontSize: 11.5, fontWeight: 850 }}>
+            {formatDate(event.date)}
+          </Typography>
+          {event.comment && (
+            <Typography sx={{ mt: 0.25, color: 'inherit', fontSize: 11.2, lineHeight: 1.3 }}>
+              {event.comment}
+            </Typography>
+          )}
+        </Box>
+      )}
+    >
+      <Box
+        sx={{
+          position: 'absolute',
+          left: `calc(28px + ${left}%)`,
+          top: top - 6,
+          width: 12,
+          height: 12,
+          borderRadius: '50%',
+          bgcolor: purple,
+          transform: 'translateX(-50%)',
+          border: '2px solid #fff',
+          boxShadow: '0 0 0 2px rgba(156, 40, 175, 0.14)',
+          cursor: 'default',
+          transition: 'transform 140ms ease, box-shadow 140ms ease',
+          '&:hover': {
+            transform: 'translateX(-50%) scale(1.18)',
+            boxShadow: '0 0 0 4px rgba(156, 40, 175, 0.16)',
+          },
+        }}
+      />
+    </Tooltip>
+  );
+}
+
+function TimelineRowGraph({ row, start, end }) {
+  const sortedEvents = [...row.events].filter((event) => event.date).sort((first, second) => (first.date || '').localeCompare(second.date || ''));
+
+  function getLeft(date) {
+    const time = getEventTime(date);
+    if (time === null || start === end) return 48;
+    return Number((Math.max(2, Math.min(98, ((time - start) / (end - start)) * 100)) * 0.96).toFixed(2));
+  }
+
+  const points = sortedEvents.map((event) => ({
+    event,
+    left: getLeft(event.date),
+    y: getSignalY(event.status),
+  }));
+  const linePoints = points.map((point) => `${point.left},${point.y}`).join(' ');
+
+  return (
+    <Box
+      sx={{
+        position: 'relative',
+        height: 88,
+        minWidth: 0,
+      }}
+    >
+      {signalRows.map((rowItem) => (
+        <Box key={rowItem.status}>
+          <Box sx={{ position: 'absolute', left: 0, top: rowItem.top - 9, width: 20, height: 20, display: 'grid', placeItems: 'center' }}>
+            <CheckInStatusIcon status={rowItem.status} size={16} />
+          </Box>
+        </Box>
+      ))}
+      <Box
+        component="svg"
+        aria-hidden="true"
+        viewBox="0 0 100 88"
+        preserveAspectRatio="none"
+        sx={{ position: 'absolute', left: 28, right: 4, top: 0, height: 88, width: 'calc(100% - 32px)', overflow: 'visible', pointerEvents: 'none' }}
+      >
+        {signalRows.map((rowItem) => (
+          <line key={rowItem.status} x1="0" y1={rowItem.top} x2="96" y2={rowItem.top} stroke="rgba(23, 21, 26, 0.055)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+        ))}
+        <line x1="0" y1="12" x2="0" y2="76" stroke="rgba(23, 21, 26, 0.1)" strokeWidth="1.1" vectorEffect="non-scaling-stroke" />
+        {points.length > 1 && <polyline points={linePoints} fill="none" stroke="rgba(156, 40, 175, 0.34)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />}
+      </Box>
+      {points.map((point) => (
+        <TimelinePoint
+          key={`${row.id}-${point.event.id}`}
+          event={point.event}
+          left={point.left}
+          top={point.y}
+        />
+      ))}
+    </Box>
+  );
+}
+
 function TeacherObservationToggle({ open, onToggle }) {
   return (
     <Stack direction="row" spacing={0.45} alignItems="center" flexWrap="wrap" useFlexGap>
@@ -336,7 +446,11 @@ function EmptyRowMessage({ children }) {
   );
 }
 
-function TimelineRowsGrid({ group, rows, weeks, borderTop = false }) {
+function isCheckInRow(row) {
+  return row.events.some((event) => event.type === 'mentor-check-in' || event.type === 'subject-check-in');
+}
+
+function TimelineRowsGrid({ group, rows, weeks, start, end, graphRows, onToggleRowGraph, borderTop = false }) {
   return (
     <Box
       sx={{
@@ -353,6 +467,8 @@ function TimelineRowsGrid({ group, rows, weeks, borderTop = false }) {
       {rows.map((row, index) => {
         const sectionLabel = getSectionLabel(group, row, index);
         const rowSurface = getRowSurface(row);
+        const graphEnabled = Boolean(graphRows[row.id]);
+        const canToggleGraph = isCheckInRow(row);
         return (
           <Fragment key={row.id}>
             {sectionLabel && (
@@ -378,8 +494,9 @@ function TimelineRowsGrid({ group, rows, weeks, borderTop = false }) {
               </Box>
             )}
             <Typography
+              component="div"
               sx={{
-                minHeight: 34,
+                minHeight: graphEnabled ? 88 : 34,
                 color: row.source === 'student' ? darkText : 'text.secondary',
                 fontSize: 11.9,
                 fontWeight: row.source === 'student' ? 880 : 820,
@@ -397,7 +514,33 @@ function TimelineRowsGrid({ group, rows, weeks, borderTop = false }) {
                 bgcolor: rowSurface.bgcolor,
               }}
             >
-              {row.label}
+              <Stack direction="row" spacing={0.4} alignItems="center" sx={{ minWidth: 0, width: '100%' }}>
+                <Typography sx={{ color: 'inherit', fontSize: 'inherit', fontWeight: 'inherit', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+                  {row.label}
+                </Typography>
+                {canToggleGraph && (
+                  <Tooltip title={graphEnabled ? 'Show heatmap' : 'Show graph'} arrow>
+                    <ButtonBase
+                      type="button"
+                      aria-label={graphEnabled ? `Show ${row.label} heatmap` : `Show ${row.label} graph`}
+                      aria-pressed={graphEnabled}
+                      onClick={() => onToggleRowGraph(row.id)}
+                      sx={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: '6px',
+                        color: graphEnabled ? purple : 'text.secondary',
+                        bgcolor: graphEnabled ? 'rgba(156, 40, 175, 0.08)' : 'transparent',
+                        flexShrink: 0,
+                        '&:hover': { bgcolor: graphEnabled ? 'rgba(156, 40, 175, 0.12)' : 'rgba(23, 21, 26, 0.05)' },
+                        '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+                      }}
+                    >
+                      <ShowChartIcon sx={{ fontSize: 16 }} />
+                    </ButtonBase>
+                  </Tooltip>
+                )}
+              </Stack>
             </Typography>
             <Box
               sx={{
@@ -412,7 +555,11 @@ function TimelineRowsGrid({ group, rows, weeks, borderTop = false }) {
                 bgcolor: rowSurface.bgcolor,
               }}
             >
-              <HeatmapRow row={row} weeks={weeks} />
+              {graphEnabled ? (
+                <TimelineRowGraph row={row} start={start} end={end} />
+              ) : (
+                <HeatmapRow row={row} weeks={weeks} />
+              )}
             </Box>
           </Fragment>
         );
@@ -421,7 +568,18 @@ function TimelineRowsGrid({ group, rows, weeks, borderTop = false }) {
   );
 }
 
-function TimelineGroup({ group, weeks, open, onToggle, showTeacherObservations, onToggleTeacherObservations }) {
+function TimelineGroup({
+  group,
+  weeks,
+  start,
+  end,
+  open,
+  onToggle,
+  showTeacherObservations,
+  onToggleTeacherObservations,
+  graphRows,
+  onToggleRowGraph,
+}) {
   const isSubjectGroup = group.id !== 'mentor';
   const studentRows = group.rows.filter((row) => row.source === 'student');
   const teacherRows = group.rows.filter((row) => row.source === 'teacher');
@@ -437,7 +595,15 @@ function TimelineGroup({ group, weeks, open, onToggle, showTeacherObservations, 
           overflow: 'hidden',
         }}
       >
-        <TimelineRowsGrid group={group} rows={group.rows} weeks={weeks} />
+        <TimelineRowsGrid
+          group={group}
+          rows={group.rows}
+          weeks={weeks}
+          start={start}
+          end={end}
+          graphRows={graphRows}
+          onToggleRowGraph={onToggleRowGraph}
+        />
       </Paper>
     );
   }
@@ -489,7 +655,15 @@ function TimelineGroup({ group, weeks, open, onToggle, showTeacherObservations, 
             </Box>
           )}
           {studentRows.length > 0 && (
-            <TimelineRowsGrid group={group} rows={studentRows} weeks={weeks} />
+            <TimelineRowsGrid
+              group={group}
+              rows={studentRows}
+              weeks={weeks}
+              start={start}
+              end={end}
+              graphRows={graphRows}
+              onToggleRowGraph={onToggleRowGraph}
+            />
           )}
           <Box sx={{ px: 0.9, pt: 0.15, pb: showTeacherObservations ? 0.25 : 0.65 }}>
             <Stack direction="row" spacing={0.7} alignItems="center" justifyContent="flex-end">
@@ -505,7 +679,15 @@ function TimelineGroup({ group, weeks, open, onToggle, showTeacherObservations, 
             </Box>
           )}
           {showTeacherObservations && teacherRows.length > 0 && (
-            <TimelineRowsGrid group={group} rows={teacherRows} weeks={weeks} />
+            <TimelineRowsGrid
+              group={group}
+              rows={teacherRows}
+              weeks={weeks}
+              start={start}
+              end={end}
+              graphRows={graphRows}
+              onToggleRowGraph={onToggleRowGraph}
+            />
           )}
         </Box>
       </Collapse>
@@ -539,7 +721,12 @@ function HeatmapGraph({ groups }) {
     groups.reduce((items, group) => ({ ...items, [group.id]: false }), {})
   ));
   const [teacherObservationGroups, setTeacherObservationGroups] = useState({});
+  const [graphRows, setGraphRows] = useState({});
   const weeks = getWeeks(groups);
+  const start = getEventTime(weeks[0]) || new Date('2026-01-01T12:00:00').getTime();
+  const lastWeekStart = new Date(`${weeks[weeks.length - 1]}T12:00:00`);
+  lastWeekStart.setDate(lastWeekStart.getDate() + 6);
+  const end = lastWeekStart.getTime();
 
   function toggleGroup(groupId) {
     setOpenGroups((current) => ({ ...current, [groupId]: !current[groupId] }));
@@ -547,6 +734,10 @@ function HeatmapGraph({ groups }) {
 
   function toggleTeacherObservations(groupId) {
     setTeacherObservationGroups((current) => ({ ...current, [groupId]: !current[groupId] }));
+  }
+
+  function toggleRowGraph(rowId) {
+    setGraphRows((current) => ({ ...current, [rowId]: !current[rowId] }));
   }
 
   return (
@@ -586,10 +777,14 @@ function HeatmapGraph({ groups }) {
           key={group.id}
           group={group}
           weeks={weeks}
+          start={start}
+          end={end}
           open={openGroups[group.id]}
           onToggle={toggleGroup}
           showTeacherObservations={Boolean(teacherObservationGroups[group.id])}
           onToggleTeacherObservations={toggleTeacherObservations}
+          graphRows={graphRows}
+          onToggleRowGraph={toggleRowGraph}
         />
       ))}
     </Stack>
