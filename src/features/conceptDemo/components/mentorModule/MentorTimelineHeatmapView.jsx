@@ -1,7 +1,8 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
+import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import ShowChartIcon from '@mui/icons-material/ShowChart';
-import { Box, ButtonBase, Collapse, Paper, Stack, Tooltip, Typography } from '@mui/material';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import { Box, ButtonBase, Collapse, Paper, Portal, Stack, Tooltip, Typography } from '@mui/material';
 import { CheckInStatusIcon, getCheckInStatusMeta } from './mentorCheckInStatus.jsx';
 import { border, darkText, formatDate, getLocalizedValue, purple, subjectIds } from './mentorModuleShared.jsx';
 
@@ -446,8 +447,8 @@ function EmptyRowMessage({ children }) {
   );
 }
 
-function isCheckInRow(row) {
-  return row.events.some((event) => event.type === 'mentor-check-in' || event.type === 'subject-check-in');
+function canShowGraph(row) {
+  return row.events.length > 0;
 }
 
 function TimelineRowsGrid({ group, rows, weeks, start, end, graphRows, onToggleRowGraph, borderTop = false }) {
@@ -468,7 +469,8 @@ function TimelineRowsGrid({ group, rows, weeks, start, end, graphRows, onToggleR
         const sectionLabel = getSectionLabel(group, row, index);
         const rowSurface = getRowSurface(row);
         const graphEnabled = Boolean(graphRows[row.id]);
-        const canToggleGraph = isCheckInRow(row);
+        const canToggleGraph = canShowGraph(row);
+        const RowLabelComponent = canToggleGraph ? ButtonBase : Typography;
         return (
           <Fragment key={row.id}>
             {sectionLabel && (
@@ -493,9 +495,14 @@ function TimelineRowsGrid({ group, rows, weeks, start, end, graphRows, onToggleR
                 </Typography>
               </Box>
             )}
-            <Typography
-              component="div"
+            <RowLabelComponent
+              type={canToggleGraph ? 'button' : undefined}
+              component={canToggleGraph ? 'button' : 'div'}
+              aria-label={canToggleGraph ? `${graphEnabled ? 'Show heatmap for' : 'Show graph for'} ${row.label}` : undefined}
+              aria-pressed={canToggleGraph ? graphEnabled : undefined}
+              onClick={canToggleGraph ? () => onToggleRowGraph(row.id) : undefined}
               sx={{
+                width: '100%',
                 minHeight: graphEnabled ? 88 : 34,
                 color: row.source === 'student' ? darkText : 'text.secondary',
                 fontSize: 11.9,
@@ -512,36 +519,18 @@ function TimelineRowsGrid({ group, rows, weeks, start, end, graphRows, onToggleR
                 borderRight: 0,
                 borderColor: rowSurface.borderColor,
                 bgcolor: rowSurface.bgcolor,
+                textAlign: 'left',
+                cursor: canToggleGraph ? 'pointer' : 'default',
+                '&:hover': canToggleGraph ? { bgcolor: row.source === 'student' ? 'rgba(156, 40, 175, 0.07)' : 'rgba(23, 21, 26, 0.045)' } : undefined,
+                '&:focus-visible': canToggleGraph ? { outline: `2px solid ${purple}`, outlineOffset: -2 } : undefined,
               }}
             >
               <Stack direction="row" spacing={0.4} alignItems="center" sx={{ minWidth: 0, width: '100%' }}>
                 <Typography sx={{ color: 'inherit', fontSize: 'inherit', fontWeight: 'inherit', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
                   {row.label}
                 </Typography>
-                {canToggleGraph && (
-                  <Tooltip title={graphEnabled ? 'Show heatmap' : 'Show graph'} arrow>
-                    <ButtonBase
-                      type="button"
-                      aria-label={graphEnabled ? `Show ${row.label} heatmap` : `Show ${row.label} graph`}
-                      aria-pressed={graphEnabled}
-                      onClick={() => onToggleRowGraph(row.id)}
-                      sx={{
-                        width: 22,
-                        height: 22,
-                        borderRadius: '6px',
-                        color: graphEnabled ? purple : 'text.secondary',
-                        bgcolor: graphEnabled ? 'rgba(156, 40, 175, 0.08)' : 'transparent',
-                        flexShrink: 0,
-                        '&:hover': { bgcolor: graphEnabled ? 'rgba(156, 40, 175, 0.12)' : 'rgba(23, 21, 26, 0.05)' },
-                        '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
-                      }}
-                    >
-                      <ShowChartIcon sx={{ fontSize: 16 }} />
-                    </ButtonBase>
-                  </Tooltip>
-                )}
               </Stack>
-            </Typography>
+            </RowLabelComponent>
             <Box
               sx={{
                 minWidth: weeks.length * 31,
@@ -703,7 +692,7 @@ function HeatmapLegend() {
   ];
 
   return (
-    <Stack direction="row" spacing={0.8} alignItems="center" flexWrap="wrap" useFlexGap>
+    <Stack direction="row" spacing={0.8} alignItems="center" justifyContent={{ xs: 'flex-start', sm: 'flex-end' }} flexWrap="wrap" useFlexGap sx={{ flex: 1 }}>
       {items.map((item) => (
         <Stack key={item.value} direction="row" spacing={0.4} alignItems="center">
           <Box sx={{ width: 18, height: 18, borderRadius: '5px', bgcolor: item.bgcolor, border: '1px solid', borderColor: item.borderColor }} />
@@ -792,30 +781,86 @@ function HeatmapGraph({ groups }) {
 }
 
 export default function MentorTimelineHeatmapView({ picture, subjectConfigs, student }) {
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const groups = buildTimelineGroups({ picture, subjectConfigs, studentId: student.id });
   const eventCount = groups.reduce((total, group) => total + group.rows.reduce((rowTotal, row) => rowTotal + row.events.length, 0), 0);
-  const learningObservationCount = groups.reduce((total, group) => total + group.rows.reduce((rowTotal, row) => rowTotal + row.events.filter((event) => event.type === 'learning-observation').length, 0), 0);
+
+  useEffect(() => {
+    if (!isFullscreen || typeof document === 'undefined') return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        setIsFullscreen(false);
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isFullscreen]);
 
   return (
-    <Paper elevation={0} sx={{ p: 1, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff' }}>
-      <Stack spacing={1.05}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
-          <Box>
-            <Typography sx={{ color: darkText, fontSize: 15.2, fontWeight: 900 }}>Signal heatmap</Typography>
-            <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 12.1, lineHeight: 1.35 }}>
-              Mentor check-ins and {learningObservationCount} subject learning observation signals for {student.displayName}.
-            </Typography>
+    <Portal disablePortal={!isFullscreen}>
+      <Paper
+        elevation={0}
+        sx={{
+          position: isFullscreen ? 'fixed' : 'relative',
+          inset: isFullscreen ? { xs: 8, sm: 14 } : 'auto',
+          zIndex: isFullscreen ? 1700 : 'auto',
+          p: isFullscreen ? { xs: 1.2, sm: 1.45 } : 1,
+          borderRadius: '8px',
+          border: `1px solid ${isFullscreen ? 'rgba(156, 40, 175, 0.24)' : border}`,
+          bgcolor: '#fff',
+          boxShadow: isFullscreen ? '0 22px 70px rgba(23, 21, 26, 0.24)' : 'none',
+          height: isFullscreen ? 'calc(100vh - 28px)' : 'auto',
+          overflow: isFullscreen ? 'auto' : 'visible',
+        }}
+      >
+        <Stack spacing={1.35}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1fr) auto' }, gap: 0.8, alignItems: 'center' }}>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography sx={{ color: darkText, fontSize: 15.2, fontWeight: 900 }}>Student check-ins and subject observations</Typography>
+            </Box>
+            <Stack direction="row" spacing={0.8} alignItems="center" justifyContent="flex-end" flexWrap="wrap" useFlexGap>
+              <HeatmapLegend />
+              <Tooltip title={isFullscreen ? 'Exit fullscreen' : 'Expand fullscreen'} arrow>
+                <ButtonBase
+                  type="button"
+                  aria-label={isFullscreen ? 'Exit fullscreen' : 'Expand fullscreen'}
+                  aria-pressed={isFullscreen}
+                  onClick={() => setIsFullscreen((current) => !current)}
+                  sx={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: '8px',
+                    border: '1px solid rgba(23, 21, 26, 0.095)',
+                    color: isFullscreen ? purple : 'text.secondary',
+                    bgcolor: isFullscreen ? 'rgba(156, 40, 175, 0.06)' : '#fff',
+                    flexShrink: 0,
+                    '&:hover': { bgcolor: isFullscreen ? 'rgba(156, 40, 175, 0.085)' : 'rgba(23, 21, 26, 0.026)' },
+                    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                  }}
+                >
+                  {isFullscreen ? <CloseFullscreenIcon sx={{ fontSize: 15 }} /> : <OpenInFullIcon sx={{ fontSize: 15 }} />}
+                </ButtonBase>
+              </Tooltip>
+            </Stack>
           </Box>
-          <HeatmapLegend />
+          {eventCount ? (
+            <HeatmapGraph groups={groups} />
+          ) : (
+            <Paper elevation={0} sx={{ p: 1.2, borderRadius: '8px', border: '1px dashed rgba(23, 21, 26, 0.14)', bgcolor: 'rgba(23, 21, 26, 0.015)' }}>
+              <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>No timeline events yet.</Typography>
+            </Paper>
+          )}
         </Stack>
-        {eventCount ? (
-          <HeatmapGraph groups={groups} />
-        ) : (
-          <Paper elevation={0} sx={{ p: 1.2, borderRadius: '8px', border: '1px dashed rgba(23, 21, 26, 0.14)', bgcolor: 'rgba(23, 21, 26, 0.015)' }}>
-            <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>No timeline events yet.</Typography>
-          </Paper>
-        )}
-      </Stack>
-    </Paper>
+      </Paper>
+    </Portal>
   );
 }

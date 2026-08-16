@@ -139,12 +139,7 @@ function StudentOverviewRow({ student, picture, subjectConfigs, selectedCell, on
       >
         <KeyboardArrowDownIcon sx={{ color: 'text.secondary', fontSize: 18, transform: selectedCell === 'timeline' ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
       </ButtonBase>
-      <ButtonBase
-        type="button"
-        aria-pressed={selectedCell === 'student'}
-        onClick={() => onSelectCell(student.id, 'student')}
-        sx={{ ...cellButtonSx, minWidth: 0 }}
-      >
+      <Box sx={{ minWidth: 0, px: 0.45, py: 0.35 }}>
         <Box sx={{ minWidth: 0 }}>
         <Typography sx={{ color: darkText, fontSize: selected ? 18 : 13, fontWeight: selected ? 920 : 820, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', transition: 'font-size 140ms ease, font-weight 140ms ease' }}>
           {student.displayName}
@@ -153,7 +148,7 @@ function StudentOverviewRow({ student, picture, subjectConfigs, selectedCell, on
           8A
         </Typography>
         </Box>
-      </ButtonBase>
+      </Box>
       <ButtonBase type="button" aria-pressed={selectedCell === 'support'} onClick={() => onSelectCell(student.id, 'support')} sx={cellButtonSx}>
         <Stack direction="row" spacing={0.5} alignItems="center">
           <StatusDot status={picture.supportStatus} size={10} />
