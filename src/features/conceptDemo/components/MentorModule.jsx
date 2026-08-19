@@ -3,9 +3,18 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import {
   Alert,
   Box,
+  Button,
   ButtonBase,
   Collapse,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   Snackbar,
   Stack,
   Typography,
@@ -191,6 +200,11 @@ export default function MentorModule() {
   const [expandedCell, setExpandedCell] = useState({ studentId: '', cellId: '' });
   const [selectedSubjectId, setSelectedSubjectId] = useState('english');
   const [activeFilter, setActiveFilter] = useState('');
+  const [privateMode, setPrivateMode] = useState(false);
+  const [privateSelectedStudentId, setPrivateSelectedStudentId] = useState('');
+  const [privacyPromptOpen, setPrivacyPromptOpen] = useState(true);
+  const [privacyChoice, setPrivacyChoice] = useState('');
+  const [pendingPrivateStudentId, setPendingPrivateStudentId] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const subjectConfigs = useMemo(() => subjectIds.reduce((configs, subjectId) => {
     configs[subjectId] = buildSubject8AConfig({ subjectId });
@@ -198,6 +212,7 @@ export default function MentorModule() {
   }, {}), []);
   const students = class8AStudents;
   const selectedStudent = students.find((student) => student.id === expandedCell.studentId) || students[0];
+  const privateSelectedStudent = privateSelectedStudentId ? students.find((student) => student.id === privateSelectedStudentId) || null : null;
   const selectedPicture = getStudentMentorPicture(selectedStudent?.id, overrides);
   const selectedSubjectConfig = subjectConfigs[selectedSubjectId] || subjectConfigs.english;
   const selectedSubjectFacts = getSubjectFacts(selectedSubjectConfig, selectedStudent?.id);
@@ -318,8 +333,134 @@ export default function MentorModule() {
     setSnackbarMessage('Subject check-in added.');
   }
 
+  function handlePrivacyChoice(nextChoice) {
+    setPrivacyChoice(nextChoice);
+
+    if (nextChoice === 'standard') {
+      setPrivateMode(false);
+      setPrivateSelectedStudentId('');
+      setPendingPrivateStudentId('');
+      setExpandedCell({ studentId: '', cellId: '' });
+      setPrivacyPromptOpen(false);
+      return;
+    }
+
+    setPrivateMode(true);
+    setPrivateSelectedStudentId('');
+    setExpandedCell({ studentId: '', cellId: '' });
+  }
+
+  function handlePrivateSelectionSubmit() {
+    if (!pendingPrivateStudentId) return;
+
+    setPrivateSelectedStudentId(pendingPrivateStudentId);
+    setExpandedCell({ studentId: pendingPrivateStudentId, cellId: '' });
+    setPrivacyPromptOpen(false);
+  }
+
   return (
     <>
+      <Dialog
+        open={privacyPromptOpen}
+        onClose={() => setPrivacyPromptOpen(false)}
+        fullWidth
+        maxWidth="sm"
+        PaperProps={{
+          sx: {
+            width: { xs: 'calc(100% - 32px)', sm: 460 },
+            maxWidth: 460,
+            borderRadius: 3,
+            bgcolor: '#fff',
+            p: 1,
+          },
+        }}
+        slotProps={{
+          backdrop: {
+            sx: {
+              backgroundColor: 'rgba(20, 18, 25, 0.52)',
+              backdropFilter: 'blur(2px)',
+            },
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: darkText, fontWeight: 900, pb: 1, textAlign: 'center' }}>
+          View in private mode?
+        </DialogTitle>
+        <DialogContent dividers sx={{ borderColor: 'rgba(23, 21, 26, 0.08)', textAlign: 'center' }}>
+          {privacyChoice !== 'private' ? (
+            <Stack spacing={1.5} alignItems="center">
+              <Typography sx={{ color: 'text.secondary', fontSize: 14, lineHeight: 1.5 }}>
+                Choose how you want to open the mentor overview.
+              </Typography>
+              <Stack direction="row" spacing={1} justifyContent="center" sx={{ width: '100%' }}>
+                <Button
+                  variant="contained"
+                  onClick={() => handlePrivacyChoice('private')}
+                  sx={{ bgcolor: purple, '&:hover': { bgcolor: '#7d2d97' }, borderRadius: '10px', px: 2.4, py: 1 }}
+                >
+                  Private mode
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => handlePrivacyChoice('standard')}
+                  sx={{ borderRadius: '10px', px: 2.4, py: 1, borderColor: 'rgba(23, 21, 26, 0.2)', color: darkText }}
+                >
+                  Standard view
+                </Button>
+              </Stack>
+            </Stack>
+          ) : (
+            <Stack spacing={1.5} alignItems="center">
+              <Typography sx={{ color: 'text.secondary', fontSize: 14, lineHeight: 1.5 }}>
+                Select the student to load privately.
+              </Typography>
+              <FormControl fullWidth>
+                <InputLabel id="mentor-private-prompt-select-label">Student</InputLabel>
+                <Select
+                  labelId="mentor-private-prompt-select-label"
+                  value={pendingPrivateStudentId}
+                  label="Student"
+                  onChange={(event) => setPendingPrivateStudentId(event.target.value)}
+                  sx={{ bgcolor: '#fff', borderRadius: '8px' }}
+                >
+                  <MenuItem value="">
+                    <em>Select a student</em>
+                  </MenuItem>
+                  {students.map((student) => (
+                    <MenuItem key={student.id} value={student.id}>
+                      {student.displayName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', px: 3, pb: 2, pt: 1.5 }}>
+          {privacyChoice === 'private' ? (
+            <Stack direction="row" spacing={1} justifyContent="center" sx={{ width: '100%' }}>
+              <Button
+                onClick={() => {
+                  setPrivacyChoice('');
+                  setPendingPrivateStudentId('');
+                }}
+                sx={{ color: 'text.secondary' }}
+              >
+                Back
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handlePrivateSelectionSubmit}
+                disabled={!pendingPrivateStudentId}
+                sx={{ bgcolor: purple, '&:hover': { bgcolor: '#7d2d97' }, borderRadius: '10px' }}
+              >
+                Load selected student
+              </Button>
+            </Stack>
+          ) : null}
+        </DialogActions>
+      </Dialog>
+
       <Box sx={{ minHeight: '100%', bgcolor: '#f8f7f9', px: { xs: 1.5, sm: 2.5, md: 4 }, py: { xs: 1.5, sm: 2.5 } }}>
         <Box sx={{ maxWidth: 1360, mx: 'auto' }}>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.4} justifyContent="space-between" alignItems={{ xs: 'stretch', md: 'center' }}>
@@ -364,64 +505,170 @@ export default function MentorModule() {
             })}
           </Box>
 
-          <Box sx={{ mt: 1.25 }}>
-            <Paper elevation={0} sx={{ p: 1, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff', minWidth: 0 }}>
-              <Stack direction="row" spacing={0.8} alignItems="center" justifyContent="space-between" sx={{ px: 0.2, pb: 0.7 }}>
-                <Box sx={{ minWidth: 0 }}>
-                  <Typography sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>
-                    Mentor overview
-                  </Typography>
-                  {currentFilter && (
-                    <Typography sx={{ mt: 0.15, color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>
-                      Showing {filteredStudents.length} students with {currentFilter.label.toLowerCase()}
-                    </Typography>
-                  )}
-                </Box>
-                <Typography sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>
-                  Teacher-set signals
-                </Typography>
-              </Stack>
-              <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: '24px minmax(190px, 1.15fr) 104px minmax(180px, 0.9fr) minmax(170px, 0.95fr) minmax(128px, 0.65fr)', gap: 0.85, px: 1, pb: 0.45 }}>
-                {['', 'Student', 'Support', 'Recent check-ins', 'Subjects', 'Follow-up'].map((label) => (
-                  <Typography key={label} sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 860 }}>{label}</Typography>
-                ))}
-              </Box>
-              <Stack spacing={0.35}>
-                {filteredStudents.map((student) => {
-                  const activeCellId = student.id === expandedCell.studentId ? expandedCell.cellId : '';
-                  const isSelected = Boolean(activeCellId);
-                  return (
-                    <Box key={student.id}>
-                      <StudentOverviewRow
-                        student={student}
-                        picture={pictures[student.id]}
-                        subjectConfigs={subjectConfigs}
-                        selectedCell={activeCellId}
-                        onSelectCell={toggleExpandedCell}
-                      />
-                      <Collapse in={isSelected} timeout={180} unmountOnExit>
-                        <MentorExpandedCellPanel
-                          student={student}
-                          picture={selectedPicture}
-                          activeCell={activeCellId}
-                          subjectConfigs={subjectConfigs}
-                          selectedSubjectId={selectedSubjectId}
-                          setSelectedSubjectId={setSelectedSubjectId}
-                          selectedSubjectConfig={selectedSubjectConfig}
-                          selectedSubjectFacts={selectedSubjectFacts}
-                          onSupportUpdate={(status, comment) => updateSupportStatus(student.id, status, comment)}
-                          onTeachingInfoChange={(teachingInfo) => updateTeachingInfo(student.id, teachingInfo)}
-                          onAddCheckIn={(status, comment) => addCheckIn(student.id, status, comment)}
-                          onAddSubjectCheckIn={(subjectId, status, comment) => addSubjectCheckIn(student.id, subjectId, status, comment)}
-                          setSnackbarMessage={setSnackbarMessage}
-                        />
-                      </Collapse>
-                    </Box>
-                  );
-                })}
-              </Stack>
-            </Paper>
+          <Box sx={{ mt: 1.25, display: 'flex', justifyContent: 'flex-end' }}>
+            <ButtonBase
+              type="button"
+              onClick={() => {
+                setPrivateMode((current) => {
+                  const next = !current;
+                  if (next) {
+                    setPrivateSelectedStudentId('');
+                    setExpandedCell({ studentId: '', cellId: '' });
+                  }
+                  return next;
+                });
+              }}
+              aria-pressed={privateMode}
+              sx={{
+                px: 1.2,
+                py: 0.7,
+                borderRadius: '999px',
+                border: '1px solid',
+                borderColor: privateMode ? 'rgba(156, 40, 175, 0.26)' : 'rgba(23, 21, 26, 0.12)',
+                bgcolor: privateMode ? 'rgba(156, 40, 175, 0.06)' : '#fff',
+                color: privateMode ? purple : 'text.secondary',
+                fontSize: 11.8,
+                fontWeight: 900,
+              }}
+            >
+              {privateMode ? 'Private mode: on' : 'Private mode: off'}
+            </ButtonBase>
           </Box>
+
+          {privateMode ? (
+            <Box sx={{ mt: 1.25, display: 'grid', gap: 1.25 }}>
+              <Box sx={{ maxWidth: 420 }}>
+                <FormControl fullWidth>
+                  <InputLabel id="mentor-private-student-select-label">Student</InputLabel>
+                  <Select
+                    labelId="mentor-private-student-select-label"
+                    value={privateSelectedStudentId}
+                    label="Student"
+                    onChange={(event) => {
+                      const nextStudentId = event.target.value;
+                      setPrivateSelectedStudentId(nextStudentId);
+                      setExpandedCell({ studentId: nextStudentId, cellId: '' });
+                    }}
+                    sx={{ bgcolor: '#fff', borderRadius: '8px' }}
+                  >
+                    <MenuItem value="">
+                      <em>Select a student</em>
+                    </MenuItem>
+                    {students.map((student) => (
+                      <MenuItem key={student.id} value={student.id}>
+                        {student.displayName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+
+              {privateSelectedStudent && (
+                <Paper elevation={0} sx={{ p: 1, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff', minWidth: 0, width: '100%' }}>
+                  <Stack direction="row" spacing={0.8} alignItems="center" justifyContent="space-between" sx={{ px: 0.2, pb: 0.7 }}>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>
+                        Mentor overview
+                      </Typography>
+                    </Box>
+                    <Typography sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>
+                      Teacher-set signals
+                    </Typography>
+                  </Stack>
+                  <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: '24px minmax(190px, 1.15fr) 104px minmax(180px, 0.9fr) minmax(170px, 0.95fr) minmax(128px, 0.65fr)', gap: 0.85, px: 1, pb: 0.45 }}>
+                    {['', 'Student', 'Support', 'Recent check-ins', 'Subjects', 'Follow-up'].map((label) => (
+                      <Typography key={label} sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 860 }}>{label}</Typography>
+                    ))}
+                  </Box>
+                  <Box>
+                    <StudentOverviewRow
+                      student={privateSelectedStudent}
+                      picture={pictures[privateSelectedStudent.id]}
+                      subjectConfigs={subjectConfigs}
+                      selectedCell={expandedCell.studentId === privateSelectedStudent.id ? expandedCell.cellId : ''}
+                      onSelectCell={(studentId, cellId) => toggleExpandedCell(studentId, cellId)}
+                    />
+                    <Collapse in={expandedCell.studentId === privateSelectedStudent.id && Boolean(expandedCell.cellId)} timeout={180} unmountOnExit>
+                      <MentorExpandedCellPanel
+                        student={privateSelectedStudent}
+                        picture={pictures[privateSelectedStudent.id]}
+                        activeCell={expandedCell.studentId === privateSelectedStudent.id ? expandedCell.cellId : ''}
+                        subjectConfigs={subjectConfigs}
+                        selectedSubjectId={selectedSubjectId}
+                        setSelectedSubjectId={setSelectedSubjectId}
+                        selectedSubjectConfig={selectedSubjectConfig}
+                        selectedSubjectFacts={selectedSubjectFacts}
+                        onSupportUpdate={(status, comment) => updateSupportStatus(privateSelectedStudent.id, status, comment)}
+                        onTeachingInfoChange={(teachingInfo) => updateTeachingInfo(privateSelectedStudent.id, teachingInfo)}
+                        onAddCheckIn={(status, comment) => addCheckIn(privateSelectedStudent.id, status, comment)}
+                        onAddSubjectCheckIn={(subjectId, status, comment) => addSubjectCheckIn(privateSelectedStudent.id, subjectId, status, comment)}
+                        setSnackbarMessage={setSnackbarMessage}
+                      />
+                    </Collapse>
+                  </Box>
+                </Paper>
+              )}
+            </Box>
+          ) : (
+            <Box sx={{ mt: 1.25 }}>
+              <Paper elevation={0} sx={{ p: 1, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff', minWidth: 0 }}>
+                <Stack direction="row" spacing={0.8} alignItems="center" justifyContent="space-between" sx={{ px: 0.2, pb: 0.7 }}>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>
+                      Mentor overview
+                    </Typography>
+                    {currentFilter && (
+                      <Typography sx={{ mt: 0.15, color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>
+                        Showing {filteredStudents.length} students with {currentFilter.label.toLowerCase()}
+                      </Typography>
+                    )}
+                  </Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>
+                    Teacher-set signals
+                  </Typography>
+                </Stack>
+                <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: '24px minmax(190px, 1.15fr) 104px minmax(180px, 0.9fr) minmax(170px, 0.95fr) minmax(128px, 0.65fr)', gap: 0.85, px: 1, pb: 0.45 }}>
+                  {['', 'Student', 'Support', 'Recent check-ins', 'Subjects', 'Follow-up'].map((label) => (
+                    <Typography key={label} sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 860 }}>{label}</Typography>
+                  ))}
+                </Box>
+                <Stack spacing={0.35}>
+                  {filteredStudents.map((student) => {
+                    const activeCellId = student.id === expandedCell.studentId ? expandedCell.cellId : '';
+                    const isSelected = Boolean(activeCellId);
+                    return (
+                      <Box key={student.id}>
+                        <StudentOverviewRow
+                          student={student}
+                          picture={pictures[student.id]}
+                          subjectConfigs={subjectConfigs}
+                          selectedCell={activeCellId}
+                          onSelectCell={toggleExpandedCell}
+                        />
+                        <Collapse in={isSelected} timeout={180} unmountOnExit>
+                          <MentorExpandedCellPanel
+                            student={student}
+                            picture={selectedPicture}
+                            activeCell={activeCellId}
+                            subjectConfigs={subjectConfigs}
+                            selectedSubjectId={selectedSubjectId}
+                            setSelectedSubjectId={setSelectedSubjectId}
+                            selectedSubjectConfig={selectedSubjectConfig}
+                            selectedSubjectFacts={selectedSubjectFacts}
+                            onSupportUpdate={(status, comment) => updateSupportStatus(student.id, status, comment)}
+                            onTeachingInfoChange={(teachingInfo) => updateTeachingInfo(student.id, teachingInfo)}
+                            onAddCheckIn={(status, comment) => addCheckIn(student.id, status, comment)}
+                            onAddSubjectCheckIn={(subjectId, status, comment) => addSubjectCheckIn(student.id, subjectId, status, comment)}
+                            setSnackbarMessage={setSnackbarMessage}
+                          />
+                        </Collapse>
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              </Paper>
+            </Box>
+          )}
         </Box>
       </Box>
 
