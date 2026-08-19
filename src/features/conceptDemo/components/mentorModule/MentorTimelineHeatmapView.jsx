@@ -1,4 +1,6 @@
 import { Fragment, useEffect, useState } from 'react';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
@@ -243,9 +245,11 @@ function getCellTone(events) {
   };
 }
 
-function HeatmapCell({ events, week }) {
+function HeatmapCell({ events, week, showSignalArrows = false }) {
   const tone = getCellTone(events);
   const sortedEvents = [...events].sort((first, second) => (first.date || '').localeCompare(second.date || ''));
+  const positiveCount = sortedEvents.filter((event) => event.status === 'positive').length;
+  const negativeCount = sortedEvents.filter((event) => event.status === 'negative').length;
 
   return (
     <Tooltip
@@ -279,12 +283,37 @@ function HeatmapCell({ events, week }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 0.35,
+          gap: 0.25,
           cursor: 'default',
           boxShadow: events.length && tone.label === 'Negative' ? 'inset 0 0 0 1px rgba(255,255,255,0.16)' : 'none',
         }}
       >
-        {events.length > 1 && (
+        {showSignalArrows && positiveCount > 0 && (
+          <Stack direction="row" spacing={0.08} alignItems="center" sx={{ lineHeight: 1 }}>
+            <ArrowUpwardIcon sx={{ fontSize: 12, color: 'inherit' }} />
+            {positiveCount > 1 && (
+              <Typography sx={{ color: 'inherit', fontSize: 9.8, fontWeight: 900, lineHeight: 1 }}>
+                {positiveCount}
+              </Typography>
+            )}
+          </Stack>
+        )}
+        {showSignalArrows && negativeCount > 0 && (
+          <Stack direction="row" spacing={0.08} alignItems="center" sx={{ lineHeight: 1 }}>
+            <ArrowDownwardIcon sx={{ fontSize: 12, color: 'inherit' }} />
+            {negativeCount > 1 && (
+              <Typography sx={{ color: 'inherit', fontSize: 9.8, fontWeight: 900, lineHeight: 1 }}>
+                {negativeCount}
+              </Typography>
+            )}
+          </Stack>
+        )}
+        {!showSignalArrows && events.length > 1 && positiveCount === 0 && negativeCount === 0 && (
+          <Typography sx={{ color: 'inherit', fontSize: 10.7, fontWeight: 900, lineHeight: 1 }}>
+            {events.length}
+          </Typography>
+        )}
+        {showSignalArrows && events.length > 1 && positiveCount === 0 && negativeCount === 0 && (
           <Typography sx={{ color: 'inherit', fontSize: 10.7, fontWeight: 900, lineHeight: 1 }}>
             {events.length}
           </Typography>
@@ -294,7 +323,7 @@ function HeatmapCell({ events, week }) {
   );
 }
 
-function HeatmapRow({ row, weeks }) {
+function HeatmapRow({ row, weeks, showSignalArrows = false }) {
   const eventsByWeek = weeks.reduce((items, week) => ({ ...items, [week]: [] }), {});
   row.events.forEach((event) => {
     const week = getWeekKey(event.date);
@@ -306,7 +335,7 @@ function HeatmapRow({ row, weeks }) {
   return (
     <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(${weeks.length}, minmax(28px, 1fr))`, gap: 0.25 }}>
       {weeks.map((week) => (
-        <HeatmapCell key={`${row.id}-${week}`} events={eventsByWeek[week]} week={week} />
+        <HeatmapCell key={`${row.id}-${week}`} events={eventsByWeek[week]} week={week} showSignalArrows={showSignalArrows} />
       ))}
     </Box>
   );
@@ -547,7 +576,7 @@ function TimelineRowsGrid({ group, rows, weeks, start, end, graphRows, onToggleR
               {graphEnabled ? (
                 <TimelineRowGraph row={row} start={start} end={end} />
               ) : (
-                <HeatmapRow row={row} weeks={weeks} />
+                <HeatmapRow row={row} weeks={weeks} showSignalArrows={group.id === 'mentor'} />
               )}
             </Box>
           </Fragment>
