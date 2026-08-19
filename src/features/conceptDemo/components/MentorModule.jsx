@@ -367,7 +367,7 @@ export default function MentorModule() {
         maxWidth="sm"
         PaperProps={{
           sx: {
-            width: { xs: 'calc(100% - 32px)', sm: 460 },
+            width: { xs: 'calc(100% - 55px)', sm: 460 },
             maxWidth: 460,
             borderRadius: 3,
             bgcolor: '#fff',
@@ -392,8 +392,15 @@ export default function MentorModule() {
               <Typography sx={{ color: 'text.secondary', fontSize: 14, lineHeight: 1.5 }}>
                 Choose how you want to open the mentor overview.
               </Typography>
-              <Stack direction="row" spacing={1} justifyContent="center" sx={{ width: '100%' }}>
-                <Button
+<Box
+  sx={{
+    display: 'flex',
+    width: '100%',
+    justifyContent: 'space-between',
+    px: 15,
+    alignItems: 'center',
+  }}
+>                <Button
                   variant="contained"
                   onClick={() => handlePrivacyChoice('private')}
                   sx={{ bgcolor: purple, '&:hover': { bgcolor: '#7d2d97' }, borderRadius: '10px', px: 2.4, py: 1 }}
@@ -407,7 +414,7 @@ export default function MentorModule() {
                 >
                   Standard view
                 </Button>
-              </Stack>
+            </Box>
             </Stack>
           ) : (
             <Stack spacing={1.5} alignItems="center">
