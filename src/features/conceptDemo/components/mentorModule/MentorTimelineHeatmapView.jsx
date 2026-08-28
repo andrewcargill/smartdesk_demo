@@ -1,9 +1,10 @@
 import { Fragment, useEffect, useState } from 'react';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
+import EastIcon from '@mui/icons-material/East';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import NorthEastIcon from '@mui/icons-material/NorthEast';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import SouthEastIcon from '@mui/icons-material/SouthEast';
 import { Box, ButtonBase, Collapse, Paper, Portal, Stack, Tooltip, Typography } from '@mui/material';
 import { CheckInStatusIcon, getCheckInStatusMeta } from './mentorCheckInStatus.jsx';
 import { border, darkText, formatDate, getLocalizedValue, purple, subjectIds } from './mentorModuleShared.jsx';
@@ -249,6 +250,7 @@ function HeatmapCell({ events, week, showSignalArrows = false }) {
   const tone = getCellTone(events);
   const sortedEvents = [...events].sort((first, second) => (first.date || '').localeCompare(second.date || ''));
   const positiveCount = sortedEvents.filter((event) => event.status === 'positive').length;
+  const neutralCount = sortedEvents.filter((event) => event.status === 'neutral').length;
   const negativeCount = sortedEvents.filter((event) => event.status === 'negative').length;
 
   return (
@@ -283,37 +285,42 @@ function HeatmapCell({ events, week, showSignalArrows = false }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 0.25,
+          gap: 0.4,
           cursor: 'default',
           boxShadow: events.length && tone.label === 'Negative' ? 'inset 0 0 0 1px rgba(255,255,255,0.16)' : 'none',
         }}
       >
         {showSignalArrows && positiveCount > 0 && (
-          <Stack direction="row" spacing={0.08} alignItems="center" sx={{ lineHeight: 1 }}>
-            <ArrowUpwardIcon sx={{ fontSize: 12, color: 'inherit' }} />
+          <Stack direction="row" spacing={0.15} alignItems="center" sx={{ lineHeight: 1 }}>
+            <NorthEastIcon sx={{ fontSize: 18, color: 'inherit', strokeWidth: 2.6 }} />
             {positiveCount > 1 && (
-              <Typography sx={{ color: 'inherit', fontSize: 9.8, fontWeight: 900, lineHeight: 1 }}>
+              <Typography sx={{ color: 'inherit', fontSize: 11, fontWeight: 950, lineHeight: 1 }}>
                 {positiveCount}
               </Typography>
             )}
           </Stack>
         )}
         {showSignalArrows && negativeCount > 0 && (
-          <Stack direction="row" spacing={0.08} alignItems="center" sx={{ lineHeight: 1 }}>
-            <ArrowDownwardIcon sx={{ fontSize: 12, color: 'inherit' }} />
+          <Stack direction="row" spacing={0.15} alignItems="center" sx={{ lineHeight: 1 }}>
+            <SouthEastIcon sx={{ fontSize: 18, color: 'inherit', strokeWidth: 2.6 }} />
             {negativeCount > 1 && (
-              <Typography sx={{ color: 'inherit', fontSize: 9.8, fontWeight: 900, lineHeight: 1 }}>
+              <Typography sx={{ color: 'inherit', fontSize: 11, fontWeight: 950, lineHeight: 1 }}>
                 {negativeCount}
               </Typography>
             )}
           </Stack>
         )}
-        {!showSignalArrows && events.length > 1 && positiveCount === 0 && negativeCount === 0 && (
-          <Typography sx={{ color: 'inherit', fontSize: 10.7, fontWeight: 900, lineHeight: 1 }}>
-            {events.length}
-          </Typography>
+        {showSignalArrows && neutralCount > 0 && (
+          <Stack direction="row" spacing={0.15} alignItems="center" sx={{ lineHeight: 1 }}>
+            <EastIcon sx={{ fontSize: 18, color: 'inherit', strokeWidth: 2.6 }} />
+            {neutralCount > 1 && (
+              <Typography sx={{ color: 'inherit', fontSize: 11, fontWeight: 950, lineHeight: 1 }}>
+                {neutralCount}
+              </Typography>
+            )}
+          </Stack>
         )}
-        {showSignalArrows && events.length > 1 && positiveCount === 0 && negativeCount === 0 && (
+        {!showSignalArrows && events.length > 1 && positiveCount === 0 && negativeCount === 0 && (
           <Typography sx={{ color: 'inherit', fontSize: 10.7, fontWeight: 900, lineHeight: 1 }}>
             {events.length}
           </Typography>
@@ -481,6 +488,8 @@ function canShowGraph(row) {
 }
 
 function TimelineRowsGrid({ group, rows, weeks, start, end, graphRows, onToggleRowGraph, borderTop = false }) {
+  const [signalPreviewRowId, setSignalPreviewRowId] = useState('');
+
   return (
     <Box
       sx={{
@@ -499,6 +508,8 @@ function TimelineRowsGrid({ group, rows, weeks, start, end, graphRows, onToggleR
         const rowSurface = getRowSurface(row);
         const graphEnabled = Boolean(graphRows[row.id]);
         const canToggleGraph = canShowGraph(row);
+        const canPreviewSignals = row.source === 'student' && row.label === 'Check-ins';
+        const showSignalArrows = group.id === 'mentor' || (canPreviewSignals && signalPreviewRowId === row.id && !graphEnabled);
         const RowLabelComponent = canToggleGraph ? ButtonBase : Typography;
         return (
           <Fragment key={row.id}>
@@ -530,6 +541,10 @@ function TimelineRowsGrid({ group, rows, weeks, start, end, graphRows, onToggleR
               aria-label={canToggleGraph ? `${graphEnabled ? 'Show heatmap for' : 'Show graph for'} ${row.label}` : undefined}
               aria-pressed={canToggleGraph ? graphEnabled : undefined}
               onClick={canToggleGraph ? () => onToggleRowGraph(row.id) : undefined}
+              onMouseEnter={canPreviewSignals ? () => setSignalPreviewRowId(row.id) : undefined}
+              onMouseLeave={canPreviewSignals ? () => setSignalPreviewRowId((current) => (current === row.id ? '' : current)) : undefined}
+              onFocus={canPreviewSignals ? () => setSignalPreviewRowId(row.id) : undefined}
+              onBlur={canPreviewSignals ? () => setSignalPreviewRowId((current) => (current === row.id ? '' : current)) : undefined}
               sx={{
                 width: '100%',
                 minHeight: graphEnabled ? 88 : 34,
@@ -576,7 +591,7 @@ function TimelineRowsGrid({ group, rows, weeks, start, end, graphRows, onToggleR
               {graphEnabled ? (
                 <TimelineRowGraph row={row} start={start} end={end} />
               ) : (
-                <HeatmapRow row={row} weeks={weeks} showSignalArrows={group.id === 'mentor'} />
+                <HeatmapRow row={row} weeks={weeks} showSignalArrows={showSignalArrows} />
               )}
             </Box>
           </Fragment>
@@ -854,10 +869,10 @@ export default function MentorTimelineHeatmapView({ picture, subjectConfigs, stu
         <Stack spacing={1.35}>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1fr) auto' }, gap: 0.8, alignItems: 'center' }}>
             <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ color: darkText, fontSize: 15.2, fontWeight: 900 }}>Student check-ins and subject observations</Typography>
-            </Box>
+            <Typography sx={{ color: darkText, fontSize: 15.2, fontWeight: 900 }}>Student check-ins and subject observations</Typography>
+          </Box>
             <Stack direction="row" spacing={0.8} alignItems="center" justifyContent="flex-end" flexWrap="wrap" useFlexGap>
-              <HeatmapLegend />
+            {/*   <HeatmapLegend /> */}
               <Tooltip title={isFullscreen ? 'Exit fullscreen' : 'Expand fullscreen'} arrow>
                 <ButtonBase
                   type="button"

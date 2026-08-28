@@ -24,8 +24,8 @@ import { buildSubject8AConfig } from './learningModule/data/subject8AConfigFacto
 import { fallbackMentorPicture, mentorSeed } from './mentorModule/data/mentor8AData.js';
 import { CheckInStatusIcon, getCheckInStatusMeta } from './mentorModule/mentorCheckInStatus.jsx';
 import MentorExpandedCellPanel from './mentorModule/MentorExpandedCellPanel.jsx';
+import SubjectWorkspaceContainer from './SubjectWorkspaceContainer.jsx';
 import {
-  border,
   darkText,
   formatDate,
   getLocalizedValue,
@@ -37,6 +37,8 @@ import {
 } from './mentorModule/mentorModuleShared.jsx';
 
 const mentorStorageKey = 'smartdesk_demo_mentor_8a_picture';
+const mentorTableColumns = '24px minmax(190px, 1.15fr) 104px minmax(180px, 0.9fr) minmax(170px, 0.95fr) minmax(128px, 0.65fr)';
+const mentorTableHeaders = ['', 'Student', 'Support', 'Recent check-ins', 'Subjects', 'Follow-up'];
 
 function readStoredMentorPicture() {
   if (typeof window === 'undefined') return {};
@@ -106,75 +108,117 @@ function StudentOverviewRow({ student, picture, subjectConfigs, selectedCell, on
   const latestCheckIn = [...(picture.checkIns || [])].sort((first, second) => second.date.localeCompare(first.date))[0];
   const nextFollowUp = (picture.followUps || []).find((item) => !item.completed);
   const selected = Boolean(selectedCell);
-  const cellButtonSx = {
-    minHeight: 34,
-    justifyContent: 'flex-start',
-    textAlign: 'left',
-    borderRadius: '8px',
-    px: 0.45,
-    py: 0.35,
-    '&:hover': { bgcolor: 'rgba(156, 40, 175, 0.045)' },
-    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+  const getCellButtonSx = (cellId) => {
+    const active = selectedCell === cellId;
+    return {
+      minHeight: 38,
+      height: '100%',
+      justifyContent: 'flex-start',
+      textAlign: 'left',
+      borderRadius: 0,
+      px: 0.8,
+      py: 0.55,
+      borderLeft: '1px solid rgba(23, 21, 26, 0.055)',
+      bgcolor: active ? 'rgba(156, 40, 175, 0.095)' : 'transparent',
+      boxShadow: active ? 'inset 0 0 0 1px rgba(156, 40, 175, 0.22)' : 'none',
+      transition: 'background-color 140ms ease, box-shadow 140ms ease',
+      '&:hover': {
+        bgcolor: active ? 'rgba(156, 40, 175, 0.12)' : 'rgba(156, 40, 175, 0.045)',
+        boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.16)',
+      },
+      '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: -2 },
+    };
   };
+  const rowCellSx = {
+    borderTop: selected ? '1px solid rgba(156, 40, 175, 0.34)' : '1px solid rgba(23, 21, 26, 0.08)',
+    borderBottom: selected ? '1px solid rgba(156, 40, 175, 0.18)' : '1px solid transparent',
+    bgcolor: selected ? 'rgba(156, 40, 175, 0.035)' : '#fff',
+    transition: 'background-color 140ms ease, border-color 140ms ease',
+  };
+  const timelineActive = selectedCell === 'timeline';
 
   return (
     <Box
+      role="row"
       sx={{
         width: '100%',
         display: 'grid',
         gridTemplateColumns: {
           xs: '1fr',
-          md: '24px minmax(190px, 1.15fr) 104px minmax(180px, 0.9fr) minmax(170px, 0.95fr) minmax(128px, 0.65fr)',
+          md: mentorTableColumns,
         },
-        gap: { xs: 0.6, md: 0.85 },
-        alignItems: 'center',
+        alignItems: 'stretch',
         textAlign: 'left',
-        px: 1,
-        py: 0.85,
-        borderRadius: '8px',
-        border: '1px solid',
-        borderColor: selected ? 'rgba(156, 40, 175, 0.32)' : 'rgba(23, 21, 26, 0.08)',
-        bgcolor: selected ? 'rgba(156, 40, 175, 0.045)' : '#fff',
-        '&:hover': { bgcolor: selected ? 'rgba(156, 40, 175, 0.06)' : 'rgba(23, 21, 26, 0.025)' },
+        bgcolor: '#fff',
+        '&:hover .MentorModuleRowCell': {
+          borderTopColor: 'rgba(156, 40, 175, 0.34)',
+          borderBottomColor: 'rgba(156, 40, 175, 0.18)',
+          bgcolor: 'rgba(156, 40, 175, 0.045)',
+        },
       }}
     >
       <ButtonBase
+        role="cell"
+        className="MentorModuleRowCell"
         type="button"
-        aria-label={`${selectedCell === 'timeline' ? 'Collapse' : 'Expand'} ${student.displayName} timeline`}
-        aria-expanded={selectedCell === 'timeline'}
-        aria-pressed={selectedCell === 'timeline'}
+        aria-label={`${timelineActive ? 'Collapse' : 'Expand'} ${student.displayName} timeline`}
+        aria-expanded={timelineActive}
+        aria-pressed={timelineActive}
         onClick={() => onSelectCell(student.id, 'timeline')}
-        sx={{ display: { xs: 'none', md: 'inline-flex' }, alignItems: 'center', justifyContent: 'center', width: 24, height: 28, borderRadius: '8px', '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 } }}
+        sx={{
+          ...rowCellSx,
+          display: { xs: 'none', md: 'inline-flex' },
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          minHeight: 38,
+          color: timelineActive ? purple : 'text.secondary',
+          bgcolor: timelineActive ? 'rgba(156, 40, 175, 0.095)' : rowCellSx.bgcolor,
+          boxShadow: timelineActive ? 'inset 0 0 0 1px rgba(156, 40, 175, 0.22)' : 'none',
+          '&:hover': { bgcolor: timelineActive ? 'rgba(156, 40, 175, 0.12)' : 'rgba(156, 40, 175, 0.045)' },
+          '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: -2 },
+        }}
       >
-        <KeyboardArrowDownIcon sx={{ color: 'text.secondary', fontSize: 18, transform: selectedCell === 'timeline' ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
+        <KeyboardArrowDownIcon sx={{ color: 'inherit', fontSize: 18, transform: timelineActive ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
       </ButtonBase>
-      <Box sx={{ minWidth: 0, px: 0.45, py: 0.35 }}>
+      <Box
+        role="rowheader"
+        className="MentorModuleRowCell"
+        sx={{
+          ...rowCellSx,
+          minWidth: 0,
+          px: 1,
+          py: 0.75,
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
         <Box sx={{ minWidth: 0 }}>
-        <Typography sx={{ color: darkText, fontSize: selected ? 18 : 13, fontWeight: selected ? 920 : 820, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', transition: 'font-size 140ms ease, font-weight 140ms ease' }}>
-          {student.displayName}
-        </Typography>
-        <Typography sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 700 }}>
-          8A
-        </Typography>
+          <Typography sx={{ color: darkText, fontSize: selected ? 17 : 13, fontWeight: selected ? 900 : 820, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', transition: 'font-size 140ms ease, font-weight 140ms ease' }}>
+            {student.displayName}
+          </Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: 11.3, fontWeight: 700 }}>
+            8A
+          </Typography>
         </Box>
       </Box>
-      <ButtonBase type="button" aria-pressed={selectedCell === 'support'} onClick={() => onSelectCell(student.id, 'support')} sx={cellButtonSx}>
+      <ButtonBase role="cell" className="MentorModuleRowCell" type="button" aria-pressed={selectedCell === 'support'} onClick={() => onSelectCell(student.id, 'support')} sx={{ ...rowCellSx, ...getCellButtonSx('support') }}>
         <Stack direction="row" spacing={0.5} alignItems="center">
           <StatusDot status={picture.supportStatus} size={10} />
-          <Typography sx={{ color: 'text.secondary', fontSize: 11.8, fontWeight: 750 }}>{getStatusMeta(picture.supportStatus).label}</Typography>
+          <Typography sx={{ color: selectedCell === 'support' ? darkText : 'text.secondary', fontSize: 11.8, fontWeight: selectedCell === 'support' ? 850 : 750 }}>{getStatusMeta(picture.supportStatus).label}</Typography>
         </Stack>
       </ButtonBase>
-      <ButtonBase type="button" aria-pressed={selectedCell === 'checkIns'} onClick={() => onSelectCell(student.id, 'checkIns')} sx={cellButtonSx}>
+      <ButtonBase role="cell" className="MentorModuleRowCell" type="button" aria-pressed={selectedCell === 'checkIns'} onClick={() => onSelectCell(student.id, 'checkIns')} sx={{ ...rowCellSx, ...getCellButtonSx('checkIns') }}>
         <Stack direction="row" spacing={0.35} alignItems="center">
           {(picture.checkIns || []).slice(-3).map((checkIn) => (
             <CheckInStatusIcon key={checkIn.id} status={checkIn.status} size={14} title={`${formatDate(checkIn.date)} · ${getCheckInStatusMeta(checkIn.status).label}`} />
           ))}
-          <Typography sx={{ pl: 0.25, color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>
+          <Typography sx={{ pl: 0.25, color: selectedCell === 'checkIns' ? darkText : 'text.secondary', fontSize: 11.5, fontWeight: selectedCell === 'checkIns' ? 840 : 720 }}>
             {latestCheckIn ? formatDate(latestCheckIn.date) : 'None'}
           </Typography>
         </Stack>
       </ButtonBase>
-      <ButtonBase type="button" aria-pressed={selectedCell === 'subjects'} onClick={() => onSelectCell(student.id, 'subjects')} sx={cellButtonSx}>
+      <ButtonBase role="cell" className="MentorModuleRowCell" type="button" aria-pressed={selectedCell === 'subjects'} onClick={() => onSelectCell(student.id, 'subjects')} sx={{ ...rowCellSx, ...getCellButtonSx('subjects') }}>
         <Stack direction="row" spacing={0.55} alignItems="center">
           {subjectIds.map((subjectId) => (
             <StatusDot
@@ -186,8 +230,8 @@ function StudentOverviewRow({ student, picture, subjectConfigs, selectedCell, on
           ))}
         </Stack>
       </ButtonBase>
-      <ButtonBase type="button" aria-pressed={selectedCell === 'followUp'} onClick={() => onSelectCell(student.id, 'followUp')} sx={cellButtonSx}>
-        <Typography sx={{ color: nextFollowUp ? darkText : 'text.secondary', fontSize: 11.8, fontWeight: nextFollowUp ? 820 : 680, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <ButtonBase role="cell" className="MentorModuleRowCell" type="button" aria-pressed={selectedCell === 'followUp'} onClick={() => onSelectCell(student.id, 'followUp')} sx={{ ...rowCellSx, ...getCellButtonSx('followUp') }}>
+        <Typography sx={{ color: nextFollowUp ? darkText : 'text.secondary', fontSize: 11.8, fontWeight: selectedCell === 'followUp' ? 880 : nextFollowUp ? 820 : 680, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {nextFollowUp ? getWeekOrDate(nextFollowUp) : '-'}
         </Typography>
       </ButtonBase>
@@ -195,7 +239,59 @@ function StudentOverviewRow({ student, picture, subjectConfigs, selectedCell, on
   );
 }
 
-export default function MentorModule() {
+function MentorTableHeader() {
+  return (
+    <Box
+      role="row"
+      sx={{
+        display: { xs: 'none', md: 'grid' },
+        gridTemplateColumns: mentorTableColumns,
+        bgcolor: '#fff',
+        borderBottom: '1px solid rgba(23, 21, 26, 0.12)',
+      }}
+    >
+      {mentorTableHeaders.map((label, index) => (
+        <Typography
+          key={label || 'expand'}
+          role="columnheader"
+          sx={{
+            color: 'text.secondary',
+            fontSize: 11.5,
+            fontWeight: 860,
+            px: index === 0 ? 0.6 : 1,
+            py: 0.85,
+            borderLeft: index > 1 ? '1px solid rgba(23, 21, 26, 0.055)' : 0,
+          }}
+        >
+          {label}
+        </Typography>
+      ))}
+    </Box>
+  );
+}
+
+function MentorTableShell({ children }) {
+  return (
+    <Box sx={{ overflowX: { xs: 'visible', md: 'auto' }, pb: 0.5 }}>
+      <Paper
+        role="table"
+        elevation={0}
+        sx={{
+          minWidth: { xs: 0, md: 860 },
+          borderRadius: '10px',
+          border: '1px solid rgba(23, 21, 26, 0.16)',
+          bgcolor: '#fff',
+          boxShadow: '0 10px 28px rgba(23, 21, 26, 0.045)',
+          overflow: 'hidden',
+        }}
+      >
+        {children}
+      </Paper>
+    </Box>
+  );
+}
+
+export default function MentorModule({ onBack }) {
   const [overrides, setOverrides] = useState(() => readStoredMentorPicture());
   const [expandedCell, setExpandedCell] = useState({ studentId: '', cellId: '' });
   const [selectedSubjectId, setSelectedSubjectId] = useState('english');
@@ -220,21 +316,21 @@ export default function MentorModule() {
     items[student.id] = getStudentMentorPicture(student.id, overrides);
     return items;
   }, {}), [overrides, students]);
-  const redMentorCount = students.filter((student) => pictures[student.id].mentorStatus === 'red').length;
-  const activeSupportCount = students.filter((student) => pictures[student.id].supportStatus !== 'green').length;
+  const redMentorCount = students.filter((student) => pictures[student.id].supportStatus === 'red').length;
+  const activeSupportCount = students.filter((student) => pictures[student.id].supportStatus === 'orange').length;
   const upcomingFollowUpCount = students.reduce((total, student) => total + (pictures[student.id].followUps || []).filter((item) => !item.completed).length, 0);
   const summaryFilters = [
     {
       id: 'redMentor',
       label: 'Red mentor status',
       value: redMentorCount,
-      matches: (student) => pictures[student.id].mentorStatus === 'red',
+      matches: (student) => pictures[student.id].supportStatus === 'red',
     },
     {
       id: 'activeSupport',
       label: 'Active support',
       value: activeSupportCount,
-      matches: (student) => pictures[student.id].supportStatus !== 'green',
+      matches: (student) => pictures[student.id].supportStatus === 'orange',
     },
     {
       id: 'upcomingFollowUps',
@@ -468,20 +564,42 @@ export default function MentorModule() {
         </DialogActions>
       </Dialog>
 
-      <Box sx={{ minHeight: '100%', bgcolor: '#f8f7f9', px: { xs: 1.5, sm: 2.5, md: 4 }, py: { xs: 1.5, sm: 2.5 } }}>
+      <SubjectWorkspaceContainer
+        title="Mentor · 8A"
+        subtitle="Follow-ups, meeting rhythm, and Prorenata handoff"
+        onBack={onBack}
+        titleMeta={(
+          <ButtonBase
+            type="button"
+            onClick={() => {
+              setPrivateMode((current) => {
+                const next = !current;
+                if (next) {
+                  setPrivateSelectedStudentId('');
+                  setExpandedCell({ studentId: '', cellId: '' });
+                }
+                return next;
+              });
+            }}
+            aria-pressed={privateMode}
+            sx={{
+              px: 1.05,
+              py: 0.55,
+              borderRadius: '999px',
+              border: '1px solid',
+              borderColor: privateMode ? 'rgba(156, 40, 175, 0.26)' : 'rgba(23, 21, 26, 0.12)',
+              bgcolor: privateMode ? 'rgba(156, 40, 175, 0.06)' : '#fff',
+              color: privateMode ? purple : 'text.secondary',
+              fontSize: 11.6,
+              fontWeight: 900,
+            }}
+          >
+            {privateMode ? 'Private mode: on' : 'Private mode: off'}
+          </ButtonBase>
+        )}
+      >
         <Box sx={{ maxWidth: 1360, mx: 'auto' }}>
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.4} justifyContent="space-between" alignItems={{ xs: 'stretch', md: 'center' }}>
-            <Box>
-              <Typography variant="h1" sx={{ color: darkText, fontSize: { xs: 30, md: 38 }, lineHeight: 1.05 }}>
-                Mentor - 8A
-              </Typography>
-              <Typography sx={{ mt: 0.65, color: 'text.secondary', fontSize: 14.5, fontWeight: 680, maxWidth: 760 }}>
-                A calm working picture for check-ins, practical teaching information, subject signals, and external handoff.
-              </Typography>
-            </Box>
-          </Stack>
-
-          <Box sx={{ mt: 2, display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' }, gap: 1 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' }, gap: 1 }}>
             {summaryFilters.map(({ id, label, value }) => {
               const selected = activeFilter === id;
               return (
@@ -495,51 +613,28 @@ export default function MentorModule() {
                 sx={{
                   display: 'block',
                   width: '100%',
-                  p: 1.25,
+                  p: 1.35,
                   borderRadius: '8px',
                   border: '1px solid',
-                  borderColor: selected ? 'rgba(156, 40, 175, 0.36)' : border,
-                  bgcolor: selected ? 'rgba(156, 40, 175, 0.045)' : '#fff',
+                  borderColor: selected ? purple : 'rgba(23, 21, 26, 0.16)',
+                  bgcolor: selected ? purple : '#fff',
                   textAlign: 'left',
-                  '&:hover': { bgcolor: selected ? 'rgba(156, 40, 175, 0.065)' : 'rgba(23, 21, 26, 0.025)' },
+                  boxShadow: selected ? '0 10px 24px rgba(156, 40, 175, 0.18)' : '0 4px 14px rgba(23, 21, 26, 0.055)',
+                  transition: 'background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease',
+                  '&:hover': {
+                    borderColor: selected ? purple : 'rgba(156, 40, 175, 0.38)',
+                    bgcolor: selected ? '#8b219e' : 'rgba(156, 40, 175, 0.035)',
+                    boxShadow: selected ? '0 12px 28px rgba(156, 40, 175, 0.22)' : '0 8px 20px rgba(23, 21, 26, 0.08)',
+                    transform: 'translateY(-1px)',
+                  },
                   '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
                 }}
               >
-                <Typography sx={{ color: darkText, fontSize: 22, fontWeight: 900, lineHeight: 1 }}>{value}</Typography>
-                <Typography sx={{ mt: 0.35, color: selected ? purple : 'text.secondary', fontSize: 12.3, fontWeight: 800 }}>{label}</Typography>
+                <Typography sx={{ color: selected ? '#fff' : darkText, fontSize: 24, fontWeight: 950, lineHeight: 1 }}>{value}</Typography>
+                <Typography sx={{ mt: 0.45, color: selected ? 'rgba(255,255,255,0.86)' : darkText, fontSize: 12.5, fontWeight: 900 }}>{label}</Typography>
               </Paper>
               );
             })}
-          </Box>
-
-          <Box sx={{ mt: 1.25, display: 'flex', justifyContent: 'flex-end' }}>
-            <ButtonBase
-              type="button"
-              onClick={() => {
-                setPrivateMode((current) => {
-                  const next = !current;
-                  if (next) {
-                    setPrivateSelectedStudentId('');
-                    setExpandedCell({ studentId: '', cellId: '' });
-                  }
-                  return next;
-                });
-              }}
-              aria-pressed={privateMode}
-              sx={{
-                px: 1.2,
-                py: 0.7,
-                borderRadius: '999px',
-                border: '1px solid',
-                borderColor: privateMode ? 'rgba(156, 40, 175, 0.26)' : 'rgba(23, 21, 26, 0.12)',
-                bgcolor: privateMode ? 'rgba(156, 40, 175, 0.06)' : '#fff',
-                color: privateMode ? purple : 'text.secondary',
-                fontSize: 11.8,
-                fontWeight: 900,
-              }}
-            >
-              {privateMode ? 'Private mode: on' : 'Private mode: off'}
-            </ButtonBase>
           </Box>
 
           {privateMode ? (
@@ -571,22 +666,8 @@ export default function MentorModule() {
               </Box>
 
               {privateSelectedStudent && (
-                <Paper elevation={0} sx={{ p: 1, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff', minWidth: 0, width: '100%' }}>
-                  <Stack direction="row" spacing={0.8} alignItems="center" justifyContent="space-between" sx={{ px: 0.2, pb: 0.7 }}>
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>
-                        Mentor overview
-                      </Typography>
-                    </Box>
-                    <Typography sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>
-                      Teacher-set signals
-                    </Typography>
-                  </Stack>
-                  <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: '24px minmax(190px, 1.15fr) 104px minmax(180px, 0.9fr) minmax(170px, 0.95fr) minmax(128px, 0.65fr)', gap: 0.85, px: 1, pb: 0.45 }}>
-                    {['', 'Student', 'Support', 'Recent check-ins', 'Subjects', 'Follow-up'].map((label) => (
-                      <Typography key={label} sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 860 }}>{label}</Typography>
-                    ))}
-                  </Box>
+                <MentorTableShell>
+                  <MentorTableHeader />
                   <Box>
                     <StudentOverviewRow
                       student={privateSelectedStudent}
@@ -613,33 +694,19 @@ export default function MentorModule() {
                       />
                     </Collapse>
                   </Box>
-                </Paper>
+                </MentorTableShell>
               )}
             </Box>
           ) : (
             <Box sx={{ mt: 1.25 }}>
-              <Paper elevation={0} sx={{ p: 1, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff', minWidth: 0 }}>
-                <Stack direction="row" spacing={0.8} alignItems="center" justifyContent="space-between" sx={{ px: 0.2, pb: 0.7 }}>
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography sx={{ color: darkText, fontSize: 17, fontWeight: 900 }}>
-                      Mentor overview
-                    </Typography>
-                    {currentFilter && (
-                      <Typography sx={{ mt: 0.15, color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>
-                        Showing {filteredStudents.length} students with {currentFilter.label.toLowerCase()}
-                      </Typography>
-                    )}
-                  </Box>
-                  <Typography sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>
-                    Teacher-set signals
-                  </Typography>
-                </Stack>
-                <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: '24px minmax(190px, 1.15fr) 104px minmax(180px, 0.9fr) minmax(170px, 0.95fr) minmax(128px, 0.65fr)', gap: 0.85, px: 1, pb: 0.45 }}>
-                  {['', 'Student', 'Support', 'Recent check-ins', 'Subjects', 'Follow-up'].map((label) => (
-                    <Typography key={label} sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 860 }}>{label}</Typography>
-                  ))}
-                </Box>
-                <Stack spacing={0.35}>
+              {currentFilter && (
+                <Typography sx={{ mb: 0.65, color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>
+                  Showing {filteredStudents.length} students with {currentFilter.label.toLowerCase()}
+                </Typography>
+              )}
+              <MentorTableShell>
+                <MentorTableHeader />
+                <Box>
                   {filteredStudents.map((student) => {
                     const activeCellId = student.id === expandedCell.studentId ? expandedCell.cellId : '';
                     const isSelected = Boolean(activeCellId);
@@ -672,12 +739,12 @@ export default function MentorModule() {
                       </Box>
                     );
                   })}
-                </Stack>
-              </Paper>
+                </Box>
+              </MentorTableShell>
             </Box>
           )}
         </Box>
-      </Box>
+      </SubjectWorkspaceContainer>
 
       <Snackbar
         open={!!snackbarMessage}

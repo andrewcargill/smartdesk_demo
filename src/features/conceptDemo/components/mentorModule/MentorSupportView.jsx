@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Box, Button, ButtonBase, Collapse, Paper, Stack, TextField, Typography } from '@mui/material';
 import { border, darkText, formatDate, getStatusMeta, purple, statusOptions } from './mentorModuleShared.jsx';
 
-export function MentorSupportActions({ picture, setSnackbarMessage }) {
+export function MentorSupportActions({ picture, setSnackbarMessage = () => {} }) {
   return (
     <Stack direction="row" spacing={0.65} flexWrap="wrap" useFlexGap justifyContent="flex-start">
       <Button size="small" startIcon={<FolderOpenIcon />} variant="outlined" onClick={() => setSnackbarMessage('Demo only - open the student Drive folder.')} sx={{ color: purple, borderColor: 'rgba(156, 40, 175, 0.24)', borderRadius: '8px', textTransform: 'none' }}>
@@ -307,11 +307,16 @@ export function SupportSummaryView({ picture, onSupportUpdate }) {
   );
 }
 
-export default function MentorSupportView({ picture, onSupportUpdate, onTeachingInfoChange }) {
+export default function MentorSupportView({ picture, onSupportUpdate, onTeachingInfoChange, setSnackbarMessage }) {
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(240px, 0.62fr) minmax(0, 1.38fr)' }, gap: 1, alignItems: 'start' }}>
-      <SupportSummaryView picture={picture} onSupportUpdate={onSupportUpdate} />
-      <SharedTeachingInfoView picture={picture} onTeachingInfoChange={onTeachingInfoChange} />
-    </Box>
+    <Stack spacing={1}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(240px, 0.62fr) minmax(0, 1.38fr)' }, gap: 1, alignItems: 'start' }}>
+        <SupportSummaryView picture={picture} onSupportUpdate={onSupportUpdate} />
+        <SharedTeachingInfoView picture={picture} onTeachingInfoChange={onTeachingInfoChange} />
+      </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <MentorSupportActions picture={picture} setSnackbarMessage={setSnackbarMessage} />
+      </Box>
+    </Stack>
   );
 }
