@@ -122,6 +122,63 @@ export const conceptDemoTranslations = {
         resetDemoAria: 'Reset and restart demo',
       },
     },
+    mentorModule: {
+      header: {
+        title: 'Mentor · 8A',
+        subtitle: 'Follow-ups, meeting rhythm, and Prorenata handoff',
+      },
+      filters: {
+        redMentorStatus: 'Red mentor status',
+        activeSupport: 'Active support',
+        upcomingFollowUps: 'Upcoming follow-ups',
+      },
+      privateMode: {
+        on: 'Private mode: on',
+        off: 'Private mode: off',
+      },
+      table: {
+        headers: {
+          student: 'Student',
+          support: 'Support',
+          recentCheckIns: 'Recent check-ins',
+          subjects: 'Subjects',
+          followUp: 'Follow-up',
+        },
+        expandTimeline: 'Expand {{student}} timeline',
+        collapseTimeline: 'Collapse {{student}} timeline',
+        filteredSummary: 'Showing {{count}} students with {{filter}}',
+        none: 'None',
+      },
+      status: {
+        green: 'Green',
+        orange: 'Orange',
+        red: 'Red',
+      },
+      checkInStatus: {
+        positive: 'Positive',
+        neutral: 'Neutral',
+        negative: 'Negative',
+      },
+      fallbacks: {
+        assessment: 'Assessment',
+      },
+      snackbar: {
+        supportStatusUpdated: 'Support status updated.',
+        teacherMessageUpdated: 'Teacher message updated.',
+        checkInAdded: 'Check-in added.',
+        subjectCheckInAdded: 'Subject check-in added.',
+      },
+      privacyModal: {
+        title: 'View in private mode?',
+        description: 'Choose how you want to open the mentor overview.',
+        privateMode: 'Private mode',
+        standardView: 'Standard view',
+        selectStudentDescription: 'Select the student to load privately.',
+        studentLabel: 'Student',
+        selectStudentPlaceholder: 'Select a student',
+        loadSelectedStudent: 'Load selected student',
+      },
+    },
     floatingSmartDesk: {
       askSmartDesk: 'Ask SmartDesk',
       selectContext: 'Select context for SmartDesk',
@@ -561,6 +618,63 @@ export const conceptDemoTranslations = {
         changeSubjects: 'Inst\u00e4llningar',
         resetDemo: '\u00c5terst\u00e4ll demo',
         resetDemoAria: '\u00c5terst\u00e4ll och starta om demon',
+      },
+    },
+    mentorModule: {
+      header: {
+        title: 'Mentor · 8A',
+        subtitle: 'Uppf\u00f6ljningar, samtalsrytm och Prorenata-\u00f6verl\u00e4mning',
+      },
+      filters: {
+        redMentorStatus: 'R\u00f6d mentorstatus',
+        activeSupport: 'Aktivt st\u00f6d',
+        upcomingFollowUps: 'Kommande uppf\u00f6ljningar',
+      },
+      privateMode: {
+        on: 'Privat l\u00e4ge: p\u00e5',
+        off: 'Privat l\u00e4ge: av',
+      },
+      table: {
+        headers: {
+          student: 'Elev',
+          support: 'St\u00f6d',
+          recentCheckIns: 'Senaste avst\u00e4mningar',
+          subjects: '\u00c4mnen',
+          followUp: 'Uppf\u00f6ljning',
+        },
+        expandTimeline: 'Expandera tidslinje f\u00f6r {{student}}',
+        collapseTimeline: 'F\u00e4ll ihop tidslinje f\u00f6r {{student}}',
+        filteredSummary: 'Visar {{count}} elever med {{filter}}',
+        none: 'Ingen',
+      },
+      status: {
+        green: 'Gr\u00f6n',
+        orange: 'Orange',
+        red: 'R\u00f6d',
+      },
+      checkInStatus: {
+        positive: 'Positiv',
+        neutral: 'Neutral',
+        negative: 'Negativ',
+      },
+      fallbacks: {
+        assessment: 'Bed\u00f6mning',
+      },
+      snackbar: {
+        supportStatusUpdated: 'St\u00f6dstatus uppdaterad.',
+        teacherMessageUpdated: 'Meddelande till l\u00e4rare uppdaterat.',
+        checkInAdded: 'Avst\u00e4mning tillagd.',
+        subjectCheckInAdded: '\u00c4mnesavst\u00e4mning tillagd.',
+      },
+      privacyModal: {
+        title: 'Visa i privat l\u00e4ge?',
+        description: 'V\u00e4lj hur du vill \u00f6ppna mentor\u00f6versikten.',
+        privateMode: 'Privat l\u00e4ge',
+        standardView: 'Standardvy',
+        selectStudentDescription: 'V\u00e4lj eleven som ska \u00f6ppnas privat.',
+        studentLabel: 'Elev',
+        selectStudentPlaceholder: 'V\u00e4lj elev',
+        loadSelectedStudent: '\u00d6ppna vald elev',
       },
     },
     floatingSmartDesk: {

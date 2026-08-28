@@ -19,6 +19,7 @@ import AssessmentResultsEntryModal from '../AssessmentResultsEntryModal.jsx';
 import ClassPictureExpandedView from '../ClassPictureExpandedView.jsx';
 import StudentEvidenceHeatmap from '../StudentEvidenceHeatmap.jsx';
 import StudentUnitInsightPanel from '../StudentUnitInsightPanel.jsx';
+import { WorkspaceExpandedRowCell } from '../../WorkspaceExpandedRowPanel.jsx';
 import { getLearningContextsForSubject } from '../data/subjectLearningContexts.js';
 import {
   LEARNING_MODULE_ASSESSMENT_RESULTS_STORAGE_EVENT,
@@ -1393,8 +1394,10 @@ function ClassPictureEvidenceGridV1({
               </Box>
 
               {isExpanded && (
-                <Box role="row" sx={{ display: 'contents' }}>
-                  <Box id={`student-insight-${student.id}`} role="cell" sx={{ gridColumn: `1 / span ${teachingUnits.length + 4}`, minWidth: 0 }}>
+                <WorkspaceExpandedRowCell
+                  id={`student-insight-${student.id}`}
+                  gridColumn={`1 / span ${teachingUnits.length + 4}`}
+                >
                     {expandedViewMode === 'unit' && expandedUnit ? (
                       <StudentUnitInsightPanel
                         student={student}
@@ -1492,8 +1495,7 @@ function ClassPictureEvidenceGridV1({
                         )}
                       </Box>
                     )}
-                  </Box>
-                </Box>
+                </WorkspaceExpandedRowCell>
               )}
             </Box>
           );

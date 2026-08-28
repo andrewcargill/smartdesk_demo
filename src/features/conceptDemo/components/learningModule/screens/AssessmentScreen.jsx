@@ -269,7 +269,7 @@ export default function AssessmentScreen({ moduleConfig }) {
     [assessments, students, teachingUnits],
   );
   const archiveRecords = useMemo(() => buildArchiveRecords(assessments, students), [assessments, students]);
-  const [activeRoute, setActiveRoute] = useState('continue');
+  const [activeRoute, setActiveRoute] = useState('start');
   const [selectedOngoingId, setSelectedOngoingId] = useState('');
   const [selectedStartId, setSelectedStartId] = useState('');
   const [selectedFindId, setSelectedFindId] = useState('my-cloud');
@@ -318,7 +318,7 @@ export default function AssessmentScreen({ moduleConfig }) {
 
     handledResetTokenRef.current = resetToken;
     setStoredAssessments(readLearningModuleAssessmentResults(moduleId).assessments);
-    setActiveRoute('continue');
+    setActiveRoute('start');
     setSelectedOngoingId('');
     setSelectedStartId('');
     setSelectedFindId('my-cloud');
@@ -331,7 +331,7 @@ export default function AssessmentScreen({ moduleConfig }) {
   }, [moduleConfig?.demoResetToken, moduleId]);
 
   function closeReveal() {
-    setActiveRoute('continue');
+    setActiveRoute('start');
     setSelectedOngoingId('');
     setSelectedStartId('');
   }
@@ -420,8 +420,8 @@ export default function AssessmentScreen({ moduleConfig }) {
             },
           }}
         >
-          <Tab value="continue" icon={<PlayArrowIcon fontSize="small" />} iconPosition="start" label="Continue" />
           <Tab value="start" icon={<AutoAwesomeIcon fontSize="small" />} iconPosition="start" label="Start" />
+          <Tab value="continue" icon={<PlayArrowIcon fontSize="small" />} iconPosition="start" label="Continue" />
           <Tab value="find" icon={<SearchIcon fontSize="small" />} iconPosition="start" label="Discover" />
         </Tabs>
 

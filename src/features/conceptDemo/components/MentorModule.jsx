@@ -20,16 +20,16 @@ import {
   Typography,
 } from '@mui/material';
 import { class8AStudents } from '../data/classes/class8AStudents.js';
+import { useConceptDemoLanguage } from '../ConceptDemoLanguageContext.jsx';
 import { buildSubject8AConfig } from './learningModule/data/subject8AConfigFactory.js';
 import { fallbackMentorPicture, mentorSeed } from './mentorModule/data/mentor8AData.js';
-import { CheckInStatusIcon, getCheckInStatusMeta } from './mentorModule/mentorCheckInStatus.jsx';
+import { CheckInStatusIcon } from './mentorModule/mentorCheckInStatus.jsx';
 import MentorExpandedCellPanel from './mentorModule/MentorExpandedCellPanel.jsx';
 import SubjectWorkspaceContainer from './SubjectWorkspaceContainer.jsx';
 import {
   darkText,
   formatDate,
   getLocalizedValue,
-  getStatusMeta,
   getWeekOrDate,
   purple,
   StatusDot,
@@ -38,7 +38,12 @@ import {
 
 const mentorStorageKey = 'smartdesk_demo_mentor_8a_picture';
 const mentorTableColumns = '24px minmax(190px, 1.15fr) 104px minmax(180px, 0.9fr) minmax(170px, 0.95fr) minmax(128px, 0.65fr)';
-const mentorTableHeaders = ['', 'Student', 'Support', 'Recent check-ins', 'Subjects', 'Follow-up'];
+const mentorTableHeaderKeys = ['', 'student', 'support', 'recentCheckIns', 'subjects', 'followUp'];
+const mentorStatusLabelKeys = {
+  green: 'green',
+  orange: 'orange',
+  red: 'red',
+};
 
 function readStoredMentorPicture() {
   if (typeof window === 'undefined') return {};
@@ -78,7 +83,7 @@ function getStudentMentorPicture(studentId, overrides = {}) {
   };
 }
 
-function getSubjectFacts(config, studentId) {
+function getSubjectFacts(config, studentId, t) {
   const observations = (config.evidence?.items || [])
     .filter((item) => item.type !== 'assessment' && item.studentId === studentId && item.date)
     .sort((first, second) => (second.date || '').localeCompare(first.date || ''));
@@ -90,7 +95,7 @@ function getSubjectFacts(config, studentId) {
         ...result,
         id: `${assessment.id}-${studentId}`,
         date: assessment.date,
-        title: getLocalizedValue(assessment.title) || assessment.assessmentTitle || 'Assessment',
+        title: getLocalizedValue(assessment.title) || assessment.assessmentTitle || t('mentorModule.fallbacks.assessment'),
       })))
     .sort((first, second) => (second.date || '').localeCompare(first.date || ''));
   const currentActivity = (config.planning?.blocks || []).find((block) => block.status === 'current')
@@ -104,7 +109,15 @@ function getSubjectFacts(config, studentId) {
   };
 }
 
-function StudentOverviewRow({ student, picture, subjectConfigs, selectedCell, onSelectCell }) {
+function getLocalizedStatusLabel(status, t) {
+  return t(`mentorModule.status.${mentorStatusLabelKeys[status] || 'green'}`);
+}
+
+function getLocalizedCheckInStatusLabel(status, t) {
+  return t(`mentorModule.checkInStatus.${status || 'neutral'}`);
+}
+
+function StudentOverviewRow({ student, picture, subjectConfigs, selectedCell, onSelectCell, t }) {
   const latestCheckIn = [...(picture.checkIns || [])].sort((first, second) => second.date.localeCompare(first.date))[0];
   const nextFollowUp = (picture.followUps || []).find((item) => !item.completed);
   const selected = Boolean(selectedCell);
@@ -161,7 +174,7 @@ function StudentOverviewRow({ student, picture, subjectConfigs, selectedCell, on
         role="cell"
         className="MentorModuleRowCell"
         type="button"
-        aria-label={`${timelineActive ? 'Collapse' : 'Expand'} ${student.displayName} timeline`}
+        aria-label={t(timelineActive ? 'mentorModule.table.collapseTimeline' : 'mentorModule.table.expandTimeline', { student: student.displayName })}
         aria-expanded={timelineActive}
         aria-pressed={timelineActive}
         onClick={() => onSelectCell(student.id, 'timeline')}
@@ -205,16 +218,16 @@ function StudentOverviewRow({ student, picture, subjectConfigs, selectedCell, on
       <ButtonBase role="cell" className="MentorModuleRowCell" type="button" aria-pressed={selectedCell === 'support'} onClick={() => onSelectCell(student.id, 'support')} sx={{ ...rowCellSx, ...getCellButtonSx('support') }}>
         <Stack direction="row" spacing={0.5} alignItems="center">
           <StatusDot status={picture.supportStatus} size={10} />
-          <Typography sx={{ color: selectedCell === 'support' ? darkText : 'text.secondary', fontSize: 11.8, fontWeight: selectedCell === 'support' ? 850 : 750 }}>{getStatusMeta(picture.supportStatus).label}</Typography>
+          <Typography sx={{ color: selectedCell === 'support' ? darkText : 'text.secondary', fontSize: 11.8, fontWeight: selectedCell === 'support' ? 850 : 750 }}>{getLocalizedStatusLabel(picture.supportStatus, t)}</Typography>
         </Stack>
       </ButtonBase>
       <ButtonBase role="cell" className="MentorModuleRowCell" type="button" aria-pressed={selectedCell === 'checkIns'} onClick={() => onSelectCell(student.id, 'checkIns')} sx={{ ...rowCellSx, ...getCellButtonSx('checkIns') }}>
         <Stack direction="row" spacing={0.35} alignItems="center">
           {(picture.checkIns || []).slice(-3).map((checkIn) => (
-            <CheckInStatusIcon key={checkIn.id} status={checkIn.status} size={14} title={`${formatDate(checkIn.date)} · ${getCheckInStatusMeta(checkIn.status).label}`} />
+            <CheckInStatusIcon key={checkIn.id} status={checkIn.status} size={14} title={`${formatDate(checkIn.date)} · ${getLocalizedCheckInStatusLabel(checkIn.status, t)}`} />
           ))}
           <Typography sx={{ pl: 0.25, color: selectedCell === 'checkIns' ? darkText : 'text.secondary', fontSize: 11.5, fontWeight: selectedCell === 'checkIns' ? 840 : 720 }}>
-            {latestCheckIn ? formatDate(latestCheckIn.date) : 'None'}
+            {latestCheckIn ? formatDate(latestCheckIn.date) : t('mentorModule.table.none')}
           </Typography>
         </Stack>
       </ButtonBase>
@@ -225,7 +238,7 @@ function StudentOverviewRow({ student, picture, subjectConfigs, selectedCell, on
               key={subjectId}
               size={10}
               status={picture.subjectStatuses[subjectId]}
-              title={`${getLocalizedValue(subjectConfigs[subjectId]?.subjectTitle)}: ${getStatusMeta(picture.subjectStatuses[subjectId]).label}`}
+              title={`${getLocalizedValue(subjectConfigs[subjectId]?.subjectTitle)}: ${getLocalizedStatusLabel(picture.subjectStatuses[subjectId], t)}`}
             />
           ))}
         </Stack>
@@ -239,7 +252,7 @@ function StudentOverviewRow({ student, picture, subjectConfigs, selectedCell, on
   );
 }
 
-function MentorTableHeader() {
+function MentorTableHeader({ t }) {
   return (
     <Box
       role="row"
@@ -250,22 +263,25 @@ function MentorTableHeader() {
         borderBottom: '1px solid rgba(23, 21, 26, 0.12)',
       }}
     >
-      {mentorTableHeaders.map((label, index) => (
-        <Typography
-          key={label || 'expand'}
-          role="columnheader"
-          sx={{
-            color: 'text.secondary',
-            fontSize: 11.5,
-            fontWeight: 860,
-            px: index === 0 ? 0.6 : 1,
-            py: 0.85,
-            borderLeft: index > 1 ? '1px solid rgba(23, 21, 26, 0.055)' : 0,
-          }}
-        >
-          {label}
-        </Typography>
-      ))}
+      {mentorTableHeaderKeys.map((key, index) => {
+        const label = key ? t(`mentorModule.table.headers.${key}`) : '';
+        return (
+          <Typography
+            key={label || 'expand'}
+            role="columnheader"
+            sx={{
+              color: 'text.secondary',
+              fontSize: 11.5,
+              fontWeight: 860,
+              px: index === 0 ? 0.6 : 1,
+              py: 0.85,
+              borderLeft: index > 1 ? '1px solid rgba(23, 21, 26, 0.055)' : 0,
+            }}
+          >
+            {label}
+          </Typography>
+        );
+      })}
     </Box>
   );
 }
@@ -292,6 +308,7 @@ function MentorTableShell({ children }) {
 }
 
 export default function MentorModule({ onBack }) {
+  const { t } = useConceptDemoLanguage();
   const [overrides, setOverrides] = useState(() => readStoredMentorPicture());
   const [expandedCell, setExpandedCell] = useState({ studentId: '', cellId: '' });
   const [selectedSubjectId, setSelectedSubjectId] = useState('english');
@@ -311,7 +328,7 @@ export default function MentorModule({ onBack }) {
   const privateSelectedStudent = privateSelectedStudentId ? students.find((student) => student.id === privateSelectedStudentId) || null : null;
   const selectedPicture = getStudentMentorPicture(selectedStudent?.id, overrides);
   const selectedSubjectConfig = subjectConfigs[selectedSubjectId] || subjectConfigs.english;
-  const selectedSubjectFacts = getSubjectFacts(selectedSubjectConfig, selectedStudent?.id);
+  const selectedSubjectFacts = getSubjectFacts(selectedSubjectConfig, selectedStudent?.id, t);
   const pictures = useMemo(() => students.reduce((items, student) => {
     items[student.id] = getStudentMentorPicture(student.id, overrides);
     return items;
@@ -322,19 +339,19 @@ export default function MentorModule({ onBack }) {
   const summaryFilters = [
     {
       id: 'redMentor',
-      label: 'Red mentor status',
+      label: t('mentorModule.filters.redMentorStatus'),
       value: redMentorCount,
       matches: (student) => pictures[student.id].supportStatus === 'red',
     },
     {
       id: 'activeSupport',
-      label: 'Active support',
+      label: t('mentorModule.filters.activeSupport'),
       value: activeSupportCount,
       matches: (student) => pictures[student.id].supportStatus === 'orange',
     },
     {
       id: 'upcomingFollowUps',
-      label: 'Upcoming follow-ups',
+      label: t('mentorModule.filters.upcomingFollowUps'),
       value: upcomingFollowUpCount,
       matches: (student) => (pictures[student.id].followUps || []).some((item) => !item.completed),
     },
@@ -368,7 +385,7 @@ export default function MentorModule({ onBack }) {
     };
     setOverrides(nextOverrides);
     writeStoredMentorPicture(nextOverrides);
-    setSnackbarMessage('Support status updated.');
+    setSnackbarMessage(t('mentorModule.snackbar.supportStatusUpdated'));
   }
 
   function updateTeachingInfo(studentId, teachingInfo) {
@@ -381,7 +398,7 @@ export default function MentorModule({ onBack }) {
     };
     setOverrides(nextOverrides);
     writeStoredMentorPicture(nextOverrides);
-    setSnackbarMessage('Teacher message updated.');
+    setSnackbarMessage(t('mentorModule.snackbar.teacherMessageUpdated'));
   }
 
   function addCheckIn(studentId, status, comment = '') {
@@ -401,7 +418,7 @@ export default function MentorModule({ onBack }) {
     };
     setOverrides(nextOverrides);
     writeStoredMentorPicture(nextOverrides);
-    setSnackbarMessage('Check-in added.');
+    setSnackbarMessage(t('mentorModule.snackbar.checkInAdded'));
   }
 
   function addSubjectCheckIn(studentId, subjectId, status, comment = '') {
@@ -426,7 +443,7 @@ export default function MentorModule({ onBack }) {
     };
     setOverrides(nextOverrides);
     writeStoredMentorPicture(nextOverrides);
-    setSnackbarMessage('Subject check-in added.');
+    setSnackbarMessage(t('mentorModule.snackbar.subjectCheckInAdded'));
   }
 
   function handlePrivacyChoice(nextChoice) {
@@ -480,54 +497,55 @@ export default function MentorModule({ onBack }) {
         }}
       >
         <DialogTitle sx={{ color: darkText, fontWeight: 900, pb: 1, textAlign: 'center' }}>
-          View in private mode?
+          {t('mentorModule.privacyModal.title')}
         </DialogTitle>
         <DialogContent dividers sx={{ borderColor: 'rgba(23, 21, 26, 0.08)', textAlign: 'center' }}>
           {privacyChoice !== 'private' ? (
             <Stack spacing={1.5} alignItems="center">
               <Typography sx={{ color: 'text.secondary', fontSize: 14, lineHeight: 1.5 }}>
-                Choose how you want to open the mentor overview.
+                {t('mentorModule.privacyModal.description')}
               </Typography>
-<Box
-  sx={{
-    display: 'flex',
-    width: '100%',
-    justifyContent: 'space-between',
-    px: 15,
-    alignItems: 'center',
-  }}
->                <Button
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+                  width: '100%',
+                  gap: 1,
+                  alignItems: 'stretch',
+                }}
+              >
+                <Button
                   variant="contained"
                   onClick={() => handlePrivacyChoice('private')}
-                  sx={{ bgcolor: purple, '&:hover': { bgcolor: '#7d2d97' }, borderRadius: '10px', px: 2.4, py: 1 }}
+                  sx={{ bgcolor: purple, '&:hover': { bgcolor: '#7d2d97' }, borderRadius: '10px', px: 2.4, py: 1, textTransform: 'none' }}
                 >
-                  Private mode
+                  {t('mentorModule.privacyModal.privateMode')}
                 </Button>
                 <Button
                   variant="outlined"
                   onClick={() => handlePrivacyChoice('standard')}
-                  sx={{ borderRadius: '10px', px: 2.4, py: 1, borderColor: 'rgba(23, 21, 26, 0.2)', color: darkText }}
+                  sx={{ borderRadius: '10px', px: 2.4, py: 1, borderColor: 'rgba(23, 21, 26, 0.2)', color: darkText, textTransform: 'none' }}
                 >
-                  Standard view
+                  {t('mentorModule.privacyModal.standardView')}
                 </Button>
-            </Box>
+              </Box>
             </Stack>
           ) : (
             <Stack spacing={1.5} alignItems="center">
               <Typography sx={{ color: 'text.secondary', fontSize: 14, lineHeight: 1.5 }}>
-                Select the student to load privately.
+                {t('mentorModule.privacyModal.selectStudentDescription')}
               </Typography>
               <FormControl fullWidth>
-                <InputLabel id="mentor-private-prompt-select-label">Student</InputLabel>
+                <InputLabel id="mentor-private-prompt-select-label">{t('mentorModule.privacyModal.studentLabel')}</InputLabel>
                 <Select
                   labelId="mentor-private-prompt-select-label"
                   value={pendingPrivateStudentId}
-                  label="Student"
+                  label={t('mentorModule.privacyModal.studentLabel')}
                   onChange={(event) => setPendingPrivateStudentId(event.target.value)}
                   sx={{ bgcolor: '#fff', borderRadius: '8px' }}
                 >
                   <MenuItem value="">
-                    <em>Select a student</em>
+                    <em>{t('mentorModule.privacyModal.selectStudentPlaceholder')}</em>
                   </MenuItem>
                   {students.map((student) => (
                     <MenuItem key={student.id} value={student.id}>
@@ -549,7 +567,7 @@ export default function MentorModule({ onBack }) {
                 }}
                 sx={{ color: 'text.secondary' }}
               >
-                Back
+                {t('common.back')}
               </Button>
               <Button
                 variant="contained"
@@ -557,7 +575,7 @@ export default function MentorModule({ onBack }) {
                 disabled={!pendingPrivateStudentId}
                 sx={{ bgcolor: purple, '&:hover': { bgcolor: '#7d2d97' }, borderRadius: '10px' }}
               >
-                Load selected student
+                {t('mentorModule.privacyModal.loadSelectedStudent')}
               </Button>
             </Stack>
           ) : null}
@@ -565,8 +583,8 @@ export default function MentorModule({ onBack }) {
       </Dialog>
 
       <SubjectWorkspaceContainer
-        title="Mentor · 8A"
-        subtitle="Follow-ups, meeting rhythm, and Prorenata handoff"
+        title={t('mentorModule.header.title')}
+        subtitle={t('mentorModule.header.subtitle')}
         onBack={onBack}
         titleMeta={(
           <ButtonBase
@@ -594,7 +612,7 @@ export default function MentorModule({ onBack }) {
               fontWeight: 900,
             }}
           >
-            {privateMode ? 'Private mode: on' : 'Private mode: off'}
+            {t(privateMode ? 'mentorModule.privateMode.on' : 'mentorModule.privateMode.off')}
           </ButtonBase>
         )}
       >
@@ -641,11 +659,11 @@ export default function MentorModule({ onBack }) {
             <Box sx={{ mt: 1.25, display: 'grid', gap: 1.25 }}>
               <Box sx={{ maxWidth: 420 }}>
                 <FormControl fullWidth>
-                  <InputLabel id="mentor-private-student-select-label">Student</InputLabel>
+                  <InputLabel id="mentor-private-student-select-label">{t('mentorModule.privacyModal.studentLabel')}</InputLabel>
                   <Select
                     labelId="mentor-private-student-select-label"
                     value={privateSelectedStudentId}
-                    label="Student"
+                    label={t('mentorModule.privacyModal.studentLabel')}
                     onChange={(event) => {
                       const nextStudentId = event.target.value;
                       setPrivateSelectedStudentId(nextStudentId);
@@ -654,7 +672,7 @@ export default function MentorModule({ onBack }) {
                     sx={{ bgcolor: '#fff', borderRadius: '8px' }}
                   >
                     <MenuItem value="">
-                      <em>Select a student</em>
+                      <em>{t('mentorModule.privacyModal.selectStudentPlaceholder')}</em>
                     </MenuItem>
                     {students.map((student) => (
                       <MenuItem key={student.id} value={student.id}>
@@ -667,7 +685,7 @@ export default function MentorModule({ onBack }) {
 
               {privateSelectedStudent && (
                 <MentorTableShell>
-                  <MentorTableHeader />
+                  <MentorTableHeader t={t} />
                   <Box>
                     <StudentOverviewRow
                       student={privateSelectedStudent}
@@ -675,6 +693,7 @@ export default function MentorModule({ onBack }) {
                       subjectConfigs={subjectConfigs}
                       selectedCell={expandedCell.studentId === privateSelectedStudent.id ? expandedCell.cellId : ''}
                       onSelectCell={(studentId, cellId) => toggleExpandedCell(studentId, cellId)}
+                      t={t}
                     />
                     <Collapse in={expandedCell.studentId === privateSelectedStudent.id && Boolean(expandedCell.cellId)} timeout={180} unmountOnExit>
                       <MentorExpandedCellPanel
@@ -701,11 +720,11 @@ export default function MentorModule({ onBack }) {
             <Box sx={{ mt: 1.25 }}>
               {currentFilter && (
                 <Typography sx={{ mb: 0.65, color: 'text.secondary', fontSize: 11.5, fontWeight: 720 }}>
-                  Showing {filteredStudents.length} students with {currentFilter.label.toLowerCase()}
+                  {t('mentorModule.table.filteredSummary', { count: filteredStudents.length, filter: currentFilter.label.toLowerCase() })}
                 </Typography>
               )}
               <MentorTableShell>
-                <MentorTableHeader />
+                <MentorTableHeader t={t} />
                 <Box>
                   {filteredStudents.map((student) => {
                     const activeCellId = student.id === expandedCell.studentId ? expandedCell.cellId : '';
@@ -718,6 +737,7 @@ export default function MentorModule({ onBack }) {
                           subjectConfigs={subjectConfigs}
                           selectedCell={activeCellId}
                           onSelectCell={toggleExpandedCell}
+                          t={t}
                         />
                         <Collapse in={isSelected} timeout={180} unmountOnExit>
                           <MentorExpandedCellPanel
