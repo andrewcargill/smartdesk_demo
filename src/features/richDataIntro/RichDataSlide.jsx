@@ -1,7 +1,7 @@
 import { Box, Stack, Typography } from '@mui/material';
 
-const darkText = '#17151a';
-const purple = '#9c28af';
+const darkText = 'var(--sd-text)';
+const purple = 'var(--sd-primary)';
 
 export default function RichDataSlide({ slide, index, total }) {
   const eyebrow = slide.eyebrow?.startsWith('Slide ') ? `Slide ${index + 1}` : slide.eyebrow;
@@ -17,7 +17,7 @@ export default function RichDataSlide({ slide, index, total }) {
     >
       <Stack spacing={1.5}>
         {!!eyebrow && (
-          <Typography sx={{ color: purple, fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0 }}>
+          <Typography sx={{ color: 'var(--sd-accent-text)', fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0 }}>
             {eyebrow} of {total}
           </Typography>
         )}
@@ -40,7 +40,7 @@ export default function RichDataSlide({ slide, index, total }) {
             objectFit: 'cover',
             objectPosition: 'center',
             borderRadius: '12px',
-            border: '1px solid rgba(23, 21, 26, 0.09)',
+            border: '1px solid rgba(var(--sd-text-rgb), 0.09)',
             display: 'block',
           }}
         />

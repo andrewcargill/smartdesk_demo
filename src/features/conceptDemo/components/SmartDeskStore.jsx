@@ -22,7 +22,7 @@ export default function SmartDeskStore() {
           inset: 0,
           display: 'grid',
           placeItems: 'center',
-          color: 'rgba(23, 21, 26, 0.14)',
+          color: 'var(--sd-text-muted)',
           fontSize: { xs: 48, sm: 86, md: 118 },
           fontWeight: 900,
           lineHeight: 1,

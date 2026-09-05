@@ -3,8 +3,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import { Box, ButtonBase, IconButton, Paper, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material';
 import AssessmentPieChart, { getAssessmentPieHoverText } from './AssessmentPieChart.jsx';
 
-const purple = '#9c28af';
-const darkText = '#17151a';
+const purple = 'var(--sd-primary)';
+const darkText = 'var(--sd-text)';
 
 function fallbackT(key, values = {}) {
   const fallbacks = {
@@ -300,11 +300,11 @@ function ObservationFocusSelector({ options, activeId, onActiveIdChange, t = fal
               borderRadius: '10px',
               justifyContent: 'flex-start',
               textAlign: 'left',
-              bgcolor: isActive ? 'rgba(156, 40, 175, 0.055)' : 'transparent',
-              boxShadow: isActive ? 'inset 0 0 0 1px rgba(156, 40, 175, 0.24)' : 'inset 0 0 0 1px transparent',
+              bgcolor: isActive ? 'rgba(var(--sd-primary-rgb), 0.055)' : 'transparent',
+              boxShadow: isActive ? 'inset 0 0 0 1px rgba(var(--sd-primary-rgb), 0.24)' : 'inset 0 0 0 1px transparent',
               transition: 'background-color 140ms ease, box-shadow 140ms ease',
-              '&:focus-visible': { boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.34), 0 0 0 3px rgba(156, 40, 175, 0.12)' },
-              '&:hover': { bgcolor: isActive ? 'rgba(156, 40, 175, 0.07)' : 'rgba(23, 21, 26, 0.035)' },
+              '&:focus-visible': { boxShadow: 'inset 0 0 0 1px rgba(var(--sd-primary-rgb), 0.34), 0 0 0 3px rgba(var(--sd-primary-rgb), 0.12)' },
+              '&:hover': { bgcolor: isActive ? 'rgba(var(--sd-primary-rgb), 0.07)' : 'rgba(var(--sd-text-rgb), 0.035)' },
             }}
           >
             <Stack direction="row" spacing={0.75} alignItems="center" sx={{ width: '100%', minWidth: 0 }}>
@@ -314,13 +314,13 @@ function ObservationFocusSelector({ options, activeId, onActiveIdChange, t = fal
                   height: 12,
                   borderRadius: '50%',
                   flexShrink: 0,
-                  bgcolor: hasObservation ? darkText : '#fff',
+                  bgcolor: hasObservation ? darkText : 'var(--sd-surface)',
                   border: isActive
                     ? `2px solid ${purple}`
                     : hasObservation
-                      ? '1px solid rgba(23, 21, 26, 0.72)'
-                      : '1px solid rgba(23, 21, 26, 0.22)',
-                  boxShadow: isActive ? '0 0 0 3px rgba(156, 40, 175, 0.1)' : 'none',
+                      ? '1px solid rgba(var(--sd-text-rgb), 0.72)'
+                      : '1px solid rgba(var(--sd-text-rgb), 0.22)',
+                  boxShadow: isActive ? '0 0 0 3px rgba(var(--sd-primary-rgb), 0.1)' : 'none',
                 }}
               />
               <Typography noWrap sx={{ color: hasObservation ? darkText : 'text.secondary', fontSize: 12.4, fontWeight: isActive ? 850 : 720, minWidth: 0, flex: 1 }}>
@@ -370,11 +370,11 @@ function ObservationFocusSummaryList({ options, activeId, onActiveIdChange, lang
               borderRadius: '10px',
               justifyContent: 'flex-start',
               textAlign: 'left',
-              bgcolor: isActive ? 'rgba(156, 40, 175, 0.06)' : 'transparent',
-              boxShadow: isActive ? 'inset 0 0 0 1px rgba(156, 40, 175, 0.24)' : 'inset 0 0 0 1px rgba(23, 21, 26, 0.07)',
+              bgcolor: isActive ? 'rgba(var(--sd-primary-rgb), 0.06)' : 'transparent',
+              boxShadow: isActive ? 'inset 0 0 0 1px rgba(var(--sd-primary-rgb), 0.24)' : 'inset 0 0 0 1px rgba(23, 21, 26, 0.07)',
               transition: 'background-color 140ms ease, box-shadow 140ms ease',
-              '&:focus-visible': { boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.34), 0 0 0 3px rgba(156, 40, 175, 0.12)' },
-              '&:hover': { bgcolor: isActive ? 'rgba(156, 40, 175, 0.08)' : 'rgba(23, 21, 26, 0.035)' },
+              '&:focus-visible': { boxShadow: 'inset 0 0 0 1px rgba(var(--sd-primary-rgb), 0.34), 0 0 0 3px rgba(var(--sd-primary-rgb), 0.12)' },
+              '&:hover': { bgcolor: isActive ? 'rgba(var(--sd-primary-rgb), 0.08)' : 'rgba(var(--sd-text-rgb), 0.035)' },
             }}
           >
             <Stack spacing={0.35} sx={{ width: '100%', minWidth: 0 }}>
@@ -437,13 +437,13 @@ function ObservationRecordsList({ observations, activeRecordId, onActiveRecordCh
               py: 0.58,
               px: 0.45,
               borderRadius: '8px',
-              borderTop: index === 0 ? '1px solid rgba(23, 21, 26, 0.07)' : 'none',
-              borderBottom: '1px solid rgba(23, 21, 26, 0.07)',
-              bgcolor: isActive ? 'rgba(156, 40, 175, 0.06)' : 'transparent',
-              boxShadow: isActive ? 'inset 0 0 0 1px rgba(156, 40, 175, 0.18)' : 'none',
+              borderTop: index === 0 ? '1px solid rgba(var(--sd-text-rgb), 0.07)' : 'none',
+              borderBottom: '1px solid rgba(var(--sd-text-rgb), 0.07)',
+              bgcolor: isActive ? 'rgba(var(--sd-primary-rgb), 0.06)' : 'transparent',
+              boxShadow: isActive ? 'inset 0 0 0 1px rgba(var(--sd-primary-rgb), 0.18)' : 'none',
               cursor: 'pointer',
               transition: 'background-color 140ms ease, box-shadow 140ms ease',
-              '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+              '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 1 },
             }}
           >
             <Typography sx={{ color: 'text.secondary', fontSize: 11.6, fontWeight: 760 }}>
@@ -456,7 +456,7 @@ function ObservationRecordsList({ observations, activeRecordId, onActiveRecordCh
               {hasActivityContext && (
                 <Box sx={{ minWidth: 0 }}>
                   {!!item.activityLabel && (
-                    <Typography sx={{ color: purple, fontSize: 11.2, fontWeight: 860, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <Typography sx={{ color: 'var(--sd-accent-text)', fontSize: 11.2, fontWeight: 860, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {item.activityLabel}
                     </Typography>
                   )}
@@ -511,16 +511,16 @@ function ObservationLevelChartGraphic({ observations, levels, activeRecordId, on
 
         return (
           <g key={level.id}>
-            <line x1={graphLeft} y1={y} x2={graphRight} y2={y} stroke="rgba(23, 21, 26, 0.055)" strokeWidth="1" />
+            <line x1={graphLeft} y1={y} x2={graphRight} y2={y} stroke="rgba(var(--sd-text-rgb), 0.055)" strokeWidth="1" />
             <text x={graphLeft - 3} y={y + 1.8} textAnchor="end" fill={darkText} fontSize="3.2" fontWeight="700">
               {level.label}
             </text>
           </g>
         );
       })}
-      <line x1={graphLeft} y1={graphTop} x2={graphLeft} y2={graphBottom} stroke="rgba(23, 21, 26, 0.12)" strokeWidth="1.1" />
-      <line x1={graphLeft} y1={graphBottom} x2={graphRight} y2={graphBottom} stroke="rgba(23, 21, 26, 0.12)" strokeWidth="1.1" />
-      {points.length > 1 && <polyline points={linePoints} fill="none" stroke="rgba(156, 40, 175, 0.32)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />}
+      <line x1={graphLeft} y1={graphTop} x2={graphLeft} y2={graphBottom} stroke="rgba(var(--sd-text-rgb), 0.12)" strokeWidth="1.1" />
+      <line x1={graphLeft} y1={graphBottom} x2={graphRight} y2={graphBottom} stroke="rgba(var(--sd-text-rgb), 0.12)" strokeWidth="1.1" />
+      {points.length > 1 && <polyline points={linePoints} fill="none" stroke="rgba(var(--sd-primary-rgb), 0.32)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />}
       {points.map((point) => {
         const isActive = activeRecordId === point.pointId;
 
@@ -540,7 +540,7 @@ function ObservationLevelChartGraphic({ observations, levels, activeRecordId, on
               }
             }}
           >
-            <circle cx={point.x} cy={point.y} r={isActive ? '2.1' : '1.8'} fill={purple} stroke={isActive ? 'rgba(156, 40, 175, 0.22)' : '#fff'} strokeWidth={isActive ? '1.6' : '0.9'}>
+            <circle cx={point.x} cy={point.y} r={isActive ? '2.1' : '1.8'} fill={purple} stroke={isActive ? 'rgba(var(--sd-primary-rgb), 0.22)' : 'var(--sd-surface)'} strokeWidth={isActive ? '1.6' : '0.9'}>
               <title>{`${formatDemoDate(point.item.date, language, t)} · ${point.item.levelLabel}${point.item.note ? ` · ${point.item.note}` : ''}`}</title>
             </circle>
           </g>
@@ -553,7 +553,7 @@ function ObservationLevelChartGraphic({ observations, levels, activeRecordId, on
 function SelectedObservationFocusDetails({ focus, validLevelObservations, activeRecordId, onActiveRecordChange, language = 'en', t = fallbackT }) {
   if (!focus) {
     return (
-      <Paper elevation={0} sx={{ p: 1.1, borderRadius: '12px', border: '1px solid rgba(23, 21, 26, 0.07)', bgcolor: '#fff' }}>
+      <Paper elevation={0} sx={{ p: 1.1, borderRadius: '12px', border: '1px solid rgba(var(--sd-text-rgb), 0.07)', bgcolor: 'var(--sd-surface)' }}>
         <Typography sx={{ color: 'text.secondary', fontSize: 12.5 }}>
           {t('learningModule.classPicture.noObservationFocusSelected')}
         </Typography>
@@ -562,14 +562,14 @@ function SelectedObservationFocusDetails({ focus, validLevelObservations, active
   }
 
   return (
-    <Paper elevation={0} sx={{ p: { xs: 1, sm: 1.15 }, borderRadius: '12px', border: '1px solid rgba(23, 21, 26, 0.07)', bgcolor: '#fff' }}>
+    <Paper elevation={0} sx={{ p: { xs: 1, sm: 1.15 }, borderRadius: '12px', border: '1px solid rgba(var(--sd-text-rgb), 0.07)', bgcolor: 'var(--sd-surface)' }}>
       <Stack spacing={0.9}>
         <Typography sx={{ color: 'text.secondary', fontSize: 12.2 }}>
           {t('learningModule.classPicture.teacherRecordedLevelsOverTime')}
         </Typography>
 
         {focus.count === 0 ? (
-          <Paper elevation={0} sx={{ p: 1.2, borderRadius: '11px', border: '1px dashed rgba(23, 21, 26, 0.14)', bgcolor: 'rgba(23, 21, 26, 0.015)' }}>
+          <Paper elevation={0} sx={{ p: 1.2, borderRadius: '11px', border: '1px dashed rgba(var(--sd-text-rgb), 0.14)', bgcolor: 'rgba(var(--sd-text-rgb), 0.015)' }}>
             <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>
               {t('learningModule.classPicture.noObservationsForFocus')}
             </Typography>
@@ -579,7 +579,7 @@ function SelectedObservationFocusDetails({ focus, validLevelObservations, active
         ) : validLevelObservations.length ? (
           <ObservationRecordsList observations={focus.observations} activeRecordId={activeRecordId} onActiveRecordChange={onActiveRecordChange} language={language} t={t} />
         ) : (
-          <Paper elevation={0} sx={{ p: 1.2, borderRadius: '11px', border: '1px dashed rgba(23, 21, 26, 0.14)', bgcolor: 'rgba(23, 21, 26, 0.015)' }}>
+          <Paper elevation={0} sx={{ p: 1.2, borderRadius: '11px', border: '1px dashed rgba(var(--sd-text-rgb), 0.14)', bgcolor: 'rgba(var(--sd-text-rgb), 0.015)' }}>
             <Typography sx={{ color: 'text.secondary', fontSize: 12.2 }}>
               {t('learningModule.classPicture.noLevelsForFocus')}
             </Typography>
@@ -672,8 +672,8 @@ export default function StudentUnitInsightPanel({
   }, [activeObservationFocus?.focusId]);
 
   return (
-    <Box sx={{ p: { xs: 1, sm: 1.25 }, bgcolor: '#fbfafc', borderTop: '1px solid rgba(23, 21, 26, 0.07)' }}>
-      <Paper elevation={0} id={`student-unit-insight-${student.id}-${panelUnit.id}`} sx={{ p: { xs: 1.25, sm: 1.55 }, borderRadius: '18px', border: `6px solid ${purple}`, bgcolor: '#fff' }}>
+    <Box sx={{ p: { xs: 1, sm: 1.25 }, bgcolor: 'var(--sd-surface-muted)', borderTop: '1px solid rgba(var(--sd-text-rgb), 0.07)' }}>
+      <Paper elevation={0} id={`student-unit-insight-${student.id}-${panelUnit.id}`} sx={{ p: { xs: 1.25, sm: 1.55 }, borderRadius: '18px', border: `6px solid ${purple}`, bgcolor: 'var(--sd-surface)' }}>
         <Stack
           spacing={1.35}
           sx={{
@@ -708,7 +708,7 @@ export default function StudentUnitInsightPanel({
                 sx={{
                   p: 0.2,
                   borderRadius: '999px',
-                  bgcolor: 'rgba(23, 21, 26, 0.045)',
+                  bgcolor: 'rgba(var(--sd-text-rgb), 0.045)',
                   '& .MuiToggleButtonGroup-grouped': {
                     minWidth: 34,
                     height: 28,
@@ -719,12 +719,12 @@ export default function StudentUnitInsightPanel({
                     fontSize: 11.5,
                     fontWeight: 850,
                     '&.Mui-selected': {
-                      color: purple,
-                      bgcolor: '#fff',
+                      color: 'var(--sd-accent-text)',
+                      bgcolor: 'var(--sd-surface)',
                       boxShadow: '0 4px 12px rgba(23, 21, 26, 0.08)',
                     },
                     '&.Mui-selected:hover': {
-                      bgcolor: '#fff',
+                      bgcolor: 'var(--sd-surface)',
                     },
                   },
                 }}
@@ -738,11 +738,11 @@ export default function StudentUnitInsightPanel({
                 onClick={onClose}
                 size="small"
                 sx={{
-                  color: 'rgba(23, 21, 26, 0.54)',
-                  bgcolor: '#fff',
-                  border: '1px solid rgba(23, 21, 26, 0.1)',
-                  '&:hover': { color: purple, borderColor: 'rgba(156, 40, 175, 0.28)', bgcolor: 'rgba(156, 40, 175, 0.045)' },
-                  '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                  color: 'var(--sd-text-muted)',
+                  bgcolor: 'var(--sd-surface)',
+                  border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
+                  '&:hover': { color: 'var(--sd-accent-text)', borderColor: 'rgba(var(--sd-primary-rgb), 0.28)', bgcolor: 'rgba(var(--sd-primary-rgb), 0.045)' },
+                  '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
                 }}
               >
                 <CloseIcon sx={{ fontSize: 17 }} />
@@ -750,7 +750,7 @@ export default function StudentUnitInsightPanel({
             </Stack>
           </Box>
 
-          <Paper className="LearningModuleUnitAssessmentPanel" elevation={0} sx={{ p: unitLayoutV2 ? 1.15 : 1.35, borderRadius: '14px', border: `1px solid ${unitLayoutV2 ? 'rgba(156, 40, 175, 0.28)' : purple}`, bgcolor: '#fff' }}>
+          <Paper className="LearningModuleUnitAssessmentPanel" elevation={0} sx={{ p: unitLayoutV2 ? 1.15 : 1.35, borderRadius: '14px', border: `1px solid ${unitLayoutV2 ? 'rgba(var(--sd-primary-rgb), 0.28)' : purple}`, bgcolor: 'var(--sd-surface)' }}>
             <Stack spacing={1.2}>
               <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="baseline">
                 <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 900 }}>{t('learningModule.classPicture.assessments')}</Typography>
@@ -773,7 +773,7 @@ export default function StudentUnitInsightPanel({
                       </Typography>
                     </Stack>
                   )) : (
-                    <Box sx={{ width: 86, height: 86, borderRadius: '50%', bgcolor: 'rgba(156, 40, 175, 0.1)', boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.18)' }} />
+                    <Box sx={{ width: 86, height: 86, borderRadius: '50%', bgcolor: 'rgba(var(--sd-primary-rgb), 0.1)', boxShadow: 'inset 0 0 0 1px rgba(var(--sd-primary-rgb), 0.18)' }} />
                   )}
                 </Stack>
                 <Box
@@ -784,8 +784,8 @@ export default function StudentUnitInsightPanel({
                     gap: 1,
                     p: 0.9,
                     borderRadius: '10px',
-                    border: '1px solid rgba(156, 40, 175, 0.16)',
-                    bgcolor: 'rgba(156, 40, 175, 0.035)',
+                    border: '1px solid rgba(var(--sd-primary-rgb), 0.16)',
+                    bgcolor: 'rgba(var(--sd-primary-rgb), 0.035)',
                   }}
                 >
                   {[
@@ -804,7 +804,7 @@ export default function StudentUnitInsightPanel({
             </Stack>
           </Paper>
 
-          <Paper className="LearningModuleUnitObservationPanel" elevation={0} sx={{ p: unitLayoutV2 ? 1.55 : 1.35, borderRadius: '14px', border: `1px solid ${purple}`, bgcolor: unitLayoutV2 ? 'rgba(156, 40, 175, 0.025)' : '#fff' }}>
+          <Paper className="LearningModuleUnitObservationPanel" elevation={0} sx={{ p: unitLayoutV2 ? 1.55 : 1.35, borderRadius: '14px', border: `1px solid ${purple}`, bgcolor: unitLayoutV2 ? 'rgba(var(--sd-primary-rgb), 0.025)' : 'var(--sd-surface)' }}>
             <Stack spacing={1.2}>
               <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="baseline">
                 <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 900 }}>{t('learningModule.classPicture.observations')}</Typography>
@@ -816,7 +816,7 @@ export default function StudentUnitInsightPanel({
                 </Typography>
               )}
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(260px, 300px) minmax(0, 1fr) minmax(0, 1fr)' }, gap: 1.4, alignItems: 'start' }}>
-                <Paper elevation={0} sx={{ p: 1, borderRadius: '12px', border: '1px solid rgba(23, 21, 26, 0.07)', bgcolor: '#fff' }}>
+                <Paper elevation={0} sx={{ p: 1, borderRadius: '12px', border: '1px solid rgba(var(--sd-text-rgb), 0.07)', bgcolor: 'var(--sd-surface)' }}>
                   <Stack spacing={0.85}>
                     <Typography sx={{ color: darkText, fontSize: 12.8, fontWeight: 880 }}>
                       {unitLayoutV2 ? t('learningModule.classPicture.focusSummary') : t('learningModule.classPicture.observationFocus')}

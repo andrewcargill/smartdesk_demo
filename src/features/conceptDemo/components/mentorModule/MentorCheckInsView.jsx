@@ -59,10 +59,10 @@ function CheckInTimeline({ checkIns }) {
         sx={{ position: 'absolute', left: 28, right: 4, top: 20, height: 96, width: 'calc(100% - 32px)', overflow: 'visible', pointerEvents: 'none' }}
       >
         {statusRows.map((row) => (
-          <line key={row.status} x1="0" y1={row.top - 20} x2="96" y2={row.top - 20} stroke="rgba(23, 21, 26, 0.055)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+          <line key={row.status} x1="0" y1={row.top - 20} x2="96" y2={row.top - 20} stroke="rgba(var(--sd-text-rgb), 0.055)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
         ))}
-        <line x1="0" y1="14" x2="0" y2="82" stroke="rgba(23, 21, 26, 0.1)" strokeWidth="1.1" vectorEffect="non-scaling-stroke" />
-        {points.length > 1 && <polyline points={linePoints} fill="none" stroke="rgba(156, 40, 175, 0.34)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />}
+        <line x1="0" y1="14" x2="0" y2="82" stroke="rgba(var(--sd-text-rgb), 0.1)" strokeWidth="1.1" vectorEffect="non-scaling-stroke" />
+        {points.length > 1 && <polyline points={linePoints} fill="none" stroke="rgba(var(--sd-primary-rgb), 0.34)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />}
       </Box>
       {points.map(({ checkIn, meta, row, plotLeft }) => {
         return (
@@ -93,13 +93,13 @@ function CheckInTimeline({ checkIns }) {
                 borderRadius: '50%',
                 bgcolor: purple,
                 transform: 'translateX(-50%)',
-                border: '2px solid #fff',
-                boxShadow: '0 0 0 2px rgba(156, 40, 175, 0.14)',
+                border: '2px solid var(--sd-surface)',
+                boxShadow: '0 0 0 2px rgba(var(--sd-primary-rgb), 0.14)',
                 cursor: 'default',
                 transition: 'transform 140ms ease, box-shadow 140ms ease',
                 '&:hover': {
                   transform: 'translateX(-50%) scale(1.18)',
-                  boxShadow: '0 0 0 4px rgba(156, 40, 175, 0.16)',
+                  boxShadow: '0 0 0 4px rgba(var(--sd-primary-rgb), 0.16)',
                 },
               }}
             />
@@ -148,10 +148,10 @@ function QuickAddCheckInDialog({ open, onClose, onAddCheckIn }) {
                 minWidth: 0,
                 borderRadius: '8px',
                 color: 'text.secondary',
-                bgcolor: '#fff',
-                border: '1px solid rgba(23, 21, 26, 0.1)',
-                '&:hover': { bgcolor: 'rgba(23, 21, 26, 0.045)' },
-                '&:focus-visible': { outline: '2px solid rgba(156, 40, 175, 0.72)', outlineOffset: 2 },
+                bgcolor: 'var(--sd-surface)',
+                border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
+                '&:hover': { bgcolor: 'rgba(var(--sd-text-rgb), 0.045)' },
+                '&:focus-visible': { outline: '2px solid rgba(var(--sd-primary-rgb), 0.72)', outlineOffset: 2 },
               }}
             >
               <Stack spacing={0.25} alignItems="center">
@@ -170,7 +170,7 @@ export default function MentorCheckInsView({ picture, onAddCheckIn }) {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
-    <Paper elevation={0} sx={{ p: 1, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff' }}>
+    <Paper elevation={0} sx={{ p: 1, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: 'var(--sd-surface)' }}>
       <Stack spacing={1}>
         <Stack direction="row" spacing={1} alignItems="flex-start" justifyContent="space-between">
           <Box>
@@ -179,7 +179,7 @@ export default function MentorCheckInsView({ picture, onAddCheckIn }) {
               Quick status marks for recent mentor contact.
             </Typography>
           </Box>
-          <Button size="small" variant="outlined" onClick={() => setDialogOpen(true)} sx={{ flexShrink: 0, borderRadius: '8px', color: 'text.secondary', borderColor: 'rgba(23, 21, 26, 0.14)', textTransform: 'none', fontWeight: 850 }}>
+          <Button size="small" variant="outlined" onClick={() => setDialogOpen(true)} sx={{ flexShrink: 0, borderRadius: '8px', color: 'text.secondary', borderColor: 'rgba(var(--sd-text-rgb), 0.14)', textTransform: 'none', fontWeight: 850 }}>
             Check-in
           </Button>
         </Stack>

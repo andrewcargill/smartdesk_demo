@@ -44,8 +44,8 @@ import { useConceptDemoLanguage } from '../../../ConceptDemoLanguageContext.jsx'
 import PlanningBlockCard from './PlanningBlockCard.jsx';
 import PlanningBlockDialog from './PlanningBlockDialog.jsx';
 
-const darkText = '#17151a';
-const purple = '#9c28af';
+const darkText = 'var(--sd-text)';
+const purple = 'var(--sd-primary)';
 
 const fallbackBlockTypeLabels = {
   holiday: 'Holiday',
@@ -303,9 +303,9 @@ function TermTimelineBlock({
         p: 0.9,
         minHeight: 58,
         borderRadius: '12px',
-        border: isHoliday ? '1px solid rgba(23, 21, 26, 0.16)' : '1px solid rgba(23, 21, 26, 0.12)',
-        bgcolor: isHoliday ? '#fbfafc' : '#fff',
-        backgroundImage: isHoliday ? 'repeating-linear-gradient(135deg, transparent 0, transparent 7px, rgba(23, 21, 26, 0.05) 7px, rgba(23, 21, 26, 0.05) 10px)' : 'none',
+        border: isHoliday ? '1px solid rgba(var(--sd-text-rgb), 0.16)' : '1px solid rgba(var(--sd-text-rgb), 0.12)',
+        bgcolor: isHoliday ? 'var(--sd-surface-muted)' : 'var(--sd-surface)',
+        backgroundImage: isHoliday ? 'repeating-linear-gradient(135deg, transparent 0, transparent 7px, rgba(var(--sd-text-rgb), 0.05) 7px, rgba(var(--sd-text-rgb), 0.05) 10px)' : 'none',
         cursor: 'grab',
         overflow: 'hidden',
         position: 'relative',
@@ -338,10 +338,10 @@ function TermTimelineBlock({
             bottom: 14,
             width: 2,
             borderRadius: 999,
-            bgcolor: 'rgba(23, 21, 26, 0.18)',
+            bgcolor: 'rgba(var(--sd-text-rgb), 0.18)',
           },
-          '&:hover': { bgcolor: 'rgba(156, 40, 175, 0.12)' },
-          '&:focus-visible': { outline: '2px solid rgba(156, 40, 175, 0.38)', outlineOffset: 1 },
+          '&:hover': { bgcolor: 'rgba(var(--sd-primary-rgb), 0.12)' },
+          '&:focus-visible': { outline: '2px solid rgba(var(--sd-primary-rgb), 0.38)', outlineOffset: 1 },
         }}
       />
       <Box
@@ -371,10 +371,10 @@ function TermTimelineBlock({
             bottom: 14,
             width: 2,
             borderRadius: 999,
-            bgcolor: 'rgba(23, 21, 26, 0.18)',
+            bgcolor: 'rgba(var(--sd-text-rgb), 0.18)',
           },
-          '&:hover': { bgcolor: 'rgba(156, 40, 175, 0.12)' },
-          '&:focus-visible': { outline: '2px solid rgba(156, 40, 175, 0.38)', outlineOffset: 1 },
+          '&:hover': { bgcolor: 'rgba(var(--sd-primary-rgb), 0.12)' },
+          '&:focus-visible': { outline: '2px solid rgba(var(--sd-primary-rgb), 0.38)', outlineOffset: 1 },
         }}
       />
       <Stack spacing={0.35}>
@@ -427,7 +427,7 @@ function CurriculumReferencePanel({
   const { t } = useConceptDemoLanguage();
 
   return (
-    <Paper elevation={0} sx={{ p: 1, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.09)', bgcolor: '#fbfafc', width: { xs: '100%', lg: 560, xl: 640 }, maxWidth: '100%', boxSizing: 'border-box', overflow: 'hidden', ...sx }}>
+    <Paper elevation={0} sx={{ p: 1, borderRadius: '14px', border: '1px solid rgba(var(--sd-text-rgb), 0.09)', bgcolor: 'var(--sd-surface-muted)', width: { xs: '100%', lg: 560, xl: 640 }, maxWidth: '100%', boxSizing: 'border-box', overflow: 'hidden', ...sx }}>
       <Stack spacing={0.75} sx={{ minWidth: 0 }}>
         <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
           <Typography sx={{ color: darkText, fontSize: 12.5, fontWeight: 860 }}>{t('learningModule.planView.curriculumReference')}</Typography>
@@ -459,12 +459,12 @@ function CurriculumReferencePanel({
                         minWidth: 0,
                         flex: '0 1 auto',
                         borderRadius: '8px',
-                        border: isRepresented ? '1px solid rgba(156, 40, 175, 0.36)' : '1px solid rgba(23, 21, 26, 0.12)',
-                        bgcolor: isRepresented ? 'rgba(156, 40, 175, 0.1)' : '#fff',
-                        backgroundImage: isRepresented ? 'none' : 'repeating-linear-gradient(135deg, transparent 0, transparent 5px, rgba(23, 21, 26, 0.045) 5px, rgba(23, 21, 26, 0.045) 7px)',
+                        border: isRepresented ? '1px solid rgba(var(--sd-primary-rgb), 0.36)' : '1px solid rgba(var(--sd-text-rgb), 0.12)',
+                        bgcolor: isRepresented ? 'rgba(var(--sd-primary-rgb), 0.1)' : 'var(--sd-surface)',
+                        backgroundImage: isRepresented ? 'none' : 'repeating-linear-gradient(135deg, transparent 0, transparent 5px, rgba(var(--sd-text-rgb), 0.045) 5px, rgba(var(--sd-text-rgb), 0.045) 7px)',
                       }}
                     >
-                      <Typography noWrap sx={{ color: isRepresented ? purple : 'text.secondary', fontSize: 11.2, fontWeight: isRepresented ? 850 : 720, maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <Typography noWrap sx={{ color: isRepresented ? 'var(--sd-accent-text)' : 'text.secondary', fontSize: 11.2, fontWeight: isRepresented ? 850 : 720, maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {area.label}
                       </Typography>
                     </Box>
@@ -898,16 +898,16 @@ export default function SubjectPlanningBoard({
               gap: 0.8,
               '& .MuiToggleButtonGroup-grouped': {
                 borderRadius: '999px !important',
-                border: '1px solid rgba(23, 21, 26, 0.12) !important',
+                border: '1px solid rgba(var(--sd-text-rgb), 0.12) !important',
                 px: 1.8,
                 py: 0.75,
                 textTransform: 'none',
                 fontWeight: 760,
               },
               '& .Mui-selected': {
-                bgcolor: 'rgba(156, 40, 175, 0.08) !important',
-                color: `${purple} !important`,
-                borderColor: 'rgba(156, 40, 175, 0.28) !important',
+                bgcolor: 'rgba(var(--sd-primary-rgb), 0.08) !important',
+                color: `${'var(--sd-accent-text)'} !important`,
+                borderColor: 'rgba(var(--sd-primary-rgb), 0.28) !important',
               },
               '& .MuiToggleButtonGroup-grouped:not(:first-of-type)': {
                 ml: 0.6,
@@ -932,7 +932,7 @@ export default function SubjectPlanningBoard({
               fontWeight: 780,
               boxShadow: 'none',
               '&:hover': {
-                bgcolor: '#842194',
+                bgcolor: 'var(--sd-primary-hover)',
                 boxShadow: 'none',
               },
             }}
@@ -944,16 +944,16 @@ export default function SubjectPlanningBoard({
             onClick={() => setCurriculumCheckOpen(true)}
             sx={{
               color: 'text.secondary',
-              borderColor: 'rgba(23, 21, 26, 0.12)',
+              borderColor: 'rgba(var(--sd-text-rgb), 0.12)',
               borderRadius: '999px',
               px: 1.8,
               py: 0.75,
               textTransform: 'none',
               fontWeight: 760,
               '&:hover': {
-                bgcolor: 'rgba(156, 40, 175, 0.08)',
-                color: purple,
-                borderColor: 'rgba(156, 40, 175, 0.28)',
+                bgcolor: 'rgba(var(--sd-primary-rgb), 0.08)',
+                color: 'var(--sd-accent-text)',
+                borderColor: 'rgba(var(--sd-primary-rgb), 0.28)',
               },
             }}
           >
@@ -980,7 +980,7 @@ export default function SubjectPlanningBoard({
           <Box ref={termScrollRef} sx={{ overflowX: 'auto', pb: 0.5 }}>
             <Box sx={{ minWidth: 980 }}>
               <Box sx={{ display: 'grid', gridTemplateColumns: `140px repeat(${termWeeks.length}, minmax(78px, 1fr))`, gap: 0.65, alignItems: 'stretch' }}>
-                <Box sx={{ position: 'sticky', left: 0, zIndex: 5, bgcolor: '#fff' }} />
+                <Box sx={{ position: 'sticky', left: 0, zIndex: 5, bgcolor: 'var(--sd-surface)' }} />
                 {termMonthSpans.map((span) => (
                   <Typography
                     key={`${span.label}-${span.startIndex}`}
@@ -995,12 +995,12 @@ export default function SubjectPlanningBoard({
                     {span.label}
                   </Typography>
                 ))}
-                <Box sx={{ position: 'sticky', left: 0, zIndex: 5, bgcolor: '#fff' }} />
+                <Box sx={{ position: 'sticky', left: 0, zIndex: 5, bgcolor: 'var(--sd-surface)' }} />
                 {termWeeks.map((week, weekIndex) => {
                   const isCurrentWeek = currentTermMarker?.weekIndex === weekIndex;
                   return (
                     <Box key={week.id} sx={{ position: 'relative', minHeight: 34 }}>
-                      <Typography sx={{ color: isCurrentWeek ? purple : 'text.secondary', fontSize: 12.2, fontWeight: isCurrentWeek ? 860 : 760 }}>
+                      <Typography sx={{ color: isCurrentWeek ? 'var(--sd-accent-text)' : 'text.secondary', fontSize: 12.2, fontWeight: isCurrentWeek ? 860 : 760 }}>
                         {week.label}
                       </Typography>
                       {isCurrentWeek && (
@@ -1015,9 +1015,9 @@ export default function SubjectPlanningBoard({
                               px: 0.6,
                               py: 0.18,
                               borderRadius: '999px',
-                              border: '1px solid rgba(156, 40, 175, 0.34)',
-                              bgcolor: '#fff',
-                              color: purple,
+                              border: '1px solid rgba(var(--sd-primary-rgb), 0.34)',
+                              bgcolor: 'var(--sd-surface)',
+                              color: 'var(--sd-accent-text)',
                               fontSize: 10.5,
                               fontWeight: 860,
                               lineHeight: 1.25,
@@ -1044,8 +1044,8 @@ export default function SubjectPlanningBoard({
                         sx={{
                           p: 1,
                           borderRadius: '14px',
-                          border: '1px solid rgba(23, 21, 26, 0.08)',
-                          bgcolor: '#fbfafc',
+                          border: '1px solid rgba(var(--sd-text-rgb), 0.08)',
+                          bgcolor: 'var(--sd-surface-muted)',
                           position: 'sticky',
                           left: 0,
                           zIndex: 6,
@@ -1065,8 +1065,8 @@ export default function SubjectPlanningBoard({
                           p: 0.8,
                           minHeight: Math.max(86, laneRows.length * 70 + 18),
                           borderRadius: '16px',
-                          border: '1px solid rgba(23, 21, 26, 0.09)',
-                          bgcolor: draggedBlockId ? '#f7f4f8' : '#fff',
+                          border: '1px solid rgba(var(--sd-text-rgb), 0.09)',
+                          bgcolor: draggedBlockId ? 'var(--sd-surface-muted)' : 'var(--sd-surface)',
                         }}
                       >
                         {termWeeks.map((week) => (
@@ -1095,15 +1095,15 @@ export default function SubjectPlanningBoard({
                             sx={{
                               gridColumn: termWeeks.indexOf(week) + 1,
                               gridRow: `1 / span ${Math.max(1, laneRows.length)}`,
-                              borderLeft: '1px solid rgba(23, 21, 26, 0.05)',
+                              borderLeft: '1px solid rgba(var(--sd-text-rgb), 0.05)',
                               minHeight: '100%',
                               cursor: 'copy',
                               borderRadius: '10px',
                               outline: 'none',
                               transition: 'background-color 140ms ease, box-shadow 140ms ease',
                               '&:hover, &:focus-visible': {
-                                bgcolor: 'rgba(156, 40, 175, 0.06)',
-                                boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.18)',
+                                bgcolor: 'rgba(var(--sd-primary-rgb), 0.06)',
+                                boxShadow: 'inset 0 0 0 1px rgba(var(--sd-primary-rgb), 0.18)',
                               },
                             }}
                           />
@@ -1165,7 +1165,7 @@ export default function SubjectPlanningBoard({
                 })}
               </Box>
               {!!unscheduledBlocks.length && (
-                <Paper elevation={0} sx={{ mt: 1.2, p: 1.2, borderRadius: '16px', border: '1px dashed rgba(23, 21, 26, 0.16)', bgcolor: '#fbfafc' }}>
+                <Paper elevation={0} sx={{ mt: 1.2, p: 1.2, borderRadius: '16px', border: '1px dashed rgba(var(--sd-text-rgb), 0.16)', bgcolor: 'var(--sd-surface-muted)' }}>
                   <Typography sx={{ color: darkText, fontWeight: 850 }}>{t('learningModule.planView.unscheduled')}</Typography>
                   <Stack spacing={1} sx={{ mt: 1 }}>
                     {unscheduledBlocks.map((block) => (
@@ -1217,14 +1217,14 @@ export default function SubjectPlanningBoard({
                   sx={{
                     p: 1,
                     borderRadius: '14px',
-                    border: '1px solid rgba(23, 21, 26, 0.1)',
-                    bgcolor: draggedBlockId ? '#f7f4f8' : '#fbfafc',
+                    border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
+                    bgcolor: draggedBlockId ? 'var(--sd-surface-muted)' : 'var(--sd-surface-muted)',
                     cursor: 'copy',
                     outline: 'none',
                     transition: 'background-color 140ms ease, border-color 140ms ease',
                     '&:hover, &:focus-visible': {
-                      bgcolor: 'rgba(156, 40, 175, 0.06)',
-                      borderColor: 'rgba(156, 40, 175, 0.24)',
+                      bgcolor: 'rgba(var(--sd-primary-rgb), 0.06)',
+                      borderColor: 'rgba(var(--sd-primary-rgb), 0.24)',
                     },
                   }}
                 >
@@ -1293,7 +1293,7 @@ export default function SubjectPlanningBoard({
                     key={template.id}
                     onClick={() => addTemplate(template)}
                     aria-label={`${t('learningModule.planView.addTemplateAria', { title: template.title })} ${quickAddDescriptions[template.id] || ''}`.trim()}
-                    sx={{ alignItems: 'flex-start', justifyContent: 'flex-start', textAlign: 'left', color: darkText, border: '1px solid rgba(23, 21, 26, 0.1)', borderRadius: '14px', px: 1, py: 0.9, minHeight: 76 }}
+                    sx={{ alignItems: 'flex-start', justifyContent: 'flex-start', textAlign: 'left', color: darkText, border: '1px solid rgba(var(--sd-text-rgb), 0.1)', borderRadius: '14px', px: 1, py: 0.9, minHeight: 76 }}
                   >
                     <Box sx={{ minWidth: 0 }}>
                       <Typography sx={{ color: darkText, fontSize: 12.5, fontWeight: 860, lineHeight: 1.25 }}>{template.title}</Typography>
@@ -1317,7 +1317,7 @@ export default function SubjectPlanningBoard({
                       key={template.id}
                       onClick={() => addTemplate(template)}
                       aria-label={`${t('learningModule.planView.addTemplateAria', { title: template.title })} ${quickAddDescriptions[template.id] || ''}`.trim()}
-                      sx={{ alignItems: 'flex-start', justifyContent: 'flex-start', textAlign: 'left', color: 'text.secondary', border: '1px solid rgba(23, 21, 26, 0.1)', borderRadius: '14px', px: 1, py: 0.85, minHeight: 64, bgcolor: '#fbfafc' }}
+                      sx={{ alignItems: 'flex-start', justifyContent: 'flex-start', textAlign: 'left', color: 'text.secondary', border: '1px solid rgba(var(--sd-text-rgb), 0.1)', borderRadius: '14px', px: 1, py: 0.85, minHeight: 64, bgcolor: 'var(--sd-surface-muted)' }}
                     >
                       <Box sx={{ minWidth: 0 }}>
                         <Typography sx={{ color: 'inherit', fontSize: 12.2, fontWeight: 850, lineHeight: 1.25 }}>{template.title}</Typography>
@@ -1333,7 +1333,7 @@ export default function SubjectPlanningBoard({
 
             {showTemplateSearch && (
             <>
-            <Box sx={{ borderTop: '1px solid rgba(23, 21, 26, 0.08)', pt: 1.15 }}>
+            <Box sx={{ borderTop: '1px solid rgba(var(--sd-text-rgb), 0.08)', pt: 1.15 }}>
               <Typography sx={{ mb: 0.55, color: darkText, fontSize: 12.4, fontWeight: 880 }}>{t('learningModule.planView.content')}</Typography>
               <Box sx={{ display: 'flex', gap: 0.55, overflowX: 'auto', pb: 0.2 }}>
                 <Button
@@ -1341,9 +1341,9 @@ export default function SubjectPlanningBoard({
                   onClick={() => setLibraryContentFilter('')}
                   sx={{
                     flexShrink: 0,
-                    color: !libraryContentFilter ? purple : 'text.secondary',
-                    border: !libraryContentFilter ? '1px solid rgba(156, 40, 175, 0.32)' : '1px solid rgba(23, 21, 26, 0.1)',
-                    bgcolor: !libraryContentFilter ? 'rgba(156, 40, 175, 0.08)' : '#fff',
+                    color: !libraryContentFilter ? 'var(--sd-accent-text)' : 'text.secondary',
+                    border: !libraryContentFilter ? '1px solid rgba(var(--sd-primary-rgb), 0.32)' : '1px solid rgba(var(--sd-text-rgb), 0.1)',
+                    bgcolor: !libraryContentFilter ? 'rgba(var(--sd-primary-rgb), 0.08)' : 'var(--sd-surface)',
                     borderRadius: '999px',
                     px: 1.15,
                     py: 0.45,
@@ -1362,9 +1362,9 @@ export default function SubjectPlanningBoard({
                       onClick={() => setLibraryContentFilter(area.id)}
                       sx={{
                         flexShrink: 0,
-                        color: isSelected ? purple : 'text.secondary',
-                        border: isSelected ? '1px solid rgba(156, 40, 175, 0.32)' : '1px solid rgba(23, 21, 26, 0.1)',
-                        bgcolor: isSelected ? 'rgba(156, 40, 175, 0.08)' : '#fff',
+                        color: isSelected ? 'var(--sd-accent-text)' : 'text.secondary',
+                        border: isSelected ? '1px solid rgba(var(--sd-primary-rgb), 0.32)' : '1px solid rgba(var(--sd-text-rgb), 0.1)',
+                        bgcolor: isSelected ? 'rgba(var(--sd-primary-rgb), 0.08)' : 'var(--sd-surface)',
                         borderRadius: '999px',
                         px: 1.15,
                         py: 0.45,
@@ -1391,9 +1391,9 @@ export default function SubjectPlanningBoard({
                       onClick={() => toggleAbilityFilter(area.id)}
                       sx={{
                         flexShrink: 0,
-                        color: isSelected ? purple : 'text.secondary',
-                        border: isSelected ? '1px solid rgba(156, 40, 175, 0.32)' : '1px solid rgba(23, 21, 26, 0.1)',
-                        bgcolor: isSelected ? 'rgba(156, 40, 175, 0.08)' : '#fff',
+                        color: isSelected ? 'var(--sd-accent-text)' : 'text.secondary',
+                        border: isSelected ? '1px solid rgba(var(--sd-primary-rgb), 0.32)' : '1px solid rgba(var(--sd-text-rgb), 0.1)',
+                        bgcolor: isSelected ? 'rgba(var(--sd-primary-rgb), 0.08)' : 'var(--sd-surface)',
                         borderRadius: '999px',
                         px: 1.15,
                         py: 0.45,
@@ -1408,7 +1408,7 @@ export default function SubjectPlanningBoard({
               </Box>
             </Box>
 
-            <Box sx={{ borderTop: '1px solid rgba(23, 21, 26, 0.08)', pt: 1.15 }}>
+            <Box sx={{ borderTop: '1px solid rgba(var(--sd-text-rgb), 0.08)', pt: 1.15 }}>
               <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" sx={{ mb: 0.65 }}>
                 <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 880 }}>{t('learningModule.planView.matchingTemplates')}</Typography>
                 <Typography sx={{ color: 'text.secondary', fontSize: 11.4, fontWeight: 720 }}>
@@ -1425,7 +1425,7 @@ export default function SubjectPlanningBoard({
                         key={template.id}
                         onClick={() => addTemplate(template)}
                         aria-label={getTemplateAriaLabel(template, inPlanLabel, t)}
-                        sx={{ justifyContent: 'flex-start', textAlign: 'left', color: darkText, border: '1px solid rgba(23, 21, 26, 0.1)', borderRadius: '14px', p: 1.05 }}
+                        sx={{ justifyContent: 'flex-start', textAlign: 'left', color: darkText, border: '1px solid rgba(var(--sd-text-rgb), 0.1)', borderRadius: '14px', p: 1.05 }}
                       >
                         <Box sx={{ width: '100%', minWidth: 0 }}>
                           <Stack direction="row" spacing={1} alignItems="flex-start" justifyContent="space-between" sx={{ minWidth: 0 }}>
@@ -1450,10 +1450,10 @@ export default function SubjectPlanningBoard({
                   })}
                 </Stack>
               ) : (
-                <Box sx={{ border: '1px solid rgba(23, 21, 26, 0.1)', borderRadius: '14px', p: 1.2, bgcolor: '#fbfafc' }}>
+                <Box sx={{ border: '1px solid rgba(var(--sd-text-rgb), 0.1)', borderRadius: '14px', p: 1.2, bgcolor: 'var(--sd-surface-muted)' }}>
                   <Typography sx={{ color: darkText, fontSize: 13, fontWeight: 850 }}>{t('learningModule.planView.noMatchingTemplates')}</Typography>
                   <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 12.4 }}>{t('learningModule.planView.noMatchingTemplatesHint')}</Typography>
-                  <Button onClick={clearLibraryFilters} sx={{ mt: 0.6, color: purple, fontSize: 12, fontWeight: 850 }}>
+                  <Button onClick={clearLibraryFilters} sx={{ mt: 0.6, color: 'var(--sd-accent-text)', fontSize: 12, fontWeight: 850 }}>
                     {t('learningModule.planView.clearFilters')}
                   </Button>
                 </Box>
@@ -1504,7 +1504,7 @@ export default function SubjectPlanningBoard({
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDurationBlock(null)} sx={{ color: 'text.secondary' }}>{t('learningModule.planView.durationDialog.cancel')}</Button>
-          <Button variant="contained" onClick={saveDuration} sx={{ bgcolor: purple, '&:hover': { bgcolor: '#842194' } }}>{t('learningModule.planView.durationDialog.save')}</Button>
+          <Button variant="contained" onClick={saveDuration} sx={{ bgcolor: purple, '&:hover': { bgcolor: 'var(--sd-primary-hover)' } }}>{t('learningModule.planView.durationDialog.save')}</Button>
         </DialogActions>
       </Dialog>
 

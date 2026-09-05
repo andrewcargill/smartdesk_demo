@@ -185,15 +185,15 @@ function getSectionLabel(group, row, index) {
 function getRowSurface(row) {
   if (row.source === 'student') {
     return {
-      bgcolor: 'rgba(156, 40, 175, 0.045)',
-      borderColor: 'rgba(156, 40, 175, 0.11)',
+      bgcolor: 'rgba(var(--sd-primary-rgb), 0.045)',
+      borderColor: 'rgba(var(--sd-primary-rgb), 0.11)',
     };
   }
 
   if (row.source === 'teacher') {
     return {
-      bgcolor: 'rgba(23, 21, 26, 0.024)',
-      borderColor: 'rgba(23, 21, 26, 0.065)',
+      bgcolor: 'rgba(var(--sd-text-rgb), 0.024)',
+      borderColor: 'rgba(var(--sd-text-rgb), 0.065)',
     };
   }
 
@@ -207,9 +207,9 @@ function getCellTone(events) {
   if (!events.length) {
     return {
       label: 'No signal',
-      bgcolor: 'rgba(23, 21, 26, 0.025)',
+      bgcolor: 'rgba(var(--sd-text-rgb), 0.025)',
       color: 'text.secondary',
-      borderColor: 'rgba(23, 21, 26, 0.07)',
+      borderColor: 'rgba(var(--sd-text-rgb), 0.07)',
     };
   }
 
@@ -224,25 +224,25 @@ function getCellTone(events) {
     return {
       label: 'Negative',
       bgcolor: purple,
-      color: '#fff',
-      borderColor: 'rgba(88, 18, 102, 0.28)',
+      color: 'var(--sd-on-primary)',
+      borderColor: 'rgba(var(--sd-primary-rgb), 0.28)',
     };
   }
 
   if (average > 0.25) {
     return {
       label: 'Positive',
-      bgcolor: '#fff',
-      color: purple,
-      borderColor: 'rgba(156, 40, 175, 0.22)',
+      bgcolor: 'var(--sd-surface)',
+      color: 'var(--sd-accent-text)',
+      borderColor: 'rgba(var(--sd-primary-rgb), 0.22)',
     };
   }
 
   return {
     label: 'Neutral',
-    bgcolor: 'rgba(156, 40, 175, 0.16)',
-    color: purple,
-    borderColor: 'rgba(156, 40, 175, 0.18)',
+    bgcolor: 'rgba(var(--sd-primary-rgb), 0.16)',
+    color: 'var(--sd-accent-text)',
+    borderColor: 'rgba(var(--sd-primary-rgb), 0.18)',
   };
 }
 
@@ -376,13 +376,13 @@ function TimelinePoint({ event, left, top }) {
           borderRadius: '50%',
           bgcolor: purple,
           transform: 'translateX(-50%)',
-          border: '2px solid #fff',
-          boxShadow: '0 0 0 2px rgba(156, 40, 175, 0.14)',
+          border: '2px solid var(--sd-surface)',
+          boxShadow: '0 0 0 2px rgba(var(--sd-primary-rgb), 0.14)',
           cursor: 'default',
           transition: 'transform 140ms ease, box-shadow 140ms ease',
           '&:hover': {
             transform: 'translateX(-50%) scale(1.18)',
-            boxShadow: '0 0 0 4px rgba(156, 40, 175, 0.16)',
+            boxShadow: '0 0 0 4px rgba(var(--sd-primary-rgb), 0.16)',
           },
         }}
       />
@@ -429,10 +429,10 @@ function TimelineRowGraph({ row, start, end }) {
         sx={{ position: 'absolute', left: 28, right: 4, top: 0, height: 88, width: 'calc(100% - 32px)', overflow: 'visible', pointerEvents: 'none' }}
       >
         {signalRows.map((rowItem) => (
-          <line key={rowItem.status} x1="0" y1={rowItem.top} x2="96" y2={rowItem.top} stroke="rgba(23, 21, 26, 0.055)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+          <line key={rowItem.status} x1="0" y1={rowItem.top} x2="96" y2={rowItem.top} stroke="rgba(var(--sd-text-rgb), 0.055)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
         ))}
-        <line x1="0" y1="12" x2="0" y2="76" stroke="rgba(23, 21, 26, 0.1)" strokeWidth="1.1" vectorEffect="non-scaling-stroke" />
-        {points.length > 1 && <polyline points={linePoints} fill="none" stroke="rgba(156, 40, 175, 0.34)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />}
+        <line x1="0" y1="12" x2="0" y2="76" stroke="rgba(var(--sd-text-rgb), 0.1)" strokeWidth="1.1" vectorEffect="non-scaling-stroke" />
+        {points.length > 1 && <polyline points={linePoints} fill="none" stroke="rgba(var(--sd-primary-rgb), 0.34)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />}
       </Box>
       {points.map((point) => (
         <TimelinePoint
@@ -458,13 +458,13 @@ function TeacherObservationToggle({ open, onToggle }) {
           px: 0.75,
           borderRadius: '999px',
           border: '1px solid',
-          borderColor: open ? 'rgba(156, 40, 175, 0.24)' : 'rgba(23, 21, 26, 0.095)',
-          bgcolor: open ? 'rgba(156, 40, 175, 0.06)' : '#fff',
+          borderColor: open ? 'rgba(var(--sd-primary-rgb), 0.24)' : 'rgba(var(--sd-text-rgb), 0.095)',
+          bgcolor: open ? 'rgba(var(--sd-primary-rgb), 0.06)' : 'var(--sd-surface)',
           color: open ? darkText : 'text.secondary',
           fontSize: 11.4,
           fontWeight: open ? 880 : 780,
-          '&:hover': { bgcolor: open ? 'rgba(156, 40, 175, 0.075)' : 'rgba(23, 21, 26, 0.026)' },
-          '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+          '&:hover': { bgcolor: open ? 'rgba(var(--sd-primary-rgb), 0.075)' : 'rgba(var(--sd-text-rgb), 0.026)' },
+          '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
         }}
       >
         {open ? 'Hide teacher observations' : 'Show teacher observations'}
@@ -475,7 +475,7 @@ function TeacherObservationToggle({ open, onToggle }) {
 
 function EmptyRowMessage({ children }) {
   return (
-    <Paper elevation={0} sx={{ p: 1, borderRadius: '8px', border: '1px dashed rgba(23, 21, 26, 0.12)', bgcolor: 'rgba(23, 21, 26, 0.018)' }}>
+    <Paper elevation={0} sx={{ p: 1, borderRadius: '8px', border: '1px dashed rgba(var(--sd-text-rgb), 0.12)', bgcolor: 'rgba(var(--sd-text-rgb), 0.018)' }}>
       <Typography sx={{ color: 'text.secondary', fontSize: 12.1, fontWeight: 740 }}>
         {children}
       </Typography>
@@ -499,7 +499,7 @@ function TimelineRowsGrid({ group, rows, weeks, start, end, graphRows, onToggleR
         rowGap: 0.35,
         px: 0.9,
         py: 0.65,
-        borderTop: borderTop ? '1px solid rgba(23, 21, 26, 0.065)' : 0,
+        borderTop: borderTop ? '1px solid rgba(var(--sd-text-rgb), 0.065)' : 0,
         overflowX: 'auto',
       }}
     >
@@ -519,7 +519,7 @@ function TimelineRowsGrid({ group, rows, weeks, start, end, graphRows, onToggleR
                   gridColumn: '1 / -1',
                   mt: index ? 0.4 : 0,
                   pt: index ? 0.65 : 0.25,
-                  borderTop: index ? '1px solid rgba(23, 21, 26, 0.075)' : 0,
+                  borderTop: index ? '1px solid rgba(var(--sd-text-rgb), 0.075)' : 0,
                 }}
               >
                 <Typography
@@ -565,8 +565,8 @@ function TimelineRowsGrid({ group, rows, weeks, start, end, graphRows, onToggleR
                 bgcolor: rowSurface.bgcolor,
                 textAlign: 'left',
                 cursor: canToggleGraph ? 'pointer' : 'default',
-                '&:hover': canToggleGraph ? { bgcolor: row.source === 'student' ? 'rgba(156, 40, 175, 0.07)' : 'rgba(23, 21, 26, 0.045)' } : undefined,
-                '&:focus-visible': canToggleGraph ? { outline: `2px solid ${purple}`, outlineOffset: -2 } : undefined,
+                '&:hover': canToggleGraph ? { bgcolor: row.source === 'student' ? 'rgba(var(--sd-primary-rgb), 0.07)' : 'rgba(var(--sd-text-rgb), 0.045)' } : undefined,
+                '&:focus-visible': canToggleGraph ? { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: -2 } : undefined,
               }}
             >
               <Stack direction="row" spacing={0.4} alignItems="center" sx={{ minWidth: 0, width: '100%' }}>
@@ -623,8 +623,8 @@ function TimelineGroup({
         elevation={0}
         sx={{
           borderRadius: '8px',
-          border: '1px solid rgba(23, 21, 26, 0.075)',
-          bgcolor: '#fff',
+          border: '1px solid rgba(var(--sd-text-rgb), 0.075)',
+          bgcolor: 'var(--sd-surface)',
           overflow: 'hidden',
         }}
       >
@@ -646,8 +646,8 @@ function TimelineGroup({
       elevation={0}
       sx={{
         borderRadius: '8px',
-        border: `1px solid ${open ? 'rgba(156, 40, 175, 0.16)' : 'rgba(23, 21, 26, 0.075)'}`,
-        bgcolor: '#fff',
+        border: `1px solid ${open ? 'rgba(var(--sd-primary-rgb), 0.16)' : 'rgba(var(--sd-text-rgb), 0.075)'}`,
+        bgcolor: 'var(--sd-surface)',
         overflow: 'hidden',
       }}
     >
@@ -663,8 +663,8 @@ function TimelineGroup({
           px: 0.9,
           py: 0.65,
           textAlign: 'left',
-          bgcolor: '#fff',
-          '&:hover': { bgcolor: 'rgba(23, 21, 26, 0.026)' },
+          bgcolor: 'var(--sd-surface)',
+          '&:hover': { bgcolor: 'rgba(var(--sd-text-rgb), 0.026)' },
         }}
       >
         <Stack direction="row" spacing={0.65} alignItems="baseline" sx={{ minWidth: 0 }}>
@@ -672,14 +672,14 @@ function TimelineGroup({
             {group.label}
           </Typography>
         </Stack>
-        <KeyboardArrowDownIcon sx={{ color: open ? purple : 'text.secondary', fontSize: 18, transform: open ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 140ms ease' }} />
+        <KeyboardArrowDownIcon sx={{ color: open ? 'var(--sd-accent-text)' : 'text.secondary', fontSize: 18, transform: open ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 140ms ease' }} />
       </ButtonBase>
       <Collapse in={open} timeout={160} unmountOnExit>
         <Box
           sx={{
-            borderTop: '1px solid rgba(156, 40, 175, 0.12)',
+            borderTop: '1px solid rgba(var(--sd-primary-rgb), 0.12)',
             borderLeft: `3px solid ${purple}`,
-            bgcolor: 'rgba(156, 40, 175, 0.026)',
+            bgcolor: 'rgba(var(--sd-primary-rgb), 0.026)',
           }}
         >
           {!studentRows.length && (
@@ -730,9 +730,9 @@ function TimelineGroup({
 
 function HeatmapLegend() {
   const items = [
-    { value: 'Positive', bgcolor: '#fff', borderColor: 'rgba(156, 40, 175, 0.22)' },
-    { value: 'Neutral', bgcolor: 'rgba(156, 40, 175, 0.16)', borderColor: 'rgba(156, 40, 175, 0.18)' },
-    { value: 'Negative', bgcolor: purple, borderColor: 'rgba(88, 18, 102, 0.28)' },
+    { value: 'Positive', bgcolor: 'var(--sd-surface)', borderColor: 'rgba(var(--sd-primary-rgb), 0.22)' },
+    { value: 'Neutral', bgcolor: 'rgba(var(--sd-primary-rgb), 0.16)', borderColor: 'rgba(var(--sd-primary-rgb), 0.18)' },
+    { value: 'Negative', bgcolor: purple, borderColor: 'rgba(var(--sd-primary-rgb), 0.28)' },
   ];
 
   return (
@@ -783,7 +783,7 @@ function HeatmapGraph({ groups }) {
           px: 0.9,
           py: 0.45,
           borderRadius: '8px',
-          bgcolor: 'rgba(23, 21, 26, 0.025)',
+          bgcolor: 'rgba(var(--sd-text-rgb), 0.025)',
           overflowX: 'auto',
         }}
       >
@@ -794,7 +794,7 @@ function HeatmapGraph({ groups }) {
             const showMonth = !previousWeek || getWeekMonthLabel(previousWeek) !== getWeekMonthLabel(week);
             return (
               <Box key={week} sx={{ textAlign: 'center', minWidth: 0 }}>
-                <Typography sx={{ height: 15, color: showMonth ? purple : 'transparent', fontSize: 11, fontWeight: 920, lineHeight: 1.05 }}>
+                <Typography sx={{ height: 15, color: showMonth ? 'var(--sd-accent-text)' : 'transparent', fontSize: 11, fontWeight: 920, lineHeight: 1.05 }}>
                   {showMonth ? getWeekMonthLabel(week) : '-'}
                 </Typography>
                 <Typography sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 860, lineHeight: 1.1 }}>
@@ -859,8 +859,8 @@ export default function MentorTimelineHeatmapView({ picture, subjectConfigs, stu
           zIndex: isFullscreen ? 1700 : 'auto',
           p: isFullscreen ? { xs: 1.2, sm: 1.45 } : 1,
           borderRadius: '8px',
-          border: `1px solid ${isFullscreen ? 'rgba(156, 40, 175, 0.24)' : border}`,
-          bgcolor: '#fff',
+          border: `1px solid ${isFullscreen ? 'rgba(var(--sd-primary-rgb), 0.24)' : border}`,
+          bgcolor: 'var(--sd-surface)',
           boxShadow: isFullscreen ? '0 22px 70px rgba(23, 21, 26, 0.24)' : 'none',
           height: isFullscreen ? 'calc(100vh - 28px)' : 'auto',
           overflow: isFullscreen ? 'auto' : 'visible',
@@ -883,12 +883,12 @@ export default function MentorTimelineHeatmapView({ picture, subjectConfigs, stu
                     width: 30,
                     height: 30,
                     borderRadius: '8px',
-                    border: '1px solid rgba(23, 21, 26, 0.095)',
-                    color: isFullscreen ? purple : 'text.secondary',
-                    bgcolor: isFullscreen ? 'rgba(156, 40, 175, 0.06)' : '#fff',
+                    border: '1px solid rgba(var(--sd-text-rgb), 0.095)',
+                    color: isFullscreen ? 'var(--sd-accent-text)' : 'text.secondary',
+                    bgcolor: isFullscreen ? 'rgba(var(--sd-primary-rgb), 0.06)' : 'var(--sd-surface)',
                     flexShrink: 0,
-                    '&:hover': { bgcolor: isFullscreen ? 'rgba(156, 40, 175, 0.085)' : 'rgba(23, 21, 26, 0.026)' },
-                    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                    '&:hover': { bgcolor: isFullscreen ? 'rgba(var(--sd-primary-rgb), 0.085)' : 'rgba(var(--sd-text-rgb), 0.026)' },
+                    '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
                   }}
                 >
                   {isFullscreen ? <CloseFullscreenIcon sx={{ fontSize: 15 }} /> : <OpenInFullIcon sx={{ fontSize: 15 }} />}
@@ -899,7 +899,7 @@ export default function MentorTimelineHeatmapView({ picture, subjectConfigs, stu
           {eventCount ? (
             <HeatmapGraph groups={groups} />
           ) : (
-            <Paper elevation={0} sx={{ p: 1.2, borderRadius: '8px', border: '1px dashed rgba(23, 21, 26, 0.14)', bgcolor: 'rgba(23, 21, 26, 0.015)' }}>
+            <Paper elevation={0} sx={{ p: 1.2, borderRadius: '8px', border: '1px dashed rgba(var(--sd-text-rgb), 0.14)', bgcolor: 'rgba(var(--sd-text-rgb), 0.015)' }}>
               <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>No timeline events yet.</Typography>
             </Paper>
           )}

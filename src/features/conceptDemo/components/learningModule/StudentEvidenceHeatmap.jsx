@@ -1,8 +1,8 @@
 import { Box, Paper, Stack, Tooltip, Typography } from '@mui/material';
 
-const purple = '#9c28af';
-const darkText = '#17151a';
-const border = 'rgba(23, 21, 26, 0.1)';
+const purple = 'var(--sd-primary)';
+const darkText = 'var(--sd-text)';
+const border = 'rgba(var(--sd-text-rgb), 0.1)';
 
 function getLocalizedValue(value, language = 'en') {
   if (value && typeof value === 'object') {
@@ -73,8 +73,8 @@ function getTone(value, count) {
   if (!count) {
     return {
       label: 'No evidence',
-      bgcolor: 'rgba(23, 21, 26, 0.025)',
-      borderColor: 'rgba(23, 21, 26, 0.07)',
+      bgcolor: 'rgba(var(--sd-text-rgb), 0.025)',
+      borderColor: 'rgba(var(--sd-text-rgb), 0.07)',
       color: 'text.secondary',
     };
   }
@@ -83,25 +83,25 @@ function getTone(value, count) {
     return {
       label: 'Strong evidence',
       bgcolor: purple,
-      borderColor: 'rgba(88, 18, 102, 0.28)',
-      color: '#fff',
+      borderColor: 'rgba(var(--sd-primary-rgb), 0.28)',
+      color: 'var(--sd-on-primary)',
     };
   }
 
   if (value >= 2.4) {
     return {
       label: 'Developing evidence',
-      bgcolor: 'rgba(156, 40, 175, 0.28)',
-      borderColor: 'rgba(156, 40, 175, 0.2)',
-      color: purple,
+      bgcolor: 'rgba(var(--sd-primary-rgb), 0.28)',
+      borderColor: 'rgba(var(--sd-primary-rgb), 0.2)',
+      color: 'var(--sd-accent-text)',
     };
   }
 
   return {
     label: 'Early evidence',
-    bgcolor: 'rgba(156, 40, 175, 0.1)',
-    borderColor: 'rgba(156, 40, 175, 0.14)',
-    color: purple,
+    bgcolor: 'rgba(var(--sd-primary-rgb), 0.1)',
+    borderColor: 'rgba(var(--sd-primary-rgb), 0.14)',
+    color: 'var(--sd-accent-text)',
   };
 }
 
@@ -344,7 +344,7 @@ export default function StudentEvidenceHeatmap({
   const weeks = getWeeks(rows.flatMap((row) => row.events));
 
   return (
-    <Paper elevation={0} sx={{ m: { xs: 1, sm: 1.25 }, p: 1.1, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff' }}>
+    <Paper elevation={0} sx={{ m: { xs: 1, sm: 1.25 }, p: 1.1, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: 'var(--sd-surface)' }}>
       <Stack spacing={1}>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1fr) auto' }, gap: 0.8, alignItems: 'center' }}>
           <Typography sx={{ color: darkText, fontSize: 15.2, fontWeight: 900, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -352,9 +352,9 @@ export default function StudentEvidenceHeatmap({
           </Typography>
           <Stack direction="row" spacing={0.8} justifyContent={{ xs: 'flex-start', sm: 'flex-end' }} flexWrap="wrap" useFlexGap>
             {[
-              { label: 'Early', bgcolor: 'rgba(156, 40, 175, 0.1)', borderColor: 'rgba(156, 40, 175, 0.14)' },
-              { label: 'Developing', bgcolor: 'rgba(156, 40, 175, 0.28)', borderColor: 'rgba(156, 40, 175, 0.2)' },
-              { label: 'Strong', bgcolor: purple, borderColor: 'rgba(88, 18, 102, 0.28)' },
+              { label: 'Early', bgcolor: 'rgba(var(--sd-primary-rgb), 0.1)', borderColor: 'rgba(var(--sd-primary-rgb), 0.14)' },
+              { label: 'Developing', bgcolor: 'rgba(var(--sd-primary-rgb), 0.28)', borderColor: 'rgba(var(--sd-primary-rgb), 0.2)' },
+              { label: 'Strong', bgcolor: purple, borderColor: 'rgba(var(--sd-primary-rgb), 0.28)' },
             ].map((item) => (
               <Stack key={item.label} direction="row" spacing={0.4} alignItems="center">
                 <Box sx={{ width: 18, height: 18, borderRadius: '5px', bgcolor: item.bgcolor, border: '1px solid', borderColor: item.borderColor }} />
@@ -382,7 +382,7 @@ export default function StudentEvidenceHeatmap({
                 const showMonth = !previousWeek || getWeekMonthLabel(previousWeek, language) !== getWeekMonthLabel(week, language);
                 return (
                   <Box key={week} sx={{ textAlign: 'center', minWidth: 0 }}>
-                    <Typography sx={{ height: 15, color: showMonth ? purple : 'transparent', fontSize: 11, fontWeight: 920, lineHeight: 1.05 }}>
+                    <Typography sx={{ height: 15, color: showMonth ? 'var(--sd-accent-text)' : 'transparent', fontSize: 11, fontWeight: 920, lineHeight: 1.05 }}>
                       {showMonth ? getWeekMonthLabel(week, language) : '-'}
                     </Typography>
                     <Typography sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 860, lineHeight: 1.1 }}>
@@ -402,8 +402,8 @@ export default function StudentEvidenceHeatmap({
                         px: 0.7,
                         py: 0.45,
                         borderRadius: '8px',
-                        bgcolor: 'rgba(156, 40, 175, 0.055)',
-                        border: '1px solid rgba(156, 40, 175, 0.11)',
+                        bgcolor: 'rgba(var(--sd-primary-rgb), 0.055)',
+                        border: '1px solid rgba(var(--sd-primary-rgb), 0.11)',
                       }}
                     >
                       <Typography sx={{ color: darkText, fontSize: 12.2, fontWeight: 900, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -415,9 +415,9 @@ export default function StudentEvidenceHeatmap({
 
                 return (
                   <Box key={row.id} sx={{ display: 'contents' }}>
-                    <Box sx={{ minHeight: 34, px: 0.65, display: 'flex', alignItems: 'center', borderRadius: '8px 0 0 8px', border: '1px solid', borderRight: 0, borderStyle: row.type === 'Assessment evidence' ? 'dashed' : 'solid', borderColor: row.type === 'Assessment evidence' ? 'rgba(156, 40, 175, 0.18)' : 'rgba(23, 21, 26, 0.08)', bgcolor: row.type === 'Learning observations' ? 'rgba(156, 40, 175, 0.045)' : row.type === 'Assessment evidence' ? '#fff' : 'rgba(23, 21, 26, 0.022)' }}>
+                    <Box sx={{ minHeight: 34, px: 0.65, display: 'flex', alignItems: 'center', borderRadius: '8px 0 0 8px', border: '1px solid', borderRight: 0, borderStyle: row.type === 'Assessment evidence' ? 'dashed' : 'solid', borderColor: row.type === 'Assessment evidence' ? 'rgba(var(--sd-primary-rgb), 0.18)' : 'rgba(var(--sd-text-rgb), 0.08)', bgcolor: row.type === 'Learning observations' ? 'rgba(var(--sd-primary-rgb), 0.045)' : row.type === 'Assessment evidence' ? 'var(--sd-surface)' : 'rgba(var(--sd-text-rgb), 0.022)' }}>
                       <Box sx={{ minWidth: 0 }}>
-                        <Typography sx={{ color: row.type === 'Learning observations' ? darkText : row.type === 'Assessment evidence' ? purple : 'text.secondary', fontSize: 11.8, fontWeight: row.type === 'Assessment evidence' ? 880 : 830, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <Typography sx={{ color: row.type === 'Learning observations' ? darkText : row.type === 'Assessment evidence' ? 'var(--sd-accent-text)' : 'text.secondary', fontSize: 11.8, fontWeight: row.type === 'Assessment evidence' ? 880 : 830, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {row.label}
                         </Typography>
                         <Typography sx={{ color: 'text.secondary', fontSize: 9.8, fontWeight: 720, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -434,7 +434,7 @@ export default function StudentEvidenceHeatmap({
             </Box>
           </Box>
         ) : (
-          <Paper elevation={0} sx={{ p: 1.2, borderRadius: '8px', border: '1px dashed rgba(23, 21, 26, 0.14)', bgcolor: 'rgba(23, 21, 26, 0.015)' }}>
+          <Paper elevation={0} sx={{ p: 1.2, borderRadius: '8px', border: '1px dashed rgba(var(--sd-text-rgb), 0.14)', bgcolor: 'rgba(var(--sd-text-rgb), 0.015)' }}>
             <Typography sx={{ color: 'text.secondary', fontSize: 12.4 }}>No evidence yet.</Typography>
           </Paper>
         )}

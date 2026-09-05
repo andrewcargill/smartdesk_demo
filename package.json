@@ -2,7 +2,9 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
-    "preview": "vite preview --host 127.0.0.1"
+    "preview": "vite preview --host 127.0.0.1",
+    "test:theme": "node scripts/test-theme.mjs",
+    "test:mockup": "node --test tests/mockup-summary.test.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

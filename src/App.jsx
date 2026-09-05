@@ -12,6 +12,7 @@ import ArticleIcon from '@mui/icons-material/Article';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import HomeIcon from '@mui/icons-material/Home';
 import WorkspacesIcon from '@mui/icons-material/Workspaces';
+import ColorModeToggle from './components/ColorModeToggle.jsx';
 import Home from './components/Home.jsx';
 import MathsModule from './components/MathsModule.jsx';
 import MusicTeacherAssessment from './components/MusicTeacherAssessment.jsx';
@@ -91,7 +92,7 @@ export default function App() {
         position="sticky"
         color="transparent"
         elevation={0}
-        sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'rgba(246, 248, 244, 0.94)', backdropFilter: 'blur(12px)' }}
+        sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper', backdropFilter: 'blur(12px)' }}
       >
         <Toolbar sx={{ gap: 2, justifyContent: 'space-between', flexWrap: 'wrap', py: 1 }}>
           <Button color="inherit" startIcon={<HomeIcon />} onClick={() => navigate('home')} aria-label="Go to home">
@@ -117,6 +118,7 @@ export default function App() {
               Grading Assistant
             </Button>
           </Stack>
+          <ColorModeToggle />
         </Toolbar>
       </AppBar>
 

@@ -20,17 +20,17 @@ import { useConceptDemoLanguage } from '../ConceptDemoLanguageContext.jsx';
 import { smartDeskDemoResponses } from '../data/smartDeskDemoResponses.js';
 import { resolveLocalizedValue } from '../i18n/conceptDemoTranslations.js';
 
-const purple = '#9c28af';
-const darkPurple = '#842194';
-const palePurple = '#fbf5fd';
-const warningAmber = '#9a5b00';
-const warningPale = '#fff8e8';
-const darkText = '#18151a';
-const border = 'rgba(24, 21, 26, 0.1)';
+const purple = 'var(--sd-primary)';
+const darkPurple = 'var(--sd-primary-hover)';
+const palePurple = 'var(--sd-primary-soft)';
+const warningAmber = 'var(--sd-warning)';
+const warningPale = 'var(--sd-warning-soft)';
+const darkText = 'var(--sd-text)';
+const border = 'rgba(var(--sd-text-rgb), 0.1)';
 const expandedWidth = 260;
 const collapsedWidth = expandedWidth;
 const homePosition = { x: 1317, y: 22 };
-const purpleCrosshairCursor = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='25' viewBox='0 0 25 25'%3E%3Cpath d='M12.5 2v21M2 12.5h21' stroke='%239c28af' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='12.5' cy='12.5' r='3.2' fill='none' stroke='%239c28af' stroke-width='1.5'/%3E%3C/svg%3E") 12 12, crosshair`;
+const purpleCrosshairCursor = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='25' viewBox='0 0 25 25'%3E%3Cpath d='M12.5 2v21M2 12.5h21' stroke='%239575ed' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='12.5' cy='12.5' r='3.2' fill='none' stroke='%239575ed' stroke-width='1.5'/%3E%3C/svg%3E") 12 12, crosshair`;
 
 function getDefaultPosition() {
   return homePosition;
@@ -246,10 +246,10 @@ function FloatingMessage({ message, t }) {
           minWidth: 0,
           maxWidth: '92%',
           borderRadius: user ? '15px 15px 5px 15px' : '15px 15px 15px 5px',
-          bgcolor: warning ? warningPale : user ? palePurple : '#fff',
+          bgcolor: warning ? warningPale : user ? palePurple : 'var(--sd-surface)',
           border: warning
-            ? '1px solid rgba(154, 91, 0, 0.18)'
-            : user ? '1px solid rgba(156, 40, 175, 0.13)' : `1px solid ${border}`,
+            ? '1px solid rgba(var(--sd-warning-rgb), 0.18)'
+            : user ? '1px solid rgba(var(--sd-primary-rgb), 0.13)' : `1px solid ${border}`,
           px: 1.15,
           py: 0.9,
           boxShadow: user ? 'none' : '0 7px 18px rgba(24, 21, 26, 0.04)',
@@ -258,8 +258,8 @@ function FloatingMessage({ message, t }) {
       >
         {message.type === 'capture' && (
           <Stack direction="row" spacing={0.6} alignItems="center" sx={{ mb: 0.55 }}>
-            <AdsClickIcon sx={{ color: purple, fontSize: 14 }} />
-            <Typography sx={{ color: purple, fontSize: 10.8, fontWeight: 850, lineHeight: 1 }}>
+            <AdsClickIcon sx={{ color: 'var(--sd-accent-text)', fontSize: 14 }} />
+            <Typography sx={{ color: 'var(--sd-accent-text)', fontSize: 10.8, fontWeight: 850, lineHeight: 1 }}>
               {t('floatingSmartDesk.capturedContext')}
             </Typography>
           </Stack>
@@ -291,14 +291,14 @@ function FloatingVoiceState({ t }) {
       aria-live="polite"
       sx={{
         borderRadius: '14px',
-        border: '1px solid rgba(156, 40, 175, 0.16)',
+        border: '1px solid rgba(var(--sd-primary-rgb), 0.16)',
         bgcolor: palePurple,
         px: 1,
         py: 0.8,
       }}
     >
       <Stack direction="row" spacing={0.85} alignItems="center">
-        <MicIcon sx={{ color: purple, fontSize: 16 }} />
+        <MicIcon sx={{ color: 'var(--sd-accent-text)', fontSize: 16 }} />
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
           {[0, 1, 2].map((index) => (
             <Box
@@ -726,12 +726,12 @@ export default function FloatingSmartDesk({ context }) {
         maxWidth: expanded ? `min(${expandedWidth}px, calc(100vw - 24px))` : collapsedWidth,
         borderRadius: expanded ? '16px' : '14px',
         overflow: 'hidden',
-        bgcolor: expanded ? '#fff' : purple,
-        color: expanded ? darkText : '#fff',
+        bgcolor: expanded ? 'var(--sd-surface)' : purple,
+        color: expanded ? darkText : 'var(--sd-on-primary)',
         border: expanded ? `1px solid ${border}` : 0,
         boxShadow: expanded
-          ? '0 22px 64px rgba(24, 21, 26, 0.16)'
-          : '0 16px 34px rgba(156, 40, 175, 0.2)',
+          ? '0 22px 64px rgba(var(--sd-shadow-rgb), 0.16)'
+          : '0 16px 34px rgba(var(--sd-primary-rgb), 0.2)',
         transition: [
           returningHome
             ? 'left 1800ms cubic-bezier(0.22, 1, 0.36, 1), top 1800ms cubic-bezier(0.22, 1, 0.36, 1)'
@@ -773,14 +773,14 @@ export default function FloatingSmartDesk({ context }) {
           display: 'block',
           cursor: expanded ? 'grab' : 'pointer',
           bgcolor: expanded ? purple : 'transparent',
-          color: '#fff',
+          color: 'var(--sd-on-primary)',
           userSelect: 'none',
           touchAction: 'none',
           '&:hover': {
             bgcolor: expanded ? darkPurple : darkPurple,
           },
           '&:focus-visible': {
-            outline: `2px solid ${purple}`,
+            outline: `2px solid ${'var(--sd-focus)'}`,
             outlineOffset: 2,
           },
         }}
@@ -851,11 +851,11 @@ export default function FloatingSmartDesk({ context }) {
               minWidth: 24,
               alignSelf: 'center',
               justifySelf: 'center',
-              color: '#fff',
-              bgcolor: selectingContext ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
+              color: 'var(--sd-on-primary)',
+              bgcolor: selectingContext ? 'rgba(var(--sd-surface-rgb), 0.2)' : 'transparent',
               p: 0,
               '&:hover': {
-                bgcolor: 'rgba(255, 255, 255, 0.14)',
+                bgcolor: 'rgba(var(--sd-surface-rgb), 0.14)',
               },
             }}
           >
@@ -877,11 +877,11 @@ export default function FloatingSmartDesk({ context }) {
               minWidth: 26,
               alignSelf: 'center',
               justifySelf: 'center',
-              color: '#fff',
-              bgcolor: 'rgba(255, 255, 255, 0.13)',
+              color: 'var(--sd-on-primary)',
+              bgcolor: 'rgba(var(--sd-surface-rgb), 0.13)',
               p: 0,
               '&:hover': {
-                bgcolor: 'rgba(255, 255, 255, 0.2)',
+                bgcolor: 'rgba(var(--sd-surface-rgb), 0.2)',
               },
             }}
           >
@@ -908,10 +908,10 @@ export default function FloatingSmartDesk({ context }) {
               minWidth: 26,
               alignSelf: 'center',
               justifySelf: 'center',
-              color: '#fff',
+              color: 'var(--sd-on-primary)',
               p: 0,
               '&:hover': {
-                bgcolor: 'rgba(255, 255, 255, 0.14)',
+                bgcolor: 'rgba(var(--sd-surface-rgb), 0.14)',
               },
             }}
           >
@@ -951,7 +951,7 @@ export default function FloatingSmartDesk({ context }) {
               overflowX: 'hidden',
               px: 1.15,
               py: 1.15,
-              bgcolor: 'rgba(251, 245, 253, 0.32)',
+              bgcolor: 'rgba(var(--sd-primary-soft-rgb), 0.32)',
             }}
           >
             {messages.map((message) => (
@@ -973,13 +973,13 @@ export default function FloatingSmartDesk({ context }) {
                       px: 1,
                       py: 0.65,
                       color: darkText,
-                      borderColor: 'rgba(24, 21, 26, 0.11)',
-                      bgcolor: '#fff',
+                      borderColor: 'rgba(var(--sd-text-rgb), 0.11)',
+                      bgcolor: 'var(--sd-surface)',
                       maxWidth: '100%',
                       whiteSpace: 'normal',
                       fontSize: 11.4,
                       lineHeight: 1.25,
-                      '&:hover': { bgcolor: palePurple, borderColor: 'rgba(156, 40, 175, 0.24)' },
+                      '&:hover': { bgcolor: palePurple, borderColor: 'rgba(var(--sd-primary-rgb), 0.24)' },
                     }}
                   >
                     {prompt.label}
@@ -995,7 +995,7 @@ export default function FloatingSmartDesk({ context }) {
                 aria-live="polite"
                 sx={{
                   borderRadius: '14px',
-                  border: '1px solid rgba(156, 40, 175, 0.16)',
+                  border: '1px solid rgba(var(--sd-primary-rgb), 0.16)',
                   bgcolor: palePurple,
                   px: 1,
                   py: 0.8,
@@ -1009,7 +1009,7 @@ export default function FloatingSmartDesk({ context }) {
 
             {thinking && (
               <Stack direction="row" spacing={0.75} alignItems="center" aria-live="polite" sx={{ color: 'text.secondary', px: 0.4 }}>
-                <CircularProgress size={13} sx={{ color: purple }} />
+                <CircularProgress size={13} sx={{ color: 'var(--sd-accent-text)' }} />
                 <Typography sx={{ fontSize: 11.5 }}>{t('floatingSmartDesk.looking')}</Typography>
               </Stack>
             )}
@@ -1023,7 +1023,7 @@ export default function FloatingSmartDesk({ context }) {
             onMouseDown={(event) => event.stopPropagation()}
             onTouchStart={(event) => event.stopPropagation()}
             onClick={(event) => event.stopPropagation()}
-            sx={{ borderTop: `1px solid ${border}`, px: 0.85, py: 0.8, bgcolor: '#fff' }}
+            sx={{ borderTop: `1px solid ${border}`, px: 0.85, py: 0.8, bgcolor: 'var(--sd-surface)' }}
           >
             <Stack direction="row" spacing={0.6} alignItems="flex-end" sx={{ minWidth: 0 }}>
               <TextField
@@ -1066,7 +1066,7 @@ export default function FloatingSmartDesk({ context }) {
                   event.stopPropagation();
                   submitText();
                 }}
-                sx={{ color: purple, width: 34, height: 34, mb: 0.1 }}
+                sx={{ color: 'var(--sd-accent-text)', width: 34, height: 34, mb: 0.1 }}
               >
                 <SendIcon sx={{ fontSize: 17 }} />
               </IconButton>

@@ -18,9 +18,10 @@ import {
   Typography,
 } from '@mui/material';
 import { useConceptDemoLanguage } from '../ConceptDemoLanguageContext.jsx';
+import ColorModeToggle from '../../../components/ColorModeToggle.jsx';
 
-const purple = '#9c28af';
-const border = 'rgba(23, 21, 26, 0.1)';
+const purple = 'var(--sd-primary)';
+const border = 'rgba(var(--sd-text-rgb), 0.1)';
 
 const modes = [
   {
@@ -76,14 +77,14 @@ export default function SubjectWorkspaceContainer({
   }
 
   return (
-    <Box sx={{ minHeight: '100%', bgcolor: '#fff', color: '#17151a' }}>
+    <Box sx={{ minHeight: '100%', bgcolor: 'var(--sd-surface)', color: 'var(--sd-text)' }}>
       <Box
         component="header"
         sx={{
           position: 'sticky',
           top: 0,
           zIndex: 4,
-          bgcolor: 'rgba(255, 255, 255, 0.96)',
+          bgcolor: 'rgba(var(--sd-surface-rgb), 0.96)',
           borderBottom: `1px solid ${border}`,
           backdropFilter: 'blur(14px)',
           WebkitBackdropFilter: 'blur(14px)',
@@ -100,10 +101,10 @@ export default function SubjectWorkspaceContainer({
                   width: 42,
                   height: 42,
                   flexShrink: 0,
-                  color: '#17151a',
+                  color: 'var(--sd-text)',
                   border: '1px solid transparent',
                   bgcolor: 'transparent',
-                  '&:hover': { bgcolor: 'rgba(23, 21, 26, 0.05)' },
+                  '&:hover': { bgcolor: 'rgba(var(--sd-text-rgb), 0.05)' },
                 }}
               >
                 <ArrowBackRoundedIcon />
@@ -111,7 +112,7 @@ export default function SubjectWorkspaceContainer({
             </Tooltip>
 
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography sx={{ color: '#17151a', fontSize: { xs: 18, sm: 21 }, lineHeight: 1.15, fontWeight: 880 }}>
+              <Typography sx={{ color: 'var(--sd-text)', fontSize: { xs: 18, sm: 21 }, lineHeight: 1.15, fontWeight: 880 }}>
                 {title}
               </Typography>
               {(subtitle || contextLine) && (
@@ -139,6 +140,11 @@ export default function SubjectWorkspaceContainer({
                 {headerActions}
               </Box>
             )}
+
+            <ColorModeToggle
+              darkLabel={t('common.switchToDarkMode')}
+              lightLabel={t('common.switchToLightMode')}
+            />
 
             {!!menuItems.length && (
               <>
@@ -194,23 +200,23 @@ export default function SubjectWorkspaceContainer({
                   maxWidth: 620,
                   flexShrink: 0,
                   minHeight: 44,
-                  border: '1px solid rgba(23, 21, 26, 0.1)',
+                  border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
                   borderRadius: '999px',
                   p: 0.4,
-                  bgcolor: '#fff',
+                  bgcolor: 'var(--sd-surface)',
                   '& .MuiTab-root': {
                     minHeight: 36,
                     minWidth: 54,
                     px: 2,
                     borderRadius: '999px',
-                    color: 'rgba(156, 40, 175, 0.4)',
+                    color: 'var(--sd-text-muted)',
                     textTransform: 'none',
                     fontWeight: 800,
                     border: '1px solid transparent',
                     transition: 'color 180ms ease',
                   },
                   '& .Mui-selected': {
-                    color: purple,
+                    color: 'var(--sd-accent-text)',
                     bgcolor: 'transparent',
                     borderColor: 'transparent',
                     boxShadow: 'none',
@@ -232,7 +238,7 @@ export default function SubjectWorkspaceContainer({
                             <Typography sx={{ fontSize: 12.8, fontWeight: 850, lineHeight: 1.2 }}>
                               {t(`learningModule.modes.${mode.translationKey}.tooltipTitle`)}
                             </Typography>
-                            <Typography sx={{ mt: 0.35, fontSize: 12.2, lineHeight: 1.35, color: 'rgba(23, 21, 26, 0.74)' }}>
+                            <Typography sx={{ mt: 0.35, fontSize: 12.2, lineHeight: 1.35, color: 'var(--sd-text-muted)' }}>
                               {t(`learningModule.modes.${mode.translationKey}.tooltipDetail`)}
                             </Typography>
                           </Box>
@@ -244,9 +250,9 @@ export default function SubjectWorkspaceContainer({
                         slotProps={{
                           tooltip: {
                             sx: {
-                              bgcolor: 'rgba(255, 255, 255, 0.98)',
-                              color: '#17151a',
-                              border: '1px solid rgba(23, 21, 26, 0.1)',
+                              bgcolor: 'rgba(var(--sd-surface-rgb), 0.98)',
+                              color: 'var(--sd-text)',
+                              border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
                               borderRadius: '12px',
                               boxShadow: '0 10px 26px rgba(23, 21, 26, 0.12)',
                               px: 1.2,
@@ -256,9 +262,9 @@ export default function SubjectWorkspaceContainer({
                           },
                           arrow: {
                             sx: {
-                              color: 'rgba(255, 255, 255, 0.98)',
+                              color: 'rgba(var(--sd-surface-rgb), 0.98)',
                               '&:before': {
-                                border: '1px solid rgba(23, 21, 26, 0.1)',
+                                border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
                               },
                             },
                           },
@@ -271,7 +277,7 @@ export default function SubjectWorkspaceContainer({
                     )}
                     aria-label={t(`learningModule.modes.${mode.translationKey}.ariaLabel`)}
                     sx={{
-                      color: activeMode === mode.id ? `${purple} !important` : 'rgba(156, 40, 175, 0.4)',
+                      color: activeMode === mode.id ? `${'var(--sd-accent-text)'} !important` : 'var(--sd-text-muted)',
                     }}
                   />
                 ))}

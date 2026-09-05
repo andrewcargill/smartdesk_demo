@@ -42,7 +42,7 @@ export default function Home({ onNavigate }) {
         <Typography variant="overline" color="primary" fontWeight={850}>
           School support prototypes
         </Typography>
-        <Typography variant="h1" sx={{ maxWidth: 720, color: '#9c28af', fontSize: { xs: 46, sm: 64, md: 92 }, lineHeight: 0.95 }}>
+        <Typography variant="h1" sx={{ maxWidth: 720, color: 'var(--sd-accent-text)', fontSize: { xs: 46, sm: 64, md: 92 }, lineHeight: 0.95 }}>
           SmartDesk Learning Lab
         </Typography>
         <Typography color="text.secondary" sx={{ maxWidth: 620, mt: 2.5, fontSize: 20, lineHeight: 1.6 }}>
@@ -64,13 +64,13 @@ export default function Home({ onNavigate }) {
                 fontWeight: 850,
                 fontSize: 18,
                 transition: 'border-color 160ms ease, background-color 160ms ease',
-                '&:hover': { borderColor: 'primary.main', bgcolor: '#fbf5fd' },
+                '&:hover': { borderColor: 'primary.main', bgcolor: 'var(--sd-primary-soft)' },
               }}
             >
-              <Box sx={{ color: route.purple ? '#9c28af' : 'inherit', display: 'inline-flex' }}>
+              <Box sx={{ color: 'var(--sd-on-primary)', bgcolor: 'primary.main', display: 'inline-flex', p: 1, borderRadius: 1.5 }}>
                 {route.icon}
               </Box>
-              <Box component="span" sx={{ color: route.purple ? '#9c28af' : 'inherit' }}>
+              <Box component="span" sx={{ color: route.purple ? 'var(--sd-accent-text)' : 'inherit' }}>
                 {route.label}
               </Box>
             </Paper>
@@ -95,7 +95,7 @@ export default function Home({ onNavigate }) {
               textTransform: 'none',
               fontWeight: 820,
               px: 0.5,
-              '&:hover': { bgcolor: 'rgba(23, 21, 26, 0.04)' },
+              '&:hover': { bgcolor: 'rgba(var(--sd-text-rgb), 0.04)' },
             }}
           >
             Other prototypes
@@ -116,9 +116,9 @@ export default function Home({ onNavigate }) {
                       color: 'text.secondary',
                       fontWeight: 780,
                       fontSize: 15,
-                      bgcolor: 'rgba(255, 255, 255, 0.72)',
+                      bgcolor: 'rgba(var(--sd-surface-rgb), 0.72)',
                       transition: 'border-color 160ms ease, background-color 160ms ease, color 160ms ease',
-                      '&:hover': { borderColor: 'rgba(156, 40, 175, 0.32)', bgcolor: '#fbf5fd', color: '#17151a' },
+                      '&:hover': { borderColor: 'rgba(var(--sd-primary-rgb), 0.32)', bgcolor: 'var(--sd-primary-soft)', color: 'var(--sd-text)' },
                     }}
                   >
                     <Box sx={{ display: 'inline-flex' }}>

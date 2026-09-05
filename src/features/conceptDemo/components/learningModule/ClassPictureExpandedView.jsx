@@ -16,9 +16,9 @@ import {
   updateLearningModuleTimelineResponse,
 } from './utils/learningModuleEvidenceStorage.js';
 
-const purple = '#9c28af';
-const darkText = '#17151a';
-const mutedText = 'rgba(23, 21, 26, 0.62)';
+const purple = 'var(--sd-primary)';
+const darkText = 'var(--sd-text)';
+const mutedText = 'rgba(var(--sd-text-rgb), 0.62)';
 const timelineFallbackTranslations = {
   'learningModule.classPicture.timelineOverview': 'Overview',
   'learningModule.classPicture.timelineClassContext': 'Class context',
@@ -40,10 +40,10 @@ const timelineFallbackTranslations = {
   'learningModule.classPicture.timelineExitFullscreen': 'Exit fullscreen',
 };
 const levelReferenceMarks = [
-  { order: 4, mark: '●', tint: 'rgba(156, 40, 175, 0.13)', color: 'rgba(156, 40, 175, 0.58)' },
-  { order: 3, mark: '◑', tint: 'rgba(156, 40, 175, 0.095)', color: 'rgba(156, 40, 175, 0.48)' },
-  { order: 2, mark: '◔', tint: 'rgba(156, 40, 175, 0.065)', color: 'rgba(156, 40, 175, 0.38)' },
-  { order: 1, mark: '○', tint: 'rgba(156, 40, 175, 0.035)', color: 'rgba(156, 40, 175, 0.3)' },
+  { order: 4, mark: '●', tint: 'rgba(var(--sd-primary-rgb), 0.13)', color: 'var(--sd-text-muted)' },
+  { order: 3, mark: '◑', tint: 'rgba(var(--sd-primary-rgb), 0.095)', color: 'var(--sd-text-muted)' },
+  { order: 2, mark: '◔', tint: 'rgba(var(--sd-primary-rgb), 0.065)', color: 'var(--sd-text-muted)' },
+  { order: 1, mark: '○', tint: 'rgba(var(--sd-primary-rgb), 0.035)', color: 'var(--sd-text-muted)' },
 ];
 
 function fallbackT(key, values = {}) {
@@ -592,18 +592,18 @@ function groupTimelineItemsByPosition(items, range) {
 
 function TimelineIcon({ type }) {
   if (type === 'assessment') {
-    return <SquareIcon sx={{ color: purple, fontSize: 13, transform: 'rotate(45deg)' }} />;
+    return <SquareIcon sx={{ color: 'var(--sd-accent-text)', fontSize: 13, transform: 'rotate(45deg)' }} />;
   }
 
   if (type === 'timeline-comment') {
-    return <NotesIcon sx={{ color: purple, fontSize: 14 }} />;
+    return <NotesIcon sx={{ color: 'var(--sd-accent-text)', fontSize: 14 }} />;
   }
 
   if (type === 'response') {
-    return <NotesIcon sx={{ color: 'rgba(23, 21, 26, 0.58)', fontSize: 14 }} />;
+    return <NotesIcon sx={{ color: 'var(--sd-text-muted)', fontSize: 14 }} />;
   }
 
-  return <RadioButtonCheckedIcon sx={{ color: purple, fontSize: 13 }} />;
+  return <RadioButtonCheckedIcon sx={{ color: 'var(--sd-accent-text)', fontSize: 13 }} />;
 }
 
 function TimelineItem({ item, range, type, children }) {
@@ -678,25 +678,25 @@ function LessonCaptureCluster({ cluster, range, language, zoomed, onZoom }) {
         placement="top"
         title={(
           <Stack spacing={0.45}>
-            <Typography sx={{ color: '#fff', fontSize: 11.8, fontWeight: 850, lineHeight: 1.2 }}>
+            <Typography sx={{ color: 'var(--sd-on-primary)', fontSize: 11.8, fontWeight: 850, lineHeight: 1.2 }}>
               {displayTitle || formatShortDate(cluster.date, language)}
             </Typography>
             {cluster.activityTitle ? (
-              <Typography sx={{ color: 'rgba(255, 255, 255, 0.82)', fontSize: 11.2, lineHeight: 1.2 }}>
+              <Typography sx={{ color: 'rgba(var(--sd-surface-rgb), 0.82)', fontSize: 11.2, lineHeight: 1.2 }}>
                 {cluster.unitTitle}
               </Typography>
             ) : null}
-            <Typography sx={{ color: 'rgba(255, 255, 255, 0.82)', fontSize: 11.2, lineHeight: 1.2 }}>
+            <Typography sx={{ color: 'rgba(var(--sd-surface-rgb), 0.82)', fontSize: 11.2, lineHeight: 1.2 }}>
               {formatShortDate(cluster.date, language)}
             </Typography>
             <Stack spacing={0.15}>
               {cluster.items.map((item) => (
                 <Box key={item.id}>
-                  <Typography sx={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: 11.2, fontWeight: item.activityCaptureLabel ? 820 : 650, lineHeight: 1.25 }}>
+                  <Typography sx={{ color: 'rgba(var(--sd-surface-rgb), 0.9)', fontSize: 11.2, fontWeight: item.activityCaptureLabel ? 820 : 650, lineHeight: 1.25 }}>
                     {item.levelMark} {item.timelineLabel || item.skillLabel}
                   </Typography>
                   {item.activityCaptureLabel && item.skillLabel ? (
-                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.66)', fontSize: 10.6, lineHeight: 1.2 }}>
+                    <Typography sx={{ color: 'rgba(var(--sd-surface-rgb), 0.66)', fontSize: 10.6, lineHeight: 1.2 }}>
                       {item.activityCaptureLabel}
                     </Typography>
                   ) : null}
@@ -717,7 +717,7 @@ function LessonCaptureCluster({ cluster, range, language, zoomed, onZoom }) {
             cursor: zoomed ? 'default' : 'zoom-in',
             textAlign: 'left',
             borderRadius: '7px',
-            '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+            '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
           }}
         >
           <Typography sx={{ color: darkText, fontSize: 11.8, fontWeight: 850, lineHeight: 1.15, maxWidth: 120, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -730,7 +730,7 @@ function LessonCaptureCluster({ cluster, range, language, zoomed, onZoom }) {
                 component="span"
                 aria-label={`${item.skillLabel}: ${item.levelLabel}`}
                 sx={{
-                  color: purple,
+                  color: 'var(--sd-accent-text)',
                   fontSize: 16,
                   fontWeight: 900,
                   lineHeight: 1,
@@ -760,7 +760,7 @@ function TimelineRow({ label, minHeight = 70, children }) {
         gap: 1.2,
         minHeight,
         py: 0.9,
-        borderTop: '1px solid rgba(23, 21, 26, 0.07)',
+        borderTop: '1px solid rgba(var(--sd-text-rgb), 0.07)',
       }}
     >
       {typeof label === 'string' ? (
@@ -776,13 +776,13 @@ function TimelineRow({ label, minHeight = 70, children }) {
 }
 
 function EmptyRow() {
-  return <Box sx={{ width: 24, height: 2, mt: 1, borderRadius: 999, bgcolor: 'rgba(23, 21, 26, 0.16)' }} />;
+  return <Box sx={{ width: 24, height: 2, mt: 1, borderRadius: 999, bgcolor: 'rgba(var(--sd-text-rgb), 0.16)' }} />;
 }
 
 function SelectClassContentPrompt() {
   return (
     <Box sx={{ py: 0.8 }}>
-      <Typography sx={{ color: 'rgba(23, 21, 26, 0.42)', fontSize: 12.2, fontWeight: 760 }}>
+      <Typography sx={{ color: 'var(--sd-text-muted)', fontSize: 12.2, fontWeight: 760 }}>
         Select class content above to show related evidence.
       </Typography>
     </Box>
@@ -848,7 +848,7 @@ function LearningObservationGraph({ events, areas, range, language }) {
                   x2="100"
                   y1="26"
                   y2="26"
-                  stroke="rgba(23, 21, 26, 0.22)"
+                  stroke="rgba(var(--sd-text-rgb), 0.22)"
                   strokeWidth="1.5"
                   vectorEffect="non-scaling-stroke"
                 />
@@ -871,14 +871,14 @@ function LearningObservationGraph({ events, areas, range, language }) {
                   placement="top"
                   title={(
                     <Stack spacing={0.3}>
-                      <Typography sx={{ color: '#fff', fontSize: 11.8, fontWeight: 850, lineHeight: 1.2 }}>
+                      <Typography sx={{ color: 'var(--sd-on-primary)', fontSize: 11.8, fontWeight: 850, lineHeight: 1.2 }}>
                         {point.title}
                       </Typography>
-                      <Typography sx={{ color: 'rgba(255, 255, 255, 0.82)', fontSize: 11.2, lineHeight: 1.2 }}>
+                      <Typography sx={{ color: 'rgba(var(--sd-surface-rgb), 0.82)', fontSize: 11.2, lineHeight: 1.2 }}>
                         {formatShortDate(point.date, language)} · {point.value}
                       </Typography>
                       {point.comment ? (
-                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.82)', fontSize: 11.2, lineHeight: 1.25 }}>
+                        <Typography sx={{ color: 'rgba(var(--sd-surface-rgb), 0.82)', fontSize: 11.2, lineHeight: 1.25 }}>
                           {point.comment}
                         </Typography>
                       ) : null}
@@ -894,7 +894,7 @@ function LearningObservationGraph({ events, areas, range, language }) {
                       height: 8,
                       borderRadius: '50%',
                       border: `2px solid ${purple}`,
-                      bgcolor: '#fff',
+                      bgcolor: 'var(--sd-surface)',
                       transform: 'translate(-50%, -50%)',
                       boxSizing: 'border-box',
                       cursor: 'default',
@@ -902,7 +902,7 @@ function LearningObservationGraph({ events, areas, range, language }) {
                       '&:hover': {
                         width: 11,
                         height: 11,
-                        boxShadow: '0 0 0 4px rgba(156, 40, 175, 0.13)',
+                        boxShadow: '0 0 0 4px rgba(var(--sd-primary-rgb), 0.13)',
                       },
                     }}
                   />
@@ -931,11 +931,11 @@ function UnitCaptureTrendGraph({ clusters, range, language, selectedUnitIds, act
           sx={{
             p: 1,
             borderRadius: '9px',
-            border: '1px solid rgba(156, 40, 175, 0.14)',
-            bgcolor: 'rgba(156, 40, 175, 0.025)',
+            border: '1px solid rgba(var(--sd-primary-rgb), 0.14)',
+            bgcolor: 'rgba(var(--sd-primary-rgb), 0.025)',
           }}
         >
-          <Typography sx={{ color: purple, fontSize: 11.8, fontWeight: 900, lineHeight: 1.15 }}>
+          <Typography sx={{ color: 'var(--sd-accent-text)', fontSize: 11.8, fontWeight: 900, lineHeight: 1.15 }}>
             {group.title}
           </Typography>
           <Stack spacing={0.85} sx={{ mt: 0.75 }}>
@@ -1031,22 +1031,22 @@ function UnitCaptureTrendGraph({ clusters, range, language, selectedUnitIds, act
                           placement="top"
                           title={(
                             <Stack spacing={0.45}>
-                              <Typography sx={{ color: '#fff', fontSize: 11.8, fontWeight: 850, lineHeight: 1.2 }}>
+                              <Typography sx={{ color: 'var(--sd-on-primary)', fontSize: 11.8, fontWeight: 850, lineHeight: 1.2 }}>
                                 {point.activityLabel || point.unitTitle}
                               </Typography>
                               {point.activityLabel ? (
-                                <Typography sx={{ color: 'rgba(255, 255, 255, 0.82)', fontSize: 11.2, lineHeight: 1.2 }}>
+                                <Typography sx={{ color: 'rgba(var(--sd-surface-rgb), 0.82)', fontSize: 11.2, lineHeight: 1.2 }}>
                                   {point.unitTitle}
                                 </Typography>
                               ) : null}
-                              <Typography sx={{ color: 'rgba(255, 255, 255, 0.82)', fontSize: 11.2, lineHeight: 1.2 }}>
+                              <Typography sx={{ color: 'rgba(var(--sd-surface-rgb), 0.82)', fontSize: 11.2, lineHeight: 1.2 }}>
                                 {formatShortDate(point.date, language)}
                               </Typography>
-                              <Typography sx={{ color: 'rgba(255, 255, 255, 0.88)', fontSize: 11.2, lineHeight: 1.25 }}>
+                              <Typography sx={{ color: 'rgba(var(--sd-surface-rgb), 0.88)', fontSize: 11.2, lineHeight: 1.25 }}>
                                 {point.levelMark} {point.skillLabel}
                               </Typography>
                               {point.activityCaptureLabel && point.curriculumSkillLabel ? (
-                                <Typography sx={{ color: 'rgba(255, 255, 255, 0.66)', fontSize: 10.6, lineHeight: 1.2 }}>
+                                <Typography sx={{ color: 'rgba(var(--sd-surface-rgb), 0.66)', fontSize: 10.6, lineHeight: 1.2 }}>
                                   {point.activityCaptureLabel}
                                 </Typography>
                               ) : null}
@@ -1063,19 +1063,19 @@ function UnitCaptureTrendGraph({ clusters, range, language, selectedUnitIds, act
                               width: pointMatchesActiveActivity ? 11 : 8,
                               height: pointMatchesActiveActivity ? 11 : 8,
                               borderRadius: '50%',
-                              border: `2px solid ${pointMutedByActiveActivity ? 'rgba(23, 21, 26, 0.24)' : purple}`,
-                              bgcolor: pointMatchesActiveActivity ? purple : '#fff',
+                              border: `2px solid ${pointMutedByActiveActivity ? 'rgba(var(--sd-text-rgb), 0.24)' : purple}`,
+                              bgcolor: pointMatchesActiveActivity ? purple : 'var(--sd-surface)',
                               transform: 'translate(-50%, -50%)',
                               boxSizing: 'border-box',
                               cursor: 'default',
                               opacity: pointMutedByActiveActivity ? 0.34 : 1,
-                              boxShadow: pointMatchesActiveActivity ? '0 0 0 4px rgba(156, 40, 175, 0.14)' : 'none',
+                              boxShadow: pointMatchesActiveActivity ? '0 0 0 4px rgba(var(--sd-primary-rgb), 0.14)' : 'none',
                               transition: 'width 120ms ease, height 120ms ease, box-shadow 120ms ease, opacity 120ms ease, border-color 120ms ease, background-color 120ms ease',
                               '&:hover': {
                                 width: 12,
                                 height: 12,
                                 opacity: 1,
-                                boxShadow: '0 0 0 4px rgba(156, 40, 175, 0.12)',
+                                boxShadow: '0 0 0 4px rgba(var(--sd-primary-rgb), 0.12)',
                               },
                             }}
                           />
@@ -1342,15 +1342,15 @@ export default function ClassPictureExpandedView({
         zIndex: isTimelineFullscreen ? 1700 : 'auto',
         m: isTimelineFullscreen ? 0 : { xs: 1, sm: 1.25 },
         p: isTimelineFullscreen ? { xs: 1.1, sm: 1.35 } : { xs: 1.25, sm: 1.55 },
-        borderTop: '1px solid rgba(23, 21, 26, 0.08)',
+        borderTop: '1px solid rgba(var(--sd-text-rgb), 0.08)',
         border: `4px solid ${purple}`,
         borderRadius: isTimelineFullscreen ? '14px' : '18px',
-        bgcolor: '#fff',
+        bgcolor: 'var(--sd-surface)',
         maxHeight: isTimelineFullscreen ? 'none' : { xs: '72vh', sm: 'min(720px, 72vh)' },
         height: isTimelineFullscreen ? 'auto' : 'auto',
         overflow: 'auto',
         boxShadow: isTimelineFullscreen
-          ? '0 28px 80px rgba(23, 21, 26, 0.24)'
+          ? '0 28px 80px rgba(var(--sd-shadow-rgb), 0.24)'
           : 'none',
       }}
     >
@@ -1360,8 +1360,8 @@ export default function ClassPictureExpandedView({
             position: 'sticky',
             top: 0,
             zIndex: 18,
-            bgcolor: '#fff',
-            borderBottom: '1px solid rgba(23, 21, 26, 0.09)',
+            bgcolor: 'var(--sd-surface)',
+            borderBottom: '1px solid rgba(var(--sd-text-rgb), 0.09)',
             boxShadow: '0 8px 18px rgba(23, 21, 26, 0.04)',
           }}
         >
@@ -1378,10 +1378,10 @@ export default function ClassPictureExpandedView({
                     width: 25,
                     height: 25,
                     borderRadius: '7px',
-                    color: purple,
-                    bgcolor: 'rgba(156, 40, 175, 0.06)',
-                    '&:hover': { bgcolor: 'rgba(156, 40, 175, 0.1)' },
-                    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                    color: 'var(--sd-accent-text)',
+                    bgcolor: 'rgba(var(--sd-primary-rgb), 0.06)',
+                    '&:hover': { bgcolor: 'rgba(var(--sd-primary-rgb), 0.1)' },
+                    '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
                   }}
                 >
                   {isTimelineFullscreen ? <CloseFullscreenIcon sx={{ fontSize: 15 }} /> : <OpenInFullIcon sx={{ fontSize: 14 }} />}
@@ -1395,9 +1395,9 @@ export default function ClassPictureExpandedView({
                     px: 0.65,
                     py: 0.35,
                     borderRadius: '7px',
-                    color: purple,
-                    bgcolor: 'rgba(156, 40, 175, 0.06)',
-                    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                    color: 'var(--sd-accent-text)',
+                    bgcolor: 'rgba(var(--sd-primary-rgb), 0.06)',
+                    '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
                   }}
                 >
                   <Typography sx={{ fontSize: 11.5, fontWeight: 880, lineHeight: 1 }}>
@@ -1427,8 +1427,8 @@ export default function ClassPictureExpandedView({
                   borderRadius: '7px',
                   px: 0.3,
                   py: 0.15,
-                  color: zoomed ? purple : mutedText,
-                  '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                  color: zoomed ? 'var(--sd-accent-text)' : mutedText,
+                  '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
                 }}
               >
                 <Typography sx={{ fontSize: 12, fontWeight: 850, textTransform: 'capitalize', lineHeight: 1.2 }}>
@@ -1446,11 +1446,11 @@ export default function ClassPictureExpandedView({
                   py: 0.25,
                   borderRadius: '999px',
                   bgcolor: purple,
-                  color: '#fff',
+                  color: 'var(--sd-on-primary)',
                   transform: 'translateX(-50%)',
                   pointerEvents: 'none',
                   zIndex: 8,
-                  boxShadow: '0 6px 16px rgba(156, 40, 175, 0.16)',
+                  boxShadow: '0 6px 16px rgba(var(--sd-primary-rgb), 0.16)',
                 }}
               >
                 <Typography sx={{ color: 'inherit', fontSize: 10.8, fontWeight: 900, lineHeight: 1 }}>
@@ -1470,7 +1470,7 @@ export default function ClassPictureExpandedView({
                   width: 238,
                   p: 0.85,
                   borderRadius: '10px',
-                  bgcolor: '#fff',
+                  bgcolor: 'var(--sd-surface)',
                   border: `1px solid ${purple}`,
                   boxShadow: '0 14px 34px rgba(23, 21, 26, 0.16)',
                   transform: 'translateX(-50%)',
@@ -1478,13 +1478,13 @@ export default function ClassPictureExpandedView({
                 }}
               >
                 <Stack spacing={0.55}>
-	                  <Typography sx={{ color: purple, fontSize: 11.4, fontWeight: 900, lineHeight: 1 }}>
+	                  <Typography sx={{ color: 'var(--sd-accent-text)', fontSize: 11.4, fontWeight: 900, lineHeight: 1 }}>
 	                    {formatShortDate(responseDraft.date, language)}
 	                  </Typography>
                   {responseDraft.mode === 'view' ? (
-                    <Box sx={{ p: 0.75, borderRadius: '8px', bgcolor: 'rgba(156, 40, 175, 0.055)', border: '1px solid rgba(156, 40, 175, 0.14)' }}>
+                    <Box sx={{ p: 0.75, borderRadius: '8px', bgcolor: 'rgba(var(--sd-primary-rgb), 0.055)', border: '1px solid rgba(var(--sd-primary-rgb), 0.14)' }}>
                       {!!responseDraft.label && (
-                        <Typography sx={{ color: purple, fontSize: 12.2, fontWeight: 900, lineHeight: 1.2 }}>
+                        <Typography sx={{ color: 'var(--sd-accent-text)', fontSize: 12.2, fontWeight: 900, lineHeight: 1.2 }}>
                           {responseDraft.label}
                         </Typography>
                       )}
@@ -1507,13 +1507,13 @@ export default function ClassPictureExpandedView({
                           px: 0.75,
                           py: 0.55,
                           borderRadius: '7px',
-                          border: '1px solid rgba(23, 21, 26, 0.14)',
+                          border: '1px solid rgba(var(--sd-text-rgb), 0.14)',
                           color: darkText,
                           font: 'inherit',
                           fontSize: 12.2,
                           fontWeight: 760,
                           outline: 'none',
-                          '&:focus': { borderColor: purple, boxShadow: '0 0 0 2px rgba(156, 40, 175, 0.1)' },
+                          '&:focus': { borderColor: purple, boxShadow: '0 0 0 2px rgba(var(--sd-primary-rgb), 0.1)' },
                         }}
                       />
                       <Box
@@ -1529,13 +1529,13 @@ export default function ClassPictureExpandedView({
                           px: 0.75,
                           py: 0.55,
                           borderRadius: '7px',
-                          border: '1px solid rgba(23, 21, 26, 0.14)',
+                          border: '1px solid rgba(var(--sd-text-rgb), 0.14)',
                           color: darkText,
                           font: 'inherit',
                           fontSize: 12.2,
                           lineHeight: 1.35,
                           outline: 'none',
-                          '&:focus': { borderColor: purple, boxShadow: '0 0 0 2px rgba(156, 40, 175, 0.1)' },
+                          '&:focus': { borderColor: purple, boxShadow: '0 0 0 2px rgba(var(--sd-primary-rgb), 0.1)' },
                         }}
                       />
                     </>
@@ -1544,7 +1544,7 @@ export default function ClassPictureExpandedView({
                     <ButtonBase
                       type="button"
                       onClick={() => setResponseDraft(null)}
-                      sx={{ px: 0.75, py: 0.45, borderRadius: '7px', color: mutedText, '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 } }}
+                      sx={{ px: 0.75, py: 0.45, borderRadius: '7px', color: mutedText, '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 } }}
                     >
                       <Typography sx={{ fontSize: 11.5, fontWeight: 820, lineHeight: 1 }}>
                         {t('learningModule.classPicture.timelineCancelResponse')}
@@ -1554,7 +1554,7 @@ export default function ClassPictureExpandedView({
                       <ButtonBase
                         type="button"
                         onClick={() => setResponseDraft((draft) => ({ ...draft, mode: 'edit' }))}
-                        sx={{ px: 0.85, py: 0.45, borderRadius: '7px', color: '#fff', bgcolor: purple, '&:hover': { bgcolor: '#87239a' }, '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 } }}
+                        sx={{ px: 0.85, py: 0.45, borderRadius: '7px', color: 'var(--sd-on-primary)', bgcolor: purple, '&:hover': { bgcolor: 'var(--sd-primary-hover)' }, '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 } }}
                       >
                         <Typography sx={{ color: 'inherit', fontSize: 11.5, fontWeight: 880, lineHeight: 1 }}>
                           {t('learningModule.classPicture.timelineEditResponse')}
@@ -1563,7 +1563,7 @@ export default function ClassPictureExpandedView({
                     ) : (
                       <ButtonBase
                         type="submit"
-                        sx={{ px: 0.85, py: 0.45, borderRadius: '7px', color: '#fff', bgcolor: purple, '&:hover': { bgcolor: '#87239a' }, '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 } }}
+                        sx={{ px: 0.85, py: 0.45, borderRadius: '7px', color: 'var(--sd-on-primary)', bgcolor: purple, '&:hover': { bgcolor: 'var(--sd-primary-hover)' }, '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 } }}
                       >
                         <Typography sx={{ color: 'inherit', fontSize: 11.5, fontWeight: 880, lineHeight: 1 }}>
                           {t('learningModule.classPicture.timelineSaveResponse')}
@@ -1600,7 +1600,7 @@ export default function ClassPictureExpandedView({
                     bottom: 0,
                     width: 2,
                     borderRadius: '999px',
-                    bgcolor: 'rgba(156, 40, 175, 0.42)',
+                    bgcolor: 'rgba(var(--sd-primary-rgb), 0.42)',
                     transform: 'translateX(-50%)',
                   }}
                 />
@@ -1636,19 +1636,19 @@ export default function ClassPictureExpandedView({
                         placement="top"
                         title={(
                           <Stack spacing={0.35}>
-                            <Typography sx={{ color: '#fff', fontSize: 11.8, fontWeight: 850, lineHeight: 1.2 }}>
+                            <Typography sx={{ color: 'var(--sd-on-primary)', fontSize: 11.8, fontWeight: 850, lineHeight: 1.2 }}>
                               {cluster.activityLabel}
                             </Typography>
-                            <Typography sx={{ color: 'rgba(255, 255, 255, 0.82)', fontSize: 11.2, lineHeight: 1.2 }}>
+                            <Typography sx={{ color: 'rgba(var(--sd-surface-rgb), 0.82)', fontSize: 11.2, lineHeight: 1.2 }}>
                               {formatShortDate(cluster.startDate, language)} - {formatShortDate(cluster.endDate, language)}
                             </Typography>
                             {!!cluster.unitTitles.length && (
-                              <Typography sx={{ color: 'rgba(255, 255, 255, 0.72)', fontSize: 10.8, lineHeight: 1.2 }}>
+                              <Typography sx={{ color: 'rgba(var(--sd-surface-rgb), 0.72)', fontSize: 10.8, lineHeight: 1.2 }}>
                                 {cluster.unitTitles.join(' / ')}
                               </Typography>
                             )}
                             {cluster.captureLabels.slice(0, 5).map((label) => (
-                              <Typography key={label} sx={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: 10.9, lineHeight: 1.2 }}>
+                              <Typography key={label} sx={{ color: 'rgba(var(--sd-surface-rgb), 0.9)', fontSize: 10.9, lineHeight: 1.2 }}>
                                 {label}
                               </Typography>
                             ))}
@@ -1667,25 +1667,25 @@ export default function ClassPictureExpandedView({
                             px: 0.65,
                             py: 0.4,
                             borderRadius: '7px',
-                            bgcolor: activitySelected ? purple : 'rgba(156, 40, 175, 0.1)',
-                            border: activitySelected ? `1px solid ${purple}` : '1px solid rgba(156, 40, 175, 0.2)',
-                            boxShadow: activitySelected ? '0 8px 20px rgba(156, 40, 175, 0.24)' : '0 5px 14px rgba(156, 40, 175, 0.08)',
+                            bgcolor: activitySelected ? purple : 'rgba(var(--sd-primary-rgb), 0.1)',
+                            border: activitySelected ? `1px solid ${purple}` : '1px solid rgba(var(--sd-primary-rgb), 0.2)',
+                            boxShadow: activitySelected ? '0 8px 20px rgba(var(--sd-primary-rgb), 0.24)' : '0 5px 14px rgba(var(--sd-primary-rgb), 0.08)',
                             cursor: 'pointer',
                             textAlign: 'left',
                             transition: 'background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease',
                             '&:hover': {
-                              bgcolor: activitySelected ? '#87239a' : 'rgba(156, 40, 175, 0.15)',
-                              borderColor: 'rgba(156, 40, 175, 0.38)',
-                              boxShadow: '0 7px 18px rgba(156, 40, 175, 0.12)',
+                              bgcolor: activitySelected ? 'var(--sd-primary-hover)' : 'rgba(var(--sd-primary-rgb), 0.15)',
+                              borderColor: 'rgba(var(--sd-primary-rgb), 0.38)',
+                              boxShadow: '0 7px 18px rgba(var(--sd-primary-rgb), 0.12)',
                             },
-                            '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                            '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
                           }}
                         >
                           <Stack direction="row" spacing={0.45} alignItems="center" sx={{ minWidth: 0 }}>
                             {activitySelected ? (
-                              <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: '#fff', flexShrink: 0 }} />
+                              <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: 'var(--sd-surface)', flexShrink: 0 }} />
                             ) : null}
-                            <Typography sx={{ color: activitySelected ? '#fff' : purple, fontSize: 11.6, fontWeight: 900, lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <Typography sx={{ color: activitySelected ? 'var(--sd-on-primary)' : 'var(--sd-accent-text)', fontSize: 11.6, fontWeight: 900, lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {cluster.activityLabel}
                             </Typography>
                           </Stack>
@@ -1724,7 +1724,7 @@ export default function ClassPictureExpandedView({
                     bottom: 0,
                     width: 2,
                     borderRadius: '999px',
-                    bgcolor: 'rgba(156, 40, 175, 0.42)',
+                    bgcolor: 'rgba(var(--sd-primary-rgb), 0.42)',
                     transform: 'translateX(-50%)',
                   }}
                 />
@@ -1743,7 +1743,7 @@ export default function ClassPictureExpandedView({
                   color: mutedText,
                   borderRadius: '7px',
                   textAlign: 'left',
-                  '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                  '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
                 }}
               >
                 <KeyboardArrowDownIcon sx={{ fontSize: 16, transform: curriculumAreasExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 140ms ease' }} />
@@ -1777,15 +1777,15 @@ export default function ClassPictureExpandedView({
                     py: 0.45,
                     borderRadius: '7px',
                     textAlign: 'left',
-                    bgcolor: unitSelected ? 'rgba(156, 40, 175, 0.13)' : 'rgba(156, 40, 175, 0.06)',
-                    border: unitSelected ? `1px solid ${purple}` : '1px solid rgba(156, 40, 175, 0.12)',
+                    bgcolor: unitSelected ? 'rgba(var(--sd-primary-rgb), 0.13)' : 'rgba(var(--sd-primary-rgb), 0.06)',
+                    border: unitSelected ? `1px solid ${purple}` : '1px solid rgba(var(--sd-primary-rgb), 0.12)',
                     opacity: unitFilterActive && !unitSelected ? 0.36 : 1,
                     transition: 'opacity 140ms ease, background-color 140ms ease, border-color 140ms ease',
                     '&:hover': {
                       opacity: 1,
-                      bgcolor: unitSelected ? 'rgba(156, 40, 175, 0.16)' : 'rgba(156, 40, 175, 0.09)',
+                      bgcolor: unitSelected ? 'rgba(var(--sd-primary-rgb), 0.16)' : 'rgba(var(--sd-primary-rgb), 0.09)',
                     },
-                    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                    '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
                   }}
                 >
                   <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 850, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -1807,7 +1807,7 @@ export default function ClassPictureExpandedView({
                   color: mutedText,
                   borderRadius: '7px',
                   textAlign: 'left',
-                  '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                  '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
                 }}
               >
                 <KeyboardArrowDownIcon sx={{ fontSize: 16, transform: learningObservationsExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 140ms ease' }} />
@@ -1842,7 +1842,7 @@ export default function ClassPictureExpandedView({
                       color: mutedText,
                       borderRadius: '7px',
                       textAlign: 'left',
-                      '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                      '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
                     }}
                   >
                     <KeyboardArrowDownIcon sx={{ fontSize: 16, transform: lessonCaptureExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 140ms ease' }} />
@@ -1919,9 +1919,9 @@ export default function ClassPictureExpandedView({
                             width: 19,
                             height: 19,
                             borderRadius: '6px',
-                            color: purple,
-                            '&:hover': { bgcolor: 'rgba(156, 40, 175, 0.08)' },
-                            '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+                            color: 'var(--sd-accent-text)',
+                            '&:hover': { bgcolor: 'rgba(var(--sd-primary-rgb), 0.08)' },
+                            '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 1 },
                           }}
                         >
                           <NotesIcon sx={{ color: 'inherit', fontSize: 14 }} />
@@ -1939,10 +1939,10 @@ export default function ClassPictureExpandedView({
                               px: 0.35,
                               borderRadius: '999px',
                               bgcolor: purple,
-                              color: '#fff',
-                              boxShadow: '0 5px 12px rgba(156, 40, 175, 0.16)',
-                              '&:hover': { bgcolor: '#87239a' },
-                              '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+                              color: 'var(--sd-on-primary)',
+                              boxShadow: '0 5px 12px rgba(var(--sd-primary-rgb), 0.16)',
+                              '&:hover': { bgcolor: 'var(--sd-primary-hover)' },
+                              '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 1 },
                             }}
                           >
                             <Typography sx={{ color: 'inherit', fontSize: 9.8, fontWeight: 900, lineHeight: 1 }}>
@@ -1961,8 +1961,8 @@ export default function ClassPictureExpandedView({
                               gap: 0.25,
                               p: 0.35,
                               borderRadius: '8px',
-                              bgcolor: '#fff',
-                              border: '1px solid rgba(156, 40, 175, 0.2)',
+                              bgcolor: 'var(--sd-surface)',
+                              border: '1px solid rgba(var(--sd-primary-rgb), 0.2)',
                               boxShadow: '0 10px 24px rgba(23, 21, 26, 0.14)',
                             }}
                           >
@@ -1985,9 +1985,9 @@ export default function ClassPictureExpandedView({
                                   px: 0.55,
                                   py: 0.4,
                                   borderRadius: '6px',
-                                  color: label === t('learningModule.classPicture.timelineDeleteResponse') ? 'rgba(184, 66, 42, 0.82)' : purple,
-                                  '&:hover': { bgcolor: 'rgba(156, 40, 175, 0.07)' },
-                                  '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+                                  color: label === t('learningModule.classPicture.timelineDeleteResponse') ? 'var(--sd-error)' : 'var(--sd-accent-text)',
+                                  '&:hover': { bgcolor: 'rgba(var(--sd-primary-rgb), 0.07)' },
+                                  '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 1 },
                                 }}
                               >
                                 <Typography sx={{ color: 'inherit', fontSize: 10.7, fontWeight: 850, lineHeight: 1, whiteSpace: 'nowrap' }}>
@@ -2003,12 +2003,12 @@ export default function ClassPictureExpandedView({
                           width: 166,
                           p: 0.55,
                           borderRadius: '9px',
-                          bgcolor: 'rgba(156, 40, 175, 0.08)',
-                          border: `1px solid rgba(156, 40, 175, 0.28)`,
-                          boxShadow: '0 8px 18px rgba(156, 40, 175, 0.08)',
+                          bgcolor: 'rgba(var(--sd-primary-rgb), 0.08)',
+                          border: `1px solid rgba(var(--sd-primary-rgb), 0.28)`,
+                          boxShadow: '0 8px 18px rgba(var(--sd-primary-rgb), 0.08)',
                         }}
                       >
-                        <Typography sx={{ color: purple, fontSize: 11.6, fontWeight: 900, lineHeight: 1.15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <Typography sx={{ color: 'var(--sd-accent-text)', fontSize: 11.6, fontWeight: 900, lineHeight: 1.15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {responseHeader}
                         </Typography>
                       </Box>
@@ -2042,9 +2042,9 @@ export default function ClassPictureExpandedView({
                               px: 0.35,
                               borderRadius: '999px',
                               bgcolor: purple,
-                              color: '#fff',
-                              '&:hover': { bgcolor: '#87239a' },
-                              '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+                              color: 'var(--sd-on-primary)',
+                              '&:hover': { bgcolor: 'var(--sd-primary-hover)' },
+                              '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 1 },
                             }}
                           >
                             <Typography sx={{ color: 'inherit', fontSize: 9.8, fontWeight: 900, lineHeight: 1 }}>

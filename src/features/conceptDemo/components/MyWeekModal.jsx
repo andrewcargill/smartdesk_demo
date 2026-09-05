@@ -43,8 +43,8 @@ import {
 } from '../utils/teacherDiaryItems.js';
 import WeekDayColumn from './WeekDayColumn.jsx';
 
-const purple = '#9c28af';
-const darkText = '#17151a';
+const purple = 'var(--sd-primary)';
+const darkText = 'var(--sd-text)';
 const teacherDiarySeedItems = [...annaDiaryEvents, ...annaReminders];
 
 const linkedContextOptions = [
@@ -199,7 +199,7 @@ function QuickDiaryItemDialog({
         paper: {
           sx: {
             borderRadius: '20px',
-            border: '1px solid rgba(23, 21, 26, 0.1)',
+            border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
             boxShadow: '0 22px 70px rgba(23, 21, 26, 0.18)',
           },
         },
@@ -327,7 +327,7 @@ function QuickDiaryItemDialog({
                           size="small"
                           variant="outlined"
                           onClick={() => onApplySuggestion(suggestion)}
-                          sx={{ borderRadius: 999, color: purple, borderColor: 'rgba(156, 40, 175, 0.22)', fontWeight: 760 }}
+                          sx={{ borderRadius: 999, color: 'var(--sd-accent-text)', borderColor: 'rgba(var(--sd-primary-rgb), 0.22)', fontWeight: 760 }}
                         >
                           {suggestion.label} · {suggestion.startTime}
                         </Button>
@@ -357,7 +357,7 @@ function QuickDiaryItemDialog({
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.25 }}>
         <Button onClick={onCancel} sx={{ color: 'text.secondary', fontWeight: 760 }}>Cancel</Button>
-        <Button variant="contained" onClick={onSubmit} sx={{ bgcolor: purple, '&:hover': { bgcolor: '#852196' } }}>
+        <Button variant="contained" onClick={onSubmit} sx={{ bgcolor: purple, '&:hover': { bgcolor: 'var(--sd-primary-hover)' } }}>
           {mode === 'edit' ? 'Save' : 'Add'}
         </Button>
       </DialogActions>
@@ -379,8 +379,8 @@ function ReminderDetailPanel({ reminder, id, onMouseEnter, onMouseLeave, onEditI
         maxWidth: 'min(226px, calc(100vw - 32px))',
         p: 1.35,
         borderRadius: '14px',
-        border: '1px solid rgba(23, 21, 26, 0.1)',
-        bgcolor: 'rgba(255, 255, 255, 0.96)',
+        border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
+        bgcolor: 'rgba(var(--sd-surface-rgb), 0.96)',
         boxShadow: '0 18px 42px rgba(23, 21, 26, 0.14)',
         backdropFilter: 'blur(18px) saturate(1.08)',
         WebkitBackdropFilter: 'blur(18px) saturate(1.08)',
@@ -417,8 +417,8 @@ function ReminderDetailPanel({ reminder, id, onMouseEnter, onMouseLeave, onEditI
             minHeight: 28,
             px: 1,
             borderRadius: '9px',
-            color: purple,
-            borderColor: 'rgba(156, 40, 175, 0.24)',
+            color: 'var(--sd-accent-text)',
+            borderColor: 'rgba(var(--sd-primary-rgb), 0.24)',
             fontWeight: 760,
           }}
         >
@@ -503,18 +503,18 @@ function ReminderCard({ reminder, onEditItem, onDeleteItem }) {
             p: 1.1,
             pr: 3.7,
             borderRadius: '12px',
-            border: '1px solid rgba(23, 21, 26, 0.08)',
-            bgcolor: 'rgba(255, 255, 255, 0.58)',
+            border: '1px solid rgba(var(--sd-text-rgb), 0.08)',
+            bgcolor: 'rgba(var(--sd-surface-rgb), 0.58)',
             overflow: 'hidden',
             transition: 'background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease',
             '&:hover': {
-              bgcolor: '#fff',
-              borderColor: 'rgba(156, 40, 175, 0.28)',
+              bgcolor: 'var(--sd-surface)',
+              borderColor: 'rgba(var(--sd-primary-rgb), 0.28)',
               boxShadow: '0 8px 18px rgba(23, 21, 26, 0.045)',
               transform: 'translateY(-1px)',
             },
             '&:focus-visible': {
-              outline: '3px solid rgba(156, 40, 175, 0.2)',
+              outline: '3px solid rgba(var(--sd-primary-rgb), 0.2)',
               outlineOffset: 2,
             },
             '&:hover .WeekItemExpandButton, &:focus-within .WeekItemExpandButton': {
@@ -557,17 +557,17 @@ function ReminderCard({ reminder, onEditItem, onDeleteItem }) {
               width: 22,
               height: 22,
               color: 'text.secondary',
-              bgcolor: 'rgba(255, 255, 255, 0.78)',
-              border: '1px solid rgba(23, 21, 26, 0.08)',
+              bgcolor: 'rgba(var(--sd-surface-rgb), 0.78)',
+              border: '1px solid rgba(var(--sd-text-rgb), 0.08)',
               opacity: detailOpen ? 1 : 0,
               pointerEvents: detailOpen ? 'auto' : 'none',
               transition: 'opacity 160ms ease, background-color 160ms ease, border-color 160ms ease',
               '&:hover': {
-                bgcolor: '#fff',
-                borderColor: 'rgba(23, 21, 26, 0.14)',
+                bgcolor: 'var(--sd-surface)',
+                borderColor: 'rgba(var(--sd-text-rgb), 0.14)',
               },
               '&:focus-visible': {
-                outline: '2px solid rgba(156, 40, 175, 0.24)',
+                outline: '2px solid rgba(var(--sd-primary-rgb), 0.24)',
                 outlineOffset: 1,
               },
               '& .MuiSvgIcon-root': {
@@ -651,12 +651,12 @@ function WeekPositionStrip({ days, currentDayId, selectedDayId, onSelectDay }) {
               minHeight: 34,
               justifyContent: 'center',
               borderRadius: 999,
-              bgcolor: current ? '#fbf5fd' : '#fff',
-              color: current || selected ? purple : darkText,
-              borderColor: current || selected ? 'rgba(156, 40, 175, 0.34)' : 'rgba(23, 21, 26, 0.11)',
+              bgcolor: current ? 'var(--sd-primary-soft)' : 'var(--sd-surface)',
+              color: current || selected ? 'var(--sd-accent-text)' : darkText,
+              borderColor: current || selected ? 'rgba(var(--sd-primary-rgb), 0.34)' : 'rgba(var(--sd-text-rgb), 0.11)',
               '&:hover': {
-                bgcolor: '#fbf5fd',
-                borderColor: 'rgba(156, 40, 175, 0.36)',
+                bgcolor: 'var(--sd-primary-soft)',
+                borderColor: 'rgba(var(--sd-primary-rgb), 0.36)',
               },
             }}
           >
@@ -937,9 +937,9 @@ export default function MyWeekModal({ open, onClose, onOpenClass, schedule = ann
             maxWidth: 1150,
             maxHeight: { xs: '100%', sm: '88vh' },
             borderRadius: { xs: 0, sm: '26px' },
-            bgcolor: { xs: 'rgba(255, 255, 255, 0.97)', sm: 'rgba(255, 255, 255, 0.72)' },
-            backgroundImage: 'linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(251, 245, 253, 0.38))',
-            border: '1px solid rgba(255, 255, 255, 0.72)',
+            bgcolor: { xs: 'rgba(var(--sd-surface-rgb), 0.97)', sm: 'rgba(var(--sd-surface-rgb), 0.72)' },
+            backgroundImage: 'linear-gradient(135deg, rgba(var(--sd-surface-rgb), 0.72), rgba(var(--sd-primary-soft-rgb), 0.38))',
+            border: '1px solid rgba(var(--sd-surface-rgb), 0.72)',
             boxShadow: '0 28px 90px rgba(23, 21, 26, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.68)',
             backdropFilter: 'blur(26px) saturate(1.16)',
             WebkitBackdropFilter: 'blur(26px) saturate(1.16)',
@@ -948,7 +948,7 @@ export default function MyWeekModal({ open, onClose, onOpenClass, schedule = ann
         },
         backdrop: {
           sx: {
-            bgcolor: 'rgba(23, 21, 26, 0.14)',
+            bgcolor: 'rgba(var(--sd-shadow-rgb), 0.14)',
             backdropFilter: 'blur(8px)',
             WebkitBackdropFilter: 'blur(8px)',
           },
@@ -967,7 +967,7 @@ export default function MyWeekModal({ open, onClose, onOpenClass, schedule = ann
             position: 'absolute',
             inset: 0,
             pointerEvents: 'none',
-            background: 'rgba(255, 255, 255, 0.2)',
+            background: 'rgba(var(--sd-surface-rgb), 0.2)',
           },
           '& > *': {
             position: 'relative',
@@ -995,10 +995,10 @@ export default function MyWeekModal({ open, onClose, onOpenClass, schedule = ann
             transform: 'translateY(-50%)',
             zIndex: 3,
             color: 'text.secondary',
-            bgcolor: 'rgba(255, 255, 255, 0.74)',
-            border: '1px solid rgba(23, 21, 26, 0.08)',
+            bgcolor: 'rgba(var(--sd-surface-rgb), 0.74)',
+            border: '1px solid rgba(var(--sd-text-rgb), 0.08)',
             boxShadow: '0 10px 28px rgba(23, 21, 26, 0.08)',
-            '&:hover': { bgcolor: '#fff' },
+            '&:hover': { bgcolor: 'var(--sd-surface)' },
           }}
         >
           <KeyboardArrowLeftIcon />
@@ -1015,10 +1015,10 @@ export default function MyWeekModal({ open, onClose, onOpenClass, schedule = ann
             transform: 'translateY(-50%)',
             zIndex: 3,
             color: 'text.secondary',
-            bgcolor: 'rgba(255, 255, 255, 0.74)',
-            border: '1px solid rgba(23, 21, 26, 0.08)',
+            bgcolor: 'rgba(var(--sd-surface-rgb), 0.74)',
+            border: '1px solid rgba(var(--sd-text-rgb), 0.08)',
             boxShadow: '0 10px 28px rgba(23, 21, 26, 0.08)',
-            '&:hover': { bgcolor: '#fff' },
+            '&:hover': { bgcolor: 'var(--sd-surface)' },
           }}
         >
           <KeyboardArrowRightIcon />
@@ -1043,11 +1043,11 @@ export default function MyWeekModal({ open, onClose, onOpenClass, schedule = ann
               minHeight: 28,
               px: 1.15,
               borderRadius: '10px',
-              color: purple,
-              borderColor: 'rgba(156, 40, 175, 0.24)',
-              bgcolor: 'rgba(255, 255, 255, 0.5)',
+              color: 'var(--sd-accent-text)',
+              borderColor: 'rgba(var(--sd-primary-rgb), 0.24)',
+              bgcolor: 'rgba(var(--sd-surface-rgb), 0.5)',
               fontWeight: 800,
-              '&:hover': { bgcolor: '#fff', borderColor: 'rgba(156, 40, 175, 0.36)' },
+              '&:hover': { bgcolor: 'var(--sd-surface)', borderColor: 'rgba(var(--sd-primary-rgb), 0.36)' },
             }}
           >
             + Add

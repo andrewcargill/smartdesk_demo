@@ -2,8 +2,8 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
 import { Box, Tooltip } from '@mui/material';
 
-const purple = '#9c28af';
-const absentOrange = '#b85c00';
+const purple = 'var(--sd-chart)';
+const absentOrange = 'var(--sd-warning)';
 
 function fallbackT(key, values = {}) {
   const fallbacks = {
@@ -111,36 +111,36 @@ export default function AssessmentPieChart({ assessment, size = 86, onEditAssess
           position: 'relative',
           overflow: 'hidden',
           cursor: canEditAssessment ? 'pointer' : 'default',
-          color: assessment.absent ? absentOrange : notPassed ? '#d32f2f' : purple,
+          color: assessment.absent ? absentOrange : notPassed ? 'var(--sd-error)' : 'var(--sd-accent-text)',
           background: assessment.absent
-            ? 'rgba(184, 92, 0, 0.08)'
-            : `conic-gradient(${purple} 0 ${percentage}%, rgba(156, 40, 175, 0.12) ${percentage}% 100%)`,
+            ? 'rgba(var(--sd-warning-rgb), 0.08)'
+            : `conic-gradient(${purple} 0 ${percentage}%, rgba(var(--sd-primary-rgb), 0.12) ${percentage}% 100%)`,
           boxShadow: assessment.absent
-            ? 'inset 0 0 0 1px rgba(184, 92, 0, 0.34)'
+            ? 'inset 0 0 0 1px rgba(var(--sd-warning-rgb), 0.34)'
             : notPassed
-              ? 'inset 0 0 0 2px rgba(211, 47, 47, 0.38)'
-              : 'inset 0 0 0 1px rgba(156, 40, 175, 0.28)',
+              ? 'inset 0 0 0 2px rgba(var(--sd-error-rgb), 0.38)'
+              : 'inset 0 0 0 1px rgba(var(--sd-primary-rgb), 0.28)',
           transition: 'transform 140ms ease, box-shadow 140ms ease',
           '&:focus-visible': {
-            outline: `2px solid ${purple}`,
+            outline: `2px solid ${'var(--sd-focus)'}`,
             outlineOffset: 3,
           },
           '&:hover': {
             transform: 'scale(1.04)',
             boxShadow: assessment.absent
-              ? 'inset 0 0 0 1px rgba(184, 92, 0, 0.5), 0 10px 24px rgba(184, 92, 0, 0.12)'
+              ? 'inset 0 0 0 1px rgba(var(--sd-warning-rgb), 0.5), 0 10px 24px rgba(var(--sd-warning-rgb), 0.12)'
               : notPassed
-                ? 'inset 0 0 0 2px rgba(211, 47, 47, 0.5), 0 10px 24px rgba(211, 47, 47, 0.1)'
-                : 'inset 0 0 0 1px rgba(156, 40, 175, 0.45), 0 10px 24px rgba(156, 40, 175, 0.13)',
+                ? 'inset 0 0 0 2px rgba(var(--sd-error-rgb), 0.5), 0 10px 24px rgba(var(--sd-error-rgb), 0.1)'
+                : 'inset 0 0 0 1px rgba(var(--sd-primary-rgb), 0.45), 0 10px 24px rgba(var(--sd-primary-rgb), 0.13)',
           },
         }}
       >
         {passMarker && !assessment.absent && (
           <Box component="svg" aria-hidden="true" viewBox="0 0 100 100" sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'none' }}>
-            <polygon points={passMarker.points} fill="#fff" />
-            <line x1={passMarker.tip.x} y1={passMarker.tip.y} x2={passMarker.leftBase.x} y2={passMarker.leftBase.y} stroke="rgba(156, 40, 175, 0.28)" strokeWidth="1.4" strokeLinecap="round" />
-            <line x1={passMarker.tip.x} y1={passMarker.tip.y} x2={passMarker.rightBase.x} y2={passMarker.rightBase.y} stroke="rgba(156, 40, 175, 0.28)" strokeWidth="1.4" strokeLinecap="round" />
-            <line x1={passMarker.leftBase.x} y1={passMarker.leftBase.y} x2={passMarker.rightBase.x} y2={passMarker.rightBase.y} stroke="#fff" strokeWidth="2.2" strokeLinecap="round" />
+            <polygon points={passMarker.points} fill="var(--sd-surface)" />
+            <line x1={passMarker.tip.x} y1={passMarker.tip.y} x2={passMarker.leftBase.x} y2={passMarker.leftBase.y} stroke="rgba(var(--sd-primary-rgb), 0.28)" strokeWidth="1.4" strokeLinecap="round" />
+            <line x1={passMarker.tip.x} y1={passMarker.tip.y} x2={passMarker.rightBase.x} y2={passMarker.rightBase.y} stroke="rgba(var(--sd-primary-rgb), 0.28)" strokeWidth="1.4" strokeLinecap="round" />
+            <line x1={passMarker.leftBase.x} y1={passMarker.leftBase.y} x2={passMarker.rightBase.x} y2={passMarker.rightBase.y} stroke="var(--sd-surface)" strokeWidth="2.2" strokeLinecap="round" />
           </Box>
         )}
         {assessment.absent && <PersonOffOutlinedIcon sx={{ position: 'relative', zIndex: 2, fontSize: Math.round(size * 0.38) }} />}
@@ -152,8 +152,8 @@ export default function AssessmentPieChart({ assessment, size = 86, onEditAssess
               bottom: Math.max(5, Math.round(size * 0.08)),
               zIndex: 2,
               fontSize: Math.round(size * 0.28),
-              color: '#d32f2f',
-              bgcolor: '#fff',
+              color: 'var(--sd-error)',
+              bgcolor: 'var(--sd-surface)',
               borderRadius: '50%',
             }}
           />

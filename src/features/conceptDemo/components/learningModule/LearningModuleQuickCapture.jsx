@@ -24,9 +24,9 @@ import {
 } from './utils/learningModuleEvidenceStorage.js';
 import { useConceptDemoLanguage } from '../../ConceptDemoLanguageContext.jsx';
 
-const purple = '#9c28af';
-const selectedPurple = '#b45ac2';
-const darkText = '#17151a';
+const purple = 'var(--sd-primary)';
+const selectedPurple = 'var(--sd-primary-selected)';
+const darkText = 'var(--sd-text)';
 
 const learningObservationChoices = [
   { id: '-', label: '−' },
@@ -61,8 +61,8 @@ function Panel({ children, sx }) {
       sx={{
         p: { xs: 2, sm: 2.5 },
         borderRadius: '22px',
-        border: '1px solid rgba(23, 21, 26, 0.1)',
-        bgcolor: '#fff',
+        border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
+        bgcolor: 'var(--sd-surface)',
         ...sx,
       }}
     >
@@ -548,8 +548,8 @@ export default function LearningModuleQuickCapture({
       sx={{
         p: { xs: 0.95, sm: 1.1 },
         borderRadius: '12px',
-        border: '1px solid rgba(156, 40, 175, 0.14)',
-        bgcolor: 'rgba(156, 40, 175, 0.025)',
+        border: '1px solid rgba(var(--sd-primary-rgb), 0.14)',
+        bgcolor: 'rgba(var(--sd-primary-rgb), 0.025)',
         boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.72)',
       }}
     >
@@ -583,7 +583,7 @@ export default function LearningModuleQuickCapture({
                 key={item.id}
                 sx={{
                   display: 'contents',
-                  '&:hover .learnObservationRowCell': { bgcolor: 'rgba(156, 40, 175, 0.045)' },
+                  '&:hover .learnObservationRowCell': { bgcolor: 'rgba(var(--sd-primary-rgb), 0.045)' },
                   '&:hover .learnObservationRowCell:first-of-type': { borderTopLeftRadius: '8px', borderBottomLeftRadius: '8px' },
                   '&:hover .learnObservationRowCell:last-child': { borderTopRightRadius: '8px', borderBottomRightRadius: '8px' },
                 }}
@@ -609,9 +609,9 @@ export default function LearningModuleQuickCapture({
                           minWidth: 32,
                           px: 0,
                           borderRadius: '999px',
-                          borderColor: isSelected ? selectedPurple : 'rgba(23, 21, 26, 0.14)',
-                          bgcolor: isSelected ? selectedPurple : '#fff',
-                          color: isSelected ? '#fff' : 'text.secondary',
+                          borderColor: isSelected ? selectedPurple : 'rgba(var(--sd-text-rgb), 0.14)',
+                          bgcolor: isSelected ? selectedPurple : 'var(--sd-surface)',
+                          color: isSelected ? 'var(--sd-on-primary)' : 'text.secondary',
                           fontSize: 14,
                           fontWeight: isSelected ? 850 : 760,
                           lineHeight: 1,
@@ -619,10 +619,10 @@ export default function LearningModuleQuickCapture({
                           transition: 'background-color 140ms ease, border-color 140ms ease, color 140ms ease',
                           '&:hover': {
                             borderColor: isSelected ? selectedPurple : darkText,
-                            bgcolor: isSelected ? selectedPurple : '#fff',
-                            color: isSelected ? '#fff' : darkText,
+                            bgcolor: isSelected ? selectedPurple : 'var(--sd-surface)',
+                            color: isSelected ? 'var(--sd-on-primary)' : darkText,
                           },
-                          '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                          '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
                         }}
                       />
                     </Box>
@@ -662,7 +662,7 @@ export default function LearningModuleQuickCapture({
                         border: `1px solid ${purple}`,
                         borderRadius: '8px',
                         color: darkText,
-                        bgcolor: '#fff',
+                        bgcolor: 'var(--sd-surface)',
                         font: 'inherit',
                         fontSize: 12.5,
                         fontWeight: 760,
@@ -681,7 +681,7 @@ export default function LearningModuleQuickCapture({
                         textAlign: 'left',
                         justifyContent: 'flex-start',
                         borderRadius: '8px',
-                        '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                        '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
                       }}
                     >
                       <Box
@@ -692,12 +692,12 @@ export default function LearningModuleQuickCapture({
                           display: 'flex',
                           alignItems: 'center',
                           borderRadius: '8px',
-                          bgcolor: 'rgba(156, 40, 175, 0.055)',
+                          bgcolor: 'rgba(var(--sd-primary-rgb), 0.055)',
                           transition: 'background-color 140ms ease',
-                          '.MuiButtonBase-root:hover &': { bgcolor: 'rgba(156, 40, 175, 0.13)' },
+                          '.MuiButtonBase-root:hover &': { bgcolor: 'rgba(var(--sd-primary-rgb), 0.13)' },
                         }}
                       >
-                        <Typography sx={{ color: learnObservationNotes[item.id] ? 'rgba(23, 21, 26, 0.58)' : 'rgba(23, 21, 26, 0.28)', fontSize: 12.2, fontWeight: learnObservationNotes[item.id] ? 720 : 640, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <Typography sx={{ color: learnObservationNotes[item.id] ? 'var(--sd-text-muted)' : 'var(--sd-text-muted)', fontSize: 12.2, fontWeight: learnObservationNotes[item.id] ? 720 : 640, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {learnObservationNotes[item.id] || t('learningModule.classPicture.optionalShortNote')}
                         </Typography>
                       </Box>
@@ -719,8 +719,8 @@ export default function LearningModuleQuickCapture({
       sx={{
         p: { xs: 0.75, sm: 0.85 },
         borderRadius: '10px',
-        border: '1px solid rgba(23, 21, 26, 0.12)',
-        bgcolor: '#fff',
+        border: '1px solid rgba(var(--sd-text-rgb), 0.12)',
+        bgcolor: 'var(--sd-surface)',
       }}
     >
       <Stack spacing={capturedObservationsOpen ? 0.55 : 0}>
@@ -733,8 +733,8 @@ export default function LearningModuleQuickCapture({
             textAlign: 'left',
             borderRadius: '8px',
             color: darkText,
-            '&:hover': { color: purple, bgcolor: '#fff' },
-            '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+            '&:hover': { color: 'var(--sd-accent-text)', bgcolor: 'var(--sd-surface)' },
+            '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
           }}
         >
           <Typography sx={{ color: 'inherit', fontSize: 13.2, fontWeight: 850 }}>
@@ -781,7 +781,7 @@ export default function LearningModuleQuickCapture({
                                       py: 0.4,
                                       px: 0.55,
                                       borderRadius: '8px',
-                                      border: '1px solid rgba(23, 21, 26, 0.08)',
+                                      border: '1px solid rgba(var(--sd-text-rgb), 0.08)',
                                     }}
                                   >
                                     <Typography sx={{ color: darkText, fontSize: 12.5, fontWeight: 760, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -801,8 +801,8 @@ export default function LearningModuleQuickCapture({
                                         justifySelf: 'end',
                                         gridColumn: { xs: '2 / 3', sm: 'auto' },
                                         gridRow: { xs: '1 / span 2', sm: 'auto' },
-                                        '&:hover': { color: darkText, bgcolor: '#fff' },
-                                        '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+                                        '&:hover': { color: darkText, bgcolor: 'var(--sd-surface)' },
+                                        '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 1 },
                                       }}
                                     >
                                       <CloseIcon sx={{ fontSize: 15 }} />
@@ -838,8 +838,8 @@ export default function LearningModuleQuickCapture({
       sx={{
         p: { xs: 1, md: 1.15 },
         borderRadius: '14px',
-        border: '1px solid rgba(23, 21, 26, 0.12)',
-        bgcolor: '#fff',
+        border: '1px solid rgba(var(--sd-text-rgb), 0.12)',
+        bgcolor: 'var(--sd-surface)',
         minWidth: 0,
       }}
     >
@@ -854,7 +854,7 @@ export default function LearningModuleQuickCapture({
         </Box>
 
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.65 }}>
-          <Box sx={{ p: 0.75, borderRadius: '9px', bgcolor: 'rgba(156, 40, 175, 0.055)', border: '1px solid rgba(156, 40, 175, 0.12)', minWidth: 0 }}>
+          <Box sx={{ p: 0.75, borderRadius: '9px', bgcolor: 'rgba(var(--sd-primary-rgb), 0.055)', border: '1px solid rgba(var(--sd-primary-rgb), 0.12)', minWidth: 0 }}>
             <Typography sx={{ color: 'text.secondary', fontSize: 11.3, fontWeight: 760, lineHeight: 1.15 }}>
               This month
             </Typography>
@@ -862,7 +862,7 @@ export default function LearningModuleQuickCapture({
               {currentMonthObservationSummaryItems.length}
             </Typography>
           </Box>
-          <Box sx={{ p: 0.75, borderRadius: '9px', bgcolor: 'rgba(23, 21, 26, 0.035)', border: '1px solid rgba(23, 21, 26, 0.08)', minWidth: 0 }}>
+          <Box sx={{ p: 0.75, borderRadius: '9px', bgcolor: 'rgba(var(--sd-text-rgb), 0.035)', border: '1px solid rgba(var(--sd-text-rgb), 0.08)', minWidth: 0 }}>
             <Typography sx={{ color: 'text.secondary', fontSize: 11.3, fontWeight: 760, lineHeight: 1.15 }}>
               Total seen
             </Typography>
@@ -872,7 +872,7 @@ export default function LearningModuleQuickCapture({
           </Box>
         </Box>
 
-        <Box sx={{ p: 0.85, borderRadius: '10px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: 'rgba(23, 21, 26, 0.018)', minWidth: 0 }}>
+        <Box sx={{ p: 0.85, borderRadius: '10px', border: '1px solid rgba(var(--sd-text-rgb), 0.08)', bgcolor: 'rgba(var(--sd-text-rgb), 0.018)', minWidth: 0 }}>
           <Typography sx={{ color: 'text.secondary', fontSize: 11.6, fontWeight: 790, lineHeight: 1.2 }}>
             Last observation
           </Typography>
@@ -892,7 +892,7 @@ export default function LearningModuleQuickCapture({
                 <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 860, lineHeight: 1.22 }}>
                   {pointLabel}
                 </Typography>
-                <Typography sx={{ color: purple, fontSize: 12.1, fontWeight: 850, lineHeight: 1.2 }}>
+                <Typography sx={{ color: 'var(--sd-accent-text)', fontSize: 12.1, fontWeight: 850, lineHeight: 1.2 }}>
                   {levelLabel}
                 </Typography>
                 <Typography sx={{ color: 'text.secondary', fontSize: 11.7, lineHeight: 1.25 }}>
@@ -921,7 +921,7 @@ export default function LearningModuleQuickCapture({
                 const levelLabel = getLocalizedValue(level?.label, language) || observation.levelId || '';
 
                 return (
-                  <Box key={observation.id || `${observation.date}-${observation.skillId}-${observation.levelId}`} component="li" sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 0.65, alignItems: 'baseline', py: 0.45, borderBottom: '1px solid rgba(23, 21, 26, 0.07)' }}>
+                  <Box key={observation.id || `${observation.date}-${observation.skillId}-${observation.levelId}`} component="li" sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 0.65, alignItems: 'baseline', py: 0.45, borderBottom: '1px solid rgba(var(--sd-text-rgb), 0.07)' }}>
                     <Box sx={{ minWidth: 0 }}>
                       <Typography sx={{ color: darkText, fontSize: 12.3, fontWeight: 800, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {pointLabel}
@@ -930,7 +930,7 @@ export default function LearningModuleQuickCapture({
                         {formatShortLessonDate(observation.date)}
                       </Typography>
                     </Box>
-                    <Typography sx={{ color: purple, fontSize: 11.8, fontWeight: 880, whiteSpace: 'nowrap' }}>
+                    <Typography sx={{ color: 'var(--sd-accent-text)', fontSize: 11.8, fontWeight: 880, whiteSpace: 'nowrap' }}>
                       {levelLabel}
                     </Typography>
                   </Box>
@@ -968,8 +968,8 @@ export default function LearningModuleQuickCapture({
           p: { xs: 0.75, md: 1 },
           pb: { xs: 1.25, md: 1.75 },
           borderRadius: '14px',
-          border: '1px solid rgba(23, 21, 26, 0.12)',
-          bgcolor: '#fff',
+          border: '1px solid rgba(var(--sd-text-rgb), 0.12)',
+          bgcolor: 'var(--sd-surface)',
           maxHeight: { xs: 96, md: 700 },
           minHeight: { xs: 96, md: 560 },
           overflow: { xs: 'hidden', md: 'auto' },
@@ -1017,12 +1017,12 @@ export default function LearningModuleQuickCapture({
                   px: 1.1,
                   py: 0.85,
                   borderRadius: '10px',
-                  border: isSelected ? `1px solid ${purple}` : '1px solid rgba(23, 21, 26, 0.12)',
-                  bgcolor: isSelected ? purple : '#fff',
-                  color: isSelected ? '#fff' : darkText,
+                  border: isSelected ? `1px solid ${purple}` : '1px solid rgba(var(--sd-text-rgb), 0.12)',
+                  bgcolor: isSelected ? purple : 'var(--sd-surface)',
+                  color: isSelected ? 'var(--sd-on-primary)' : darkText,
                   fontWeight: isSelected ? 860 : 720,
-                  '&:hover': { bgcolor: isSelected ? purple : '#fff', borderColor: isSelected ? purple : darkText },
-                  '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                  '&:hover': { bgcolor: isSelected ? purple : 'var(--sd-surface)', borderColor: isSelected ? purple : darkText },
+                  '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
                 }}
               >
                 <Stack direction="row" spacing={0.65} alignItems="center" sx={{ width: '100%', minWidth: 0 }}>
@@ -1041,8 +1041,8 @@ export default function LearningModuleQuickCapture({
                         alignItems: 'center',
                         justifyContent: 'center',
                         borderRadius: '999px',
-                        border: isSelected ? '1px solid rgba(255, 255, 255, 0.72)' : '1px solid rgba(23, 21, 26, 0.16)',
-                        color: isSelected ? '#fff' : darkText,
+                        border: isSelected ? '1px solid rgba(var(--sd-surface-rgb), 0.72)' : '1px solid rgba(var(--sd-text-rgb), 0.16)',
+                        color: isSelected ? 'var(--sd-on-primary)' : darkText,
                         fontSize: 11.5,
                         fontWeight: 850,
                         lineHeight: 1,
@@ -1059,7 +1059,7 @@ export default function LearningModuleQuickCapture({
       </Paper>
 
       <Stack spacing={{ xs: 0.8, sm: 0.95 }} sx={{ minWidth: 0 }}>
-        <Panel sx={{ p: { xs: 0.95, sm: 1.2, md: 1.35 }, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.12)' }}>
+        <Panel sx={{ p: { xs: 0.95, sm: 1.2, md: 1.35 }, borderRadius: '14px', border: '1px solid rgba(var(--sd-text-rgb), 0.12)' }}>
           <Stack spacing={{ xs: 0.8, sm: 0.95 }}>
             <Box>
               <Typography sx={{ color: darkText, fontSize: { xs: 17.5, sm: 19.5 }, lineHeight: 1.15, fontWeight: 880 }}>
@@ -1104,7 +1104,7 @@ export default function LearningModuleQuickCapture({
                     }}
                     sx={{
                       borderRadius: '10px',
-                      bgcolor: '#fff',
+                      bgcolor: 'var(--sd-surface)',
                       fontSize: 13,
                       fontWeight: 760,
                     }}
@@ -1130,7 +1130,7 @@ export default function LearningModuleQuickCapture({
                     }}
                     sx={{
                       borderRadius: '10px',
-                      bgcolor: '#fff',
+                      bgcolor: 'var(--sd-surface)',
                       fontSize: 13,
                       fontWeight: 760,
                     }}
@@ -1159,7 +1159,7 @@ export default function LearningModuleQuickCapture({
                     }}
                     sx={{
                       borderRadius: '10px',
-                      bgcolor: '#fff',
+                      bgcolor: 'var(--sd-surface)',
                       fontSize: 13,
                       fontWeight: 760,
                     }}
@@ -1181,14 +1181,14 @@ export default function LearningModuleQuickCapture({
                   minHeight: 40,
                   justifySelf: { xs: 'stretch', md: 'end' },
                   borderRadius: '10px',
-                  border: '1px solid rgba(23, 21, 26, 0.14)',
+                  border: '1px solid rgba(var(--sd-text-rgb), 0.14)',
                   color: 'text.secondary',
                   fontSize: 12.4,
                   fontWeight: 760,
                   textTransform: 'none',
                   whiteSpace: 'nowrap',
-                  '&:hover': { color: purple, bgcolor: '#fff', borderColor: purple },
-                  '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                  '&:hover': { color: 'var(--sd-accent-text)', bgcolor: 'var(--sd-surface)', borderColor: purple },
+                  '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
                 }}
               >
                 Restart
@@ -1199,7 +1199,7 @@ export default function LearningModuleQuickCapture({
               Unit Observations
             </Typography>
 
-            <Paper elevation={0} sx={{ p: { xs: 0.7, sm: 0.85 }, borderRadius: '10px', border: '1px solid transparent', bgcolor: '#fff', overflowX: 'auto' }}>
+            <Paper elevation={0} sx={{ p: { xs: 0.7, sm: 0.85 }, borderRadius: '10px', border: '1px solid transparent', bgcolor: 'var(--sd-surface)', overflowX: 'auto' }}>
               <Box
                 sx={{
                   display: 'grid',
@@ -1228,7 +1228,7 @@ export default function LearningModuleQuickCapture({
                       key={capturePoint.id}
                       sx={{
                         display: 'contents',
-                        '&:hover .unitObservationRowCell, &:focus-within .unitObservationRowCell': { bgcolor: 'rgba(156, 40, 175, 0.045)' },
+                        '&:hover .unitObservationRowCell, &:focus-within .unitObservationRowCell': { bgcolor: 'rgba(var(--sd-primary-rgb), 0.045)' },
                         '&:hover .unitObservationMeta, &:focus-within .unitObservationMeta': { opacity: 1 },
                         '&:hover .unitObservationRowCell:first-of-type, &:focus-within .unitObservationRowCell:first-of-type': { borderTopLeftRadius: '8px', borderBottomLeftRadius: '8px' },
                         '&:hover .unitObservationRowCell:last-child, &:focus-within .unitObservationRowCell:last-child': { borderTopRightRadius: '8px', borderBottomRightRadius: '8px' },
@@ -1246,7 +1246,7 @@ export default function LearningModuleQuickCapture({
                           transition: 'opacity 140ms ease, background-color 140ms ease',
                         }}
                       >
-                        <Typography sx={{ color: purple, fontSize: 11.6, fontWeight: 850, lineHeight: 1.15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <Typography sx={{ color: 'var(--sd-accent-text)', fontSize: 11.6, fontWeight: 850, lineHeight: 1.15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {mapping.areaLabel}
                         </Typography>
                         <Typography sx={{ color: 'text.secondary', fontSize: 11.2, fontWeight: 720, lineHeight: 1.15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -1276,9 +1276,9 @@ export default function LearningModuleQuickCapture({
                                 minWidth: 32,
                                 px: 0,
                                 borderRadius: '999px',
-                                borderColor: isActive ? selectedPurple : 'rgba(23, 21, 26, 0.14)',
-                                bgcolor: isActive ? selectedPurple : '#fff',
-                                color: isActive ? '#fff' : 'text.secondary',
+                                borderColor: isActive ? selectedPurple : 'rgba(var(--sd-text-rgb), 0.14)',
+                                bgcolor: isActive ? selectedPurple : 'var(--sd-surface)',
+                                color: isActive ? 'var(--sd-on-primary)' : 'text.secondary',
                                 fontSize: 14,
                                 fontWeight: isActive ? 850 : 760,
                                 lineHeight: 1,
@@ -1286,10 +1286,10 @@ export default function LearningModuleQuickCapture({
                                 transition: 'background-color 140ms ease, border-color 140ms ease, color 140ms ease',
                                 '&:hover': {
                                   borderColor: isActive ? selectedPurple : darkText,
-                                  bgcolor: isActive ? selectedPurple : '#fff',
-                                  color: isActive ? '#fff' : darkText,
+                                  bgcolor: isActive ? selectedPurple : 'var(--sd-surface)',
+                                  color: isActive ? 'var(--sd-on-primary)' : darkText,
                                 },
-                                '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                                '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
                               }}
                             />
                           </Box>

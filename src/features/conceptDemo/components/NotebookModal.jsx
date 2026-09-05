@@ -18,10 +18,10 @@ import {
 } from '@mui/material';
 import { annaNotebookNotes } from '../data/annaNotebook.js';
 
-const purple = '#9c28af';
-const palePurple = '#fbf5fd';
-const darkText = '#17151a';
-const border = 'rgba(23, 21, 26, 0.1)';
+const purple = 'var(--sd-primary)';
+const palePurple = 'var(--sd-primary-soft)';
+const darkText = 'var(--sd-text)';
+const border = 'rgba(var(--sd-text-rgb), 0.1)';
 const notesStorageKey = 'smartdesk_demo_notebook_notes';
 const hiddenStorageKey = 'smartdesk_demo_notebook_hidden_notes';
 const voiceTranscript = 'Try a shorter written example with 7A before independent work.';
@@ -98,7 +98,7 @@ function NoteCard({ note, onHide }) {
         p: 1.75,
         borderRadius: '18px',
         border: `1px solid ${border}`,
-        bgcolor: '#fff',
+        bgcolor: 'var(--sd-surface)',
       }}
     >
       <Stack direction="row" spacing={1} alignItems="center">
@@ -108,8 +108,8 @@ function NoteCard({ note, onHide }) {
           label={note.type === 'voice' ? 'Voice' : 'Text'}
           sx={{
             height: 24,
-            bgcolor: note.type === 'voice' ? palePurple : '#fff',
-            color: note.type === 'voice' ? purple : 'text.secondary',
+            bgcolor: note.type === 'voice' ? palePurple : 'var(--sd-surface)',
+            color: note.type === 'voice' ? 'var(--sd-accent-text)' : 'text.secondary',
             border: `1px solid ${border}`,
             '& .MuiChip-icon': { color: 'inherit', fontSize: 15 },
           }}
@@ -133,7 +133,7 @@ function NoteCard({ note, onHide }) {
               sx={{
                 height: 22,
                 bgcolor: palePurple,
-                color: purple,
+                color: 'var(--sd-accent-text)',
                 fontSize: 11.5,
                 fontWeight: 720,
               }}
@@ -295,13 +295,13 @@ export default function NotebookModal({ open, onClose }) {
             maxWidth: 820,
             maxHeight: { xs: '100%', sm: '82vh' },
             borderRadius: { xs: 0, sm: '24px' },
-            bgcolor: '#fff',
+            bgcolor: 'var(--sd-surface)',
             boxShadow: '0 28px 82px rgba(23, 21, 26, 0.16)',
             overflow: 'hidden',
           },
         },
         backdrop: {
-          sx: { bgcolor: 'rgba(23, 21, 26, 0.22)' },
+          sx: { bgcolor: 'rgba(var(--sd-shadow-rgb), 0.22)' },
         },
       }}
     >
@@ -327,7 +327,7 @@ export default function NotebookModal({ open, onClose }) {
             p: { xs: 1.75, sm: 2.25 },
             borderRadius: '22px',
             border: `1px solid ${border}`,
-            bgcolor: '#fff',
+            bgcolor: 'var(--sd-surface)',
           }}
         >
           <Stack spacing={1.4}>
@@ -360,10 +360,10 @@ export default function NotebookModal({ open, onClose }) {
               </Typography>
             </Stack>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
-              <Button variant="contained" disabled={!draft.trim()} onClick={handleSaveTextNote} sx={{ bgcolor: purple, '&:hover': { bgcolor: '#852196' } }}>
+              <Button variant="contained" disabled={!draft.trim()} onClick={handleSaveTextNote} sx={{ bgcolor: purple, '&:hover': { bgcolor: 'var(--sd-primary-hover)' } }}>
                 Save note
               </Button>
-              <Button variant="outlined" startIcon={<MicIcon />} onClick={handleStartVoice} sx={{ color: purple, borderColor: 'rgba(156, 40, 175, 0.24)' }}>
+              <Button variant="outlined" startIcon={<MicIcon />} onClick={handleStartVoice} sx={{ color: 'var(--sd-accent-text)', borderColor: 'rgba(var(--sd-primary-rgb), 0.24)' }}>
                 Record voice note
               </Button>
               {!!savedMessage && (
@@ -380,15 +380,15 @@ export default function NotebookModal({ open, onClose }) {
                   mt: 0.3,
                   p: 1.5,
                   borderRadius: '18px',
-                  border: '1px solid rgba(156, 40, 175, 0.14)',
+                  border: '1px solid rgba(var(--sd-primary-rgb), 0.14)',
                   bgcolor: palePurple,
                 }}
               >
                 <Stack direction="row" spacing={1.25} alignItems="center">
-                  <Box sx={{ width: 34, height: 34, borderRadius: '50%', bgcolor: '#fff', display: 'grid', placeItems: 'center' }}>
+                  <Box sx={{ width: 34, height: 34, borderRadius: '50%', bgcolor: 'var(--sd-surface)', display: 'grid', placeItems: 'center' }}>
                     <MicIcon
                       sx={{
-                        color: purple,
+                        color: 'var(--sd-accent-text)',
                         fontSize: 18,
                         animation: voiceState === 'listening' ? 'notebookPulse 950ms ease-in-out infinite' : 'none',
                         '@keyframes notebookPulse': {
@@ -414,7 +414,7 @@ export default function NotebookModal({ open, onClose }) {
                 </Stack>
                 {voiceState === 'ready' && (
                   <Stack direction="row" spacing={0.75} sx={{ mt: 1.1 }}>
-                    <Button size="small" variant="contained" onClick={handleSaveVoiceNote} disabled={!voiceDraft.trim()} sx={{ bgcolor: purple, '&:hover': { bgcolor: '#852196' } }}>
+                    <Button size="small" variant="contained" onClick={handleSaveVoiceNote} disabled={!voiceDraft.trim()} sx={{ bgcolor: purple, '&:hover': { bgcolor: 'var(--sd-primary-hover)' } }}>
                       Save voice note
                     </Button>
                     <Button size="small" variant="text" onClick={handleCancelVoice} sx={{ color: 'text.secondary' }}>
@@ -433,7 +433,7 @@ export default function NotebookModal({ open, onClose }) {
             mt: 2,
             p: 2,
             borderRadius: '20px',
-            border: '1px solid rgba(156, 40, 175, 0.13)',
+            border: '1px solid rgba(var(--sd-primary-rgb), 0.13)',
             bgcolor: palePurple,
           }}
         >
@@ -447,10 +447,10 @@ export default function NotebookModal({ open, onClose }) {
             You can keep it here or add it to the class later.
           </Typography>
           <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
-            <Button size="small" variant="text" sx={{ color: purple }}>
+            <Button size="small" variant="text" sx={{ color: 'var(--sd-accent-text)' }}>
               Keep here
             </Button>
-            <Button size="small" variant="text" sx={{ color: purple }}>
+            <Button size="small" variant="text" sx={{ color: 'var(--sd-accent-text)' }}>
               Add to Mathematics 7A
             </Button>
           </Stack>

@@ -11,8 +11,8 @@ import {
   Typography,
 } from '@mui/material';
 
-const purple = '#9c28af';
-const border = 'rgba(23, 21, 26, 0.1)';
+const purple = 'var(--sd-primary)';
+const border = 'rgba(var(--sd-text-rgb), 0.1)';
 const enterDuration = 1200;
 const exitDuration = 760;
 const enterEasing = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
@@ -126,7 +126,7 @@ export default function FocusedWorkspace({
       ModalProps={{ keepMounted: true, disableEnforceFocus: true }}
       BackdropProps={{
         sx: {
-          bgcolor: 'rgba(23, 21, 26, 0.22)',
+          bgcolor: 'rgba(var(--sd-shadow-rgb), 0.22)',
         },
       }}
       PaperProps={{
@@ -134,7 +134,7 @@ export default function FocusedWorkspace({
         sx: {
           boxSizing: 'border-box',
           flexShrink: 0,
-          bgcolor: '#fff',
+          bgcolor: 'var(--sd-surface)',
           borderLeft: { xs: 0, sm: `1px solid ${border}` },
           borderTopLeftRadius: { xs: 0, sm: '26px' },
           borderBottomLeftRadius: { xs: 0, sm: '26px' },
@@ -198,7 +198,7 @@ export default function FocusedWorkspace({
               zIndex: 2,
               px: { xs: 2, sm: 3 },
               py: { xs: 1.4, sm: 1.65 },
-              bgcolor: 'rgba(255, 255, 255, 0.96)',
+              bgcolor: 'rgba(var(--sd-surface-rgb), 0.96)',
               borderBottom: `1px solid ${border}`,
               backdropFilter: 'blur(14px)',
               WebkitBackdropFilter: 'blur(14px)',
@@ -214,7 +214,7 @@ export default function FocusedWorkspace({
                 Back to Anna's home
               </Button>
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography sx={{ color: '#17151a', fontSize: { xs: 18, sm: 22 }, fontWeight: 880, lineHeight: 1.15 }}>
+                <Typography sx={{ color: 'var(--sd-text)', fontSize: { xs: 18, sm: 22 }, fontWeight: 880, lineHeight: 1.15 }}>
                   {title}
                 </Typography>
                 {subtitle && (
@@ -223,7 +223,7 @@ export default function FocusedWorkspace({
                   </Typography>
                 )}
               </Box>
-              <IconButton aria-label={`Close ${title}`} onClick={onClose} sx={{ color: purple }}>
+              <IconButton aria-label={`Close ${title}`} onClick={onClose} sx={{ color: 'var(--sd-accent-text)' }}>
                 <CloseIcon />
               </IconButton>
             </Stack>

@@ -194,8 +194,8 @@ export default function PlanScreen({ moduleConfig, screenConfig }) {
 
   if (!periods.length || !initialBlocks.length) {
     return (
-      <Paper elevation={0} sx={{ border: '1px solid rgba(23, 21, 26, 0.1)', borderRadius: '14px', p: 2 }}>
-        <Typography sx={{ color: '#17151a', fontSize: 16, fontWeight: 800 }}>
+      <Paper elevation={0} sx={{ border: '1px solid rgba(var(--sd-text-rgb), 0.1)', borderRadius: '14px', p: 2 }}>
+        <Typography sx={{ color: 'var(--sd-text)', fontSize: 16, fontWeight: 800 }}>
           {screenConfig?.title || t('learningModule.navigation.plan')}
         </Typography>
         <Typography sx={{ mt: 0.75, color: 'text.secondary', fontSize: 13.5 }}>

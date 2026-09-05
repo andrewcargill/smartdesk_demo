@@ -20,8 +20,8 @@ import {
 import { getSubjectDefinition } from '../data/subjectCatalogue.js';
 import { resolveLocalizedValue } from '../i18n/conceptDemoTranslations.js';
 
-const purple = '#9c28af';
-const darkText = '#17151a';
+const purple = 'var(--sd-primary)';
+const darkText = 'var(--sd-text)';
 const TIMELINE_TAP_MOVE_TOLERANCE = 7;
 const DEFAULT_TIMELINE_ADD_DURATION_MINUTES = 30;
 const MIN_TIMELINE_ADD_DURATION_MINUTES = 10;
@@ -63,8 +63,8 @@ function getWeekItemVisualVariant(event) {
 function getEventStyles(variant) {
   if (variant === 'lesson') {
     return {
-      borderColor: 'rgba(156, 40, 175, 0.38)',
-      bgcolor: '#fff',
+      borderColor: 'rgba(var(--sd-primary-rgb), 0.38)',
+      bgcolor: 'var(--sd-surface)',
       borderStyle: 'solid',
       boxShadow: 'none',
     };
@@ -72,8 +72,8 @@ function getEventStyles(variant) {
 
   if (variant === 'soft') {
     return {
-      borderColor: 'rgba(23, 21, 26, 0.035)',
-      bgcolor: 'rgba(255, 255, 255, 0.22)',
+      borderColor: 'rgba(var(--sd-text-rgb), 0.035)',
+      bgcolor: 'rgba(var(--sd-surface-rgb), 0.22)',
       borderStyle: 'solid',
       boxShadow: 'none',
     };
@@ -81,16 +81,16 @@ function getEventStyles(variant) {
 
   if (variant === 'flexible') {
     return {
-      borderColor: 'rgba(23, 21, 26, 0.08)',
-      bgcolor: 'rgba(255, 255, 255, 0.48)',
+      borderColor: 'rgba(var(--sd-text-rgb), 0.08)',
+      bgcolor: 'rgba(var(--sd-surface-rgb), 0.48)',
       borderStyle: 'dashed',
       boxShadow: 'none',
     };
   }
 
   return {
-    borderColor: 'rgba(23, 21, 26, 0.1)',
-    bgcolor: '#fff',
+    borderColor: 'rgba(var(--sd-text-rgb), 0.1)',
+    bgcolor: 'var(--sd-surface)',
     borderStyle: 'solid',
     boxShadow: 'none',
   };
@@ -255,8 +255,8 @@ function EventDetailPanel({ event, id, onMouseEnter, onMouseLeave, onEditItem, o
         maxWidth: 'min(226px, calc(100vw - 32px))',
         p: 1.35,
         borderRadius: '14px',
-        border: '1px solid rgba(23, 21, 26, 0.1)',
-        bgcolor: 'rgba(255, 255, 255, 0.96)',
+        border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
+        bgcolor: 'rgba(var(--sd-surface-rgb), 0.96)',
         boxShadow: '0 18px 42px rgba(23, 21, 26, 0.14)',
         backdropFilter: 'blur(18px) saturate(1.08)',
         WebkitBackdropFilter: 'blur(18px) saturate(1.08)',
@@ -320,8 +320,8 @@ function EventDetailPanel({ event, id, onMouseEnter, onMouseLeave, onEditItem, o
               minHeight: 28,
               px: 1,
               borderRadius: '9px',
-              color: purple,
-              borderColor: 'rgba(156, 40, 175, 0.24)',
+              color: 'var(--sd-accent-text)',
+              borderColor: 'rgba(var(--sd-primary-rgb), 0.24)',
               fontWeight: 760,
             }}
           >
@@ -371,8 +371,8 @@ function EventCard({ event, height, activeRelation, onRelationFocus, onOpenClass
   const titleOnly = isMinimalDensity || isTinyDensity;
   const showTime = isFullDensity || isCompactDensity;
   const hasHiddenDetails = hasHiddenWeekItemDetails(event, contentDensity);
-  const softPurple = '#f5e6f8';
-  const highlightedText = '#5f1b6b';
+  const softPurple = 'var(--sd-primary-soft)';
+  const highlightedText = 'var(--sd-primary-hover)';
   const accessibleLabel = getEventAccessibleLabel(event);
 
   useEffect(() => () => {
@@ -485,19 +485,19 @@ function EventCard({ event, height, activeRelation, onRelationFocus, onOpenClass
             justifyContent: titleOnly ? 'center' : 'flex-start',
             ...styles,
             bgcolor: lessonHighlighted ? softPurple : styles.bgcolor,
-            borderColor: highlighted ? 'rgba(156, 40, 175, 0.34)' : styles.borderColor,
-            boxShadow: borderHighlighted ? 'inset 0 0 0 1px rgba(156, 40, 175, 0.18)' : styles.boxShadow,
+            borderColor: highlighted ? 'rgba(var(--sd-primary-rgb), 0.34)' : styles.borderColor,
+            boxShadow: borderHighlighted ? 'inset 0 0 0 1px rgba(var(--sd-primary-rgb), 0.18)' : styles.boxShadow,
             color: lessonHighlighted ? highlightedText : 'inherit',
             transition: 'background-color 520ms ease, border-color 520ms ease, box-shadow 220ms ease, color 420ms ease, transform 180ms ease',
             '&:hover': {
-              bgcolor: relation?.kind === 'lesson' ? '#efd7f4' : styles.bgcolor,
-              borderColor: relation ? 'rgba(156, 40, 175, 0.42)' : styles.borderColor,
+              bgcolor: relation?.kind === 'lesson' ? 'var(--sd-primary-soft)' : styles.bgcolor,
+              borderColor: relation ? 'rgba(var(--sd-primary-rgb), 0.42)' : styles.borderColor,
               color: relation?.kind === 'lesson' ? highlightedText : 'inherit',
               boxShadow: visualVariant === 'fixed' ? '0 8px 18px rgba(23, 21, 26, 0.045)' : 'none',
               transform: 'translateY(-1px)',
             },
             '&:focus-visible': {
-              outline: `3px solid rgba(156, 40, 175, 0.2)`,
+              outline: `3px solid rgba(var(--sd-primary-rgb), 0.2)`,
               outlineOffset: 2,
             },
             '&:hover .WeekItemExpandButton, &:focus-within .WeekItemExpandButton': {
@@ -507,7 +507,7 @@ function EventCard({ event, height, activeRelation, onRelationFocus, onOpenClass
           }}
         >
           {showTime && (
-            <Typography sx={{ color: lessonHighlighted ? 'rgba(95, 27, 107, 0.72)' : 'text.secondary', fontSize: 12, lineHeight: 1.1, fontWeight: isSoft ? 640 : 700, transition: 'color 420ms ease' }}>
+            <Typography sx={{ color: lessonHighlighted ? 'var(--sd-text-muted)' : 'text.secondary', fontSize: 12, lineHeight: 1.1, fontWeight: isSoft ? 640 : 700, transition: 'color 420ms ease' }}>
               {event.start}-{event.end}
             </Typography>
           )}
@@ -559,17 +559,17 @@ function EventCard({ event, height, activeRelation, onRelationFocus, onOpenClass
                 width: 22,
                 height: 22,
                 color: 'text.secondary',
-                bgcolor: 'rgba(255, 255, 255, 0.78)',
-                border: '1px solid rgba(23, 21, 26, 0.08)',
+                bgcolor: 'rgba(var(--sd-surface-rgb), 0.78)',
+                border: '1px solid rgba(var(--sd-text-rgb), 0.08)',
                 opacity: detailOpen ? 1 : 0,
                 pointerEvents: detailOpen ? 'auto' : 'none',
                 transition: 'opacity 160ms ease, background-color 160ms ease, border-color 160ms ease',
                 '&:hover': {
-                  bgcolor: '#fff',
-                  borderColor: 'rgba(23, 21, 26, 0.14)',
+                  bgcolor: 'var(--sd-surface)',
+                  borderColor: 'rgba(var(--sd-text-rgb), 0.14)',
                 },
                 '&:focus-visible': {
-                  outline: `2px solid rgba(156, 40, 175, 0.24)`,
+                  outline: `2px solid rgba(var(--sd-primary-rgb), 0.24)`,
                   outlineOffset: 1,
                 },
                 '& .MuiSvgIcon-root': {
@@ -822,12 +822,12 @@ export default function WeekDayColumn({
         minWidth: { xs: '100%', md: 0 },
         borderTop: current ? `3px solid ${purple}` : '3px solid transparent',
         borderRadius: '18px',
-        bgcolor: current ? 'rgba(251, 245, 253, 0.42)' : '#fff',
+        bgcolor: current ? 'rgba(var(--sd-primary-soft-rgb), 0.42)' : 'var(--sd-surface)',
         p: 0.75,
       }}
     >
       <Box sx={{ px: 0.5, py: 0.65 }}>
-        <Typography sx={{ color: current ? purple : darkText, fontSize: 16, fontWeight: 850 }}>
+        <Typography sx={{ color: current ? 'var(--sd-accent-text)' : darkText, fontSize: 16, fontWeight: 850 }}>
           {day.label}
         </Typography>
         <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 13 }}>
@@ -851,7 +851,7 @@ export default function WeekDayColumn({
           px: 0.15,
           py: 0.35,
           boxSizing: 'border-box',
-          bgcolor: 'rgba(255, 255, 255, 0.24)',
+          bgcolor: 'rgba(var(--sd-surface-rgb), 0.24)',
           borderRadius: '14px',
         }}
       >
@@ -865,7 +865,7 @@ export default function WeekDayColumn({
               right: 0,
               height: `${workingDayGeometry.height}px`,
               borderRadius: '14px',
-              bgcolor: 'rgba(156, 40, 175, 0.04)',
+              bgcolor: 'rgba(var(--sd-primary-rgb), 0.04)',
               pointerEvents: 'none',
               zIndex: 0,
             }}
@@ -884,12 +884,12 @@ export default function WeekDayColumn({
               alignItems: 'center',
               gap: 0.55,
               pointerEvents: 'none',
-              color: purple,
+              color: 'var(--sd-accent-text)',
               opacity: 0.78,
             }}
           >
-            <Box sx={{ flex: 1, height: 1, bgcolor: 'rgba(156, 40, 175, 0.22)' }} />
-            <Typography sx={{ px: 0.6, py: 0.15, borderRadius: 999, bgcolor: 'rgba(255, 255, 255, 0.76)', border: '1px solid rgba(156, 40, 175, 0.12)', fontSize: 11.4, lineHeight: 1.3, fontWeight: 780 }}>
+            <Box sx={{ flex: 1, height: 1, bgcolor: 'rgba(var(--sd-primary-rgb), 0.22)' }} />
+            <Typography sx={{ px: 0.6, py: 0.15, borderRadius: 999, bgcolor: 'rgba(var(--sd-surface-rgb), 0.76)', border: '1px solid rgba(var(--sd-primary-rgb), 0.12)', fontSize: 11.4, lineHeight: 1.3, fontWeight: 780 }}>
               + Add at {addPreview.startTime}
             </Typography>
           </Box>
@@ -951,8 +951,8 @@ export default function WeekDayColumn({
             }}
           >
             <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: purple }} />
-            <Box sx={{ width: 14, height: 1, bgcolor: 'rgba(156, 40, 175, 0.5)' }} />
-            <Typography sx={{ color: purple, fontSize: 11.8, fontWeight: 750 }}>
+            <Box sx={{ width: 14, height: 1, bgcolor: 'rgba(var(--sd-primary-rgb), 0.5)' }} />
+            <Typography sx={{ color: 'var(--sd-accent-text)', fontSize: 11.8, fontWeight: 750 }}>
               You are here
             </Typography>
           </Box>

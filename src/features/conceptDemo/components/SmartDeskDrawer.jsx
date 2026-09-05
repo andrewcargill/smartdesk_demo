@@ -16,10 +16,10 @@ import { smartDeskDemoResponses } from '../data/smartDeskDemoResponses.js';
 import { resolveLocalizedValue } from '../i18n/conceptDemoTranslations.js';
 import { getContextWelcome } from '../utils/smartDeskContextUtils.js';
 
-const purple = '#9c28af';
-const palePurple = '#fbf5fd';
-const darkText = '#18151a';
-const border = 'rgba(24, 21, 26, 0.1)';
+const purple = 'var(--sd-primary)';
+const palePurple = 'var(--sd-primary-soft)';
+const darkText = 'var(--sd-text)';
+const border = 'rgba(var(--sd-text-rgb), 0.1)';
 const smartDeskDrawerWidth = {
   xs: 'min(380px, calc(100vw - 20px))',
   sm: 420,
@@ -98,8 +98,8 @@ function SmartDeskMessage({ message, onAction }) {
           minWidth: 0,
           maxWidth: '86%',
           borderRadius: user ? '20px 20px 6px 20px' : '20px 20px 20px 6px',
-          bgcolor: user ? palePurple : '#fff',
-          border: user ? '1px solid rgba(156, 40, 175, 0.13)' : `1px solid ${border}`,
+          bgcolor: user ? palePurple : 'var(--sd-surface)',
+          border: user ? '1px solid rgba(var(--sd-primary-rgb), 0.13)' : `1px solid ${border}`,
           px: 1.75,
           py: 1.35,
           boxShadow: user ? 'none' : '0 8px 24px rgba(24, 21, 26, 0.04)',
@@ -124,12 +124,12 @@ function SmartDeskMessage({ message, onAction }) {
                 onClick={() => onAction?.(action.action)}
                 sx={{
                   borderRadius: 999,
-                  color: purple,
-                  borderColor: 'rgba(156, 40, 175, 0.22)',
-                  bgcolor: '#fff',
+                  color: 'var(--sd-accent-text)',
+                  borderColor: 'rgba(var(--sd-primary-rgb), 0.22)',
+                  bgcolor: 'var(--sd-surface)',
                   maxWidth: '100%',
                   whiteSpace: 'normal',
-                  '&:hover': { bgcolor: palePurple, borderColor: 'rgba(156, 40, 175, 0.34)' },
+                  '&:hover': { bgcolor: palePurple, borderColor: 'rgba(var(--sd-primary-rgb), 0.34)' },
                 }}
               >
                 {action.label}
@@ -148,7 +148,7 @@ function VoiceState({ onCancel }) {
       aria-live="polite"
       sx={{
         borderRadius: '22px',
-        border: '1px solid rgba(156, 40, 175, 0.16)',
+        border: '1px solid rgba(var(--sd-primary-rgb), 0.16)',
         bgcolor: palePurple,
         p: 2,
       }}
@@ -204,15 +204,15 @@ function SmartDeskAttachedTab({ open, onOpen, onClose }) {
         height: { xs: 42, md: 142 },
         borderRadius: { xs: '12px 0 0 12px', md: '12px 0 0 12px' },
         bgcolor: purple,
-        color: '#fff',
-        boxShadow: '0 16px 34px rgba(156, 40, 175, 0.18)',
+        color: 'var(--sd-on-primary)',
+        boxShadow: '0 16px 34px rgba(var(--sd-primary-rgb), 0.18)',
         px: { xs: 1.35, md: 0.7 },
         py: { xs: 0.9, md: 1.2 },
         transition: open
           ? `right ${drawerEnterTransition}`
           : `right ${drawerExitTransition}`,
         '&:hover': {
-          bgcolor: '#842194',
+          bgcolor: 'var(--sd-primary-hover)',
         },
       }}
     >
@@ -390,7 +390,7 @@ export default function SmartDeskDrawer({
           position: 'fixed',
           inset: 0,
           zIndex: 1390,
-          bgcolor: 'rgba(24, 21, 26, 0.42)',
+          bgcolor: 'rgba(var(--sd-text-rgb), 0.42)',
           opacity: open ? 1 : 0,
           pointerEvents: open ? 'auto' : 'none',
           transition: open
@@ -411,7 +411,7 @@ export default function SmartDeskDrawer({
           minInlineSize: smartDeskDrawerWidth,
           maxInlineSize: smartDeskDrawerWidth,
           blockSize: '100dvh',
-          bgcolor: '#fff',
+          bgcolor: 'var(--sd-surface)',
           borderLeft: `1px solid ${border}`,
           boxShadow: '-18px 0 54px rgba(24, 21, 26, 0.12)',
           boxSizing: 'border-box',
@@ -432,9 +432,9 @@ export default function SmartDeskDrawer({
               sx={{
                 width: 42,
                 height: 42,
-                color: purple,
-                border: '1px solid rgba(156, 40, 175, 0.18)',
-                bgcolor: '#fff',
+                color: 'var(--sd-accent-text)',
+                border: '1px solid rgba(var(--sd-primary-rgb), 0.18)',
+                bgcolor: 'var(--sd-surface)',
                 '&:hover': { bgcolor: palePurple },
               }}
             >
@@ -473,11 +473,11 @@ export default function SmartDeskDrawer({
                     px: 1.5,
                     py: 1.15,
                     color: darkText,
-                    borderColor: 'rgba(24, 21, 26, 0.11)',
-                    bgcolor: '#fff',
+                    borderColor: 'rgba(var(--sd-text-rgb), 0.11)',
+                    bgcolor: 'var(--sd-surface)',
                     maxWidth: '100%',
                     whiteSpace: 'normal',
-                    '&:hover': { bgcolor: palePurple, borderColor: 'rgba(156, 40, 175, 0.24)' },
+                    '&:hover': { bgcolor: palePurple, borderColor: 'rgba(var(--sd-primary-rgb), 0.24)' },
                   }}
                 >
                   {prompt.label}
@@ -490,19 +490,19 @@ export default function SmartDeskDrawer({
 
           {thinking && (
             <Stack direction="row" spacing={1} alignItems="center" aria-live="polite" sx={{ color: 'text.secondary', px: 0.5 }}>
-              <CircularProgress size={16} sx={{ color: purple }} />
+              <CircularProgress size={16} sx={{ color: 'var(--sd-accent-text)' }} />
               <Typography sx={{ fontSize: 13.5 }}>SmartDesk is looking at your workspace...</Typography>
             </Stack>
           )}
           <Box ref={endRef} />
         </Stack>
 
-        <Box sx={{ px: 2.5, py: 2, borderTop: `1px solid ${border}`, bgcolor: 'rgba(255, 255, 255, 0.96)' }}>
+        <Box sx={{ px: 2.5, py: 2, borderTop: `1px solid ${border}`, bgcolor: 'rgba(var(--sd-surface-rgb), 0.96)' }}>
           <Stack direction="row" spacing={1} alignItems="flex-end" sx={{ minWidth: 0 }}>
             <IconButton
               aria-label="Start demo voice interaction"
               onClick={startVoiceDemo}
-              sx={{ color: purple, border: '1px solid rgba(156, 40, 175, 0.16)', mb: 0.2 }}
+              sx={{ color: 'var(--sd-accent-text)', border: '1px solid rgba(var(--sd-primary-rgb), 0.16)', mb: 0.2 }}
             >
               <MicIcon />
             </IconButton>
@@ -521,7 +521,7 @@ export default function SmartDeskDrawer({
               size="small"
               sx={{ minWidth: 0 }}
             />
-            <IconButton aria-label="Send message" disabled={!input.trim()} onClick={submitText} sx={{ color: purple, mb: 0.2 }}>
+            <IconButton aria-label="Send message" disabled={!input.trim()} onClick={submitText} sx={{ color: 'var(--sd-accent-text)', mb: 0.2 }}>
               <SendIcon />
             </IconButton>
           </Stack>

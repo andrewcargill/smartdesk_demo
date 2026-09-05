@@ -18,6 +18,7 @@ export default function DemoShell({
   smartDeskDataStreams,
   schedule = annaSchedule,
   smartDeskSurface = 'floating',
+  hideFloatingSmartDesk = false,
 }) {
   const { todayOpen, openToday, closeToday } = useConceptDemoDrawers();
   const { currentContext } = schedule;
@@ -40,7 +41,9 @@ export default function DemoShell({
       {children}
 
       {smartDeskSurface === 'floating' && (
-        <FloatingSmartDesk context={smartDeskContext} dataStreams={smartDeskDataStreams} />
+        <Box sx={{ display: hideFloatingSmartDesk ? 'none' : 'contents' }}>
+          <FloatingSmartDesk context={smartDeskContext} dataStreams={smartDeskDataStreams} />
+        </Box>
       )}
 
       <TodayDrawer

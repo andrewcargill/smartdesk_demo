@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { useConceptDemoLanguage } from '../../../ConceptDemoLanguageContext.jsx';
 
-const darkText = '#17151a';
+const darkText = 'var(--sd-text)';
 
 function getPlanningLocale(language) {
   return language === 'sv' ? 'sv-SE' : 'en-GB';
@@ -90,9 +90,9 @@ export default function PlanningBlockCard({
       sx={{
         p: 1.45,
         borderRadius: '16px',
-        border: isHoliday ? '1px solid rgba(23, 21, 26, 0.16)' : '1px solid rgba(23, 21, 26, 0.1)',
-        bgcolor: isHoliday ? '#fbfafc' : '#fff',
-        backgroundImage: isHoliday ? 'repeating-linear-gradient(135deg, transparent 0, transparent 7px, rgba(23, 21, 26, 0.05) 7px, rgba(23, 21, 26, 0.05) 10px)' : 'none',
+        border: isHoliday ? '1px solid rgba(var(--sd-text-rgb), 0.16)' : '1px solid rgba(var(--sd-text-rgb), 0.1)',
+        bgcolor: isHoliday ? 'var(--sd-surface-muted)' : 'var(--sd-surface)',
+        backgroundImage: isHoliday ? 'repeating-linear-gradient(135deg, transparent 0, transparent 7px, rgba(var(--sd-text-rgb), 0.05) 7px, rgba(var(--sd-text-rgb), 0.05) 10px)' : 'none',
         cursor: draggable ? 'grab' : 'default',
       }}
     >

@@ -25,9 +25,9 @@ import {
 } from '@mui/material';
 import { useConceptDemoLanguage } from '../../../ConceptDemoLanguageContext.jsx';
 
-const darkText = '#17151a';
-const purple = '#9c28af';
-const palePurple = '#fbf5fd';
+const darkText = 'var(--sd-text)';
+const purple = 'var(--sd-primary)';
+const palePurple = 'var(--sd-primary-soft)';
 
 const blockTypeOptionIds = ['teaching', 'revisit', 'assessment', 'consolidation'];
 const statusOptionIds = ['planned', 'current', 'completed'];
@@ -411,9 +411,9 @@ export default function PlanningBlockDialog({
           <Box>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between">
               <Typography sx={{ color: darkText, fontWeight: 850 }}>{t('learningModule.planView.editDialog.linkedContent')}</Typography>
-              <Chip label={t('learningModule.planView.editDialog.linkedSummary', { contentCount: curriculumAreaIds.length, abilityCount: abilityIds.length })} size="small" sx={{ alignSelf: { xs: 'flex-start', sm: 'center' }, bgcolor: palePurple, color: purple, fontWeight: 760 }} />
+              <Chip label={t('learningModule.planView.editDialog.linkedSummary', { contentCount: curriculumAreaIds.length, abilityCount: abilityIds.length })} size="small" sx={{ alignSelf: { xs: 'flex-start', sm: 'center' }, bgcolor: palePurple, color: 'var(--sd-accent-text)', fontWeight: 760 }} />
             </Stack>
-            <Paper elevation={0} sx={{ mt: 1, maxHeight: 230, overflowY: 'auto', border: '1px solid rgba(23, 21, 26, 0.1)', borderRadius: '16px', p: 1 }}>
+            <Paper elevation={0} sx={{ mt: 1, maxHeight: 230, overflowY: 'auto', border: '1px solid rgba(var(--sd-text-rgb), 0.1)', borderRadius: '16px', p: 1 }}>
               <Stack spacing={1.1}>
                 {groupedCurriculumAreas.map((section) => (
                   <Box key={section.id}>
@@ -431,7 +431,7 @@ export default function PlanningBlockDialog({
                           />
                         )}
                         label={area.label}
-                        sx={{ display: 'flex', mx: 0, px: 0.5, borderRadius: '10px', '&:hover': { bgcolor: '#fbfafc' } }}
+                        sx={{ display: 'flex', mx: 0, px: 0.5, borderRadius: '10px', '&:hover': { bgcolor: 'var(--sd-surface-muted)' } }}
                       />
                     ))}
                   </Box>
@@ -472,7 +472,7 @@ export default function PlanningBlockDialog({
                 <TextField label={t('learningModule.planView.editDialog.optionalDescription')} value={description} onChange={(event) => setDescription(event.target.value)} multiline minRows={2} fullWidth />
                 <TextField label={t('learningModule.planView.editDialog.optionalNotes')} value={notes} onChange={(event) => setNotes(event.target.value)} multiline minRows={2} fullWidth />
 
-                <Paper elevation={0} sx={{ p: 1.25, borderRadius: '16px', border: '1px solid rgba(23, 21, 26, 0.09)', bgcolor: '#fff' }}>
+                <Paper elevation={0} sx={{ p: 1.25, borderRadius: '16px', border: '1px solid rgba(var(--sd-text-rgb), 0.09)', bgcolor: 'var(--sd-surface)' }}>
                   <Stack spacing={1}>
                     <Box>
                       <Typography sx={{ color: darkText, fontWeight: 850 }}>{t('learningModule.planView.editDialog.quickCaptureMoments')}</Typography>
@@ -496,17 +496,17 @@ export default function PlanningBlockDialog({
                       </Box>
                     ))}
                     {showMomentError && (
-                      <Typography sx={{ color: '#7a4250', fontSize: 13 }}>
+                      <Typography sx={{ color: 'var(--sd-error)', fontSize: 13 }}>
                         {t('learningModule.planView.editDialog.momentRequired')}
                       </Typography>
                     )}
-                    <Button startIcon={<AddIcon />} onClick={addMoment} sx={{ alignSelf: 'flex-start', color: purple }}>
+                    <Button startIcon={<AddIcon />} onClick={addMoment} sx={{ alignSelf: 'flex-start', color: 'var(--sd-accent-text)' }}>
                       {t('learningModule.planView.editDialog.addMoment')}
                     </Button>
                   </Stack>
                 </Paper>
 
-                <Paper elevation={0} sx={{ p: 1.25, borderRadius: '16px', border: '1px solid rgba(23, 21, 26, 0.09)', bgcolor: '#fff' }}>
+                <Paper elevation={0} sx={{ p: 1.25, borderRadius: '16px', border: '1px solid rgba(var(--sd-text-rgb), 0.09)', bgcolor: 'var(--sd-surface)' }}>
                   <Stack spacing={1.1}>
                     <Box>
                       <Typography sx={{ color: darkText, fontWeight: 850 }}>{t('learningModule.planView.editDialog.focusAdaptations')}</Typography>
@@ -519,7 +519,7 @@ export default function PlanningBlockDialog({
                       const selectedGroupLabel = selectedGroup?.label || getWorkingGroupLabel(adaptation.workingGroupId);
 
                       return (
-                        <Paper key={adaptation.id} elevation={0} sx={{ p: 1, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fbfafc' }}>
+                        <Paper key={adaptation.id} elevation={0} sx={{ p: 1, borderRadius: '14px', border: '1px solid rgba(var(--sd-text-rgb), 0.08)', bgcolor: 'var(--sd-surface-muted)' }}>
                           <Stack spacing={1}>
                             <FormControl fullWidth size="small">
                               <InputLabel id={`group-adaptation-${adaptation.id}-label`}>{t('learningModule.planView.editDialog.focus')}</InputLabel>
@@ -572,11 +572,11 @@ export default function PlanningBlockDialog({
                       );
                     })}
                     {!!adaptationError && (
-                      <Typography sx={{ color: '#7a4250', fontSize: 13 }}>
+                      <Typography sx={{ color: 'var(--sd-error)', fontSize: 13 }}>
                         {adaptationError}
                       </Typography>
                     )}
-                    <Button startIcon={<AddIcon />} onClick={addGroupAdaptation} sx={{ alignSelf: 'flex-start', color: purple }}>
+                    <Button startIcon={<AddIcon />} onClick={addGroupAdaptation} sx={{ alignSelf: 'flex-start', color: 'var(--sd-accent-text)' }}>
                       {t('learningModule.planView.editDialog.addFocusAdaptation')}
                     </Button>
                   </Stack>
@@ -593,7 +593,7 @@ export default function PlanningBlockDialog({
                   {t('learningModule.planView.editDialog.deleteBlock')}
                 </Button>
               ) : (
-                <Paper elevation={0} sx={{ p: 1.4, borderRadius: '15px', border: '1px solid rgba(23, 21, 26, 0.12)', bgcolor: '#fff' }}>
+                <Paper elevation={0} sx={{ p: 1.4, borderRadius: '15px', border: '1px solid rgba(var(--sd-text-rgb), 0.12)', bgcolor: 'var(--sd-surface)' }}>
                   <Typography sx={{ color: darkText, fontWeight: 850 }}>{t('learningModule.planView.deleteDialog.title')}</Typography>
                   <Typography sx={{ mt: 0.35, color: 'text.secondary', lineHeight: 1.45 }}>
                     {t('learningModule.planView.deleteDialog.body')}
@@ -610,7 +610,7 @@ export default function PlanningBlockDialog({
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
         <Button onClick={onClose} sx={{ color: 'text.secondary' }}>{t('learningModule.planView.editDialog.cancel')}</Button>
-        <Button variant="contained" onClick={saveBlock} sx={{ bgcolor: purple, '&:hover': { bgcolor: '#842194' } }}>
+        <Button variant="contained" onClick={saveBlock} sx={{ bgcolor: purple, '&:hover': { bgcolor: 'var(--sd-primary-hover)' } }}>
           {mode === 'edit' ? t('learningModule.planView.editDialog.saveBlock') : t('learningModule.planView.addBlock')}
         </Button>
       </DialogActions>

@@ -6,8 +6,8 @@ import { Box, Button, IconButton, Paper, Stack, Typography } from '@mui/material
 import RichDataSlide from './RichDataSlide.jsx';
 import { richDataSlides } from './richDataSlides.js';
 
-const darkText = '#17151a';
-const purple = '#9c28af';
+const darkText = 'var(--sd-text)';
+const purple = 'var(--sd-primary)';
 
 export default function RichDataIntro({ onOpenDemo }) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -28,9 +28,9 @@ export default function RichDataIntro({ onOpenDemo }) {
       <Paper
         elevation={0}
         sx={{
-          border: '1px solid rgba(23, 21, 26, 0.1)',
+          border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
           borderRadius: '16px',
-          bgcolor: '#fff',
+          bgcolor: 'var(--sd-surface)',
           overflow: 'hidden',
           boxShadow: '0 18px 42px rgba(23, 21, 26, 0.045)',
         }}
@@ -53,7 +53,7 @@ export default function RichDataIntro({ onOpenDemo }) {
                     textTransform: 'none',
                     fontWeight: 900,
                     px: 1.6,
-                    '&:hover': { bgcolor: '#842194', boxShadow: 'none' },
+                    '&:hover': { bgcolor: 'var(--sd-primary-hover)', boxShadow: 'none' },
                   }}
                 >
                   Open demo homescreen
@@ -65,16 +65,16 @@ export default function RichDataIntro({ onOpenDemo }) {
           <Box
             sx={{
               p: { xs: 1.5, md: 2 },
-              bgcolor: 'rgba(23, 21, 26, 0.018)',
-              borderTop: { xs: '1px solid rgba(23, 21, 26, 0.08)', lg: 0 },
-              borderLeft: { xs: 0, lg: '1px solid rgba(23, 21, 26, 0.08)' },
+              bgcolor: 'rgba(var(--sd-text-rgb), 0.018)',
+              borderTop: { xs: '1px solid rgba(var(--sd-text-rgb), 0.08)', lg: 0 },
+              borderLeft: { xs: 0, lg: '1px solid rgba(var(--sd-text-rgb), 0.08)' },
               display: 'grid',
               alignContent: 'space-between',
               gap: 2,
             }}
           >
             <Stack spacing={1.2}>
-              <Typography sx={{ color: purple, fontSize: 13, fontWeight: 900 }}>
+              <Typography sx={{ color: 'var(--sd-accent-text)', fontSize: 13, fontWeight: 900 }}>
                 Intro slides
               </Typography>
               <Stack spacing={0.75}>
@@ -90,12 +90,12 @@ export default function RichDataIntro({ onOpenDemo }) {
                         textAlign: 'left',
                         minHeight: 42,
                         borderRadius: '8px',
-                        color: isActive ? purple : darkText,
-                        bgcolor: isActive ? 'rgba(156, 40, 175, 0.08)' : 'transparent',
+                        color: isActive ? 'var(--sd-accent-text)' : darkText,
+                        bgcolor: isActive ? 'rgba(var(--sd-primary-rgb), 0.08)' : 'transparent',
                         textTransform: 'none',
                         fontSize: 13,
                         fontWeight: isActive ? 900 : 760,
-                        '&:hover': { bgcolor: isActive ? 'rgba(156, 40, 175, 0.11)' : 'rgba(23, 21, 26, 0.045)' },
+                        '&:hover': { bgcolor: isActive ? 'rgba(var(--sd-primary-rgb), 0.11)' : 'rgba(var(--sd-text-rgb), 0.045)' },
                       }}
                     >
                       <Box component="span" sx={{ display: 'block', width: '100%', lineHeight: 1.25 }}>
@@ -113,7 +113,7 @@ export default function RichDataIntro({ onOpenDemo }) {
                   aria-label="Previous slide"
                   onClick={goPrevious}
                   disabled={isFirstSlide}
-                  sx={{ border: '1px solid rgba(23, 21, 26, 0.1)', borderRadius: '8px' }}
+                  sx={{ border: '1px solid rgba(var(--sd-text-rgb), 0.1)', borderRadius: '8px' }}
                 >
                   <ArrowBackIcon />
                 </IconButton>
@@ -126,7 +126,7 @@ export default function RichDataIntro({ onOpenDemo }) {
                         width: index === activeIndex ? 18 : 7,
                         height: 7,
                         borderRadius: 999,
-                        bgcolor: index === activeIndex ? purple : 'rgba(23, 21, 26, 0.18)',
+                        bgcolor: index === activeIndex ? purple : 'rgba(var(--sd-text-rgb), 0.18)',
                         transition: 'width 140ms ease, background-color 140ms ease',
                       }}
                     />
@@ -136,7 +136,7 @@ export default function RichDataIntro({ onOpenDemo }) {
                   aria-label="Next slide"
                   onClick={goNext}
                   disabled={isLastSlide}
-                  sx={{ border: '1px solid rgba(23, 21, 26, 0.1)', borderRadius: '8px' }}
+                  sx={{ border: '1px solid rgba(var(--sd-text-rgb), 0.1)', borderRadius: '8px' }}
                 >
                   <ArrowForwardIcon />
                 </IconButton>

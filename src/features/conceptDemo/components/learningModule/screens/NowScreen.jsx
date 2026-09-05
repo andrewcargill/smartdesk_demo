@@ -7,7 +7,7 @@ import {
   readLearningModuleLearningObservations,
 } from '../utils/learningModuleEvidenceStorage.js';
 
-const darkText = '#17151a';
+const darkText = 'var(--sd-text)';
 
 export default function NowScreen({ moduleConfig }) {
   const moduleId = moduleConfig?.id || 'learning-module';

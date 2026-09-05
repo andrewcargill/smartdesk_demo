@@ -21,7 +21,7 @@ const legacyScreenIds = {
   classPicture: 'class-picture',
 };
 
-const purple = '#9c28af';
+const purple = 'var(--sd-primary)';
 
 function normalizeScreenId(screenId) {
   return legacyScreenIds[screenId] || screenId;
@@ -261,8 +261,8 @@ export default function ReusableLearningModuleShell({ moduleData, onBack }) {
             px: 1,
             py: 0.55,
             borderRadius: '999px',
-            border: '1px solid rgba(23, 21, 26, 0.1)',
-            bgcolor: '#fff',
+            border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
+            bgcolor: 'var(--sd-surface)',
             height: 44,
           }}
         >
@@ -278,7 +278,7 @@ export default function ReusableLearningModuleShell({ moduleData, onBack }) {
                     width: 18,
                     height: 4,
                     borderRadius: '999px',
-                    bgcolor: index <= activeLessonIndex ? purple : 'rgba(156, 40, 175, 0.16)',
+                    bgcolor: index <= activeLessonIndex ? purple : 'rgba(var(--sd-primary-rgb), 0.16)',
                   }}
                 />
               ))}
@@ -295,17 +295,17 @@ export default function ReusableLearningModuleShell({ moduleData, onBack }) {
                   width: 30,
                   height: 30,
                   borderRadius: '999px',
-                  bgcolor: 'rgba(156, 40, 175, 0.09)',
-                  color: purple,
-                  border: '1px solid rgba(156, 40, 175, 0.16)',
+                  bgcolor: 'rgba(var(--sd-primary-rgb), 0.09)',
+                  color: 'var(--sd-accent-text)',
+                  border: '1px solid rgba(var(--sd-primary-rgb), 0.16)',
                   '&:hover': {
-                    bgcolor: 'rgba(156, 40, 175, 0.13)',
-                    borderColor: 'rgba(156, 40, 175, 0.24)',
+                    bgcolor: 'rgba(var(--sd-primary-rgb), 0.13)',
+                    borderColor: 'rgba(var(--sd-primary-rgb), 0.24)',
                   },
                   '&.Mui-disabled': {
-                    color: 'rgba(23, 21, 26, 0.38)',
-                    bgcolor: 'rgba(23, 21, 26, 0.07)',
-                    borderColor: 'rgba(23, 21, 26, 0.08)',
+                    color: 'var(--sd-text-muted)',
+                    bgcolor: 'rgba(var(--sd-text-rgb), 0.07)',
+                    borderColor: 'rgba(var(--sd-text-rgb), 0.08)',
                   },
                 }}
               >
@@ -322,13 +322,13 @@ export default function ReusableLearningModuleShell({ moduleData, onBack }) {
                 width: 30,
                 height: 30,
                 borderRadius: '999px',
-                color: 'rgba(23, 21, 26, 0.56)',
-                border: '1px solid rgba(23, 21, 26, 0.1)',
-                bgcolor: '#fff',
+                color: 'var(--sd-text-muted)',
+                border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
+                bgcolor: 'var(--sd-surface)',
                 '&:hover': {
-                  color: purple,
-                  bgcolor: 'rgba(156, 40, 175, 0.07)',
-                  borderColor: 'rgba(156, 40, 175, 0.18)',
+                  color: 'var(--sd-accent-text)',
+                  bgcolor: 'rgba(var(--sd-primary-rgb), 0.07)',
+                  borderColor: 'rgba(var(--sd-primary-rgb), 0.18)',
                 },
               }}
             >

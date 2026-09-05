@@ -19,11 +19,11 @@ import {
 } from './utils/todayScheduleUtils.js';
 import { useConceptDemoDrawers } from './ConceptDemoDrawerContext.jsx';
 
-const purple = '#9c28af';
-const purpleTint = '#fbf6fc';
-const darkText = '#18151a';
-const mutedText = '#736d76';
-const border = 'rgba(24, 21, 26, 0.08)';
+const purple = 'var(--sd-primary)';
+const purpleTint = 'var(--sd-primary-soft)';
+const darkText = 'var(--sd-text)';
+const mutedText = 'var(--sd-text-muted)';
+const border = 'rgba(var(--sd-text-rgb), 0.08)';
 const todayDrawerWidth = {
   xs: 'min(390px, calc(100vw - 18px))',
   sm: 410,
@@ -48,9 +48,9 @@ function TodayAttachedTab({ open, onOpen, onClose }) {
         maxWidth: { xs: 96, md: 46 },
         height: { xs: 42, md: 116 },
         borderRadius: '0 12px 12px 0',
-        bgcolor: '#fff',
+        bgcolor: 'var(--sd-surface)',
         color: darkText,
-        border: '1px solid rgba(24, 21, 26, 0.14)',
+        border: '1px solid rgba(var(--sd-text-rgb), 0.14)',
         borderLeft: open ? `1px solid ${border}` : 0,
         boxShadow: '0 16px 34px rgba(24, 21, 26, 0.1)',
         px: { xs: 1.15, md: 0.7 },
@@ -60,7 +60,7 @@ function TodayAttachedTab({ open, onOpen, onClose }) {
           : `left ${todayExitTransition}`,
         '&:hover': {
           bgcolor: purpleTint,
-          borderColor: 'rgba(156, 40, 175, 0.24)',
+          borderColor: 'rgba(var(--sd-primary-rgb), 0.24)',
         },
       }}
     >
@@ -94,7 +94,7 @@ function StatusDot({ state }) {
           borderRadius: '50%',
           display: 'grid',
           placeItems: 'center',
-          bgcolor: '#fff',
+          bgcolor: 'var(--sd-surface)',
           border: `1px solid ${border}`,
           color: mutedText,
           flexShrink: 0,
@@ -111,7 +111,7 @@ function StatusDot({ state }) {
           height: 12,
           borderRadius: '50%',
           bgcolor: purple,
-          boxShadow: '0 0 0 5px rgba(156, 40, 175, 0.10)',
+          boxShadow: '0 0 0 5px rgba(var(--sd-primary-rgb), 0.10)',
           flexShrink: 0,
         }}
       />
@@ -125,7 +125,7 @@ function StatusDot({ state }) {
           width: 12,
           height: 12,
           borderRadius: '50%',
-          bgcolor: '#fff',
+          bgcolor: 'var(--sd-surface)',
           border: `2px solid ${purple}`,
           flexShrink: 0,
         }}
@@ -139,7 +139,7 @@ function StatusDot({ state }) {
         width: 8,
         height: 8,
         borderRadius: '50%',
-        bgcolor: 'rgba(24, 21, 26, 0.16)',
+        bgcolor: 'rgba(var(--sd-text-rgb), 0.16)',
         flexShrink: 0,
       }}
     />
@@ -174,7 +174,7 @@ function HereMarker() {
 
       <Typography
         sx={{
-          color: purple,
+          color: 'var(--sd-accent-text)',
           fontSize: 12.5,
           fontWeight: 750,
           letterSpacing: 0.1,
@@ -187,7 +187,7 @@ function HereMarker() {
         sx={{
           height: 1,
           flex: 1,
-          bgcolor: 'rgba(156, 40, 175, 0.18)',
+          bgcolor: 'rgba(var(--sd-primary-rgb), 0.18)',
         }}
       />
     </Stack>
@@ -221,13 +221,13 @@ function TimelineEvent({ event, state, onOpenEvent }) {
         py: 1.65,
         borderRadius: '20px',
         border: isCurrent
-          ? '1px solid rgba(156, 40, 175, 0.22)'
+          ? '1px solid rgba(var(--sd-primary-rgb), 0.22)'
           : `1px solid ${border}`,
         bgcolor: isCurrent
           ? purpleTint
           : isNext
-            ? '#fff'
-            : 'rgba(255, 255, 255, 0.96)',
+            ? 'var(--sd-surface)'
+            : 'rgba(var(--sd-surface-rgb), 0.96)',
         opacity: isEarlier ? 0.62 : 1,
         cursor: 'pointer',
         transition:
@@ -236,14 +236,14 @@ function TimelineEvent({ event, state, onOpenEvent }) {
           transform: 'translateY(-1px)',
           boxShadow: '0 10px 30px rgba(24, 21, 26, 0.07)',
           borderColor: isCurrent
-            ? 'rgba(156, 40, 175, 0.34)'
-            : 'rgba(24, 21, 26, 0.13)',
+            ? 'rgba(var(--sd-primary-rgb), 0.34)'
+            : 'rgba(var(--sd-text-rgb), 0.13)',
           '& .event-more-button': {
             opacity: 1,
           },
         },
         '&:focus-visible': {
-          outline: `3px solid rgba(156, 40, 175, 0.18)`,
+          outline: `3px solid rgba(var(--sd-primary-rgb), 0.18)`,
           outlineOffset: 2,
         },
       }}
@@ -262,7 +262,7 @@ function TimelineEvent({ event, state, onOpenEvent }) {
         >
           <Typography
             sx={{
-              color: isCurrent ? purple : mutedText,
+              color: isCurrent ? 'var(--sd-accent-text)' : mutedText,
               fontSize: 12.5,
               fontWeight: 750,
               letterSpacing: 0.15,
@@ -278,7 +278,7 @@ function TimelineEvent({ event, state, onOpenEvent }) {
               sx={{
                 height: 21,
                 bgcolor: purple,
-                color: '#fff',
+                color: 'var(--sd-on-primary)',
                 fontSize: 11,
                 fontWeight: 750,
                 '& .MuiChip-label': {
@@ -292,7 +292,7 @@ function TimelineEvent({ event, state, onOpenEvent }) {
             <Typography
               component="span"
               sx={{
-                color: purple,
+                color: 'var(--sd-accent-text)',
                 fontSize: 11.5,
                 fontWeight: 750,
               }}
@@ -342,7 +342,7 @@ function TimelineEvent({ event, state, onOpenEvent }) {
                 size="small"
                 sx={{
                   height: 22,
-                  bgcolor: '#fff',
+                  bgcolor: 'var(--sd-surface)',
                   border: `1px solid ${border}`,
                   color: mutedText,
                   fontSize: 11.5,
@@ -434,7 +434,7 @@ export default function TodayDrawer({
           position: 'fixed',
           inset: 0,
           zIndex: 1390,
-          bgcolor: 'rgba(24, 21, 26, 0.32)',
+          bgcolor: 'rgba(var(--sd-text-rgb), 0.32)',
           opacity: open ? 1 : 0,
           pointerEvents: open ? 'auto' : 'none',
           transition: open
@@ -455,7 +455,7 @@ export default function TodayDrawer({
           minInlineSize: todayDrawerWidth,
           maxInlineSize: todayDrawerWidth,
           blockSize: '100dvh',
-          bgcolor: '#fff',
+          bgcolor: 'var(--sd-surface)',
           borderRight: `1px solid ${border}`,
           boxShadow: '16px 0 50px rgba(24, 21, 26, 0.12)',
           boxSizing: 'border-box',
@@ -524,7 +524,7 @@ export default function TodayDrawer({
         >
           <Typography
             sx={{
-              color: purple,
+              color: 'var(--sd-accent-text)',
               fontSize: 12.5,
               fontWeight: 780,
             }}
@@ -551,11 +551,11 @@ export default function TodayDrawer({
             sx={{
               mt: 1,
               ml: -0.75,
-              color: purple,
+              color: 'var(--sd-accent-text)',
               fontWeight: 750,
               textTransform: 'none',
               '&:hover': {
-                bgcolor: 'rgba(156, 40, 175, 0.07)',
+                bgcolor: 'rgba(var(--sd-primary-rgb), 0.07)',
               },
             }}
           >

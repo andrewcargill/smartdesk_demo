@@ -37,10 +37,10 @@ import {
   readLearningModuleLearningObservations,
 } from '../utils/learningModuleEvidenceStorage.js';
 
-const purple = '#9c28af';
-const darkText = '#17151a';
-const border = 'rgba(23, 21, 26, 0.1)';
-const absentOrange = '#b85c00';
+const purple = 'var(--sd-primary)';
+const darkText = 'var(--sd-text)';
+const border = 'rgba(var(--sd-text-rgb), 0.1)';
+const absentOrange = 'var(--sd-warning)';
 
 function getClassViewStorageKey(moduleId) {
   return `smartdesk_demo_learning_class_views_${moduleId}`;
@@ -218,7 +218,7 @@ function EvidenceMarker({ summary, t }) {
   if (!hasEvidence) {
     return (
       <Box sx={{ minHeight: 34, display: 'grid', placeItems: 'center' }}>
-        <Box sx={{ width: 20, height: 2, borderRadius: 999, bgcolor: 'rgba(23, 21, 26, 0.18)' }} />
+        <Box sx={{ width: 20, height: 2, borderRadius: 999, bgcolor: 'rgba(var(--sd-text-rgb), 0.18)' }} />
       </Box>
     );
   }
@@ -237,13 +237,13 @@ function EvidenceMarker({ summary, t }) {
                 width: 12,
                 height: 12,
                 borderRadius: '50%',
-                background: `conic-gradient(${purple} 0 ${percentage}%, rgba(156, 40, 175, 0.13) ${percentage}% 100%)`,
-                boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.28)',
+                background: `conic-gradient(${purple} 0 ${percentage}%, rgba(var(--sd-primary-rgb), 0.13) ${percentage}% 100%)`,
+                boxShadow: 'inset 0 0 0 1px rgba(var(--sd-primary-rgb), 0.28)',
               }}
             />
           );
         }) : (
-          <Box sx={{ width: 24, height: 6, borderRadius: 999, bgcolor: 'rgba(156, 40, 175, 0.12)' }} />
+          <Box sx={{ width: 24, height: 6, borderRadius: 999, bgcolor: 'rgba(var(--sd-primary-rgb), 0.12)' }} />
         )}
       </Stack>
       <Box
@@ -251,7 +251,7 @@ function EvidenceMarker({ summary, t }) {
         sx={{
           height: 5,
           borderRadius: 999,
-          bgcolor: 'rgba(23, 21, 26, 0.08)',
+          bgcolor: 'rgba(var(--sd-text-rgb), 0.08)',
           overflow: 'hidden',
         }}
       >
@@ -261,7 +261,7 @@ function EvidenceMarker({ summary, t }) {
               width: `${Math.max(density * 100, 18)}%`,
               height: '100%',
               borderRadius: 999,
-              bgcolor: 'rgba(23, 21, 26, 0.42)',
+              bgcolor: 'rgba(var(--sd-text-rgb), 0.42)',
             }}
           />
         )}
@@ -308,7 +308,7 @@ function LearningObservationTimelineGraph({ observations, activeObservationId, o
   const hasRange = Number.isFinite(minTime) && Number.isFinite(maxTime) && minTime !== maxTime;
 
   return (
-    <Paper elevation={0} sx={{ p: 1.15, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff', minHeight: '100%' }}>
+    <Paper elevation={0} sx={{ p: 1.15, borderRadius: '14px', border: '1px solid rgba(var(--sd-text-rgb), 0.08)', bgcolor: 'var(--sd-surface)', minHeight: '100%' }}>
       <Stack spacing={0.8}>
         <Typography sx={{ color: darkText, fontSize: 13.6, fontWeight: 880 }}>{t('learningModule.classPicture.learningObservationPattern')}</Typography>
         <Stack spacing={0.65}>
@@ -342,14 +342,14 @@ function LearningObservationTimelineGraph({ observations, activeObservationId, o
                   '& circle:hover': { r: 4.4, fill: purple },
                 }}
               >
-                <text x="1" y="7" fill="rgba(23, 21, 26, 0.68)" fontSize="5.4" fontWeight="800">{area.label}</text>
-                <text x="6" y="23.8" fill="rgba(23, 21, 26, 0.48)" fontSize="5.2" fontWeight="800" textAnchor="middle">+</text>
-                <text x="6" y="37.8" fill="rgba(23, 21, 26, 0.48)" fontSize="5.2" fontWeight="800" textAnchor="middle">0</text>
-                <text x="6" y="51.8" fill="rgba(23, 21, 26, 0.48)" fontSize="5.2" fontWeight="800" textAnchor="middle">-</text>
-                <line x1="16" y1="22" x2="213" y2="22" stroke="rgba(23, 21, 26, 0.05)" strokeWidth="1" />
-                <line x1="16" y1="36" x2="213" y2="36" stroke="rgba(23, 21, 26, 0.1)" strokeWidth="1" />
-                <line x1="16" y1="50" x2="213" y2="50" stroke="rgba(23, 21, 26, 0.05)" strokeWidth="1" />
-                {points.length > 1 && <polyline points={linePoints} fill="none" stroke="rgba(156, 40, 175, 0.34)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />}
+                <text x="1" y="7" fill="rgba(var(--sd-text-rgb), 0.68)" fontSize="5.4" fontWeight="800">{area.label}</text>
+                <text x="6" y="23.8" fill="rgba(var(--sd-text-rgb), 0.48)" fontSize="5.2" fontWeight="800" textAnchor="middle">+</text>
+                <text x="6" y="37.8" fill="rgba(var(--sd-text-rgb), 0.48)" fontSize="5.2" fontWeight="800" textAnchor="middle">0</text>
+                <text x="6" y="51.8" fill="rgba(var(--sd-text-rgb), 0.48)" fontSize="5.2" fontWeight="800" textAnchor="middle">-</text>
+                <line x1="16" y1="22" x2="213" y2="22" stroke="rgba(var(--sd-text-rgb), 0.05)" strokeWidth="1" />
+                <line x1="16" y1="36" x2="213" y2="36" stroke="rgba(var(--sd-text-rgb), 0.1)" strokeWidth="1" />
+                <line x1="16" y1="50" x2="213" y2="50" stroke="rgba(var(--sd-text-rgb), 0.05)" strokeWidth="1" />
+                {points.length > 1 && <polyline points={linePoints} fill="none" stroke="rgba(var(--sd-primary-rgb), 0.34)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />}
                 {points.map((point) => {
                   const isActive = activeObservationId === point.id;
 
@@ -360,7 +360,7 @@ function LearningObservationTimelineGraph({ observations, activeObservationId, o
                       cy={point.y}
                       r={isActive ? '3.9' : '2.8'}
                       fill={purple}
-                      stroke={isActive ? 'rgba(156, 40, 175, 0.28)' : '#fff'}
+                      stroke={isActive ? 'rgba(var(--sd-primary-rgb), 0.28)' : 'var(--sd-surface)'}
                       strokeWidth={isActive ? '2.4' : '1'}
                       tabIndex={0}
                       onMouseEnter={() => onActiveObservationChange?.(point)}
@@ -373,8 +373,8 @@ function LearningObservationTimelineGraph({ observations, activeObservationId, o
                 })}
                 {!points.length && (
                   <>
-                    <line x1="24" y1="36" x2="86" y2="36" stroke="rgba(23, 21, 26, 0.16)" strokeWidth="2" strokeLinecap="round" />
-                    <circle cx="55" cy="36" r="3" fill="rgba(23, 21, 26, 0.18)" />
+                    <line x1="24" y1="36" x2="86" y2="36" stroke="rgba(var(--sd-text-rgb), 0.16)" strokeWidth="2" strokeLinecap="round" />
+                    <circle cx="55" cy="36" r="3" fill="rgba(var(--sd-text-rgb), 0.18)" />
                   </>
                 )}
               </Box>
@@ -402,7 +402,7 @@ function LearningObservationHistoryPanel({ observations, activeObservation, lear
   }, {});
 
   return (
-    <Paper elevation={0} sx={{ p: 1.15, height: 310, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+    <Paper elevation={0} sx={{ p: 1.15, height: 310, borderRadius: '14px', border: '1px solid rgba(var(--sd-text-rgb), 0.08)', bgcolor: 'var(--sd-surface)' }}>
       <Typography sx={{ color: darkText, fontSize: 13.6, fontWeight: 880 }}>{t('learningModule.classPicture.learningObservations')}</Typography>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'repeat(3, minmax(0, 1fr))' }, gap: 0.8, mt: 0.9 }}>
         {learningObservationAreas.map((area) => {
@@ -410,7 +410,7 @@ function LearningObservationHistoryPanel({ observations, activeObservation, lear
           const choice = latestObservation?.[area.id] || '';
 
           return (
-            <Box key={area.id} sx={{ p: 1, minHeight: 68, borderRadius: '12px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+            <Box key={area.id} sx={{ p: 1, minHeight: 68, borderRadius: '12px', border: '1px solid rgba(var(--sd-text-rgb), 0.08)', bgcolor: 'var(--sd-surface)' }}>
               <Typography sx={{ color: darkText, fontSize: 12.6, fontWeight: 850 }}>{area.label}</Typography>
               <Stack direction="row" spacing={0.75} alignItems="center" justifyContent="space-between" sx={{ mt: 0.45 }}>
                 <Typography sx={{ color: 'text.secondary', fontSize: 11.8, fontWeight: 650 }}>
@@ -422,9 +422,9 @@ function LearningObservationHistoryPanel({ observations, activeObservation, lear
                     width: 24,
                     height: 24,
                     borderRadius: '50%',
-                    border: latestObservation ? `1px solid ${purple}` : '1px solid rgba(23, 21, 26, 0.14)',
-                    bgcolor: latestObservation ? purple : '#fff',
-                    color: latestObservation ? '#fff' : 'rgba(23, 21, 26, 0.36)',
+                    border: latestObservation ? `1px solid ${purple}` : '1px solid rgba(var(--sd-text-rgb), 0.14)',
+                    bgcolor: latestObservation ? purple : 'var(--sd-surface)',
+                    color: latestObservation ? 'var(--sd-on-primary)' : 'var(--sd-text-muted)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -445,8 +445,8 @@ function LearningObservationHistoryPanel({ observations, activeObservation, lear
           minHeight: 112,
           p: 1.25,
           borderRadius: '12px',
-          border: '1px solid rgba(23, 21, 26, 0.07)',
-          bgcolor: activeObservation ? 'rgba(156, 40, 175, 0.035)' : '#fff',
+          border: '1px solid rgba(var(--sd-text-rgb), 0.07)',
+          bgcolor: activeObservation ? 'rgba(var(--sd-primary-rgb), 0.035)' : 'var(--sd-surface)',
           transition: 'background-color 140ms ease',
         }}
       >
@@ -456,16 +456,16 @@ function LearningObservationHistoryPanel({ observations, activeObservation, lear
               {formatDemoDate(activeObservation.date, language, t)} · {activeObservation.areaLabel} · {activeObservation.choiceId}
             </Typography>
             <Box>
-              <Typography sx={{ color: 'rgba(23, 21, 26, 0.42)', fontSize: 11.8, fontWeight: 840, lineHeight: 1.2 }}>
+              <Typography sx={{ color: 'var(--sd-text-muted)', fontSize: 11.8, fontWeight: 840, lineHeight: 1.2 }}>
                 {t('learningModule.classPicture.teacherComment')}
               </Typography>
-              <Typography sx={{ mt: 0.35, pl: 0.9, color: 'text.secondary', fontSize: 13.4, lineHeight: 1.48, borderLeft: '3px solid rgba(156, 40, 175, 0.24)' }}>
+              <Typography sx={{ mt: 0.35, pl: 0.9, color: 'text.secondary', fontSize: 13.4, lineHeight: 1.48, borderLeft: '3px solid rgba(var(--sd-primary-rgb), 0.24)' }}>
                 {activeObservation.note || t('learningModule.classPicture.noCommentAdded')}
               </Typography>
             </Box>
           </Stack>
         ) : (
-          <Typography sx={{ color: 'rgba(23, 21, 26, 0.34)', fontSize: 13.2, lineHeight: 1.45 }}>
+          <Typography sx={{ color: 'var(--sd-text-muted)', fontSize: 13.2, lineHeight: 1.45 }}>
             {t('learningModule.classPicture.hoverGraphPoint')}
           </Typography>
         )}
@@ -481,8 +481,8 @@ function StudentGlobalInsightPanel({ student, evidenceItems, rowNote, learningOb
   const [activeLearningObservation, setActiveLearningObservation] = useState(null);
 
   return (
-    <Box sx={{ p: { xs: 1, sm: 1.25 }, bgcolor: '#fbfafc', borderTop: '1px solid rgba(23, 21, 26, 0.07)' }}>
-      <Paper elevation={0} id={`student-insight-global-${student.id}`} sx={{ p: { xs: 1.25, sm: 1.55 }, borderRadius: '18px', border: `4px solid ${purple}`, bgcolor: '#fff' }}>
+    <Box sx={{ p: { xs: 1, sm: 1.25 }, bgcolor: 'var(--sd-surface-muted)', borderTop: '1px solid rgba(var(--sd-text-rgb), 0.07)' }}>
+      <Paper elevation={0} id={`student-insight-global-${student.id}`} sx={{ p: { xs: 1.25, sm: 1.55 }, borderRadius: '18px', border: `4px solid ${purple}`, bgcolor: 'var(--sd-surface)' }}>
         <Stack spacing={1.25}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
             <Box>
@@ -510,7 +510,7 @@ function StudentGlobalInsightPanel({ student, evidenceItems, rowNote, learningOb
                 language={language}
                 t={t}
               />
-              <Paper elevation={0} sx={{ p: 0.95, borderRadius: '14px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+              <Paper elevation={0} sx={{ p: 0.95, borderRadius: '14px', border: '1px solid rgba(var(--sd-text-rgb), 0.08)', bgcolor: 'var(--sd-surface)' }}>
                 <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 880 }}>{t('learningModule.classPicture.knownAnchors')}</Typography>
                 <Stack spacing={0.42} sx={{ mt: 0.65 }}>
                   <Typography sx={{ color: 'text.secondary', fontSize: 11.8 }}>
@@ -660,10 +660,10 @@ function ClassPictureEvidenceGridV1({
     minWidth: { xs: v2 || v3 ? v2MinimumGridWidth : 760, lg: v2 || v3 ? v2MinimumGridWidth : 0 },
     display: 'grid',
     gridTemplateColumns,
-    border: v2 || v3 ? '1px solid rgba(23, 21, 26, 0.16)' : '1px solid rgba(23, 21, 26, 0.12)',
+    border: v2 || v3 ? '1px solid rgba(var(--sd-text-rgb), 0.16)' : '1px solid rgba(var(--sd-text-rgb), 0.12)',
     borderRadius: v2 || v3 ? '10px' : '14px',
     overflow: 'hidden',
-    bgcolor: '#fff',
+    bgcolor: 'var(--sd-surface)',
     boxShadow: v2 || v3 ? '0 10px 28px rgba(23, 21, 26, 0.045)' : 'none',
   };
 
@@ -682,8 +682,8 @@ function ClassPictureEvidenceGridV1({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-start',
-            bgcolor: '#fff',
-            borderBottom: '1px solid rgba(23, 21, 26, 0.12)',
+            bgcolor: 'var(--sd-surface)',
+            borderBottom: '1px solid rgba(var(--sd-text-rgb), 0.12)',
           }}
         >
           <Box
@@ -694,13 +694,13 @@ function ClassPictureEvidenceGridV1({
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'rgba(156, 40, 175, 0.52)',
+              color: 'var(--sd-text-muted)',
             }}
           >
             <GroupsIcon sx={{ fontSize: 16, opacity: 1 }} />
           </Box>
         </Box>
-        <Box role="columnheader" aria-label={t('learningModule.classPicture.assessmentAlerts')} sx={{ p: 1, bgcolor: '#fff', borderBottom: '1px solid rgba(23, 21, 26, 0.12)' }} />
+        <Box role="columnheader" aria-label={t('learningModule.classPicture.assessmentAlerts')} sx={{ p: 1, bgcolor: 'var(--sd-surface)', borderBottom: '1px solid rgba(var(--sd-text-rgb), 0.12)' }} />
         <Box
           role="columnheader"
           aria-label={t('learningModule.classPicture.quickNotes')}
@@ -710,8 +710,8 @@ function ClassPictureEvidenceGridV1({
             alignItems: 'center',
             gap: 0.45,
             justifyContent: 'flex-start',
-            bgcolor: '#fff',
-            borderBottom: '1px solid rgba(23, 21, 26, 0.12)',
+            bgcolor: 'var(--sd-surface)',
+            borderBottom: '1px solid rgba(var(--sd-text-rgb), 0.12)',
           }}
         >
           <IconButton
@@ -725,19 +725,19 @@ function ClassPictureEvidenceGridV1({
             sx={{
               width: 28,
               height: 28,
-              color: rowNotesVisible ? 'rgba(156, 40, 175, 0.52)' : 'rgba(23, 21, 26, 0.3)',
+              color: rowNotesVisible ? 'var(--sd-text-muted)' : 'var(--sd-text-muted)',
               bgcolor: 'transparent',
               border: '1px solid transparent',
               '&:hover, &:focus-visible': {
-                bgcolor: rowNotesVisible ? 'rgba(156, 40, 175, 0.09)' : 'rgba(23, 21, 26, 0.07)',
-                borderColor: rowNotesVisible ? 'rgba(156, 40, 175, 0.12)' : 'rgba(23, 21, 26, 0.08)',
+                bgcolor: rowNotesVisible ? 'rgba(var(--sd-primary-rgb), 0.09)' : 'rgba(var(--sd-text-rgb), 0.07)',
+                borderColor: rowNotesVisible ? 'rgba(var(--sd-primary-rgb), 0.12)' : 'rgba(var(--sd-text-rgb), 0.08)',
               },
             }}
           >
             <NotesIcon sx={{ fontSize: 16, opacity: rowNotesVisible ? 1 : 0.48 }} />
           </IconButton>
           {!rowNotesVisible && (
-            <Typography sx={{ color: 'rgba(23, 21, 26, 0.3)', fontSize: 11.5, fontWeight: 760, lineHeight: 1 }}>
+            <Typography sx={{ color: 'var(--sd-text-muted)', fontSize: 11.5, fontWeight: 760, lineHeight: 1 }}>
               {t('learningModule.classPicture.hidden')}
             </Typography>
           )}
@@ -750,9 +750,9 @@ function ClassPictureEvidenceGridV1({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            bgcolor: '#fff',
-            borderBottom: '1px solid rgba(23, 21, 26, 0.12)',
-            borderLeft: '1px solid rgba(23, 21, 26, 0.055)',
+            bgcolor: 'var(--sd-surface)',
+            borderBottom: '1px solid rgba(var(--sd-text-rgb), 0.12)',
+            borderLeft: '1px solid rgba(var(--sd-text-rgb), 0.055)',
           }}
         >
           <Box
@@ -763,7 +763,7 @@ function ClassPictureEvidenceGridV1({
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'rgba(156, 40, 175, 0.52)',
+              color: 'var(--sd-text-muted)',
             }}
           >
             <TimelineIcon sx={{ fontSize: 16, opacity: 1 }} />
@@ -780,10 +780,10 @@ function ClassPictureEvidenceGridV1({
               onClick={() => startEditingUnit(unit.id)}
               sx={{
                 p: 1,
-                bgcolor: '#fff',
+                bgcolor: 'var(--sd-surface)',
                 color: darkText,
-                borderBottom: '1px solid rgba(23, 21, 26, 0.12)',
-                borderLeft: '1px solid rgba(23, 21, 26, 0.055)',
+                borderBottom: '1px solid rgba(var(--sd-text-rgb), 0.12)',
+                borderLeft: '1px solid rgba(var(--sd-text-rgb), 0.055)',
                 cursor: 'pointer',
                 minWidth: 0,
               }}
@@ -815,7 +815,7 @@ function ClassPictureEvidenceGridV1({
                     border: `1px solid ${purple}`,
                     borderRadius: '8px',
                     color: darkText,
-                    bgcolor: '#fff',
+                    bgcolor: 'var(--sd-surface)',
                     font: 'inherit',
                     fontSize: 12.4,
                     fontWeight: 860,
@@ -856,8 +856,8 @@ function ClassPictureEvidenceGridV1({
                     sx={{
                       gridColumn: `1 / span ${teachingUnits.length + 4}`,
                       p: 0.85,
-                      borderTop: '1px solid rgba(23, 21, 26, 0.12)',
-                      bgcolor: isDragTarget ? 'rgba(156, 40, 175, 0.12)' : '#fff',
+                      borderTop: '1px solid rgba(var(--sd-text-rgb), 0.12)',
+                      bgcolor: isDragTarget ? 'rgba(var(--sd-primary-rgb), 0.12)' : 'var(--sd-surface)',
                       cursor: 'default',
                     }}
                   >
@@ -868,7 +868,7 @@ function ClassPictureEvidenceGridV1({
                         openEditGroupDialog(group);
                       }}
                       aria-expanded={!isCollapsed}
-                      sx={{ minWidth: 0, gap: 0.55, borderRadius: '8px', textAlign: 'left', '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 } }}
+                      sx={{ minWidth: 0, gap: 0.55, borderRadius: '8px', textAlign: 'left', '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 1 } }}
                     >
                       <KeyboardArrowDownIcon sx={{ color: 'text.secondary', fontSize: 18, transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease' }} />
                       <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 860 }}>
@@ -899,7 +899,7 @@ function ClassPictureEvidenceGridV1({
                     enterNextDelay={1200}
                     title={(
                       <Box sx={{ px: 0.25, py: 0.15 }}>
-                        <Typography sx={{ color: '#fff', fontSize: 12.4, fontWeight: 820, lineHeight: 1.35 }}>
+                        <Typography sx={{ color: 'var(--sd-on-primary)', fontSize: 12.4, fontWeight: 820, lineHeight: 1.35 }}>
                           {t('learningModule.classPicture.doubleClickCreateFocus')}
                         </Typography>
                       </Box>
@@ -915,8 +915,8 @@ function ClassPictureEvidenceGridV1({
                       sx={{
                         gridColumn: `1 / span ${teachingUnits.length + 4}`,
                         p: 0.85,
-                        borderTop: '1px solid rgba(23, 21, 26, 0.12)',
-                        bgcolor: isDragTarget ? 'rgba(156, 40, 175, 0.12)' : '#fff',
+                        borderTop: '1px solid rgba(var(--sd-text-rgb), 0.12)',
+                        bgcolor: isDragTarget ? 'rgba(var(--sd-primary-rgb), 0.12)' : 'var(--sd-surface)',
                         cursor: 'default',
                       }}
                     >
@@ -927,7 +927,7 @@ function ClassPictureEvidenceGridV1({
                           openCreateGroupDialog();
                         }}
                         aria-expanded={!isCollapsed}
-                        sx={{ gap: 0.55, borderRadius: '8px', textAlign: 'left', '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 } }}
+                        sx={{ gap: 0.55, borderRadius: '8px', textAlign: 'left', '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 1 } }}
                       >
                         <KeyboardArrowDownIcon sx={{ color: 'text.secondary', fontSize: 18, transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease' }} />
                         <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 860 }}>
@@ -996,9 +996,9 @@ function ClassPictureEvidenceGridV1({
                     alignItems: 'center',
                     gap: 0.45,
                     p: 1,
-                    borderTop: isHovered ? '1px solid rgba(156, 40, 175, 0.34)' : '1px solid rgba(23, 21, 26, 0.08)',
-                    borderBottom: isHovered ? '1px solid rgba(156, 40, 175, 0.22)' : '1px solid transparent',
-                    bgcolor: draggedStudentId === student.id ? 'rgba(156, 40, 175, 0.08)' : isHovered ? 'rgba(156, 40, 175, 0.045)' : '#fff',
+                    borderTop: isHovered ? '1px solid rgba(var(--sd-primary-rgb), 0.34)' : '1px solid rgba(var(--sd-text-rgb), 0.08)',
+                    borderBottom: isHovered ? '1px solid rgba(var(--sd-primary-rgb), 0.22)' : '1px solid transparent',
+                    bgcolor: draggedStudentId === student.id ? 'rgba(var(--sd-primary-rgb), 0.08)' : isHovered ? 'rgba(var(--sd-primary-rgb), 0.045)' : 'var(--sd-surface)',
                     minWidth: 0,
                     transition: 'opacity 160ms ease, filter 160ms ease, background-color 140ms ease, border-color 140ms ease',
                     ...timelineMuteCellSx,
@@ -1018,7 +1018,7 @@ function ClassPictureEvidenceGridV1({
                         borderRadius: '8px',
                         color: 'text.secondary',
                         cursor: 'grab',
-                        '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+                        '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 1 },
                       }}
                     >
                       <DragIndicatorIcon sx={{ fontSize: 17 }} />
@@ -1035,7 +1035,7 @@ function ClassPictureEvidenceGridV1({
                       flexShrink: 0,
                       borderRadius: '8px',
                       color: 'text.secondary',
-                      '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 1 },
+                      '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 1 },
                     }}
                   >
                     <KeyboardArrowDownIcon sx={{ color: 'text.secondary', fontSize: 18, transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
@@ -1070,9 +1070,9 @@ function ClassPictureEvidenceGridV1({
                     pl: 0.35,
                     pr: 0.25,
                     minWidth: 0,
-                    borderTop: isHovered ? '1px solid rgba(156, 40, 175, 0.34)' : '1px solid rgba(23, 21, 26, 0.08)',
-                    borderBottom: isHovered ? '1px solid rgba(156, 40, 175, 0.22)' : '1px solid transparent',
-                    bgcolor: isHovered ? 'rgba(156, 40, 175, 0.045)' : '#fff',
+                    borderTop: isHovered ? '1px solid rgba(var(--sd-primary-rgb), 0.34)' : '1px solid rgba(var(--sd-text-rgb), 0.08)',
+                    borderBottom: isHovered ? '1px solid rgba(var(--sd-primary-rgb), 0.22)' : '1px solid transparent',
+                    bgcolor: isHovered ? 'rgba(var(--sd-primary-rgb), 0.045)' : 'var(--sd-surface)',
                     transition: 'opacity 160ms ease, filter 160ms ease, background-color 140ms ease, border-color 140ms ease',
                     ...timelineMuteCellSx,
                   }}
@@ -1097,7 +1097,7 @@ function ClassPictureEvidenceGridV1({
                           borderRadius: '5px',
                           cursor: alert.teachingUnitId ? 'pointer' : 'default',
                           '&:hover': {
-                            bgcolor: alert.type === 'absent' ? 'rgba(184, 92, 0, 0.08)' : 'rgba(156, 40, 175, 0.08)',
+                            bgcolor: alert.type === 'absent' ? 'rgba(var(--sd-warning-rgb), 0.08)' : 'rgba(var(--sd-primary-rgb), 0.08)',
                           },
                           '&:focus-visible': { outline: `2px solid ${alert.type === 'absent' ? absentOrange : purple}`, outlineOffset: 1 },
                         }}
@@ -1105,7 +1105,7 @@ function ClassPictureEvidenceGridV1({
                         {alert.type === 'absent' ? (
                           <PersonOffOutlinedIcon sx={{ color: absentOrange, fontSize: isExpanded ? 18 : 15, flexShrink: 0, opacity: 0.88 }} />
                         ) : (
-                          <ErrorOutlineIcon sx={{ color: purple, fontSize: isExpanded ? 18 : 15, flexShrink: 0, opacity: 0.88 }} />
+                          <ErrorOutlineIcon sx={{ color: 'var(--sd-accent-text)', fontSize: isExpanded ? 18 : 15, flexShrink: 0, opacity: 0.88 }} />
                         )}
                       </ButtonBase>
                     </Tooltip>
@@ -1127,9 +1127,9 @@ function ClassPictureEvidenceGridV1({
                     display: 'flex',
                     alignItems: 'center',
                     minWidth: 0,
-                    borderTop: isHovered ? '1px solid rgba(156, 40, 175, 0.34)' : '1px solid rgba(23, 21, 26, 0.08)',
-                    borderBottom: isHovered ? '1px solid rgba(156, 40, 175, 0.22)' : '1px solid transparent',
-                    bgcolor: isHovered ? 'rgba(156, 40, 175, 0.045)' : '#fff',
+                    borderTop: isHovered ? '1px solid rgba(var(--sd-primary-rgb), 0.34)' : '1px solid rgba(var(--sd-text-rgb), 0.08)',
+                    borderBottom: isHovered ? '1px solid rgba(var(--sd-primary-rgb), 0.22)' : '1px solid transparent',
+                    bgcolor: isHovered ? 'rgba(var(--sd-primary-rgb), 0.045)' : 'var(--sd-surface)',
                     cursor: rowNotesVisible ? 'pointer' : 'default',
                     transition: 'opacity 160ms ease, filter 160ms ease, background-color 140ms ease, border-color 140ms ease',
                     ...timelineMuteCellSx,
@@ -1162,7 +1162,7 @@ function ClassPictureEvidenceGridV1({
                           border: `1px solid ${purple}`,
                           borderRadius: '8px',
                           color: darkText,
-                          bgcolor: '#fff',
+                          bgcolor: 'var(--sd-surface)',
                           font: 'inherit',
                           fontSize: 12.5,
                           fontWeight: 760,
@@ -1178,11 +1178,11 @@ function ClassPictureEvidenceGridV1({
                             display: 'flex',
                             alignItems: 'center',
                             borderRadius: '8px',
-                            bgcolor: isRowNoteHovered ? 'rgba(156, 40, 175, 0.13)' : 'rgba(156, 40, 175, 0.055)',
+                            bgcolor: isRowNoteHovered ? 'rgba(var(--sd-primary-rgb), 0.13)' : 'rgba(var(--sd-primary-rgb), 0.055)',
                             transition: 'background-color 140ms ease',
                           }}
                         >
-                        <Typography sx={{ color: rowNote ? 'rgba(23, 21, 26, 0.58)' : 'rgba(23, 21, 26, 0.28)', fontSize: 12.2, fontWeight: rowNote ? 720 : 640, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <Typography sx={{ color: rowNote ? 'var(--sd-text-muted)' : 'var(--sd-text-muted)', fontSize: 12.2, fontWeight: rowNote ? 720 : 640, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {rowNote}
                         </Typography>
                       </Box>
@@ -1198,10 +1198,10 @@ function ClassPictureEvidenceGridV1({
                     justifyContent: 'center',
                     p: 0.45,
                     minWidth: 0,
-                    borderTop: isHovered ? '1px solid rgba(156, 40, 175, 0.34)' : '1px solid rgba(23, 21, 26, 0.08)',
-                    borderBottom: isHovered ? '1px solid rgba(156, 40, 175, 0.22)' : '1px solid transparent',
-                    borderLeft: '1px solid rgba(23, 21, 26, 0.055)',
-                    bgcolor: isHovered ? 'rgba(156, 40, 175, 0.045)' : '#fff',
+                    borderTop: isHovered ? '1px solid rgba(var(--sd-primary-rgb), 0.34)' : '1px solid rgba(var(--sd-text-rgb), 0.08)',
+                    borderBottom: isHovered ? '1px solid rgba(var(--sd-primary-rgb), 0.22)' : '1px solid transparent',
+                    borderLeft: '1px solid rgba(var(--sd-text-rgb), 0.055)',
+                    bgcolor: isHovered ? 'rgba(var(--sd-primary-rgb), 0.045)' : 'var(--sd-surface)',
                     transition: 'opacity 160ms ease, filter 160ms ease, background-color 140ms ease, border-color 140ms ease',
                     ...timelineMuteCellSx,
                   }}
@@ -1230,11 +1230,11 @@ function ClassPictureEvidenceGridV1({
                           height: isExpanded ? 22 : 19,
                           px: 0.45,
                           borderRadius: '999px',
-                          border: '1px solid rgba(23, 21, 26, 0.14)',
-                          bgcolor: 'rgba(23, 21, 26, 0.035)',
-                          color: 'rgba(23, 21, 26, 0.58)',
+                          border: '1px solid rgba(var(--sd-text-rgb), 0.14)',
+                          bgcolor: 'rgba(var(--sd-text-rgb), 0.035)',
+                          color: 'var(--sd-text-muted)',
                           cursor: 'pointer',
-                          '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                          '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
                         }}
                       >
                         <NotesIcon sx={{ fontSize: isExpanded ? 13.5 : 12.5, flexShrink: 0 }} />
@@ -1244,7 +1244,7 @@ function ClassPictureEvidenceGridV1({
                       </Box>
                     </Tooltip>
                   ) : (
-                    <Box sx={{ width: 20, height: 2, borderRadius: 999, bgcolor: 'rgba(23, 21, 26, 0.16)' }} />
+                    <Box sx={{ width: 20, height: 2, borderRadius: 999, bgcolor: 'rgba(var(--sd-text-rgb), 0.16)' }} />
                   )}
                 </Box>
 
@@ -1284,19 +1284,19 @@ function ClassPictureEvidenceGridV1({
                       }}
                       sx={{
                         p: 1,
-                        borderTop: isHovered ? '1px solid rgba(156, 40, 175, 0.34)' : '1px solid rgba(23, 21, 26, 0.08)',
-                        borderBottom: isHovered ? '1px solid rgba(156, 40, 175, 0.22)' : '1px solid transparent',
-                        borderLeft: '1px solid rgba(23, 21, 26, 0.055)',
+                        borderTop: isHovered ? '1px solid rgba(var(--sd-primary-rgb), 0.34)' : '1px solid rgba(var(--sd-text-rgb), 0.08)',
+                        borderBottom: isHovered ? '1px solid rgba(var(--sd-primary-rgb), 0.22)' : '1px solid transparent',
+                        borderLeft: '1px solid rgba(var(--sd-text-rgb), 0.055)',
                         textAlign: 'left',
                         position: 'relative',
-                        bgcolor: isActiveUnitCell ? 'rgba(156, 40, 175, 0.095)' : isHovered ? 'rgba(156, 40, 175, 0.045)' : '#fff',
-                        boxShadow: isActiveUnitCell ? 'inset 0 0 0 1px rgba(156, 40, 175, 0.22)' : 'none',
+                        bgcolor: isActiveUnitCell ? 'rgba(var(--sd-primary-rgb), 0.095)' : isHovered ? 'rgba(var(--sd-primary-rgb), 0.045)' : 'var(--sd-surface)',
+                        boxShadow: isActiveUnitCell ? 'inset 0 0 0 1px rgba(var(--sd-primary-rgb), 0.22)' : 'none',
                         cursor: isEditingCell ? 'text' : 'pointer',
                         transition: 'opacity 160ms ease, filter 160ms ease, background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease',
                         ...timelineMuteCellSx,
                         '&:hover, &:focus-within': {
-                          bgcolor: 'rgba(156, 40, 175, 0.085)',
-                          boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.16)',
+                          bgcolor: 'rgba(var(--sd-primary-rgb), 0.085)',
+                          boxShadow: 'inset 0 0 0 1px rgba(var(--sd-primary-rgb), 0.16)',
                         },
                         '&:hover .LearningModuleUnitNoteButton, &:focus-within .LearningModuleUnitNoteButton': {
                           opacity: 1,
@@ -1328,15 +1328,15 @@ function ClassPictureEvidenceGridV1({
                             transform: 'translateY(1px) scale(0.96)',
                             transition: 'opacity 140ms ease, transform 140ms ease, background-color 140ms ease, color 140ms ease',
                             transitionDelay: '0ms',
-                            color: purple,
-                            bgcolor: '#fff',
-                            border: '1px solid rgba(156, 40, 175, 0.18)',
+                            color: 'var(--sd-accent-text)',
+                            bgcolor: 'var(--sd-surface)',
+                            border: '1px solid rgba(var(--sd-primary-rgb), 0.18)',
                             boxShadow: '0 4px 10px rgba(23, 21, 26, 0.08)',
-                            '&:hover': { bgcolor: purple, color: '#fff' },
+                            '&:hover': { bgcolor: purple, color: 'var(--sd-on-primary)' },
                             '&:focus-visible': {
                               opacity: 1,
                               pointerEvents: 'auto',
-                              outline: `2px solid ${purple}`,
+                              outline: `2px solid ${'var(--sd-focus)'}`,
                               outlineOffset: 1,
                             },
                           }}
@@ -1371,7 +1371,7 @@ function ClassPictureEvidenceGridV1({
                             border: `1px solid ${purple}`,
                             borderRadius: '8px',
                             color: darkText,
-                            bgcolor: '#fff',
+                            bgcolor: 'var(--sd-surface)',
                             font: 'inherit',
                             fontSize: 13,
                             fontWeight: 860,
@@ -1381,7 +1381,7 @@ function ClassPictureEvidenceGridV1({
                         />
                       ) : savedNote ? (
                         <Box sx={{ minHeight: 33, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Typography sx={{ color: purple, fontSize: 13.4, fontWeight: 900, lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <Typography sx={{ color: 'var(--sd-accent-text)', fontSize: 13.4, fontWeight: 900, lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {savedNote}
                           </Typography>
                         </Box>
@@ -1444,14 +1444,14 @@ function ClassPictureEvidenceGridV1({
                                     px: 0.75,
                                     borderRadius: '999px',
                                     border: '1px solid',
-                                    borderColor: selected ? 'rgba(156, 40, 175, 0.24)' : 'rgba(23, 21, 26, 0.095)',
-                                    bgcolor: selected ? 'rgba(156, 40, 175, 0.06)' : '#fff',
+                                    borderColor: selected ? 'rgba(var(--sd-primary-rgb), 0.24)' : 'rgba(var(--sd-text-rgb), 0.095)',
+                                    bgcolor: selected ? 'rgba(var(--sd-primary-rgb), 0.06)' : 'var(--sd-surface)',
                                     color: selected ? darkText : 'text.secondary',
                                     fontSize: 11.4,
                                     fontWeight: selected ? 880 : 780,
                                     gap: 0.35,
-                                    '&:hover': { bgcolor: selected ? 'rgba(156, 40, 175, 0.075)' : 'rgba(23, 21, 26, 0.026)' },
-                                    '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                                    '&:hover': { bgcolor: selected ? 'rgba(var(--sd-primary-rgb), 0.075)' : 'rgba(var(--sd-text-rgb), 0.026)' },
+                                    '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
                                   }}
                                 >
                                   <Icon sx={{ fontSize: 14 }} />
@@ -2087,7 +2087,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
             sx={{
               minWidth: { xs: 180, sm: 220 },
               borderRadius: '999px',
-              color: groupedViewActive ? purple : 'text.secondary',
+              color: groupedViewActive ? 'var(--sd-accent-text)' : 'text.secondary',
               fontSize: 13,
               fontWeight: 760,
               '& .MuiSelect-select': {
@@ -2096,13 +2096,13 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
                 pr: 4,
               },
               '& fieldset': {
-                borderColor: groupedViewActive ? 'rgba(156, 40, 175, 0.28)' : 'rgba(23, 21, 26, 0.12)',
+                borderColor: groupedViewActive ? 'rgba(var(--sd-primary-rgb), 0.28)' : 'rgba(var(--sd-text-rgb), 0.12)',
               },
               '&:hover fieldset': {
-                borderColor: 'rgba(156, 40, 175, 0.28) !important',
+                borderColor: 'rgba(var(--sd-primary-rgb), 0.28) !important',
               },
               '&.Mui-focused fieldset': {
-                borderColor: 'rgba(156, 40, 175, 0.38) !important',
+                borderColor: 'rgba(var(--sd-primary-rgb), 0.38) !important',
               },
             }}
           >
@@ -2126,7 +2126,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
                         event.stopPropagation();
                         deleteClassView(definition.id);
                       }}
-                      sx={{ ml: 'auto', mr: -0.5, flexShrink: 0, color: 'text.secondary', '&:hover': { color: '#b42318', bgcolor: 'rgba(180, 35, 24, 0.08)' } }}
+                      sx={{ ml: 'auto', mr: -0.5, flexShrink: 0, color: 'text.secondary', '&:hover': { color: 'var(--sd-error)', bgcolor: 'rgba(var(--sd-error-rgb), 0.08)' } }}
                     >
                       <DeleteOutlineIcon sx={{ fontSize: 16 }} />
                     </IconButton>
@@ -2186,7 +2186,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
             <ButtonBase
               type="button"
               onClick={closeAddClassViewDialog}
-              sx={{ px: 0.85, py: 0.45, borderRadius: '8px', color: 'text.secondary', fontSize: 12, fontWeight: 850, '&:hover': { bgcolor: 'rgba(23, 21, 26, 0.035)' } }}
+              sx={{ px: 0.85, py: 0.45, borderRadius: '8px', color: 'text.secondary', fontSize: 12, fontWeight: 850, '&:hover': { bgcolor: 'rgba(var(--sd-text-rgb), 0.035)' } }}
             >
               Cancel
             </ButtonBase>
@@ -2199,7 +2199,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
                 py: 0.45,
                 borderRadius: '8px',
                 bgcolor: purple,
-                color: '#fff',
+                color: 'var(--sd-on-primary)',
                 fontSize: 12,
                 fontWeight: 880,
                 opacity: newClassViewTitle.trim() ? 1 : 0.45,

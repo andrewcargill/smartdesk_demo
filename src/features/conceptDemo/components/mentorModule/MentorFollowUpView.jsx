@@ -4,7 +4,7 @@ import { border, darkText, getWeekOrDate, purple } from './mentorModuleShared.js
 
 export function NextFollowUpCard({ nextFollowUp }) {
   return (
-    <Box sx={{ p: 0.85, borderRadius: '8px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+    <Box sx={{ p: 0.85, borderRadius: '8px', border: '1px solid rgba(var(--sd-text-rgb), 0.08)', bgcolor: 'var(--sd-surface)' }}>
       <Typography sx={{ color: 'text.secondary', fontSize: 11.7, fontWeight: 780 }}>Next follow-up</Typography>
       {nextFollowUp ? (
         <>
@@ -26,15 +26,15 @@ export function NextFollowUpCard({ nextFollowUp }) {
 
 export default function MentorFollowUpView({ picture }) {
   return (
-    <Paper elevation={0} sx={{ p: 1, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff' }}>
+    <Paper elevation={0} sx={{ p: 1, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: 'var(--sd-surface)' }}>
       <Stack direction="row" spacing={0.55} alignItems="center">
-        <EventAvailableIcon sx={{ color: purple, fontSize: 18 }} />
+        <EventAvailableIcon sx={{ color: 'var(--sd-accent-text)', fontSize: 18 }} />
         <Typography sx={{ color: darkText, fontSize: 15.2, fontWeight: 900 }}>Upcoming</Typography>
       </Stack>
       {picture.followUps.length ? (
         <Stack component="ul" spacing={0.55} sx={{ m: 0, mt: 0.8, p: 0, listStyle: 'none' }}>
           {picture.followUps.map((item) => (
-            <Box key={item.id} component="li" sx={{ display: 'grid', gridTemplateColumns: '72px minmax(0, 1fr)', gap: 0.65, py: 0.55, borderBottom: '1px solid rgba(23, 21, 26, 0.07)' }}>
+            <Box key={item.id} component="li" sx={{ display: 'grid', gridTemplateColumns: '72px minmax(0, 1fr)', gap: 0.65, py: 0.55, borderBottom: '1px solid rgba(var(--sd-text-rgb), 0.07)' }}>
               <Typography sx={{ color: 'text.secondary', fontSize: 11.8, fontWeight: 780 }}>{getWeekOrDate(item)}</Typography>
               <Typography sx={{ color: darkText, fontSize: 12.4, fontWeight: 820 }}>{item.label}{item.completed ? ' · Completed' : ''}</Typography>
             </Box>

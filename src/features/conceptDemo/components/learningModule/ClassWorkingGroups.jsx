@@ -34,9 +34,9 @@ import {
   getUngroupedStudents,
 } from '../../utils/classGroupUtils.js';
 
-const darkText = '#17151a';
-const purple = '#9c28af';
-const palePurple = '#fbf5fd';
+const darkText = 'var(--sd-text)';
+const purple = 'var(--sd-primary)';
+const palePurple = 'var(--sd-primary-soft)';
 
 function getStudentCountLabel(count) {
   return `${count} ${count === 1 ? 'student' : 'students'}`;
@@ -80,8 +80,8 @@ function StudentNameChip({ student, onSelectStudent }) {
       size="small"
       aria-label={onSelectStudent ? `Open ${student.displayName}'s profile` : undefined}
       sx={{
-        bgcolor: '#fff',
-        border: '1px solid rgba(23, 21, 26, 0.1)',
+        bgcolor: 'var(--sd-surface)',
+        border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
         color: darkText,
         cursor: onSelectStudent ? 'pointer' : 'default',
         fontWeight: 720,
@@ -92,11 +92,11 @@ function StudentNameChip({ student, onSelectStudent }) {
           textOverflow: 'ellipsis',
         },
         '&:hover': onSelectStudent ? {
-          bgcolor: '#f7f4f8',
-          borderColor: 'rgba(23, 21, 26, 0.18)',
+          bgcolor: 'var(--sd-surface-muted)',
+          borderColor: 'rgba(var(--sd-text-rgb), 0.18)',
         } : undefined,
         '&:focus-visible': {
-          outline: '2px solid rgba(156, 40, 175, 0.38)',
+          outline: '2px solid rgba(var(--sd-primary-rgb), 0.38)',
           outlineOffset: 2,
         },
       }}
@@ -271,7 +271,7 @@ export function GroupDialog({
                   <Chip
                     label={`${selectedStudentIds.length} selected`}
                     size="small"
-                    sx={{ alignSelf: { xs: 'flex-start', sm: 'center' }, bgcolor: palePurple, color: purple, fontWeight: 760 }}
+                    sx={{ alignSelf: { xs: 'flex-start', sm: 'center' }, bgcolor: palePurple, color: 'var(--sd-accent-text)', fontWeight: 760 }}
                   />
                 </Stack>
                 <TextField
@@ -288,7 +288,7 @@ export function GroupDialog({
                     mt: 1,
                     maxHeight: 280,
                     overflowY: 'auto',
-                    border: '1px solid rgba(23, 21, 26, 0.1)',
+                    border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
                     borderRadius: '16px',
                     p: 0.5,
                   }}
@@ -309,7 +309,7 @@ export function GroupDialog({
                         mx: 0,
                         px: 0.5,
                         borderRadius: '10px',
-                        '&:hover': { bgcolor: '#fbfafc' },
+                        '&:hover': { bgcolor: 'var(--sd-surface-muted)' },
                       }}
                     />
                   ))}
@@ -333,7 +333,7 @@ export function GroupDialog({
                   ) : (
                     <Paper
                       elevation={0}
-                      sx={{ p: 1.4, borderRadius: '15px', border: '1px solid rgba(23, 21, 26, 0.12)', bgcolor: '#fff' }}
+                      sx={{ p: 1.4, borderRadius: '15px', border: '1px solid rgba(var(--sd-text-rgb), 0.12)', bgcolor: 'var(--sd-surface)' }}
                     >
                       <Typography sx={{ color: darkText, fontWeight: 850 }}>Delete this focus?</Typography>
                       <Typography sx={{ mt: 0.35, color: 'text.secondary', lineHeight: 1.45 }}>
@@ -353,7 +353,7 @@ export function GroupDialog({
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
         <Button onClick={onClose} sx={{ color: 'text.secondary' }}>Cancel</Button>
-        <Button variant="contained" onClick={saveGroup} sx={{ bgcolor: purple, '&:hover': { bgcolor: '#842194' } }}>
+        <Button variant="contained" onClick={saveGroup} sx={{ bgcolor: purple, '&:hover': { bgcolor: 'var(--sd-primary-hover)' } }}>
           {mode === 'edit' ? 'Save focus' : 'Create focus'}
         </Button>
       </DialogActions>
@@ -399,8 +399,8 @@ export default function ClassWorkingGroups({
       sx={{
         p: { xs: 2, sm: 2.5 },
         borderRadius: '22px',
-        border: '1px solid rgba(23, 21, 26, 0.1)',
-        bgcolor: '#fff',
+        border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
+        bgcolor: 'var(--sd-surface)',
       }}
     >
       <Stack spacing={2.1}>
@@ -419,7 +419,7 @@ export default function ClassWorkingGroups({
               variant="outlined"
               onClick={openCreateDialog}
               size="small"
-              sx={{ color: purple, borderColor: 'rgba(156, 40, 175, 0.24)', fontWeight: 760 }}
+              sx={{ color: 'var(--sd-accent-text)', borderColor: 'rgba(var(--sd-primary-rgb), 0.24)', fontWeight: 760 }}
             >
               Create focus
             </Button>
@@ -465,8 +465,8 @@ export default function ClassWorkingGroups({
                         p: 1.55,
                         minHeight: 184,
                         borderRadius: '16px',
-                        border: '1px solid rgba(23, 21, 26, 0.1)',
-                        bgcolor: '#fff',
+                        border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
+                        bgcolor: 'var(--sd-surface)',
                       }}
                     >
                       <Stack spacing={1.05} sx={{ height: '100%' }}>
@@ -489,7 +489,7 @@ export default function ClassWorkingGroups({
                             <StudentNameChip key={student.id} student={student} onSelectStudent={onSelectStudent} />
                           ))}
                           {!groupStudents.length && (
-                            <Chip label="No students selected" size="small" sx={{ bgcolor: '#fff', color: 'text.secondary' }} />
+                            <Chip label="No students selected" size="small" sx={{ bgcolor: 'var(--sd-surface)', color: 'text.secondary' }} />
                           )}
                         </Stack>
 
@@ -517,8 +517,8 @@ export default function ClassWorkingGroups({
                 sx={{
                   p: 1.55,
                   borderRadius: '16px',
-                  border: '1px solid rgba(23, 21, 26, 0.09)',
-                  bgcolor: '#fbfafc',
+                  border: '1px solid rgba(var(--sd-text-rgb), 0.09)',
+                  bgcolor: 'var(--sd-surface-muted)',
                 }}
               >
                 <Stack spacing={1}>

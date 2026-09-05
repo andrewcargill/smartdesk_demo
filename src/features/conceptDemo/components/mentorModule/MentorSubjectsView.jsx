@@ -19,7 +19,7 @@ function SubjectCheckInComposer({ subjectId, subjectTitle, subjectCheckIns = [],
   }
 
   return (
-    <Paper elevation={0} sx={{ p: 1, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff' }}>
+    <Paper elevation={0} sx={{ p: 1, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: 'var(--sd-surface)' }}>
       <Stack spacing={0.75}>
         <Box>
           <Typography sx={{ color: darkText, fontSize: 13.2, fontWeight: 900 }}>Subject check-in</Typography>
@@ -28,7 +28,7 @@ function SubjectCheckInComposer({ subjectId, subjectTitle, subjectCheckIns = [],
           </Typography>
         </Box>
         {latestSubjectCheckIn && (
-          <Box sx={{ p: 0.75, borderRadius: '8px', bgcolor: 'rgba(23, 21, 26, 0.025)', border: '1px solid rgba(23, 21, 26, 0.07)' }}>
+          <Box sx={{ p: 0.75, borderRadius: '8px', bgcolor: 'rgba(var(--sd-text-rgb), 0.025)', border: '1px solid rgba(var(--sd-text-rgb), 0.07)' }}>
             <Stack direction="row" spacing={0.5} alignItems="center">
               <CheckInStatusIcon status={latestSubjectCheckIn.status} size={16} />
               <Typography sx={{ color: 'text.secondary', fontSize: 11.5, fontWeight: 800 }}>{formatDate(latestSubjectCheckIn.date)}</Typography>
@@ -60,11 +60,11 @@ function SubjectCheckInComposer({ subjectId, subjectTitle, subjectCheckIns = [],
               sx={{
                 height: 34,
                 borderRadius: '8px',
-                border: '1px solid rgba(23, 21, 26, 0.1)',
-                bgcolor: '#fff',
+                border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
+                bgcolor: 'var(--sd-surface)',
                 opacity: hasComment ? 1 : 0.46,
-                '&:hover': { bgcolor: hasComment ? 'rgba(23, 21, 26, 0.035)' : '#fff' },
-                '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                '&:hover': { bgcolor: hasComment ? 'rgba(var(--sd-text-rgb), 0.035)' : 'var(--sd-surface)' },
+                '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
               }}
             >
               <Stack direction="row" spacing={0.4} alignItems="center">
@@ -91,7 +91,7 @@ export default function MentorSubjectsView({
   const selectedSubjectTitle = getLocalizedValue(selectedSubjectConfig.subjectTitle);
 
   return (
-    <Paper elevation={0} sx={{ p: 1, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff' }}>
+    <Paper elevation={0} sx={{ p: 1, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: 'var(--sd-surface)' }}>
       <Stack spacing={1}>
         <Box>
           <Typography sx={{ color: darkText, fontSize: 15.2, fontWeight: 900 }}>Subjects</Typography>
@@ -100,7 +100,7 @@ export default function MentorSubjectsView({
           </Typography>
         </Box>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(320px, 0.95fr) minmax(0, 1.05fr)' }, gap: 1, alignItems: 'start' }}>
-          <Paper elevation={0} sx={{ p: 0.65, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: '#fff', overflow: 'hidden' }}>
+          <Paper elevation={0} sx={{ p: 0.65, borderRadius: '8px', border: `1px solid ${border}`, bgcolor: 'var(--sd-surface)', overflow: 'hidden' }}>
             <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'minmax(130px, 1fr) 112px minmax(150px, 1.1fr)', gap: 0.65, px: 0.65, pb: 0.45 }}>
               {['Subject', 'Teacher status', 'Student status'].map((label) => (
                 <Typography key={label} sx={{ color: 'text.secondary', fontSize: 11.3, fontWeight: 860 }}>
@@ -132,11 +132,11 @@ export default function MentorSubjectsView({
                       borderRadius: '8px',
                       border: '1px solid',
                       borderColor: selected ? getStatusMeta(status).border : 'transparent',
-                      bgcolor: selected ? getStatusMeta(status).bg : '#fff',
+                      bgcolor: selected ? getStatusMeta(status).bg : 'var(--sd-surface)',
                       color: darkText,
                       textAlign: 'left',
-                      '&:hover': { bgcolor: selected ? getStatusMeta(status).bg : 'rgba(23, 21, 26, 0.035)' },
-                      '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                      '&:hover': { bgcolor: selected ? getStatusMeta(status).bg : 'rgba(var(--sd-text-rgb), 0.035)' },
+                      '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
                     }}
                   >
                     <Typography sx={{ color: darkText, fontSize: 12.5, fontWeight: 900, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

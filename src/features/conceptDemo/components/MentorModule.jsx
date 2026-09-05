@@ -131,21 +131,21 @@ function StudentOverviewRow({ student, picture, subjectConfigs, selectedCell, on
       borderRadius: 0,
       px: 0.8,
       py: 0.55,
-      borderLeft: '1px solid rgba(23, 21, 26, 0.055)',
-      bgcolor: active ? 'rgba(156, 40, 175, 0.095)' : 'transparent',
-      boxShadow: active ? 'inset 0 0 0 1px rgba(156, 40, 175, 0.22)' : 'none',
+      borderLeft: '1px solid rgba(var(--sd-text-rgb), 0.055)',
+      bgcolor: active ? 'rgba(var(--sd-primary-rgb), 0.095)' : 'transparent',
+      boxShadow: active ? 'inset 0 0 0 1px rgba(var(--sd-primary-rgb), 0.22)' : 'none',
       transition: 'background-color 140ms ease, box-shadow 140ms ease',
       '&:hover': {
-        bgcolor: active ? 'rgba(156, 40, 175, 0.12)' : 'rgba(156, 40, 175, 0.045)',
-        boxShadow: 'inset 0 0 0 1px rgba(156, 40, 175, 0.16)',
+        bgcolor: active ? 'rgba(var(--sd-primary-rgb), 0.12)' : 'rgba(var(--sd-primary-rgb), 0.045)',
+        boxShadow: 'inset 0 0 0 1px rgba(var(--sd-primary-rgb), 0.16)',
       },
-      '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: -2 },
+      '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: -2 },
     };
   };
   const rowCellSx = {
-    borderTop: selected ? '1px solid rgba(156, 40, 175, 0.34)' : '1px solid rgba(23, 21, 26, 0.08)',
-    borderBottom: selected ? '1px solid rgba(156, 40, 175, 0.18)' : '1px solid transparent',
-    bgcolor: selected ? 'rgba(156, 40, 175, 0.035)' : '#fff',
+    borderTop: selected ? '1px solid rgba(var(--sd-primary-rgb), 0.34)' : '1px solid rgba(var(--sd-text-rgb), 0.08)',
+    borderBottom: selected ? '1px solid rgba(var(--sd-primary-rgb), 0.18)' : '1px solid transparent',
+    bgcolor: selected ? 'rgba(var(--sd-primary-rgb), 0.035)' : 'var(--sd-surface)',
     transition: 'background-color 140ms ease, border-color 140ms ease',
   };
   const timelineActive = selectedCell === 'timeline';
@@ -162,11 +162,11 @@ function StudentOverviewRow({ student, picture, subjectConfigs, selectedCell, on
         },
         alignItems: 'stretch',
         textAlign: 'left',
-        bgcolor: '#fff',
+        bgcolor: 'var(--sd-surface)',
         '&:hover .MentorModuleRowCell': {
-          borderTopColor: 'rgba(156, 40, 175, 0.34)',
-          borderBottomColor: 'rgba(156, 40, 175, 0.18)',
-          bgcolor: 'rgba(156, 40, 175, 0.045)',
+          borderTopColor: 'rgba(var(--sd-primary-rgb), 0.34)',
+          borderBottomColor: 'rgba(var(--sd-primary-rgb), 0.18)',
+          bgcolor: 'rgba(var(--sd-primary-rgb), 0.045)',
         },
       }}
     >
@@ -185,11 +185,11 @@ function StudentOverviewRow({ student, picture, subjectConfigs, selectedCell, on
           justifyContent: 'center',
           width: '100%',
           minHeight: 38,
-          color: timelineActive ? purple : 'text.secondary',
-          bgcolor: timelineActive ? 'rgba(156, 40, 175, 0.095)' : rowCellSx.bgcolor,
-          boxShadow: timelineActive ? 'inset 0 0 0 1px rgba(156, 40, 175, 0.22)' : 'none',
-          '&:hover': { bgcolor: timelineActive ? 'rgba(156, 40, 175, 0.12)' : 'rgba(156, 40, 175, 0.045)' },
-          '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: -2 },
+          color: timelineActive ? 'var(--sd-accent-text)' : 'text.secondary',
+          bgcolor: timelineActive ? 'rgba(var(--sd-primary-rgb), 0.095)' : rowCellSx.bgcolor,
+          boxShadow: timelineActive ? 'inset 0 0 0 1px rgba(var(--sd-primary-rgb), 0.22)' : 'none',
+          '&:hover': { bgcolor: timelineActive ? 'rgba(var(--sd-primary-rgb), 0.12)' : 'rgba(var(--sd-primary-rgb), 0.045)' },
+          '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: -2 },
         }}
       >
         <KeyboardArrowDownIcon sx={{ color: 'inherit', fontSize: 18, transform: timelineActive ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
@@ -259,8 +259,8 @@ function MentorTableHeader({ t }) {
       sx={{
         display: { xs: 'none', md: 'grid' },
         gridTemplateColumns: mentorTableColumns,
-        bgcolor: '#fff',
-        borderBottom: '1px solid rgba(23, 21, 26, 0.12)',
+        bgcolor: 'var(--sd-surface)',
+        borderBottom: '1px solid rgba(var(--sd-text-rgb), 0.12)',
       }}
     >
       {mentorTableHeaderKeys.map((key, index) => {
@@ -275,7 +275,7 @@ function MentorTableHeader({ t }) {
               fontWeight: 860,
               px: index === 0 ? 0.6 : 1,
               py: 0.85,
-              borderLeft: index > 1 ? '1px solid rgba(23, 21, 26, 0.055)' : 0,
+              borderLeft: index > 1 ? '1px solid rgba(var(--sd-text-rgb), 0.055)' : 0,
             }}
           >
             {label}
@@ -295,8 +295,8 @@ function MentorTableShell({ children }) {
         sx={{
           minWidth: { xs: 0, md: 860 },
           borderRadius: '10px',
-          border: '1px solid rgba(23, 21, 26, 0.16)',
-          bgcolor: '#fff',
+          border: '1px solid rgba(var(--sd-text-rgb), 0.16)',
+          bgcolor: 'var(--sd-surface)',
           boxShadow: '0 10px 28px rgba(23, 21, 26, 0.045)',
           overflow: 'hidden',
         }}
@@ -483,7 +483,7 @@ export default function MentorModule({ onBack }) {
             width: { xs: 'calc(100% - 55px)', sm: 460 },
             maxWidth: 460,
             borderRadius: 3,
-            bgcolor: '#fff',
+            bgcolor: 'var(--sd-surface)',
             p: 1,
           },
         }}
@@ -499,7 +499,7 @@ export default function MentorModule({ onBack }) {
         <DialogTitle sx={{ color: darkText, fontWeight: 900, pb: 1, textAlign: 'center' }}>
           {t('mentorModule.privacyModal.title')}
         </DialogTitle>
-        <DialogContent dividers sx={{ borderColor: 'rgba(23, 21, 26, 0.08)', textAlign: 'center' }}>
+        <DialogContent dividers sx={{ borderColor: 'rgba(var(--sd-text-rgb), 0.08)', textAlign: 'center' }}>
           {privacyChoice !== 'private' ? (
             <Stack spacing={1.5} alignItems="center">
               <Typography sx={{ color: 'text.secondary', fontSize: 14, lineHeight: 1.5 }}>
@@ -517,14 +517,14 @@ export default function MentorModule({ onBack }) {
                 <Button
                   variant="contained"
                   onClick={() => handlePrivacyChoice('private')}
-                  sx={{ bgcolor: purple, '&:hover': { bgcolor: '#7d2d97' }, borderRadius: '10px', px: 2.4, py: 1, textTransform: 'none' }}
+                  sx={{ bgcolor: purple, '&:hover': { bgcolor: 'var(--sd-primary-hover)' }, borderRadius: '10px', px: 2.4, py: 1, textTransform: 'none' }}
                 >
                   {t('mentorModule.privacyModal.privateMode')}
                 </Button>
                 <Button
                   variant="outlined"
                   onClick={() => handlePrivacyChoice('standard')}
-                  sx={{ borderRadius: '10px', px: 2.4, py: 1, borderColor: 'rgba(23, 21, 26, 0.2)', color: darkText, textTransform: 'none' }}
+                  sx={{ borderRadius: '10px', px: 2.4, py: 1, borderColor: 'rgba(var(--sd-text-rgb), 0.2)', color: darkText, textTransform: 'none' }}
                 >
                   {t('mentorModule.privacyModal.standardView')}
                 </Button>
@@ -542,7 +542,7 @@ export default function MentorModule({ onBack }) {
                   value={pendingPrivateStudentId}
                   label={t('mentorModule.privacyModal.studentLabel')}
                   onChange={(event) => setPendingPrivateStudentId(event.target.value)}
-                  sx={{ bgcolor: '#fff', borderRadius: '8px' }}
+                  sx={{ bgcolor: 'var(--sd-surface)', borderRadius: '8px' }}
                 >
                   <MenuItem value="">
                     <em>{t('mentorModule.privacyModal.selectStudentPlaceholder')}</em>
@@ -573,7 +573,7 @@ export default function MentorModule({ onBack }) {
                 variant="contained"
                 onClick={handlePrivateSelectionSubmit}
                 disabled={!pendingPrivateStudentId}
-                sx={{ bgcolor: purple, '&:hover': { bgcolor: '#7d2d97' }, borderRadius: '10px' }}
+                sx={{ bgcolor: purple, '&:hover': { bgcolor: 'var(--sd-primary-hover)' }, borderRadius: '10px' }}
               >
                 {t('mentorModule.privacyModal.loadSelectedStudent')}
               </Button>
@@ -605,9 +605,9 @@ export default function MentorModule({ onBack }) {
               py: 0.55,
               borderRadius: '999px',
               border: '1px solid',
-              borderColor: privateMode ? 'rgba(156, 40, 175, 0.26)' : 'rgba(23, 21, 26, 0.12)',
-              bgcolor: privateMode ? 'rgba(156, 40, 175, 0.06)' : '#fff',
-              color: privateMode ? purple : 'text.secondary',
+              borderColor: privateMode ? 'rgba(var(--sd-primary-rgb), 0.26)' : 'rgba(var(--sd-text-rgb), 0.12)',
+              bgcolor: privateMode ? 'rgba(var(--sd-primary-rgb), 0.06)' : 'var(--sd-surface)',
+              color: privateMode ? 'var(--sd-accent-text)' : 'text.secondary',
               fontSize: 11.6,
               fontWeight: 900,
             }}
@@ -634,22 +634,22 @@ export default function MentorModule({ onBack }) {
                   p: 1.35,
                   borderRadius: '8px',
                   border: '1px solid',
-                  borderColor: selected ? purple : 'rgba(23, 21, 26, 0.16)',
-                  bgcolor: selected ? purple : '#fff',
+                  borderColor: selected ? purple : 'rgba(var(--sd-text-rgb), 0.16)',
+                  bgcolor: selected ? purple : 'var(--sd-surface)',
                   textAlign: 'left',
-                  boxShadow: selected ? '0 10px 24px rgba(156, 40, 175, 0.18)' : '0 4px 14px rgba(23, 21, 26, 0.055)',
+                  boxShadow: selected ? '0 10px 24px rgba(var(--sd-primary-rgb), 0.18)' : '0 4px 14px rgba(23, 21, 26, 0.055)',
                   transition: 'background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease',
                   '&:hover': {
-                    borderColor: selected ? purple : 'rgba(156, 40, 175, 0.38)',
-                    bgcolor: selected ? '#8b219e' : 'rgba(156, 40, 175, 0.035)',
-                    boxShadow: selected ? '0 12px 28px rgba(156, 40, 175, 0.22)' : '0 8px 20px rgba(23, 21, 26, 0.08)',
+                    borderColor: selected ? purple : 'rgba(var(--sd-primary-rgb), 0.38)',
+                    bgcolor: selected ? 'var(--sd-primary-hover)' : 'rgba(var(--sd-primary-rgb), 0.035)',
+                    boxShadow: selected ? '0 12px 28px rgba(var(--sd-primary-rgb), 0.22)' : '0 8px 20px rgba(23, 21, 26, 0.08)',
                     transform: 'translateY(-1px)',
                   },
-                  '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+                  '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
                 }}
               >
-                <Typography sx={{ color: selected ? '#fff' : darkText, fontSize: 24, fontWeight: 950, lineHeight: 1 }}>{value}</Typography>
-                <Typography sx={{ mt: 0.45, color: selected ? 'rgba(255,255,255,0.86)' : darkText, fontSize: 12.5, fontWeight: 900 }}>{label}</Typography>
+                <Typography sx={{ color: selected ? 'var(--sd-on-primary)' : darkText, fontSize: 24, fontWeight: 950, lineHeight: 1 }}>{value}</Typography>
+                <Typography sx={{ mt: 0.45, color: selected ? 'rgba(var(--sd-surface-rgb), 0.86)' : darkText, fontSize: 12.5, fontWeight: 900 }}>{label}</Typography>
               </Paper>
               );
             })}
@@ -669,7 +669,7 @@ export default function MentorModule({ onBack }) {
                       setPrivateSelectedStudentId(nextStudentId);
                       setExpandedCell({ studentId: nextStudentId, cellId: '' });
                     }}
-                    sx={{ bgcolor: '#fff', borderRadius: '8px' }}
+                    sx={{ bgcolor: 'var(--sd-surface)', borderRadius: '8px' }}
                   >
                     <MenuItem value="">
                       <em>{t('mentorModule.privacyModal.selectStudentPlaceholder')}</em>

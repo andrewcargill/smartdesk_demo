@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import { useColorMode } from '../../ColorModeContext.jsx';
 import {
   Box,
   Button,
@@ -23,6 +26,7 @@ import { ConceptDemoLanguageProvider, useConceptDemoLanguage } from './ConceptDe
 import { ConceptDemoSubjectProvider, useConceptDemoSubjects } from './ConceptDemoSubjectContext.jsx';
 import { ConceptDemoTeacherProvider, useConceptDemoTeacher } from './ConceptDemoTeacherContext.jsx';
 import DemoShell from './DemoShell.jsx';
+import HomeMockup01 from './mockups/home01/HomeMockup01.jsx';
 import FocusedWorkspace from './components/FocusedWorkspace.jsx';
 import LearningModule from './components/learningModule/LearningModule.jsx';
 import MentorModule from './components/MentorModule.jsx';
@@ -38,7 +42,7 @@ import { resolveLocalizedValue } from './i18n/conceptDemoTranslations.js';
 import { getSmartDeskHomeContext } from './utils/smartDeskContextUtils.js';
 import { getSubjectModules, getTeachingEvents } from './utils/annaSubjectUtils.js';
 import { getCurrentWeekContext } from './utils/weekDataUtils.js';
-import bg1Image from './media/bg-1.jpg';
+import DynamicGradientBackground from './media/DynamicGradientBackground/DynamicGradientBackground.jsx';
 import bg2Image from './media/bg-2.jpg';
 import bg3Image from './media/bg-3.jpg';
 import smartDeskImage from './media/smartdesk-image.png';
@@ -46,9 +50,9 @@ import smartDeskObservationsImage from './media/smartdesk-observations.png';
 import smartDeskWorkflowImage from './media/smartdesk-workflow.png';
 import smartDeskLearningObservationsImage from './media/smartdesk_learningOb.png';
 
-const purple = '#9c28af';
-const palePurple = '#fbf5fd';
-const darkText = '#17151a';
+const purple = 'var(--sd-primary)';
+const palePurple = 'var(--sd-primary-soft)';
+const darkText = 'var(--sd-text)';
 const smartDeskWelcomeImageModules = import.meta.glob('./media/smartdesk_*.png', { eager: true, query: '?url', import: 'default' });
 const smartDeskWelcomeFallbackImage = smartDeskWelcomeImageModules['./media/smartdesk_1.png'];
 const smartDeskWelcomeSlides = ['smartdesk_1.png', 'smartdesk_2.png', 'smartdesk_3.png'].map((filename, index) => ({
@@ -57,7 +61,7 @@ const smartDeskWelcomeSlides = ['smartdesk_1.png', 'smartdesk_2.png', 'smartdesk
 }));
 const homeBackgrounds = {
   none: null,
-  bg1: bg1Image,
+  bg1: null,
   bg2: bg2Image,
   bg3: bg3Image,
 };
@@ -292,7 +296,7 @@ function TeacherCircle({ teacherName, onOpenWeek, t }) {
         aspectRatio: '1 / 1',
         mx: 'auto',
         borderRadius: '50%',
-        border: '1px solid rgba(23, 21, 26, 0.13)',
+        border: '1px solid rgba(var(--sd-text-rgb), 0.13)',
         boxShadow: '0 24px 70px rgba(23, 21, 26, 0.08)',
         display: 'grid',
         placeItems: 'center',
@@ -300,12 +304,12 @@ function TeacherCircle({ teacherName, onOpenWeek, t }) {
         p: 3,
         transition: 'transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease',
         '&:hover': {
-          borderColor: 'rgba(156, 40, 175, 0.32)',
+          borderColor: 'rgba(var(--sd-primary-rgb), 0.32)',
           boxShadow: '0 28px 76px rgba(23, 21, 26, 0.1)',
           transform: { md: 'translate(-50%, calc(-50% - 4px))' },
         },
         '&:focus-visible': {
-          outline: `3px solid rgba(156, 40, 175, 0.22)`,
+          outline: `3px solid rgba(var(--sd-primary-rgb), 0.22)`,
           outlineOffset: 5,
         },
       }}
@@ -392,19 +396,19 @@ function ModuleCircle({ module, selected, onSelect, onOpenSubjectClass, onOpenNo
           width: '100%',
           height: '100%',
           borderRadius: '50%',
-          bgcolor: module.relevant ? palePurple : '#fff',
+          bgcolor: module.relevant ? palePurple : 'var(--sd-surface)',
           color: darkText,
-          boxShadow: selected ? '0 18px 46px rgba(156, 40, 175, 0.13)' : '0 14px 38px rgba(23, 21, 26, 0.06)',
+          boxShadow: selected ? '0 18px 46px rgba(var(--sd-primary-rgb), 0.13)' : '0 14px 38px rgba(23, 21, 26, 0.06)',
           borderStyle: 'solid',
           borderWidth: selected ? 2 : 1,
-          borderColor: selected && module.type !== 'subject' && !['mentor', 'notebook'].includes(module.id) ? purple : 'rgba(23, 21, 26, 0.13)',
+          borderColor: selected && module.type !== 'subject' && !['mentor', 'notebook'].includes(module.id) ? purple : 'rgba(var(--sd-text-rgb), 0.13)',
           display: 'grid',
           placeItems: 'center',
           textAlign: 'center',
           p: 2.25,
           transition: 'box-shadow 180ms ease, border-color 180ms ease',
           '&:focus-visible': {
-            outline: `3px solid rgba(156, 40, 175, 0.22)`,
+            outline: `3px solid rgba(var(--sd-primary-rgb), 0.22)`,
             outlineOffset: 4,
           },
         }}
@@ -437,12 +441,12 @@ function ModuleCircle({ module, selected, onSelect, onOpenSubjectClass, onOpenNo
             height: { xs: 38, sm: 42 },
             borderRadius: '50%',
             p: 0,
-            bgcolor: '#fff',
-            color: purple,
+            bgcolor: 'var(--sd-surface)',
+            color: 'var(--sd-accent-text)',
             fontSize: 12.5,
             fontWeight: 850,
             lineHeight: 1.2,
-            border: '1px solid rgba(156, 40, 175, 0.18)',
+            border: '1px solid rgba(var(--sd-primary-rgb), 0.18)',
             boxShadow: '0 10px 24px rgba(23, 21, 26, 0.08)',
             opacity: 0,
             pointerEvents: 'none',
@@ -451,11 +455,11 @@ function ModuleCircle({ module, selected, onSelect, onOpenSubjectClass, onOpenNo
             transition: 'opacity 420ms ease, transform 920ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 260ms ease, background-color 260ms ease, border-color 260ms ease',
             '&:hover': {
               bgcolor: palePurple,
-              borderColor: 'rgba(156, 40, 175, 0.34)',
-              boxShadow: '0 12px 24px rgba(156, 40, 175, 0.14)',
+              borderColor: 'rgba(var(--sd-primary-rgb), 0.34)',
+              boxShadow: '0 12px 24px rgba(var(--sd-primary-rgb), 0.14)',
             },
             '&:focus-visible': {
-              outline: `3px solid rgba(156, 40, 175, 0.2)`,
+              outline: `3px solid rgba(var(--sd-primary-rgb), 0.2)`,
               outlineOffset: 3,
             },
           }}
@@ -479,7 +483,7 @@ function ConnectorLine({ line }) {
         zIndex: 1,
         height: 1,
         width,
-        bgcolor: 'rgba(23, 21, 26, 0.11)',
+        bgcolor: 'rgba(var(--sd-text-rgb), 0.11)',
         transform: `rotate(${angle}deg)`,
         transformOrigin: 'center',
         ...placement,
@@ -550,7 +554,7 @@ function SetupDialog({ open, onClose, initialSetup = false }) {
       PaperProps={{
         sx: {
           borderRadius: '16px',
-          border: '1px solid rgba(23, 21, 26, 0.12)',
+          border: '1px solid rgba(var(--sd-text-rgb), 0.12)',
           boxShadow: '0 24px 70px rgba(23, 21, 26, 0.18)',
         },
       }}
@@ -582,14 +586,14 @@ function SetupDialog({ open, onClose, initialSetup = false }) {
                 '& .MuiToggleButton-root': {
                   minWidth: 74,
                   color: darkText,
-                  borderColor: 'rgba(23, 21, 26, 0.12)',
+                  borderColor: 'rgba(var(--sd-text-rgb), 0.12)',
                   px: 1.4,
                   py: 0.7,
                   fontSize: 12.5,
                   fontWeight: 800,
                 },
                 '& .Mui-selected': {
-                  color: purple,
+                  color: 'var(--sd-accent-text)',
                   bgcolor: palePurple,
                 },
                 '& .Mui-selected:hover': {
@@ -619,7 +623,7 @@ function SetupDialog({ open, onClose, initialSetup = false }) {
               <Typography sx={{ color: darkText, fontSize: 13.5, fontWeight: 820 }}>
                 {t('home.setup.subjectsLabel')}
               </Typography>
-              <Typography sx={{ color: draftSubjectIds.length === maxSelectedSubjectCount ? purple : 'text.secondary', fontSize: 12.4, fontWeight: 760 }}>
+              <Typography sx={{ color: draftSubjectIds.length === maxSelectedSubjectCount ? 'var(--sd-accent-text)' : 'text.secondary', fontSize: 12.4, fontWeight: 760 }}>
                 {t('home.setup.subjectCount', { count: draftSubjectIds.length, max: maxSelectedSubjectCount })}
               </Typography>
             </Stack>
@@ -643,20 +647,20 @@ function SetupDialog({ open, onClose, initialSetup = false }) {
                       minHeight: 46,
                       borderRadius: '10px',
                       textTransform: 'none',
-                      borderColor: selected ? 'rgba(156, 40, 175, 0.42)' : 'rgba(23, 21, 26, 0.12)',
-                      bgcolor: selected ? palePurple : '#fff',
-                      color: selected ? purple : darkText,
+                      borderColor: selected ? 'rgba(var(--sd-primary-rgb), 0.42)' : 'rgba(var(--sd-text-rgb), 0.12)',
+                      bgcolor: selected ? palePurple : 'var(--sd-surface)',
+                      color: selected ? 'var(--sd-accent-text)' : darkText,
                       px: 1.4,
                       '&:hover': {
-                        bgcolor: selected ? palePurple : '#fff',
-                        borderColor: 'rgba(156, 40, 175, 0.36)',
+                        bgcolor: selected ? palePurple : 'var(--sd-surface)',
+                        borderColor: 'rgba(var(--sd-primary-rgb), 0.36)',
                       },
                     }}
                   >
                     <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 820 }}>
                       {subjectTitle}
                     </Box>
-                    <Box component="span" sx={{ ml: 1, color: selected ? purple : 'text.secondary', fontSize: 11.5, fontWeight: 850 }}>
+                    <Box component="span" sx={{ ml: 1, color: selected ? 'var(--sd-accent-text)' : 'text.secondary', fontSize: 11.5, fontWeight: 850 }}>
                       {subjectShortTitle}
                     </Box>
                   </Button>
@@ -672,7 +676,7 @@ function SetupDialog({ open, onClose, initialSetup = false }) {
             {t('common.close')}
           </Button>
         )}
-        <Button variant="contained" disabled={saveDisabled} onClick={handleSave} sx={{ bgcolor: purple, '&:hover': { bgcolor: '#842195' } }}>
+        <Button variant="contained" disabled={saveDisabled} onClick={handleSave} sx={{ bgcolor: purple, '&:hover': { bgcolor: 'var(--sd-primary-hover)' } }}>
           {t('home.setup.save')}
         </Button>
       </DialogActions>
@@ -710,19 +714,19 @@ function LanguageToggle() {
         }}
         aria-label={t('common.language')}
         sx={{
-          bgcolor: '#fff',
+          bgcolor: 'var(--sd-surface)',
           '& .MuiToggleButton-root': {
             width: 38,
             height: 30,
             color: darkText,
-            borderColor: 'rgba(23, 21, 26, 0.12)',
+            borderColor: 'rgba(var(--sd-text-rgb), 0.12)',
             px: 0,
             py: 0,
             fontSize: 11.5,
             fontWeight: 850,
           },
           '& .Mui-selected': {
-            color: purple,
+            color: 'var(--sd-accent-text)',
             bgcolor: palePurple,
           },
           '& .Mui-selected:hover': {
@@ -745,6 +749,7 @@ function LanguageToggle() {
 }
 
 function HomeScreenContent() {
+  const { colorMode, toggleColorMode } = useColorMode();
   const { language, languages, setLanguage, t } = useConceptDemoLanguage();
   const { selectedSubjectIds } = useConceptDemoSubjects();
   const { teacherName } = useConceptDemoTeacher();
@@ -825,11 +830,22 @@ function HomeScreenContent() {
   const [smartDeskSurface, setSmartDeskSurface] = useState('floating');
   const [homeBackground, setHomeBackground] = useState('none');
   const [homeMenuAnchor, setHomeMenuAnchor] = useState(null);
+  const [homeMockupOpen, setHomeMockupOpen] = useState(false);
+  const homeMenuButtonRef = useRef(null);
+  const mockupReturnFocusRef = useRef(null);
+  const restoreHomeMenuFocus = useRef(false);
   const [homeBackgroundDialogOpen, setHomeBackgroundDialogOpen] = useState(false);
   const selectedHomeBackground = homeBackgrounds[homeBackground];
   const mentorWorkspaceActive = activeWorkspace?.type === 'mentor';
   const subjectWorkspaceOpen = subjectWorkspaceActive || mentorWorkspaceActive;
   const homeMenuOpen = Boolean(homeMenuAnchor);
+
+  useEffect(() => {
+    if (!homeMockupOpen && restoreHomeMenuFocus.current) {
+      homeMenuButtonRef.current?.focus({ preventScroll: true });
+      restoreHomeMenuFocus.current = false;
+    }
+  }, [homeMockupOpen]);
 
   useEffect(() => {
     if (!subjectWorkspaceOpen || typeof document === 'undefined') {
@@ -974,6 +990,7 @@ function HomeScreenContent() {
       smartDeskContext={smartDeskContext}
       smartDeskDataStreams={smartDeskDataStreams}
       smartDeskSurface={smartDeskSurface}
+      hideFloatingSmartDesk={homeMockupOpen}
     >
       <Box
         aria-hidden={subjectWorkspaceOpen}
@@ -992,15 +1009,28 @@ function HomeScreenContent() {
           },
         }}
       >
+        {homeMockupOpen && (
+          <Box ref={mockupReturnFocusRef} tabIndex={-1} sx={{ outline: 'none' }}>
+            <HomeMockup01 onOpenMathsModule={() => openSubjectClass('mathematics', '8A')} onBack={() => {
+              restoreHomeMenuFocus.current = true;
+              setHomeMockupOpen(false);
+            }} />
+          </Box>
+        )}
+        {/* Preserve the existing home and its local state while previewing a mockup. */}
         <Box
           component="section"
+          hidden={homeMockupOpen}
           sx={{
+            display: homeMockupOpen ? 'none' : undefined,
+            position: 'relative',
+            isolation: 'isolate',
             minHeight: '100vh',
             width: '100%',
             overflowX: 'hidden',
-            bgcolor: selectedHomeBackground ? 'rgba(255, 255, 255, 0.86)' : '#fff',
+            bgcolor: selectedHomeBackground ? 'rgba(var(--sd-surface-rgb), 0.86)' : 'var(--sd-surface)',
             backgroundImage: selectedHomeBackground
-              ? `linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.68)), url(${selectedHomeBackground})`
+              ? `linear-gradient(var(--sd-wallpaper-start), var(--sd-wallpaper-end)), url(${selectedHomeBackground})`
               : 'none',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
@@ -1010,8 +1040,10 @@ function HomeScreenContent() {
             py: { xs: 3, md: 4 },
           }}
         >
-        <Box sx={{ position: 'relative', maxWidth: 1160, mx: 'auto' }}>
+        {homeBackground === 'bg1' && <DynamicGradientBackground />}
+        <Box sx={{ position: 'relative', zIndex: 1, maxWidth: 1160, mx: 'auto' }}>
           <IconButton
+            ref={homeMenuButtonRef}
             aria-label={t('home.moreOptions')}
             aria-controls={homeMenuOpen ? 'home-options-menu' : undefined}
             aria-haspopup="menu"
@@ -1028,15 +1060,15 @@ function HomeScreenContent() {
               width: 38,
               height: 38,
               color: darkText,
-              // bgcolor: 'rgba(255, 255, 255, 0.76)',
-              // border: '1px solid rgba(23, 21, 26, 0.1)',
+              // bgcolor: 'rgba(var(--sd-surface-rgb), 0.76)',
+              // border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
               boxShadow: '0 10px 24px rgba(23, 21, 26, 0.08)',
               '&:hover': {
-                bgcolor: '#fff',
-                color: purple,
-                borderColor: 'rgba(156, 40, 175, 0.22)',
+                bgcolor: 'var(--sd-surface)',
+                color: 'var(--sd-accent-text)',
+                borderColor: 'rgba(var(--sd-primary-rgb), 0.22)',
               },
-              '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+              '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
             }}
           >
             <MoreVertIcon fontSize="small" />
@@ -1055,7 +1087,7 @@ function HomeScreenContent() {
                   mt: 0.6,
                   minWidth: 192,
                   borderRadius: '12px',
-                  border: '1px solid rgba(23, 21, 26, 0.1)',
+                  border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
                   boxShadow: '0 18px 42px rgba(23, 21, 26, 0.14)',
                 },
               },
@@ -1063,6 +1095,9 @@ function HomeScreenContent() {
           >
             <MenuItem onClick={() => runHomeMenuAction(openSmartDeskHome)}>
               {t('home.smartDeskHome')}
+            </MenuItem>
+            <MenuItem onClick={() => runHomeMenuAction(() => setHomeMockupOpen(true))}>
+              {t('home.firstHomeMockup')}
             </MenuItem>
             <MenuItem onClick={() => runHomeMenuAction(openSetup)}>
               {t('home.setup.changeSubjects')}
@@ -1089,6 +1124,14 @@ function HomeScreenContent() {
               {t('home.homeBackground')}
             </MenuItem>
             <MenuItem
+              onClick={toggleColorMode}
+              aria-label={t(colorMode === 'light' ? 'common.switchToDarkMode' : 'common.switchToLightMode')}
+              sx={{ gap: 1.1, justifyContent: 'space-between' }}
+            >
+              {t(colorMode === 'light' ? 'common.switchToDarkMode' : 'common.switchToLightMode')}
+              {colorMode === 'light' ? <DarkModeIcon fontSize="small" /> : <LightModeIcon fontSize="small" />}
+            </MenuItem>
+            <MenuItem
               disableRipple
               sx={{ gap: 1.1, justifyContent: 'space-between', py: 1, cursor: 'default' }}
               onClick={(event) => event.stopPropagation()}
@@ -1112,13 +1155,13 @@ function HomeScreenContent() {
                     px: 0.75,
                     py: 0.25,
                     color: darkText,
-                    borderColor: 'rgba(23, 21, 26, 0.12)',
+                    borderColor: 'rgba(var(--sd-text-rgb), 0.12)',
                     fontSize: 11.5,
                     fontWeight: 820,
                     lineHeight: 1.2,
                   },
                   '& .Mui-selected': {
-                    color: purple,
+                    color: 'var(--sd-accent-text)',
                     bgcolor: palePurple,
                   },
                   '& .Mui-selected:hover': {
@@ -1152,7 +1195,7 @@ function HomeScreenContent() {
                   inputProps={{ 'aria-label': t('home.toggleSmartDeskSurface') }}
                   sx={{
                     '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: purple,
+                      color: 'var(--sd-accent-text)',
                     },
                     '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
                       bgcolor: purple,
@@ -1230,7 +1273,7 @@ function HomeScreenContent() {
         onClose={closeWorkspace}
         title={mentorWorkspaceActive ? 'Mentor' : activeModuleConfig?.title?.[language] || activeModuleConfig?.title?.en || ''}
         subtitle={mentorWorkspaceActive ? 'Follow-ups, meeting rhythm, and Prorenata handoff' : activeModuleConfig?.subtitle?.[language] || activeModuleConfig?.subtitle?.en || t('home.focusedWorkspaceSubtitle')}
-        returnFocusRef={maths7ATriggerRef}
+        returnFocusRef={homeMockupOpen ? mockupReturnFocusRef : maths7ATriggerRef}
         showHeader={false}
       >
         {mentorWorkspaceActive ? (
@@ -1272,7 +1315,7 @@ function HomeScreenContent() {
                 gap: 0.75,
                 '& .MuiToggleButtonGroup-grouped': {
                   m: '0 !important',
-                  border: '1px solid rgba(23, 21, 26, 0.12) !important',
+                  border: '1px solid rgba(var(--sd-text-rgb), 0.12) !important',
                   borderRadius: '10px !important',
                 },
                 '& .MuiToggleButton-root': {
@@ -1284,7 +1327,7 @@ function HomeScreenContent() {
                   textTransform: 'none',
                 },
                 '& .Mui-selected': {
-                  color: purple,
+                  color: 'var(--sd-accent-text)',
                   bgcolor: palePurple,
                 },
                 '& .Mui-selected:hover': {
@@ -1293,7 +1336,7 @@ function HomeScreenContent() {
               }}
             >
               <ToggleButton value="none" aria-label={t('home.noHomeBackground')}>{t('home.noBackground')}</ToggleButton>
-              <ToggleButton value="bg1" aria-label={t('home.useBackground', { number: 1 })}>{t('home.backgroundShort', { number: 1 })}</ToggleButton>
+              <ToggleButton value="bg1" aria-label={t('home.useGradientBackground')}>{t('home.gradientBackground')}</ToggleButton>
               <ToggleButton value="bg2" aria-label={t('home.useBackground', { number: 2 })}>{t('home.backgroundShort', { number: 2 })}</ToggleButton>
               <ToggleButton value="bg3" aria-label={t('home.useBackground', { number: 3 })}>{t('home.backgroundShort', { number: 3 })}</ToggleButton>
             </ToggleButtonGroup>
@@ -1302,7 +1345,7 @@ function HomeScreenContent() {
         <DialogActions sx={{ px: 3, pb: 2.2 }}>
           <Button
             onClick={() => setHomeBackgroundDialogOpen(false)}
-            sx={{ color: purple, textTransform: 'none', fontWeight: 760 }}
+            sx={{ color: 'var(--sd-accent-text)', textTransform: 'none', fontWeight: 760 }}
           >
             {t('common.close')}
           </Button>
@@ -1318,7 +1361,7 @@ function HomeScreenContent() {
             zIndex: 1600,
             display: 'grid',
             placeItems: 'center',
-            bgcolor: 'rgba(23, 21, 26, 0.34)',
+            bgcolor: 'rgba(var(--sd-shadow-rgb), 0.34)',
             px: 2,
           }}
         >
@@ -1333,10 +1376,10 @@ function HomeScreenContent() {
               height: '92vh',
               overflow: 'hidden',
               borderRadius: '18px',
-              border: '1px solid rgba(23, 21, 26, 0.12)',
+              border: '1px solid rgba(var(--sd-text-rgb), 0.12)',
               boxShadow: '0 24px 70px rgba(23, 21, 26, 0.18)',
               p: 0,
-              bgcolor: '#fff',
+              bgcolor: 'var(--sd-surface)',
             }}
           >
             <SmartDeskStore />
@@ -1353,7 +1396,7 @@ function HomeScreenContent() {
             zIndex: 1600,
             display: 'grid',
             placeItems: 'center',
-            bgcolor: 'rgba(23, 21, 26, 0.34)',
+            bgcolor: 'rgba(var(--sd-shadow-rgb), 0.34)',
             px: 2,
           }}
         >
@@ -1368,10 +1411,10 @@ function HomeScreenContent() {
               maxHeight: 'calc(100vh - 48px)',
               overflowY: 'auto',
               borderRadius: '18px',
-              border: '1px solid rgba(23, 21, 26, 0.12)',
+              border: '1px solid rgba(var(--sd-text-rgb), 0.12)',
               boxShadow: '0 24px 70px rgba(23, 21, 26, 0.18)',
               p: { xs: 2, sm: 2.5 },
-              bgcolor: '#fff',
+              bgcolor: 'var(--sd-surface)',
             }}
           >
             <Typography id="smartdesk-info-title" variant="h2" sx={{ color: darkText, fontSize: 24, fontWeight: 750 }}>
@@ -1389,12 +1432,12 @@ function HomeScreenContent() {
                 width: '100%',
                 mt: 2,
                 borderRadius: '12px',
-                border: '1px solid rgba(23, 21, 26, 0.1)',
+                border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
               }}
             />
          
             <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2.5 }}>
-              <Button variant="text" onClick={() => setSmartDeskInfoOpen(false)} sx={{ color: purple }}>
+              <Button variant="text" onClick={() => setSmartDeskInfoOpen(false)} sx={{ color: 'var(--sd-accent-text)' }}>
                 {t('common.close')}
               </Button>
             </Stack>
@@ -1411,7 +1454,7 @@ function HomeScreenContent() {
             zIndex: 1600,
             display: 'grid',
             placeItems: 'center',
-            bgcolor: 'rgba(23, 21, 26, 0.34)',
+            bgcolor: 'rgba(var(--sd-shadow-rgb), 0.34)',
             px: 2,
           }}
         >
@@ -1426,10 +1469,10 @@ function HomeScreenContent() {
               maxHeight: 'calc(100vh - 48px)',
               overflowY: 'auto',
               borderRadius: '18px',
-              border: '1px solid rgba(23, 21, 26, 0.12)',
+              border: '1px solid rgba(var(--sd-text-rgb), 0.12)',
               boxShadow: '0 24px 70px rgba(23, 21, 26, 0.18)',
               p: { xs: 2, sm: 2.5 },
-              bgcolor: '#fff',
+              bgcolor: 'var(--sd-surface)',
             }}
           >
             <Typography id="smartdesk-how-it-works-title" variant="h2" sx={{ color: darkText, fontSize: 24, fontWeight: 750 }}>
@@ -1444,11 +1487,11 @@ function HomeScreenContent() {
                 width: '100%',
                 mt: 2,
                 borderRadius: '12px',
-                border: '1px solid rgba(23, 21, 26, 0.1)',
+                border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
               }}
             />
             <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2.5 }}>
-              <Button variant="text" onClick={() => setSmartDeskHowItWorksOpen(false)} sx={{ color: purple }}>
+              <Button variant="text" onClick={() => setSmartDeskHowItWorksOpen(false)} sx={{ color: 'var(--sd-accent-text)' }}>
                 {t('common.close')}
               </Button>
             </Stack>
@@ -1465,7 +1508,7 @@ function HomeScreenContent() {
             zIndex: 1600,
             display: 'grid',
             placeItems: 'center',
-            bgcolor: 'rgba(23, 21, 26, 0.34)',
+            bgcolor: 'rgba(var(--sd-shadow-rgb), 0.34)',
             px: 2,
           }}
         >
@@ -1480,10 +1523,10 @@ function HomeScreenContent() {
               maxHeight: 'calc(100vh - 48px)',
               overflowY: 'auto',
               borderRadius: '18px',
-              border: '1px solid rgba(23, 21, 26, 0.12)',
+              border: '1px solid rgba(var(--sd-text-rgb), 0.12)',
               boxShadow: '0 24px 70px rgba(23, 21, 26, 0.18)',
               p: { xs: 2, sm: 2.5 },
-              bgcolor: '#fff',
+              bgcolor: 'var(--sd-surface)',
             }}
           >
             <Typography id="smartdesk-workflow-title" variant="h2" sx={{ color: darkText, fontSize: 24, fontWeight: 750 }}>
@@ -1498,11 +1541,11 @@ function HomeScreenContent() {
                 width: '100%',
                 mt: 2,
                 borderRadius: '12px',
-                border: '1px solid rgba(23, 21, 26, 0.1)',
+                border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
               }}
             />
             <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2.5 }}>
-              <Button variant="text" onClick={() => setSmartDeskWorkflowOpen(false)} sx={{ color: purple }}>
+              <Button variant="text" onClick={() => setSmartDeskWorkflowOpen(false)} sx={{ color: 'var(--sd-accent-text)' }}>
                 {t('common.close')}
               </Button>
             </Stack>
@@ -1519,7 +1562,7 @@ function HomeScreenContent() {
             zIndex: 1600,
             display: 'grid',
             placeItems: 'center',
-            bgcolor: 'rgba(23, 21, 26, 0.34)',
+            bgcolor: 'rgba(var(--sd-shadow-rgb), 0.34)',
             px: 2,
           }}
         >
@@ -1534,10 +1577,10 @@ function HomeScreenContent() {
               maxHeight: 'calc(100vh - 48px)',
               overflowY: 'auto',
               borderRadius: '18px',
-              border: '1px solid rgba(23, 21, 26, 0.12)',
+              border: '1px solid rgba(var(--sd-text-rgb), 0.12)',
               boxShadow: '0 24px 70px rgba(23, 21, 26, 0.18)',
               p: { xs: 2, sm: 2.5 },
-              bgcolor: '#fff',
+              bgcolor: 'var(--sd-surface)',
             }}
           >
             <Typography id="smartdesk-learning-observations-title" variant="h2" sx={{ color: darkText, fontSize: 24, fontWeight: 750 }}>
@@ -1552,11 +1595,11 @@ function HomeScreenContent() {
                 width: '100%',
                 mt: 2,
                 borderRadius: '12px',
-                border: '1px solid rgba(23, 21, 26, 0.1)',
+                border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
               }}
             />
             <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2.5 }}>
-              <Button variant="text" onClick={() => setSmartDeskLearningObservationsOpen(false)} sx={{ color: purple }}>
+              <Button variant="text" onClick={() => setSmartDeskLearningObservationsOpen(false)} sx={{ color: 'var(--sd-accent-text)' }}>
                 {t('common.close')}
               </Button>
             </Stack>
@@ -1573,7 +1616,7 @@ function HomeScreenContent() {
             zIndex: 1600,
             display: 'grid',
             placeItems: 'center',
-            bgcolor: 'rgba(23, 21, 26, 0.34)',
+            bgcolor: 'rgba(var(--sd-shadow-rgb), 0.34)',
             px: 2,
           }}
         >
@@ -1588,10 +1631,10 @@ function HomeScreenContent() {
               maxHeight: 'calc(100vh - 48px)',
               overflowY: 'auto',
               borderRadius: '18px',
-              border: '1px solid rgba(23, 21, 26, 0.12)',
+              border: '1px solid rgba(var(--sd-text-rgb), 0.12)',
               boxShadow: '0 24px 70px rgba(23, 21, 26, 0.18)',
               p: { xs: 2, sm: 2.5 },
-              bgcolor: '#fff',
+              bgcolor: 'var(--sd-surface)',
             }}
           >
             <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
@@ -1611,7 +1654,7 @@ function HomeScreenContent() {
                 width: '100%',
                 mt: 2,
                 borderRadius: '12px',
-                border: '1px solid rgba(23, 21, 26, 0.1)',
+                border: '1px solid rgba(var(--sd-text-rgb), 0.1)',
               }}
             />
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 2.5 }}>
@@ -1628,7 +1671,7 @@ function HomeScreenContent() {
                       height: 8,
                       borderRadius: '999px',
                       border: 'none',
-                      bgcolor: index === smartDeskWelcomeSlideIndex ? purple : 'rgba(23, 21, 26, 0.18)',
+                      bgcolor: index === smartDeskWelcomeSlideIndex ? purple : 'rgba(var(--sd-text-rgb), 0.18)',
                       cursor: 'pointer',
                       transition: 'width 140ms ease, background-color 140ms ease',
                     }}
@@ -1636,14 +1679,14 @@ function HomeScreenContent() {
                 ))}
               </Stack>
               <Stack direction="row" spacing={1}>
-                <Button variant="text" onClick={() => setSmartDeskWelcomeOpen(false)} sx={{ color: purple }}>
+                <Button variant="text" onClick={() => setSmartDeskWelcomeOpen(false)} sx={{ color: 'var(--sd-accent-text)' }}>
                   {t('common.close')}
                 </Button>
                 <Button
                   variant="outlined"
                   disabled={smartDeskWelcomeSlideIndex === 0}
                   onClick={() => setSmartDeskWelcomeSlideIndex((index) => Math.max(0, index - 1))}
-                  sx={{ borderColor: 'rgba(156, 40, 175, 0.35)', color: purple }}
+                  sx={{ borderColor: 'rgba(var(--sd-primary-rgb), 0.35)', color: 'var(--sd-accent-text)' }}
                 >
                   {t('common.back')}
                 </Button>
@@ -1651,7 +1694,7 @@ function HomeScreenContent() {
                   variant="contained"
                   disabled={smartDeskWelcomeSlideIndex === smartDeskWelcomeSlides.length - 1}
                   onClick={() => setSmartDeskWelcomeSlideIndex((index) => Math.min(smartDeskWelcomeSlides.length - 1, index + 1))}
-                  sx={{ bgcolor: purple, '&:hover': { bgcolor: '#842194' } }}
+                  sx={{ bgcolor: purple, '&:hover': { bgcolor: 'var(--sd-primary-hover)' } }}
                 >
                   {t('common.next')}
                 </Button>

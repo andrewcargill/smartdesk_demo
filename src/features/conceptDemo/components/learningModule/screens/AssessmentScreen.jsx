@@ -19,9 +19,9 @@ import {
   readLearningModuleAssessmentResults,
 } from '../utils/assessmentResultsStorage.js';
 
-const purple = '#9c28af';
-const darkText = '#17151a';
-const border = 'rgba(23, 21, 26, 0.1)';
+const purple = 'var(--sd-primary)';
+const darkText = 'var(--sd-text)';
+const border = 'rgba(var(--sd-text-rgb), 0.1)';
 
 const startOptions = [
   {
@@ -128,13 +128,13 @@ function QuietButton({ children, onClick }) {
       variant="outlined"
       onClick={onClick}
       sx={{
-        borderColor: 'rgba(23, 21, 26, 0.12)',
+        borderColor: 'rgba(var(--sd-text-rgb), 0.12)',
         color: darkText,
         borderRadius: '9px',
         textTransform: 'none',
         fontSize: 12.3,
         fontWeight: 760,
-        '&:hover': { bgcolor: '#fff', borderColor: 'rgba(156, 40, 175, 0.28)' },
+        '&:hover': { bgcolor: 'var(--sd-surface)', borderColor: 'rgba(var(--sd-primary-rgb), 0.28)' },
       }}
     >
       {children}
@@ -151,24 +151,24 @@ function DocumentThumbnail({ variant = 'reading' }) {
         aspectRatio: '0.72',
         flexShrink: 0,
         borderRadius: '6px',
-        border: '1px solid rgba(23, 21, 26, 0.14)',
-        bgcolor: '#fff',
+        border: '1px solid rgba(var(--sd-text-rgb), 0.14)',
+        bgcolor: 'var(--sd-surface)',
         p: 0.5,
         display: 'grid',
         gap: 0.35,
       }}
     >
-      <Box sx={{ height: 4, width: '70%', borderRadius: '999px', bgcolor: 'rgba(23, 21, 26, 0.18)' }} />
+      <Box sx={{ height: 4, width: '70%', borderRadius: '999px', bgcolor: 'rgba(var(--sd-text-rgb), 0.18)' }} />
       {variant === 'speaking' ? (
         <Box sx={{ display: 'flex', gap: 0.35, alignItems: 'end', height: 22 }}>
           {[10, 16, 8].map((height, index) => (
-            <Box key={height + index} sx={{ width: 7, height, borderRadius: '999px', bgcolor: index === 1 ? purple : 'rgba(23, 21, 26, 0.18)' }} />
+            <Box key={height + index} sx={{ width: 7, height, borderRadius: '999px', bgcolor: index === 1 ? purple : 'rgba(var(--sd-text-rgb), 0.18)' }} />
           ))}
         </Box>
       ) : variant === 'writing' ? (
         <Stack spacing={0.35}>
           {['topic', 'reason', 'example'].map((line) => (
-            <Typography key={line} sx={{ color: 'rgba(23, 21, 26, 0.66)', fontSize: 6.2, fontWeight: 800, lineHeight: 1 }}>
+            <Typography key={line} sx={{ color: 'var(--sd-text-muted)', fontSize: 6.2, fontWeight: 800, lineHeight: 1 }}>
               {line}
             </Typography>
           ))}
@@ -176,18 +176,18 @@ function DocumentThumbnail({ variant = 'reading' }) {
       ) : (
         <Stack spacing={0.35}>
           <Box sx={{ height: 4, borderRadius: '999px', bgcolor: purple, width: '80%' }} />
-          <Box sx={{ height: 4, borderRadius: '999px', bgcolor: 'rgba(23, 21, 26, 0.14)', width: '96%' }} />
-          <Box sx={{ height: 4, borderRadius: '999px', bgcolor: 'rgba(23, 21, 26, 0.14)', width: '66%' }} />
+          <Box sx={{ height: 4, borderRadius: '999px', bgcolor: 'rgba(var(--sd-text-rgb), 0.14)', width: '96%' }} />
+          <Box sx={{ height: 4, borderRadius: '999px', bgcolor: 'rgba(var(--sd-text-rgb), 0.14)', width: '66%' }} />
         </Stack>
       )}
-      <Box sx={{ height: 3, borderRadius: '999px', bgcolor: 'rgba(23, 21, 26, 0.1)' }} />
-      <Box sx={{ height: 3, width: '82%', borderRadius: '999px', bgcolor: 'rgba(23, 21, 26, 0.1)' }} />
+      <Box sx={{ height: 3, borderRadius: '999px', bgcolor: 'rgba(var(--sd-text-rgb), 0.1)' }} />
+      <Box sx={{ height: 3, width: '82%', borderRadius: '999px', bgcolor: 'rgba(var(--sd-text-rgb), 0.1)' }} />
     </Box>
   );
 }
 
 function getStatIcon(icon) {
-  const sx = { color: 'rgba(23, 21, 26, 0.52)', fontSize: 16 };
+  const sx = { color: 'var(--sd-text-muted)', fontSize: 16 };
 
   if (icon === 'complete') return <CheckCircleOutlineIcon sx={sx} />;
   if (icon === 'absent') return <PersonOffOutlinedIcon sx={sx} />;
@@ -208,11 +208,11 @@ function OngoingItem({ item, selected, onClick }) {
         minHeight: 188,
         p: 1.15,
         borderRadius: '12px',
-        border: selected ? '1px solid rgba(156, 40, 175, 0.3)' : '1px solid rgba(23, 21, 26, 0.09)',
-        bgcolor: selected ? 'rgba(156, 40, 175, 0.035)' : '#fff',
+        border: selected ? '1px solid rgba(var(--sd-primary-rgb), 0.3)' : '1px solid rgba(var(--sd-text-rgb), 0.09)',
+        bgcolor: selected ? 'rgba(var(--sd-primary-rgb), 0.035)' : 'var(--sd-surface)',
         textAlign: 'left',
-        '&:hover': { bgcolor: 'rgba(156, 40, 175, 0.025)' },
-        '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+        '&:hover': { bgcolor: 'rgba(var(--sd-primary-rgb), 0.025)' },
+        '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
       }}
     >
       <Stack spacing={1} sx={{ height: '100%' }}>
@@ -222,7 +222,7 @@ function OngoingItem({ item, selected, onClick }) {
         </Box>
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.55 }}>
           {(item.stats || []).map((stat) => (
-            <Stack key={stat.id} direction="row" spacing={0.55} alignItems="center" sx={{ minWidth: 0, px: 0.75, py: 0.55, borderRadius: '9px', bgcolor: 'rgba(23, 21, 26, 0.035)' }}>
+            <Stack key={stat.id} direction="row" spacing={0.55} alignItems="center" sx={{ minWidth: 0, px: 0.75, py: 0.55, borderRadius: '9px', bgcolor: 'rgba(var(--sd-text-rgb), 0.035)' }}>
               {getStatIcon(stat.icon)}
               <Box sx={{ minWidth: 0 }}>
                 <Typography sx={{ color: darkText, fontSize: 12.3, fontWeight: 870, lineHeight: 1.05 }}>{stat.value}</Typography>
@@ -238,7 +238,7 @@ function OngoingItem({ item, selected, onClick }) {
 
 function PreviewResource({ item }) {
   return (
-    <Box sx={{ display: 'flex', gap: 0.9, minWidth: 0, p: 0.9, borderRadius: '11px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+    <Box sx={{ display: 'flex', gap: 0.9, minWidth: 0, p: 0.9, borderRadius: '11px', border: '1px solid rgba(var(--sd-text-rgb), 0.08)', bgcolor: 'var(--sd-surface)' }}>
       <DocumentThumbnail variant={item.thumbnail} />
       <Box sx={{ minWidth: 0 }}>
         <Typography sx={{ color: darkText, fontSize: 12.9, fontWeight: 840, lineHeight: 1.25 }}>{item.title}</Typography>
@@ -400,7 +400,7 @@ export default function AssessmentScreen({ moduleConfig }) {
             border: `1px solid ${border}`,
             borderRadius: '12px',
             p: 0.35,
-            bgcolor: '#fff',
+            bgcolor: 'var(--sd-surface)',
             '& .MuiTabs-indicator': { display: 'none' },
             '& .MuiTab-root': {
               minHeight: 34,
@@ -412,11 +412,11 @@ export default function AssessmentScreen({ moduleConfig }) {
               fontSize: 13,
               fontWeight: 820,
               gap: 0.65,
-              '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+              '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
             },
             '& .Mui-selected': {
-              color: `${purple} !important`,
-              bgcolor: 'rgba(156, 40, 175, 0.055)',
+              color: `${'var(--sd-accent-text)'} !important`,
+              bgcolor: 'rgba(var(--sd-primary-rgb), 0.055)',
             },
           }}
         >
@@ -437,7 +437,7 @@ export default function AssessmentScreen({ moduleConfig }) {
             border: `1px solid ${border}`,
             borderRadius: '12px',
             p: 0.35,
-            bgcolor: '#fff',
+            bgcolor: 'var(--sd-surface)',
             '& .MuiTabs-indicator': { display: 'none' },
             '& .MuiTab-root': {
               minHeight: 34,
@@ -449,11 +449,11 @@ export default function AssessmentScreen({ moduleConfig }) {
               fontSize: 13,
               fontWeight: 820,
               gap: 0.65,
-              '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+              '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
             },
             '& .Mui-selected': {
-              color: `${purple} !important`,
-              bgcolor: 'rgba(156, 40, 175, 0.055)',
+              color: `${'var(--sd-accent-text)'} !important`,
+              bgcolor: 'rgba(var(--sd-primary-rgb), 0.055)',
             },
           }}
         >
@@ -468,8 +468,8 @@ export default function AssessmentScreen({ moduleConfig }) {
           borderRadius: '8px',
           color: 'text.secondary',
           textAlign: 'left',
-          '&:hover': { color: purple },
-          '&:focus-visible': { outline: `2px solid ${purple}`, outlineOffset: 2 },
+          '&:hover': { color: 'var(--sd-accent-text)' },
+          '&:focus-visible': { outline: `2px solid ${'var(--sd-focus)'}`, outlineOffset: 2 },
         }}
       >
         <Typography sx={{ fontSize: 12.5, fontWeight: 720 }}>
@@ -486,12 +486,12 @@ export default function AssessmentScreen({ moduleConfig }) {
             px: 1,
             py: 0.85,
             borderRadius: '12px',
-            border: '1px solid rgba(156, 40, 175, 0.22)',
-            bgcolor: 'rgba(156, 40, 175, 0.045)',
+            border: '1px solid rgba(var(--sd-primary-rgb), 0.22)',
+            bgcolor: 'rgba(var(--sd-primary-rgb), 0.045)',
             color: darkText,
           }}
         >
-          <CheckCircleOutlineIcon sx={{ color: purple, fontSize: 18, flexShrink: 0 }} />
+          <CheckCircleOutlineIcon sx={{ color: 'var(--sd-accent-text)', fontSize: 18, flexShrink: 0 }} />
           <Box sx={{ minWidth: 0 }}>
             <Typography sx={{ color: darkText, fontSize: 12.8, fontWeight: 860, lineHeight: 1.25 }}>
               Demo test stored
@@ -505,7 +505,7 @@ export default function AssessmentScreen({ moduleConfig }) {
         </Box>
       )}
 
-      <Paper elevation={0} sx={{ p: { xs: 1.2, sm: 1.45 }, borderRadius: '16px', border: `1px solid ${border}`, bgcolor: '#fbfafc' }}>
+      <Paper elevation={0} sx={{ p: { xs: 1.2, sm: 1.45 }, borderRadius: '16px', border: `1px solid ${border}`, bgcolor: 'var(--sd-surface-muted)' }}>
         <Stack spacing={1.1}>
           {activeRoute !== 'continue' && (
             <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
@@ -560,8 +560,8 @@ export default function AssessmentScreen({ moduleConfig }) {
                       width: '100%',
                       p: 1,
                       borderRadius: '11px',
-                      border: selectedStartId === option.id ? '1px solid rgba(156, 40, 175, 0.28)' : '1px solid rgba(23, 21, 26, 0.09)',
-                      bgcolor: selectedStartId === option.id ? 'rgba(156, 40, 175, 0.035)' : '#fff',
+                      border: selectedStartId === option.id ? '1px solid rgba(var(--sd-primary-rgb), 0.28)' : '1px solid rgba(var(--sd-text-rgb), 0.09)',
+                      bgcolor: selectedStartId === option.id ? 'rgba(var(--sd-primary-rgb), 0.035)' : 'var(--sd-surface)',
                       textAlign: 'left',
                     }}
                   >
@@ -595,9 +595,9 @@ export default function AssessmentScreen({ moduleConfig }) {
                       startIcon={icon}
                       onClick={() => setSelectedFindId(id)}
                       sx={{
-                        border: selected ? `1px solid ${purple}` : '1px solid rgba(23, 21, 26, 0.11)',
-                        color: selected ? purple : darkText,
-                        bgcolor: selected ? 'rgba(156, 40, 175, 0.045)' : '#fff',
+                        border: selected ? `1px solid ${purple}` : '1px solid rgba(var(--sd-text-rgb), 0.11)',
+                        color: selected ? 'var(--sd-accent-text)' : darkText,
+                        bgcolor: selected ? 'rgba(var(--sd-primary-rgb), 0.045)' : 'var(--sd-surface)',
                         borderRadius: '999px',
                         textTransform: 'none',
                         fontSize: 12.2,
@@ -634,7 +634,7 @@ export default function AssessmentScreen({ moduleConfig }) {
                 Completed tests and assessment records Anna previously chose to create or save.
               </Typography>
               {archiveRecords.map((record) => (
-                <Box key={record.id} sx={{ p: 0.9, borderRadius: '11px', border: '1px solid rgba(23, 21, 26, 0.08)', bgcolor: '#fff' }}>
+                <Box key={record.id} sx={{ p: 0.9, borderRadius: '11px', border: '1px solid rgba(var(--sd-text-rgb), 0.08)', bgcolor: 'var(--sd-surface)' }}>
                   <Typography sx={{ color: darkText, fontSize: 12.9, fontWeight: 840 }}>{record.title}</Typography>
                   <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: 11.9 }}>
                     {formatDemoDate(record.date)} · {record.resultCount}/{record.totalCount} results saved
