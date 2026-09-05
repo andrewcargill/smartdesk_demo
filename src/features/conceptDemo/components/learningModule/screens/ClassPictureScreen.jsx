@@ -9,7 +9,7 @@ import NotesIcon from '@mui/icons-material/Notes';
 import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import TimelineIcon from '@mui/icons-material/Timeline';
-import { Box, ButtonBase, Dialog, DialogContent, IconButton, MenuItem, Paper, Select, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import { Box, ButtonBase, Dialog, DialogContent, FormControlLabel, IconButton, MenuItem, Paper, Select, Stack, Switch, TextField, Tooltip, Typography } from '@mui/material';
 import { useConceptDemoLanguage } from '../../../ConceptDemoLanguageContext.jsx';
 import { classGroupDefinitions } from '../../../data/classGroupDefinitions.js';
 import { useClassWorkingGroups } from '../../../hooks/useClassWorkingGroups.js';
@@ -582,6 +582,7 @@ function getUngroupedStudentsForType(students, groups, typeId) {
 }
 
 function ClassPictureEvidenceGridV1({
+  calmMode,
   activeGroupingSet,
   allowDrop,
   buildGridAriaLabel,
@@ -986,7 +987,22 @@ function ClassPictureEvidenceGridV1({
                 onDrop={groupedViewActive ? (event) => handleDrop(event, groupId, rowIndex) : undefined}
                 onMouseEnter={() => setHoveredStudentId(student.id)}
                 onMouseLeave={() => setHoveredStudentId('')}
-                sx={{ display: 'contents' }}
+                sx={{
+                  display: 'contents',
+                  ...(calmMode && {
+                    // Fade content only so cell borders and backgrounds remain visible.
+                    '& > [role="cell"] > :not(.LearningModuleUnitNoteButton), & > [role="rowheader"] > button': {
+                      opacity: 0,
+                      transition: 'opacity 180ms ease',
+                    },
+                    '&:hover > [role="cell"] > :not(.LearningModuleUnitNoteButton), &:focus-within > [role="cell"] > :not(.LearningModuleUnitNoteButton), &:hover > [role="rowheader"] > button, &:focus-within > [role="rowheader"] > button': {
+                      opacity: 1,
+                    },
+                    '@media (prefers-reduced-motion: reduce)': {
+                      '& > [role="cell"] > :not(.LearningModuleUnitNoteButton), & > [role="rowheader"] > button': { transition: 'none' },
+                    },
+                  }),
+                }}
               >
                 <Box
                   role="rowheader"
@@ -1041,6 +1057,8 @@ function ClassPictureEvidenceGridV1({
                     <KeyboardArrowDownIcon sx={{ color: 'text.secondary', fontSize: 18, transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 150ms ease' }} />
                   </ButtonBase>
                   <Box
+                    tabIndex={calmMode ? 0 : undefined}
+                    onTouchStart={calmMode ? (event) => event.currentTarget.focus() : undefined}
                     data-smartdesk-hotspot={student.id === 'elias-nilsson' ? 'elias-student-row' : undefined}
                     data-smartdesk-student-id={student.id === 'elias-nilsson' ? student.id : undefined}
                     data-smartdesk-student-name={student.id === 'elias-nilsson' ? student.displayName : undefined}
@@ -1049,6 +1067,7 @@ function ClassPictureEvidenceGridV1({
                     sx={{
                       flex: '1 1 auto',
                       minWidth: 0,
+                      '&:focus-visible': { outline: '2px solid var(--sd-focus)', outlineOffset: 2, borderRadius: '4px' },
                     }}
                   >
                     <Typography sx={{ color: darkText, fontSize: isExpanded ? 18 : 13, fontWeight: isExpanded ? 920 : 820, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', transition: 'font-size 140ms ease, font-weight 140ms ease' }}>
@@ -1554,6 +1573,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
   const [hoveredStudentId, setHoveredStudentId] = useState('');
   const [hoveredRowNoteStudentId, setHoveredRowNoteStudentId] = useState('');
   const [rowNotesVisible, setRowNotesVisible] = useState(true);
+  const [calmMode, setCalmMode] = useState(false);
   const [expandedViewMode, setExpandedViewMode] = useState('timeline');
   const [rowNotes, setRowNotes] = useState(() => getStoredNotes(rowNotesStorageKey));
   const [cellNotes, setCellNotes] = useState(() => getStoredNotes(cellNotesStorageKey));
@@ -2011,6 +2031,7 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
   }
 
   const classPictureGridProps = {
+    calmMode,
     activeGroupingSet,
     allowDrop,
     buildGridAriaLabel,
@@ -2079,6 +2100,13 @@ export default function ClassPictureScreen({ moduleConfig, screenConfig }) {
     <Stack spacing={2.25} sx={{ minWidth: 0 }}>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'auto' }, gap: 1.2, alignItems: 'start', justifyContent: 'end' }}>
         <Stack direction="row" spacing={0.7} alignItems="center" sx={{ justifySelf: { xs: 'stretch', lg: 'end' }, alignSelf: 'start', flexWrap: 'wrap' }}>
+          <Tooltip title={language === 'sv' ? 'Visa detaljer när du pekar på eller fokuserar en elevrad.' : 'Reveal details when you hover or focus a student row.'}>
+            <FormControlLabel
+              control={<Switch size="small" checked={calmMode} onChange={(event) => setCalmMode(event.target.checked)} />}
+              label={language === 'sv' ? 'Lugnt läge' : 'Calm mode'}
+              sx={{ mr: 1, '& .MuiFormControlLabel-label': { fontSize: 13, color: 'text.secondary' } }}
+            />
+          </Tooltip>
           <Select
             value={activeGroupingSetId}
             onChange={(event) => changeClassView(event.target.value)}
