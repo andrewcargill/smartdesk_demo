@@ -9,7 +9,9 @@ import ColorModeToggle from '../../../../components/ColorModeToggle.jsx';
 import DynamicGradientBackground from '../../media/DynamicGradientBackground/DynamicGradientBackground.jsx';
 import { useConceptDemoLanguage } from '../../ConceptDemoLanguageContext.jsx';
 import MathsSummary from './MathsSummary.jsx';
-import { isMathsSummaryRequest } from './mathsSummaryData.js';
+import { getMockReportRequest } from './mathsSummaryData.js';
+import AmiraMathsReport from './AmiraMathsReport.jsx';
+import PlanningOverview from './planning/PlanningOverview.jsx';
 
 // Illustrative moments only; this view does not read or write live demo data.
 const moments = [
@@ -27,7 +29,8 @@ export default function HomeMockup01({ onBack, onOpenMathsModule }) {
   const [draft, setDraft] = useState('');
   const [message, setMessage] = useState('');
   const [voicePreview, setVoicePreview] = useState(false);
-  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [activeReport, setActiveReport] = useState(null);
+  const summaryOpen = activeReport !== null;
   const [reply, setReply] = useState('');
 
   useEffect(() => {
@@ -40,13 +43,18 @@ export default function HomeMockup01({ onBack, onOpenMathsModule }) {
     if (!draft.trim()) return;
     const text = draft.trim();
     setMessage(text);
-    if (isMathsSummaryRequest(text)) {
-      setSummaryOpen(true);
-      setReply('Here’s a quick look at 8A maths.');
+    const requestedReport = getMockReportRequest(text);
+    if (requestedReport) {
+      setActiveReport(requestedReport);
+      setReply(requestedReport === 'planning'
+        ? 'Here’s a planning overview. Select a week or activity to explore and edit this mock plan.'
+        : requestedReport === 'amira'
+        ? 'Here’s Amira’s maths snapshot. Her reasoning is getting clearer.'
+        : 'Here’s a quick look at 8A maths. Try “Amira” for her maths report.');
     } else {
       setReply(summaryOpen
-        ? 'I’m keeping the 8A maths summary here. This preview only has a prepared class response.'
-        : 'Try “8a maths” to see a class summary.');
+        ? `I’m keeping ${activeReport === 'planning' ? 'the planning overview' : activeReport === 'amira' ? 'Amira’s report' : 'the class summary'} here. Try “planning”, “Amira” or “8a maths” to switch views.`
+        : 'Try “planning” for a timeline, “8a maths” for the class, or “Amira” for her maths report.');
     }
     setDraft('');
     setVoicePreview(false);
@@ -54,12 +62,12 @@ export default function HomeMockup01({ onBack, onOpenMathsModule }) {
   }
 
   function resetConversation() {
-    setSummaryOpen(false);
+    setActiveReport(null);
     setMessage('');
     setReply('');
     setDraft('');
     setVoicePreview(false);
-    headingRef.current?.focus({ preventScroll: true });
+    window.requestAnimationFrame(() => headingRef.current?.focus({ preventScroll: true }));
     window.scrollTo(0, 0);
   }
 
@@ -98,8 +106,8 @@ export default function HomeMockup01({ onBack, onOpenMathsModule }) {
           </Box>
         </Box>
 
-        <Box component="section" aria-labelledby="home-mockup-chat-title" sx={{ display: 'flex', flexDirection: 'column', flexShrink: 0, maxHeight: summaryOpen ? '44dvh' : 'none', overflowY: summaryOpen ? 'auto' : 'visible', width: '100%', maxWidth: summaryOpen ? 820 : 600, mx: 'auto', mt: summaryOpen ? 2 : 0, mb: summaryOpen ? 2 : 0, px: summaryOpen ? { xs: 2, sm: 2.5 } : 0, bgcolor: summaryOpen ? 'background.paper' : 'transparent', border: summaryOpen ? '1px solid' : 'none', borderColor: 'divider', borderRadius: summaryOpen ? '20px' : 0, boxShadow: summaryOpen ? '0 8px 28px rgba(0, 0, 0, 0.035)' : 'none', pt: summaryOpen ? 2 : { xs: 8, sm: 'clamp(64px, 13vh, 150px)' }, pb: summaryOpen ? 1.5 : 8, transition: 'padding 550ms ease, max-width 550ms ease', '@media (prefers-reduced-motion: reduce)': { transition: 'none' } }}>
-          <Typography ref={headingRef} tabIndex={-1} id="home-mockup-chat-title" component="h1" sx={{ textAlign: summaryOpen ? 'left' : 'center', fontSize: summaryOpen ? 13 : { xs: 34, sm: 44 }, fontWeight: 450, letterSpacing: '-0.04em', lineHeight: 1.2, mb: summaryOpen ? 1.25 : 4, outline: 'none', transition: 'font-size 550ms ease, margin 550ms ease', '@media (prefers-reduced-motion: reduce)': { transition: 'none' } }}>
+        <Box component="section" aria-label={summaryOpen ? 'Chat or voice input' : undefined} aria-labelledby={summaryOpen ? undefined : 'home-mockup-chat-title'} sx={{ display: 'flex', flexDirection: 'column', flexShrink: 0, maxHeight: summaryOpen ? '44dvh' : 'none', overflowY: summaryOpen ? 'auto' : 'visible', width: '100%', maxWidth: summaryOpen ? 820 : 600, mx: 'auto', mt: summaryOpen ? 2 : 0, mb: summaryOpen ? 2 : 0, pt: summaryOpen ? 0 : { xs: 8, sm: 'clamp(64px, 13vh, 150px)' }, pb: summaryOpen ? 0 : 8, transition: 'padding 550ms ease, max-width 550ms ease', '@media (prefers-reduced-motion: reduce)': { transition: 'none' } }}>
+          <Typography ref={headingRef} tabIndex={-1} id="home-mockup-chat-title" component="h1" sx={{ display: summaryOpen ? 'none' : 'block', textAlign: 'center', fontSize: summaryOpen ? 13 : { xs: 34, sm: 44 }, fontWeight: 450, letterSpacing: '-0.04em', lineHeight: 1.2, mb: summaryOpen ? 1.25 : 4, outline: 'none', transition: 'font-size 550ms ease, margin 550ms ease', '@media (prefers-reduced-motion: reduce)': { transition: 'none' } }}>
             {summaryOpen ? "Chat / talk" : "How are you?"}
           </Typography>
 
@@ -113,15 +121,10 @@ export default function HomeMockup01({ onBack, onOpenMathsModule }) {
           )}
 
           {reply && (
-            <Box sx={{ mb: summaryOpen ? 1.25 : 1, flexShrink: 0 }}>
-              <Typography role="status" sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.5, maxHeight: summaryOpen ? 40 : 'none', overflowY: 'auto' }}>{reply}</Typography>
-              {summaryOpen && (
-                <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-                  <Button size="small" variant="contained" onClick={onOpenMathsModule} endIcon={<ArrowForwardRoundedIcon />} sx={{ borderRadius: 2.5, px: 1.5 }}>Open module</Button>
-                  <Button size="small" onClick={resetConversation} color="inherit" sx={{ borderRadius: 2.5, px: 1.5 }}>Thanks</Button>
-                </Stack>
-              )}
-            </Box>
+            <Typography role="status" sx={summaryOpen
+              ? { position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clipPath: 'inset(50%)', whiteSpace: 'nowrap' }
+              : { fontSize: 13, color: 'text.secondary', lineHeight: 1.5, mb: 1 }
+            }>{reply}</Typography>
           )}
 
           <Paper component="form" onSubmit={submitDraft} elevation={0} sx={{ display: summaryOpen ? 'flex' : 'block', flexShrink: 0, alignItems: 'center', gap: 1, borderRadius: summaryOpen ? '18px' : '24px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', px: { xs: 2, sm: 2.5 }, pt: summaryOpen ? 0.6 : 2, pb: summaryOpen ? 0.6 : 1.2, boxShadow: '0 12px 40px rgba(0, 0, 0, 0.025)', '&:focus-within': { borderColor: 'var(--sd-focus)' } }}>
@@ -137,7 +140,7 @@ export default function HomeMockup01({ onBack, onOpenMathsModule }) {
                 inputRef={inputRef}
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
-                placeholder={summaryOpen ? "Anything else about 8A maths?" : "What's on your mind?"}
+                placeholder={activeReport === 'planning' ? "Try 8a maths or Amira to switch views…" : activeReport === 'amira' ? "Ask about Amira, or type 8a maths…" : summaryOpen ? "Try Amira, or ask about 8A maths…" : "What's on your mind?"}
                 multiline
                 minRows={summaryOpen ? 1 : 2}
                 maxRows={summaryOpen ? 2 : 5}
@@ -162,7 +165,15 @@ export default function HomeMockup01({ onBack, onOpenMathsModule }) {
             </Stack>
           </Paper>
         </Box>
-        {summaryOpen && <MathsSummary />}
+        {activeReport === 'class' && <MathsSummary />}
+        {activeReport === 'amira' && <AmiraMathsReport />}
+        {activeReport === 'planning' && <PlanningOverview />}
+        {summaryOpen && (
+          <Stack direction="row" justifyContent="center" spacing={1.5} role="group" aria-label="Report actions" sx={{ width: '100%', maxWidth: 820, mx: 'auto', flexShrink: 0, pt: 1.5, pb: 1 }}>
+            <Button size="small" variant="contained" onClick={onOpenMathsModule} endIcon={<ArrowForwardRoundedIcon />} sx={{ borderRadius: 2.5, px: 2 }}>Open module</Button>
+            <Button size="small" onClick={resetConversation} color="inherit" sx={{ borderRadius: 2.5, px: 2 }}>Thanks</Button>
+          </Stack>
+        )}
       </Box>
 
       <Stack component="nav" direction="row" justifyContent="space-between" alignItems="center" sx={{ position: 'relative', zIndex: 1, px: { xs: 2, sm: 4 }, pb: summaryOpen ? 0.5 : 2, flexShrink: 0, color: 'text.secondary' }}>

@@ -4,7 +4,7 @@ export const mathsSummary = {
   subject: 'Maths',
   students: 26,
   passed: 23,
-  module: { title: 'Algebra & equations', lesson: 6, lessons: 10, next: 'Equations with brackets' },
+  module: { materialId: 'favorit-matematik-8', chapterId: 'algebra', title: 'Algebra & equations', lesson: 6, lessons: 10, next: 'Equations with brackets' },
   scores: [61, 66, 69, 73],
   highlights: [
     { name: 'Amira', note: 'Explaining her reasoning more clearly.' },
@@ -21,4 +21,12 @@ export const mathsSummary = {
 
 export function isMathsSummaryRequest(text) {
   return /\b8\s*a\b/i.test(text) && /\bmath(?:s|ematics)?\b/i.test(text);
+}
+
+export function getMockReportRequest(text) {
+  // Explicit planning intent takes priority over student/class context.
+  if (/\bplanning\b/i.test(text)) return 'planning';
+  // A named student takes priority over a class mentioned in the same request.
+  if (/\bamira\b/i.test(text)) return 'amira';
+  return isMathsSummaryRequest(text) ? 'class' : null;
 }

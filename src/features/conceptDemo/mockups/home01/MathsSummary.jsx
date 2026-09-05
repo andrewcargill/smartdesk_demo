@@ -1,4 +1,5 @@
 import { Box, LinearProgress, Paper, Stack, Typography } from '@mui/material';
+import TeachingMaterial from './TeachingMaterial.jsx';
 import { mathsSummary as data } from './mathsSummaryData.js';
 
 const panel = { p: { xs: 1.5, sm: 2 }, borderRadius: '16px', bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' };
@@ -44,7 +45,8 @@ export default function MathsSummary() {
       >
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.25 }}>
         <Paper elevation={0} sx={panel}>
-          <Typography sx={caption}>Current module</Typography>
+          <TeachingMaterial chapterId={data.module.chapterId} />
+          <Typography sx={{ ...caption, mt: 1.5 }}>Current module</Typography>
           <Typography component="h3" sx={{ fontSize: 18, fontWeight: 500, mt: 0.5 }}>{data.module.title}</Typography>
           <Stack direction="row" justifyContent="space-between" sx={{ mt: 1.5, mb: 0.75 }}>
             <Typography sx={caption}>Lesson {data.module.lesson} of {data.module.lessons}</Typography>
