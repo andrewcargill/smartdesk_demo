@@ -24,6 +24,8 @@ export function isMathsSummaryRequest(text) {
 }
 
 export function getMockReportRequest(text) {
+  if (/\brelax\b/i.test(text)) return 'relax';
+  if (/\bsummary\b/i.test(text)) return 'summary';
   // Explicit planning intent takes priority over student/class context.
   if (/\bplanning\b/i.test(text)) return 'planning';
   // A named student takes priority over a class mentioned in the same request.

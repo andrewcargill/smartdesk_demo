@@ -1,3 +1,5 @@
+import RelaxSuggestions from '../relax/RelaxSuggestions.jsx';
+import TeacherSummary from '../summary/TeacherSummary.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { Box, Button, ButtonBase, IconButton, InputBase, Paper, Stack, Tooltip, Typography } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
@@ -22,7 +24,7 @@ const moments = [
   { label: 'A plan', when: 'Tomorrow', detail: 'An idea for another day.' },
 ];
 
-export default function HomeMockup01({ onBack, onOpenMathsModule }) {
+export default function HomeMockup01({ onBack, onOpenMathsModule, onOpenMentor }) {
   const { t } = useConceptDemoLanguage();
   const headingRef = useRef(null);
   const inputRef = useRef(null);
@@ -46,15 +48,19 @@ export default function HomeMockup01({ onBack, onOpenMathsModule }) {
     const requestedReport = getMockReportRequest(text);
     if (requestedReport) {
       setActiveReport(requestedReport);
-      setReply(requestedReport === 'planning'
+      setReply(requestedReport === 'relax'
+        ? 'Here are a few ways to take a little space for yourself. All booking and contact actions are previews.'
+        : requestedReport === 'summary'
+        ? 'Here’s your day at a glance: teaching readiness, tasks and follow-ups.'
+        : requestedReport === 'planning'
         ? 'Here’s a planning overview. Select a week or activity to explore and edit this mock plan.'
         : requestedReport === 'amira'
         ? 'Here’s Amira’s maths snapshot. Her reasoning is getting clearer.'
         : 'Here’s a quick look at 8A maths. Try “Amira” for her maths report.');
     } else {
       setReply(summaryOpen
-        ? `I’m keeping ${activeReport === 'planning' ? 'the planning overview' : activeReport === 'amira' ? 'Amira’s report' : 'the class summary'} here. Try “planning”, “Amira” or “8a maths” to switch views.`
-        : 'Try “planning” for a timeline, “8a maths” for the class, or “Amira” for her maths report.');
+        ? `I’m keeping ${activeReport === 'relax' ? 'your relax suggestions' : activeReport === 'summary' ? 'your daily summary' : activeReport === 'planning' ? 'the planning overview' : activeReport === 'amira' ? 'Amira’s report' : 'the class summary'} here. Try “relax”, “summary”, “planning”, “Amira” or “8a maths” to switch views.`
+        : 'Try “relax” for a break, “summary” for your day, “planning” for a timeline, “8a maths” for the class, or “Amira” for her maths report.');
     }
     setDraft('');
     setVoicePreview(false);
@@ -140,7 +146,7 @@ export default function HomeMockup01({ onBack, onOpenMathsModule }) {
                 inputRef={inputRef}
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
-                placeholder={activeReport === 'planning' ? "Try 8a maths or Amira to switch views…" : activeReport === 'amira' ? "Ask about Amira, or type 8a maths…" : summaryOpen ? "Try Amira, or ask about 8A maths…" : "What's on your mind?"}
+                placeholder={activeReport === 'relax' ? 'Ask more, or try summary or planning…' : activeReport === 'summary' ? 'Ask more, or try planning, 8a maths or Amira…' : activeReport === 'planning' ? "Try 8a maths or Amira to switch views…" : activeReport === 'amira' ? "Ask about Amira, or type 8a maths…" : summaryOpen ? "Try Amira, or ask about 8A maths…" : "What's on your mind?"}
                 multiline
                 minRows={summaryOpen ? 1 : 2}
                 maxRows={summaryOpen ? 2 : 5}
@@ -165,10 +171,12 @@ export default function HomeMockup01({ onBack, onOpenMathsModule }) {
             </Stack>
           </Paper>
         </Box>
+        {activeReport === 'relax' && <RelaxSuggestions onReset={resetConversation} />}
+        {activeReport === 'summary' && <TeacherSummary onOpenMentor={onOpenMentor} onReset={resetConversation} />}
         {activeReport === 'class' && <MathsSummary />}
         {activeReport === 'amira' && <AmiraMathsReport />}
         {activeReport === 'planning' && <PlanningOverview />}
-        {summaryOpen && (
+        {summaryOpen && !['summary', 'relax'].includes(activeReport) && (
           <Stack direction="row" justifyContent="center" spacing={1.5} role="group" aria-label="Report actions" sx={{ width: '100%', maxWidth: 820, mx: 'auto', flexShrink: 0, pt: 1.5, pb: 1 }}>
             <Button size="small" variant="contained" onClick={onOpenMathsModule} endIcon={<ArrowForwardRoundedIcon />} sx={{ borderRadius: 2.5, px: 2 }}>Open module</Button>
             <Button size="small" onClick={resetConversation} color="inherit" sx={{ borderRadius: 2.5, px: 2 }}>Thanks</Button>

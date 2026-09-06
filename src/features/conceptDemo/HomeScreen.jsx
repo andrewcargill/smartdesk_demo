@@ -1,3 +1,4 @@
+import MockupNavigation from './mockups/home02/MockupNavigation.jsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
@@ -27,6 +28,7 @@ import { ConceptDemoSubjectProvider, useConceptDemoSubjects } from './ConceptDem
 import { ConceptDemoTeacherProvider, useConceptDemoTeacher } from './ConceptDemoTeacherContext.jsx';
 import DemoShell from './DemoShell.jsx';
 import HomeMockup01 from './mockups/home01/HomeMockup01.jsx';
+import HomeMockup02 from './mockups/home02/HomeMockup02.jsx';
 import FocusedWorkspace from './components/FocusedWorkspace.jsx';
 import LearningModule from './components/learningModule/LearningModule.jsx';
 import MentorModule from './components/MentorModule.jsx';
@@ -831,6 +833,8 @@ function HomeScreenContent() {
   const [homeBackground, setHomeBackground] = useState('none');
   const [homeMenuAnchor, setHomeMenuAnchor] = useState(null);
   const [homeMockupOpen, setHomeMockupOpen] = useState(false);
+  const [homeMockupVersion, setHomeMockupVersion] = useState(1);
+  const HomeMockupView = homeMockupVersion === 2 ? HomeMockup02 : HomeMockup01;
   const homeMenuButtonRef = useRef(null);
   const mockupReturnFocusRef = useRef(null);
   const restoreHomeMenuFocus = useRef(false);
@@ -1011,7 +1015,12 @@ function HomeScreenContent() {
       >
         {homeMockupOpen && (
           <Box ref={mockupReturnFocusRef} tabIndex={-1} sx={{ outline: 'none' }}>
-            <HomeMockup01 onOpenMathsModule={() => openSubjectClass('mathematics', '8A')} onBack={() => {
+            <HomeMockupView navigation={<MockupNavigation
+              modules={modules.map(module => ({ ...module, label: getModuleTitle(module, t) }))}
+              onOpenSubjectClass={openSubjectClass} onOpenMentor={openMentor}
+              onOpenNotebook={openNotebook} onOpenWeek={openWeek}
+              weekLabel={language === 'sv' ? 'Min vecka' : 'My week'}
+            />} onOpenMentor={openMentor} onOpenMathsModule={() => openSubjectClass('mathematics', '8A')} onBack={() => {
               restoreHomeMenuFocus.current = true;
               setHomeMockupOpen(false);
             }} />
@@ -1096,8 +1105,11 @@ function HomeScreenContent() {
             <MenuItem onClick={() => runHomeMenuAction(openSmartDeskHome)}>
               {t('home.smartDeskHome')}
             </MenuItem>
-            <MenuItem onClick={() => runHomeMenuAction(() => setHomeMockupOpen(true))}>
+            <MenuItem onClick={() => runHomeMenuAction(() => { setHomeMockupVersion(1); setHomeMockupOpen(true); })}>
               {t('home.firstHomeMockup')}
+            </MenuItem>
+            <MenuItem onClick={() => runHomeMenuAction(() => { setHomeMockupVersion(2); setHomeMockupOpen(true); })}>
+              {t('home.secondHomeMockup')}
             </MenuItem>
             <MenuItem onClick={() => runHomeMenuAction(openSetup)}>
               {t('home.setup.changeSubjects')}

@@ -1,0 +1,32 @@
+[
+  { "id": "outdoor", "label": "Outdoors", "intro": "A change of scene", "ideas": [
+    { "title": "Take the green way", "duration": "15 min", "detail": "Follow a leafy loop and leave your phone in your pocket." },
+    { "title": "Find a sunny bench", "duration": "10 min", "detail": "Sit outside with a warm drink and no task to finish." },
+    { "title": "A photo wander", "duration": "20 min", "detail": "Look for three interesting textures, colours or shadows." },
+    { "title": "Lunch in the fresh air", "duration": "25 min", "detail": "Bring your lunch outside for a slower break." }
+  ]},
+  { "id": "quiet", "label": "Quiet", "intro": "Turn the volume down", "ideas": [
+    { "title": "A chapter just for you", "duration": "15 min", "detail": "Pick a novel or magazine from the library." },
+    { "title": "Music, eyes closed", "duration": "8 min", "detail": "Choose two familiar tracks and settle somewhere comfortable." },
+    { "title": "A screen-free tea", "duration": "10 min", "detail": "Put notifications aside and enjoy a drink slowly." },
+    { "title": "An empty page", "duration": "5 min", "detail": "Write whatever is on your mind, without needing a conclusion." }
+  ]},
+  { "id": "social", "label": "Socialize", "intro": "A little connection", "ideas": [
+    { "title": "Coffee with a colleague", "duration": "15 min", "detail": "Invite someone for a chat beyond lesson plans." },
+    { "title": "Call an old friend", "duration": "10 min", "detail": "Make a little space for a familiar voice." },
+    { "title": "A shared lunch", "duration": "25 min", "detail": "Join someone you don’t usually sit with." },
+    { "title": "Send a kind note", "duration": "5 min", "detail": "Tell someone about a small thing you appreciated." }
+  ]},
+  { "id": "movement", "label": "Movement", "intro": "A gentle reset", "ideas": [
+    { "title": "Unwind your shoulders", "duration": "5 min", "detail": "Stand up and move gently in a way that feels comfortable." },
+    { "title": "A corridor wander", "duration": "8 min", "detail": "Take an easy indoor loop when the weather isn’t inviting." },
+    { "title": "One-song break", "duration": "4 min", "detail": "Put on a favourite track and move at your own pace." },
+    { "title": "Walk somewhere new", "duration": "20 min", "detail": "Choose a different nearby path with time to return." }
+  ]},
+  { "id": "creative", "label": "Creative", "intro": "Make something small", "ideas": [
+    { "title": "Doodle a little", "duration": "5 min", "detail": "Fill a corner of paper with shapes, without a plan." },
+    { "title": "Build a tiny playlist", "duration": "10 min", "detail": "Choose five songs for the kind of afternoon you want." },
+    { "title": "Sketch the view", "duration": "15 min", "detail": "Draw what you see from a window, just for yourself." },
+    { "title": "Fold something", "duration": "10 min", "detail": "Try a simple paper fold and give your hands a new task." }
+  ]}
+]

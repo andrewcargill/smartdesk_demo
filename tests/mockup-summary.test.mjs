@@ -90,3 +90,19 @@ test('the class and all planning activities link to valid mock textbook chapters
   const moved = movePlanningBlock(initialPlanningBlocks, 'warmup', 1).find((block) => block.id === 'warmup');
   assert.equal(moved.chapterId, 'algebra');
 });
+
+
+test('summary anywhere in a request opens the teacher overview before other contexts', () => {
+  for (const prompt of ['summary', 'My SUMMARY please', 'summary of 8a maths', 'Amira planning summary']) {
+    assert.equal(getMockReportRequest(prompt), 'summary');
+  }
+  assert.equal(getMockReportRequest('summaryish'), null);
+});
+
+
+test('relax suggestions recognise the word anywhere and override other report contexts', () => {
+  for (const prompt of ['relax', 'Help me RELAX please', 'summary and relax', 'relax after 8a maths']) {
+    assert.equal(getMockReportRequest(prompt), 'relax');
+  }
+  for (const prompt of ['relaxation', 'relaxed', 'prelax']) assert.equal(getMockReportRequest(prompt), null);
+});
