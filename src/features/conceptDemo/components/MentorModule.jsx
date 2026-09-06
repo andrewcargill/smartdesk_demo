@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import {
   Alert,
@@ -22,7 +22,7 @@ import {
 import { class8AStudents } from '../data/classes/class8AStudents.js';
 import { useConceptDemoLanguage } from '../ConceptDemoLanguageContext.jsx';
 import { buildSubject8AConfig } from './learningModule/data/subject8AConfigFactory.js';
-import { fallbackMentorPicture, mentorSeed } from './mentorModule/data/mentor8AData.js';
+import { getStudentMentorPicture, readStoredMentorPicture, writeStoredMentorPicture, subscribeMentorPicture } from './mentorModule/utils/mentorPictureStorage.js';
 import { CheckInStatusIcon } from './mentorModule/mentorCheckInStatus.jsx';
 import MentorExpandedCellPanel from './mentorModule/MentorExpandedCellPanel.jsx';
 import SubjectWorkspaceContainer from './SubjectWorkspaceContainer.jsx';
@@ -36,7 +36,6 @@ import {
   subjectIds,
 } from './mentorModule/mentorModuleShared.jsx';
 
-const mentorStorageKey = 'smartdesk_demo_mentor_8a_picture';
 const mentorTableColumns = '24px minmax(190px, 1.15fr) 104px minmax(180px, 0.9fr) minmax(170px, 0.95fr) minmax(128px, 0.65fr)';
 const mentorTableHeaderKeys = ['', 'student', 'support', 'recentCheckIns', 'subjects', 'followUp'];
 const mentorStatusLabelKeys = {
@@ -45,43 +44,10 @@ const mentorStatusLabelKeys = {
   red: 'red',
 };
 
-function readStoredMentorPicture() {
-  if (typeof window === 'undefined') return {};
-
-  try {
-    const value = window.localStorage.getItem(mentorStorageKey);
-    return value ? JSON.parse(value) : {};
-  } catch {
-    return {};
-  }
-}
-
-function writeStoredMentorPicture(value) {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(mentorStorageKey, JSON.stringify(value));
-}
-
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function getStudentMentorPicture(studentId, overrides = {}) {
-  return {
-    ...fallbackMentorPicture,
-    ...(mentorSeed[studentId] || {}),
-    ...(overrides[studentId] || {}),
-    subjectStatuses: {
-      ...fallbackMentorPicture.subjectStatuses,
-      ...(mentorSeed[studentId]?.subjectStatuses || {}),
-      ...(overrides[studentId]?.subjectStatuses || {}),
-    },
-    subjectCheckIns: {
-      ...fallbackMentorPicture.subjectCheckIns,
-      ...(mentorSeed[studentId]?.subjectCheckIns || {}),
-      ...(overrides[studentId]?.subjectCheckIns || {}),
-    },
-  };
-}
 
 function getSubjectFacts(config, studentId, t) {
   const observations = (config.evidence?.items || [])
@@ -310,6 +276,7 @@ function MentorTableShell({ children }) {
 export default function MentorModule({ onBack }) {
   const { t } = useConceptDemoLanguage();
   const [overrides, setOverrides] = useState(() => readStoredMentorPicture());
+  useEffect(() => subscribeMentorPicture(() => setOverrides(readStoredMentorPicture())), []);
   const [expandedCell, setExpandedCell] = useState({ studentId: '', cellId: '' });
   const [selectedSubjectId, setSelectedSubjectId] = useState('english');
   const [activeFilter, setActiveFilter] = useState('');
@@ -397,8 +364,8 @@ export default function MentorModule({ onBack }) {
       },
     };
     setOverrides(nextOverrides);
-    writeStoredMentorPicture(nextOverrides);
-    setSnackbarMessage(t('mentorModule.snackbar.teacherMessageUpdated'));
+    const saved = writeStoredMentorPicture(nextOverrides);
+    setSnackbarMessage(saved ? t('mentorModule.snackbar.teacherMessageUpdated') : 'Message shared for this session only; browser storage is unavailable.');
   }
 
   function addCheckIn(studentId, status, comment = '') {

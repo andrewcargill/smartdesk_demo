@@ -1,3 +1,5 @@
+import { useConceptDemoTeacher } from '../../ConceptDemoTeacherContext.jsx';
+import { getCurrentTeachingMessage } from './utils/mentorPictureStorage.js';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
@@ -36,9 +38,7 @@ export function ProrenataCard({ picture }) {
 }
 
 function splitTeachingMessages(teachingInfo = []) {
-  const current = teachingInfo.find((item) => item.status === 'current')
-    || teachingInfo.find((item) => item.status !== 'past')
-    || null;
+  const current = getCurrentTeachingMessage(teachingInfo);
   const past = teachingInfo.filter((item) => item.id !== current?.id);
   return { current, past };
 }
@@ -53,6 +53,7 @@ function formatUpdatedDate(item) {
 }
 
 export function SharedTeachingInfoView({ picture, onTeachingInfoChange }) {
+  const { teacherName } = useConceptDemoTeacher();
   const [draftMessage, setDraftMessage] = useState('');
   const [pastOpen, setPastOpen] = useState(false);
   const { current, past } = useMemo(() => splitTeachingMessages(picture.teachingInfo), [picture.teachingInfo]);
@@ -64,6 +65,8 @@ export function SharedTeachingInfoView({ picture, onTeachingInfoChange }) {
     const nextMessage = {
       id: `teaching-info-${Date.now()}`,
       text,
+      author: teacherName,
+      createdAt: new Date().toISOString(),
       updatedDate: todayIso(),
       status: 'current',
     };

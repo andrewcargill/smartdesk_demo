@@ -1,3 +1,6 @@
+import MessageIcon from '@mui/icons-material/Message';
+import MentorMessageCell from '../MentorMessageCell.jsx';
+import { readStoredMentorPicture, subscribeMentorPicture, getStudentTeachingMessage } from '../../mentorModule/utils/mentorPictureStorage.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
@@ -648,17 +651,19 @@ function ClassPictureEvidenceGridV1({
   unitNotes,
 }) {
   const [studentOverviewView, setStudentOverviewView] = useState('timeline');
+  const [mentorOverrides, setMentorOverrides] = useState(readStoredMentorPicture);
+  useEffect(() => subscribeMentorPicture(() => setMentorOverrides(readStoredMentorPicture())), []);
   const v2 = comparisonVariant === 'v2';
   const v3 = comparisonVariant === 'v3';
   const v2UnitColumnFlex = 3 / Math.max(teachingUnits.length, 1);
-  const v2MinimumGridWidth = 384 + (teachingUnits.length * 92);
+  const v2MinimumGridWidth = 444 + (teachingUnits.length * 92);
   const gridTemplateColumns = v3
-    ? `minmax(96px, 0.82fr) minmax(56px, 0.36fr) minmax(112px, 0.86fr) minmax(70px, 0.46fr) repeat(${teachingUnits.length}, minmax(92px, ${v2UnitColumnFlex}fr))`
+    ? `minmax(96px, 0.68fr) 60px minmax(56px, 0.36fr) minmax(112px, 0.86fr) minmax(70px, 0.46fr) repeat(${teachingUnits.length}, minmax(92px, ${v2UnitColumnFlex}fr))`
     : v2
-    ? `minmax(128px, 1.1fr) minmax(56px, 0.36fr) minmax(112px, 0.86fr) minmax(70px, 0.46fr) repeat(${teachingUnits.length}, minmax(92px, ${v2UnitColumnFlex}fr))`
-    : `minmax(105px, max-content) 96px minmax(90px, 1fr) 72px repeat(${teachingUnits.length}, 100px)`;
+    ? `minmax(128px, 0.85fr) 60px minmax(56px, 0.36fr) minmax(112px, 0.86fr) minmax(70px, 0.46fr) repeat(${teachingUnits.length}, minmax(92px, ${v2UnitColumnFlex}fr))`
+    : `minmax(105px, max-content) 60px 96px minmax(90px, 1fr) 72px repeat(${teachingUnits.length}, 100px)`;
   const gridShellSx = {
-    minWidth: { xs: v2 || v3 ? v2MinimumGridWidth : 760, lg: v2 || v3 ? v2MinimumGridWidth : 0 },
+    minWidth: { xs: v2 || v3 ? v2MinimumGridWidth : 820, lg: v2 || v3 ? v2MinimumGridWidth : 0 },
     display: 'grid',
     gridTemplateColumns,
     border: v2 || v3 ? '1px solid rgba(var(--sd-text-rgb), 0.16)' : '1px solid rgba(var(--sd-text-rgb), 0.12)',
@@ -701,6 +706,7 @@ function ClassPictureEvidenceGridV1({
             <GroupsIcon sx={{ fontSize: 16, opacity: 1 }} />
           </Box>
         </Box>
+        <Box role="columnheader" aria-label="Mentor" sx={{ display: 'grid', placeItems: 'center', pr: 2, bgcolor: 'var(--sd-surface)', borderBottom: '1px solid rgba(var(--sd-text-rgb), 0.12)' }}><Tooltip title={language === 'sv' ? 'Meddelande från mentor' : 'Message from mentor'}><MessageIcon sx={{ fontSize: 17, color: 'text.secondary' }} /></Tooltip></Box>
         <Box role="columnheader" aria-label={t('learningModule.classPicture.assessmentAlerts')} sx={{ p: 1, bgcolor: 'var(--sd-surface)', borderBottom: '1px solid rgba(var(--sd-text-rgb), 0.12)' }} />
         <Box
           role="columnheader"
@@ -855,7 +861,7 @@ function ClassPictureEvidenceGridV1({
                     }}
                     aria-label={t('learningModule.classPicture.groupHeaderEditAria', { group: group.label })}
                     sx={{
-                      gridColumn: `1 / span ${teachingUnits.length + 4}`,
+                      gridColumn: `1 / span ${teachingUnits.length + 5}`,
                       p: 0.85,
                       borderTop: '1px solid rgba(var(--sd-text-rgb), 0.12)',
                       bgcolor: isDragTarget ? 'rgba(var(--sd-primary-rgb), 0.12)' : 'var(--sd-surface)',
@@ -914,7 +920,7 @@ function ClassPictureEvidenceGridV1({
                       }}
                       aria-label={t('learningModule.classPicture.unassignedStudentsCreateFocus')}
                       sx={{
-                        gridColumn: `1 / span ${teachingUnits.length + 4}`,
+                        gridColumn: `1 / span ${teachingUnits.length + 5}`,
                         p: 0.85,
                         borderTop: '1px solid rgba(var(--sd-text-rgb), 0.12)',
                         bgcolor: isDragTarget ? 'rgba(var(--sd-primary-rgb), 0.12)' : 'var(--sd-surface)',
@@ -1012,6 +1018,7 @@ function ClassPictureEvidenceGridV1({
                     alignItems: 'center',
                     gap: 0.45,
                     p: 1,
+                    pr: 0.25,
                     borderTop: isHovered ? '1px solid rgba(var(--sd-primary-rgb), 0.34)' : '1px solid rgba(var(--sd-text-rgb), 0.08)',
                     borderBottom: isHovered ? '1px solid rgba(var(--sd-primary-rgb), 0.22)' : '1px solid transparent',
                     bgcolor: draggedStudentId === student.id ? 'rgba(var(--sd-primary-rgb), 0.08)' : isHovered ? 'rgba(var(--sd-primary-rgb), 0.045)' : 'var(--sd-surface)',
@@ -1075,6 +1082,9 @@ function ClassPictureEvidenceGridV1({
                     </Typography>
                   </Box>
                 </Box>
+
+                <MentorMessageCell student={student} language={language} hovered={isHovered} sx={timelineMuteCellSx}
+                  message={getStudentTeachingMessage(student.id, moduleConfig?.classId || moduleConfig?.className, mentorOverrides)} />
 
                 <Box
                   role="cell"
@@ -1415,7 +1425,7 @@ function ClassPictureEvidenceGridV1({
               {isExpanded && (
                 <WorkspaceExpandedRowCell
                   id={`student-insight-${student.id}`}
-                  gridColumn={`1 / span ${teachingUnits.length + 4}`}
+                  gridColumn={`1 / span ${teachingUnits.length + 5}`}
                 >
                     {expandedViewMode === 'unit' && expandedUnit ? (
                       <StudentUnitInsightPanel
