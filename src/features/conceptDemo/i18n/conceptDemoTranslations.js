@@ -271,6 +271,11 @@ export const conceptDemoTranslations = {
         unitObservations: 'Unit observations',
       },
       quickCapture: {
+        activity: 'Activity',
+        curriculum: 'Curriculum',
+        captureBy: 'Capture by',
+        teachingUnit: 'Teaching unit',
+        captureSettings: 'Capture settings: {{title}}',
         selectStudentBelow: 'Select a student below',
       },
       classPicture: {
@@ -776,6 +781,11 @@ export const conceptDemoTranslations = {
         unitObservations: 'Observationer f\u00f6r omr\u00e5det',
       },
       quickCapture: {
+        activity: 'Aktivitet',
+        curriculum: 'Läroplan',
+        captureBy: 'Observera utifrån',
+        teachingUnit: 'Undervisningsområde',
+        captureSettings: 'Observationsinställningar: {{title}}',
         selectStudentBelow: 'V\u00e4lj en elev nedan',
       },
       classPicture: {

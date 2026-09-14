@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Box, Stack, Typography } from '@mui/material';
+import { Box, Stack, Switch, Typography } from '@mui/material';
 import LearningModuleQuickCapture from '../LearningModuleQuickCapture.jsx';
+import LearningModuleCapturePreview from '../LearningModuleCapturePreview.jsx';
 import { getLearningContextsForSubject } from '../data/subjectLearningContexts.js';
 import {
   readLearningModuleEvidence,
@@ -10,6 +11,8 @@ import {
 const darkText = 'var(--sd-text)';
 
 export default function NowScreen({ moduleConfig }) {
+  const [showNewCapture, setShowNewCapture] = useState(false);
+  const CaptureComponent = showNewCapture ? LearningModuleCapturePreview : LearningModuleQuickCapture;
   const moduleId = moduleConfig?.id || 'learning-module';
   const students = moduleConfig?.classData?.students || [];
   const teachingUnits = [...(moduleConfig?.curriculum?.teachingUnits || [])]
@@ -43,12 +46,26 @@ export default function NowScreen({ moduleConfig }) {
   return (
     <Box sx={{ minWidth: 0 }}>
       <Stack spacing={1.35}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1.5}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ flexWrap: 'wrap', gap: 1.5 }}>
           <Typography sx={{ color: darkText, fontSize: { xs: 18, sm: 20 }, fontWeight: 880, lineHeight: 1.15 }}>
             Lesson capture
           </Typography>
+          <Stack direction="row" alignItems="center" spacing={0.5} sx={{ flexShrink: 0 }}>
+            <Typography sx={{ color: darkText, fontSize: 13, fontWeight: showNewCapture ? 400 : 700 }}>
+              A · Current
+            </Typography>
+            <Switch
+              size="small"
+              checked={showNewCapture}
+              onChange={(event) => setShowNewCapture(event.target.checked)}
+              slotProps={{ input: { 'aria-label': 'Use version B of Lesson capture' } }}
+            />
+            <Typography sx={{ color: darkText, fontSize: 13, fontWeight: showNewCapture ? 700 : 400 }}>
+              B · New
+            </Typography>
+          </Stack>
         </Stack>
-        <LearningModuleQuickCapture
+        <CaptureComponent
           moduleId={moduleId}
           students={students}
           teachingUnits={teachingUnits}
