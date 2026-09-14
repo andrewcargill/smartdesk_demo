@@ -29,6 +29,8 @@ import {
   Paper,
   Select,
   Stack,
+  Tab,
+  Tabs,
   ToggleButton,
   ToggleButtonGroup,
   Tooltip,
@@ -180,6 +182,7 @@ export default function LearningModuleQuickCaptureV2({
   const [learnObservationNotes, setLearnObservationNotes] = useState({});
   const [visibleLearnObservationNoteFields, setVisibleLearnObservationNoteFields] = useState({});
   const [setupOpen, setSetupOpen] = useState(false);
+  const [observationView, setObservationView] = useState('subject');
   const [hiddenPointsByContext, setHiddenPointsByContext] = useState({});
   const [studentDetailsOpen, setStudentDetailsOpen] = useState(false);
   const [studentSearch, setStudentSearch] = useState('');
@@ -550,35 +553,38 @@ export default function LearningModuleQuickCaptureV2({
     return null;
   }
 
-  const ratingButtonSx = (selected) => ({
-    minWidth: 0, minHeight: 48, px: 0.5, py: 0.75, borderRadius: '10px',
-    textTransform: 'none', lineHeight: 1.2, fontSize: 12, fontWeight: 700,
-    border: '1px solid', borderColor: selected ? purple : 'rgba(var(--sd-text-rgb), 0.16)',
-    bgcolor: selected ? purple : 'var(--sd-surface)',
-    color: selected ? 'var(--sd-on-primary)' : darkText,
-    '&:hover': { bgcolor: selected ? purple : 'rgba(var(--sd-primary-rgb), 0.08)', borderColor: purple },
-    '&:focus-visible': { outline: '3px solid var(--sd-focus)', outlineOffset: 2 },
-  });
+  const observationAreaSx = {
+    py: 1.5, borderBottom: '1px solid rgba(var(--sd-text-rgb), 0.08)',
+    '&:last-child': { borderBottom: 0 }, display: 'grid',
+    gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1fr) minmax(280px, 1.1fr)' },
+    gap: 1.25, alignItems: 'center',
+  };
+  const observationToggleSx = {
+    borderRadius: '10px', bgcolor: 'rgba(var(--sd-text-rgb), 0.025)',
+    '& .MuiToggleButton-root': {
+      flex: 1, minWidth: 0, minHeight: 48, py: 1,
+      borderColor: 'rgba(var(--sd-text-rgb), 0.16)', color: darkText,
+      '&.Mui-selected, &.Mui-selected:hover': { bgcolor: purple, color: 'var(--sd-on-primary)' },
+      '&:focus-visible': { outline: '3px solid var(--sd-focus)', outlineOffset: 2, zIndex: 1 },
+    },
+  };
 
   const learnObservationsPanel = (
     <Panel sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: '16px' }}>
-      <Typography component="h3" sx={{ color: darkText, fontSize: 16, fontWeight: 800 }}>
-        Learning observations
-      </Typography>
-      <Stack spacing={1.25}>
+      <Stack spacing={0}>
         {learningObservationItems.map((item) => (
-          <Box key={item.id} sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 0.75, alignItems: 'center' }}>
-            <Typography sx={{ color: darkText, fontSize: 14, fontWeight: 700, overflowWrap: 'anywhere' }}>{item.label}</Typography>
-            <Stack direction="row" spacing={0.5}>
+          <Box key={item.id} sx={observationAreaSx}>
+            <Typography id={`capture-learning-${item.id}`} sx={{ color: darkText, fontSize: 14, fontWeight: 750, lineHeight: 1.4 }}>{item.label}</Typography>
+            <ToggleButtonGroup exclusive fullWidth value={learnObservationSelections[item.id] || null}
+              aria-labelledby={`capture-learning-${item.id}`}
+              onChange={(_, choiceId) => { if (choiceId !== null) chooseLearningObservation(item.id, choiceId); }}
+              sx={observationToggleSx}>
               {learningObservationChoices.map((choice) => (
-                <Button key={choice.id} aria-label={`${item.label}: ${choice.id}`}
-                  aria-pressed={learnObservationSelections[item.id] === choice.id}
-                  onClick={() => chooseLearningObservation(item.id, choice.id)}
-                  sx={{ ...ratingButtonSx(learnObservationSelections[item.id] === choice.id), width: 44, minHeight: 44, fontSize: 20 }}>
-                  {choice.label}
-                </Button>
+                <ToggleButton key={choice.id} value={choice.id} aria-label={`${item.label}: ${choice.id}`}>
+                  <Box component="span" aria-hidden="true" sx={{ fontSize: 17, lineHeight: 1 }}>{choice.label}</Box>
+                </ToggleButton>
               ))}
-            </Stack>
+            </ToggleButtonGroup>
             <Box sx={{ gridColumn: '1 / -1', minWidth: 0 }}>
               {visibleLearnObservationNoteFields[item.id] ? (
                 <TextField fullWidth size="small" label={`${item.label} note`} value={learnObservationNotes[item.id] || ''}
@@ -596,7 +602,7 @@ export default function LearningModuleQuickCaptureV2({
               ) : (
                 <Button onClick={() => showLearnObservationNoteField(item.id)}
                   aria-label={`${learnObservationNotes[item.id] ? 'Edit' : 'Add'} ${item.label} note`}
-                  sx={{ minHeight: 44, px: 0, textTransform: 'none', color: 'text.secondary', fontSize: 12, justifyContent: 'flex-start', textAlign: 'left', overflowWrap: 'anywhere' }}>
+                  sx={{ minHeight: 44, px: 0, textTransform: 'none', color: 'text.secondary', fontSize: 12, fontWeight: 400, justifyContent: 'flex-start', textAlign: 'left', overflowWrap: 'anywhere' }}>
                   {learnObservationNotes[item.id] || '+ Add a note'}
                 </Button>
               )}
@@ -949,14 +955,26 @@ export default function LearningModuleQuickCaptureV2({
           </Collapse>
         </Paper>
 
+        <Tabs value={observationView} onChange={(_, view) => setObservationView(view)}
+          aria-label={t('learningModule.quickCapture.observationView')}
+          sx={{ minHeight: 44, borderBottom: '1px solid rgba(var(--sd-text-rgb), 0.08)',
+            '& .MuiTabs-indicator': { bgcolor: 'text.secondary', height: 2 },
+            '& .MuiTab-root': { minHeight: 44, minWidth: 0, px: 1.5, textTransform: 'none', fontSize: 13, fontWeight: 400, color: 'text.secondary' },
+            '& .MuiTab-root.Mui-selected': { color: darkText, fontWeight: 600 },
+          }}>
+          <Tab value="subject" id="capture-subject-tab" aria-controls="capture-subject-panel"
+            label={t(`learningModule.quickCapture.${captureMode === 'activity' ? 'activity' : 'curriculum'}`)} />
+          <Tab value="learning" id="capture-learning-tab" aria-controls="capture-learning-panel"
+            label={t('learningModule.classPicture.learningObservations')} />
+        </Tabs>
+        <Box role="tabpanel" id="capture-subject-panel" aria-labelledby="capture-subject-tab" hidden={observationView !== 'subject'}>
         {(setupOpen || visibleCapturePoints.length > 0 || !activeCapturePoints.length) && <Panel sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: '16px' }}>
           <Stack spacing={0}>
             {(setupOpen ? activeCapturePoints : visibleCapturePoints).map((point) => {
               const currentLevel = currentLevelByCapturePointId[point.id];
               const isHidden = hiddenPointIds.includes(point.id);
               return (
-                <Box key={point.id} sx={{ py: 1.5, borderBottom: '1px solid rgba(var(--sd-text-rgb), 0.08)', '&:last-child': { borderBottom: 0 },
-                  display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1fr) minmax(280px, 1.1fr)' }, gap: 1.25, alignItems: 'center' }}>
+                <Box key={point.id} sx={observationAreaSx}>
                   <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
                     <Typography id={`capture-v2-point-${point.id}`} sx={{ fontSize: 14, fontWeight: 750, lineHeight: 1.4, color: isHidden ? 'text.secondary' : darkText }}>{point.label}</Typography>
                     {setupOpen && <Switch size="small" checked={!isHidden}
@@ -980,16 +998,7 @@ export default function LearningModuleQuickCaptureV2({
                       const level = levels.find((item) => item.id === levelId);
                       if (level) captureLevel(point, level, currentLevel ? 'update' : 'new');
                     }}
-                    sx={{
-                      borderRadius: '10px',
-                      bgcolor: 'rgba(var(--sd-text-rgb), 0.025)',
-                      '& .MuiToggleButton-root': {
-                        flex: 1, minWidth: 0, minHeight: 48, py: 1,
-                        borderColor: 'rgba(var(--sd-text-rgb), 0.16)', color: darkText,
-                        '&.Mui-selected, &.Mui-selected:hover': { bgcolor: purple, color: 'var(--sd-on-primary)' },
-                        '&:focus-visible': { outline: '3px solid var(--sd-focus)', outlineOffset: 2, zIndex: 1 },
-                      },
-                    }}
+                    sx={observationToggleSx}
                   >
                     {levels.map((level) => (
                       <Tooltip key={level.id} title={level.label}>
@@ -1005,7 +1014,10 @@ export default function LearningModuleQuickCaptureV2({
             {!activeCapturePoints.length && <Typography sx={{ py: 2, fontSize: 14 }}>No capture points for this activity. Choose another activity above.</Typography>}
           </Stack>
         </Panel>}
-        {learnObservationsPanel}
+        </Box>
+        <Box role="tabpanel" id="capture-learning-panel" aria-labelledby="capture-learning-tab" hidden={observationView !== 'learning'}>
+          {learnObservationsPanel}
+        </Box>
         <Dialog open={studentDetailsOpen} onClose={() => setStudentDetailsOpen(false)} fullWidth maxWidth="sm" aria-labelledby="capture-student-details-title">
           <DialogTitle id="capture-student-details-title">{selectedStudent.displayName}</DialogTitle>
           <DialogContent>
